@@ -10,6 +10,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := hello-tango-jni
 LOCAL_SHARED_LIBRARIES := libtango-prebuilt 
 LOCAL_SRC_FILES := hello-tango-jni.cpp
-LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog
+LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog -lGLESv1_CM -lGLESv2
 LOCAL_ARM_MODE := arm
 include $(BUILD_SHARED_LIBRARY)
