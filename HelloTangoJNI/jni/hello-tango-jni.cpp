@@ -7,6 +7,10 @@
 #include <tango-api/application-interface.h>
 #include <tango-api/vio-interface.h>
 
+#include <GLES2/gl2.h>
+#include <GLES/gl.h>
+#include <math.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -62,15 +66,66 @@ extern "C"
     }
 
     JNIEXPORT void Java_com_google_tango_hellotangojni_TangoJNINative_onGlSurfaceCreated(JNIEnv * env, jclass cls) {
-
+    	glClearColor(0, 0, 0, 1.0f);
+    	glEnable(GL_CULL_FACE);
+    	glEnable(GL_DEPTH_TEST);
     }
 
     JNIEXPORT void Java_com_google_tango_hellotangojni_TangoJNINative_onGLSurfaceChanged(JNIEnv * env, jclass cls, jint width, jint height) {
-
+    	glViewport(0, 0, width, height);
+    	glMatrixMode(GL_PROJECTION);
+    	glLoadIdentity();
+    	glFrustumf(-(GLfloat) width/height, (GLfloat) width/height, -1.0f, 1.0f, 1.0f, 10.0f);
+    	glMatrixMode(GL_MODELVIEW);
+    	glLoadIdentity();
     }
 
     JNIEXPORT void Java_com_google_tango_hellotangojni_TangoJNINative_onGLSurfaceDraw(JNIEnv * env, jclass cls) {
+    	static GLfloat vertices[] =
+		{
+			0, 0, 1.0,
+		    0, 0, 0,
+		    0, 1.0, 0,
+		    0, 1.0, 1.0,
+		    1.0, 0, 1.0,
+		    1.0, 0, 0,
+		    1.0, 1.0, 0,
+		    1.0, 1.0, 1.0
+		};
+    	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    	glMatrixMode(GL_MODELVIEW);
+    	glLoadIdentity();
+    	glTranslatef(vioStatusArray[0]*3.0, vioStatusArray[1]*3.0, -3.0f+vioStatusArray[2]*3.0);
+    	glRotatef(vioStatusArray[3]*180.0, 1.0, 0.0, 0.0);
+    	glRotatef(vioStatusArray[4]*180.0, 0.0, 0.0, -1.0);
+    	glRotatef(vioStatusArray[5]*180.0, 0.0, 1.0, 0.0);
 
+    	glTranslatef(-0.5, -0.5, -0.5);
+    	glEnableClientState(GL_VERTEX_ARRAY);
+    	glVertexPointer(3, GL_FLOAT, 0, vertices);
+
+    	static GLbyte frontIndices[] = { 4, 5, 6, 7 };
+    	static GLbyte rightIndices[] = { 1, 2, 6, 5 };
+    	static GLbyte bottomIndices[] = { 0, 1, 5, 4 };
+    	static GLbyte backIndices[] = { 0, 3, 2, 1 };
+    	static GLbyte leftIndices[] = { 0, 4, 7, 3 };
+    	static GLbyte topIndices[] = { 2, 3, 7, 6 };
+
+    	glColor4f(0.3, 0.2, 0.8, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, frontIndices);
+    	glColor4f(1.0, 0.3, 0.6, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, rightIndices);
+    	glColor4f(0.3, 0.7, 0.9, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, bottomIndices);
+    	glColor4f(0.9, 0.5, 0.2, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, backIndices);
+    	glColor4f(0.1, 0.7, 0.6, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, leftIndices);
+    	glColor4f(0.8, 0.8, 0.0, 1.0);
+    	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, topIndices);
+    	glDisableClientState(GL_VERTEX_ARRAY);
+
+    	glFlush();
     }
 
 #ifdef __cplusplus
