@@ -5,3 +5,7 @@ HelloTangoJNI/gen
 .metadata
 HelloTangoJNI/libs
 HelloTangoJNI/obj
+TangoJNIVideoOverlay/bin
+TangoJNIVideoOverlay/gen
+TangoJNIVideoOverlay/obj
+TangoJNIVideoOverlay/libs
