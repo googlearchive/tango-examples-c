@@ -1,11 +1,11 @@
-HelloTangoJNI/bin
-HelloTangoJNI/gen
 .classpath
 .project
 .metadata
+HelloTangoJNI/bin
+HelloTangoJNI/gen
 HelloTangoJNI/libs
 HelloTangoJNI/obj
 TangoJNIVideoOverlay/bin
 TangoJNIVideoOverlay/gen
-TangoJNIVideoOverlay/obj
 TangoJNIVideoOverlay/libs
+TangoJNIVideoOverlay/obj
