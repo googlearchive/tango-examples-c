@@ -6,7 +6,7 @@ import android.app.Activity;
 public class VideoOverlayActivity extends Activity {
 
 	VideoOverlayView videoOverlayView;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
