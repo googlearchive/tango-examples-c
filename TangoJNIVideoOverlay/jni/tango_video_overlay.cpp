@@ -1,19 +1,12 @@
+#include <stdlib.h>
 #include <jni.h>
 #include <android/log.h>
-
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include <tango-api/application-interface.h>
-#include <tango-api/depth-interface.h>
 #include <tango-api/hardware-control-interface.h>
-#include <tango-api/util-interface.h>
 #include <tango-api/video-overlay-interface.h>
-#include <tango-api/vio-interface.h>
 
 #define  LOG_TAG    "tango_video_overlay"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -45,12 +38,11 @@ static const GLushort kIndices[] = { 0, 1, 2, 2, 1, 3 };
 static const GLfloat kTextureCoords[] =
     { 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 };
 
-const GLuint kTexWidth = 1280;
-const GLuint kTexHeight = 720;
-const GLuint kScreenWidth = 1920;
-const GLuint kScreenHeight = 1080;
-
 application_handle_t *app_handler;
+struct VideoModeAttributes video_mode;
+
+GLuint screen_width;
+GLuint screen_height;
 
 GLuint shader_program;
 GLuint attrib_vertices;
@@ -68,21 +60,21 @@ static void CheckGlError(const char* operation) {
   }
 }
 
-GLuint LoadShader(GLenum shaderType, const char* pSource) {
-  GLuint shader = glCreateShader(shaderType);
+GLuint LoadShader(GLenum shader_type, const char* shader_source) {
+  GLuint shader = glCreateShader(shader_type);
   if (shader) {
-    glShaderSource(shader, 1, &pSource, NULL);
+    glShaderSource(shader, 1, &shader_source, NULL);
     glCompileShader(shader);
     GLint compiled = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
-      GLint infoLen = 0;
-      glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-      if (infoLen) {
-        char* buf = (char*) malloc(infoLen);
+      GLint info_len = 0;
+      glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_len);
+      if (info_len) {
+        char* buf = (char*) malloc(info_len);
         if (buf) {
-          glGetShaderInfoLog(shader, infoLen, NULL, buf);
-          LOGE("Could not compile shader %d:\n%s\n", shaderType, buf);
+          glGetShaderInfoLog(shader, info_len, NULL, buf);
+          LOGE("Could not compile shader %d:\n%s\n", shader_type, buf);
           free(buf);
         }
         glDeleteShader(shader);
@@ -93,14 +85,14 @@ GLuint LoadShader(GLenum shaderType, const char* pSource) {
   return shader;
 }
 
-GLuint CreateProgram(const char* pVertexSource, const char* pFragmentSource) {
-  GLuint vertexShader = LoadShader(GL_VERTEX_SHADER, pVertexSource);
+GLuint CreateProgram(const char* vertex_source, const char* fragment_source) {
+  GLuint vertexShader = LoadShader(GL_VERTEX_SHADER, vertex_source);
   if (!vertexShader) {
     return 0;
   }
 
-  GLuint pixelShader = LoadShader(GL_FRAGMENT_SHADER, pFragmentSource);
-  if (!pixelShader) {
+  GLuint fragment_shader = LoadShader(GL_FRAGMENT_SHADER, fragment_source);
+  if (!fragment_shader) {
     return 0;
   }
 
@@ -108,18 +100,18 @@ GLuint CreateProgram(const char* pVertexSource, const char* pFragmentSource) {
   if (program) {
     glAttachShader(program, vertexShader);
     CheckGlError("glAttachShader");
-    glAttachShader(program, pixelShader);
+    glAttachShader(program, fragment_shader);
     CheckGlError("glAttachShader");
     glLinkProgram(program);
-    GLint linkStatus = GL_FALSE;
-    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-    if (linkStatus != GL_TRUE) {
-      GLint bufLength = 0;
-      glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
-      if (bufLength) {
-        char* buf = (char*) malloc(bufLength);
+    GLint link_status = GL_FALSE;
+    glGetProgramiv(program, GL_LINK_STATUS, &link_status);
+    if (link_status != GL_TRUE) {
+      GLint buf_length = 0;
+      glGetProgramiv(program, GL_INFO_LOG_LENGTH, &buf_length);
+      if (buf_length) {
+        char* buf = (char*) malloc(buf_length);
         if (buf) {
-          glGetProgramInfoLog(program, bufLength, NULL, buf);
+          glGetProgramInfoLog(program, buf_length, NULL, buf);
           LOGE("Could not link program:\n%s\n", buf);
           free(buf);
         }
@@ -131,20 +123,30 @@ GLuint CreateProgram(const char* pVertexSource, const char* pFragmentSource) {
   return program;
 }
 
-void SetupTango() {
+bool SetupTango() {
+  // initialize tango application.
   app_handler = ApplicationInitialize("[Superframes Small-Peanut]", 0);
   if (app_handler == NULL) {
     LOGI("Application initialize failed\n");
-    return;
+    return false;
   }
 
+  // initialize video overlay.
   CAPIErrorCodes ret_error;
   if ((ret_error = VideoOverlayInitialize(app_handler)) != kCAPISuccess) {
     LOGI("video overlay init failed: %d\n", ret_error);
-    return;
-  } else {
-    LOGI("video overlay init success.\n");
+    return false;
   }
+  
+  // Get camera video mode.
+  int num_video_modes = HardwareCameraNumberVideoModes();
+  if ((ret_error = HardwareCameraGetVideoMode(0, &video_mode))
+      != kCAPISuccess) {
+    LOGI("video overlay init failed: %d\n", ret_error);
+    return false;
+  }
+  
+  return true;
 }
 
 bool SetupGraphics(int w, int h) {
@@ -162,7 +164,8 @@ bool SetupGraphics(int w, int h) {
   glBindTexture(GL_TEXTURE_2D, texture_id);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, kTexWidth, kTexHeight, 0, GL_RGBA,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, video_mode.width,
+               video_mode.height, 0, GL_RGBA,
                GL_UNSIGNED_BYTE, 0);
   CheckGlError("Texture");
 
@@ -204,32 +207,37 @@ bool SetupGraphics(int w, int h) {
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  glViewport(0, 0, kScreenWidth, kScreenHeight);
+  
+  screen_width = w;
+  screen_height = h;
+  glViewport(0, 0, screen_width, screen_height);
   CheckGlError("glViewport");
 
   return true;
 }
 
-void RenderFrame() {
+bool RenderFrame() {
   ApplicationDoStep(app_handler);
   CAPIErrorCodes ret_error;
-  ret_error = VideoOverlayRenderLatestFrame(app_handler, texture_id, kTexWidth,
-                                            kTexHeight,
+  ret_error = VideoOverlayRenderLatestFrame(app_handler, texture_id,
+                                            video_mode.width,
+                                            video_mode.height,
                                             &video_overlay_timestamp);
   if (ret_error != kCAPISuccess) {
     LOGE("Video overlay init error: %d\n", ret_error);
+    return false;
   }
 
   glUseProgram(shader_program);
-
+  CheckGlError("glUseProgram");
+  
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
   glEnable (GL_BLEND);
 
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  glViewport(0, 0, kScreenWidth, kScreenHeight);
+  glViewport(0, 0, screen_width, screen_height);
 
   // vertex
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);
@@ -250,6 +258,8 @@ void RenderFrame() {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
   CheckGlError("glDrawElements");
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  
+  return true;
 }
 
 #ifdef __cplusplus
