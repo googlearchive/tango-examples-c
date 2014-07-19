@@ -25,5 +25,4 @@ public class MotionTrackingView extends GLSurfaceView{
 			
 		}
 	}
-
 }
