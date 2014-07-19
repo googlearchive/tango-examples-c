@@ -7,6 +7,7 @@
 #include <tango-api/application-interface.h>
 #include <tango-api/hardware-control-interface.h>
 #include <tango-api/video-overlay-interface.h>
+#include <tango-api/tango_client_api.h>
 
 #define  LOG_TAG    "tango_video_overlay"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -53,6 +54,18 @@ GLuint texture_id;
 GLuint vertex_buffers[3];
 
 double video_overlay_timestamp;
+
+static void onPoseAvailable(TangoPoseData *pose) {
+  LOGI("PoseCallback: %lf %lf %lf %lf %lf\t%lf %lf %lf\n",
+         pose->timestamp,
+         pose->orientation[0],
+         pose->orientation[1],
+         pose->orientation[2],
+         pose->orientation[3],
+         pose->translation[0],
+         pose->translation[1],
+         pose->translation[2]);
+}
 
 static void CheckGlError(const char* operation) {
   for (GLint error = glGetError(); error; error = glGetError()) {
@@ -124,27 +137,51 @@ GLuint CreateProgram(const char* vertex_source, const char* fragment_source) {
 }
 
 bool SetupTango() {
-  // initialize tango application.
-  app_handler = ApplicationInitialize("[Superframes Small-Peanut]", 0);
-  if (app_handler == NULL) {
-    LOGI("Application initialize failed\n");
-    return false;
-  }
-
-  // initialize video overlay.
-  CAPIErrorCodes ret_error;
-  if ((ret_error = VideoOverlayInitialize(app_handler)) != kCAPISuccess) {
-    LOGI("video overlay init failed: %d\n", ret_error);
-    return false;
+  int i;
+  TangoConfig* config;
+  if (TangoService_initialize() != 0) {
+    LOGI("TangoService_initialize(): Failed\n");
+    return -1;
   }
   
-  // Get camera video mode.
-  int num_video_modes = HardwareCameraNumberVideoModes();
-  if ((ret_error = HardwareCameraGetVideoMode(0, &video_mode))
-      != kCAPISuccess) {
-    LOGI("video overlay init failed: %d\n", ret_error);
-    return false;
+  // Allocate a TangoConfig object.
+  if ((config = TangoConfig_alloc()) == NULL) {
+    LOGI("TangoService_allocConfig(): Failed\n");
+    return -1;
   }
+  
+  // Get the default TangoConfig.
+  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
+    LOGI("TangoService_getConfig(): Failed\n");
+    return -1;
+  }
+  
+  // Set a parameter in TangoConfig.
+  if (TangoConfig_setBool(config, "disable_opengl", true) != 0) {
+    LOGI("TangoConfig_setBool(\"disable_opengl\", true): Failed\n");
+    return -1;
+  }
+  
+  // Report the current TangoConfig.
+  LOGI("TangoConfig:\n%s\n", TangoConfig_toString(config));
+  
+  // Lock in this configuration.
+  if (TangoService_lockConfig(config) != 0) {
+    LOGI("TangoService_lockConfig(): Failed\n");
+    return -1;
+  }
+  
+  // Attach the onPoseAvailable callback.
+  if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
+    LOGI("TangoService_connectOnPoseAvailable(): Failed\n");
+    return -1;
+  }
+  
+  TangoService_connectTextureId(TANGO_CAMERA_COLOR,
+                                texture_id);
+  
+  // Connect to the Tango Service.
+  TangoService_connect();
   
   return true;
 }
@@ -159,15 +196,17 @@ bool SetupGraphics(int w, int h) {
   }
 
   // init texture
+//  glGenTextures(1, &texture_id);
+//  glActiveTexture (GL_TEXTURE0);
+//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
+//  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//  CheckGlError("Texture");
+  
   glGenTextures(1, &texture_id);
-  glActiveTexture (GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, video_mode.width,
-               video_mode.height, 0, GL_RGBA,
-               GL_UNSIGNED_BYTE, 0);
-  CheckGlError("Texture");
 
   // texutre
   uniform_texture = glGetUniformLocation(shader_program, "texture");
@@ -216,17 +255,13 @@ bool SetupGraphics(int w, int h) {
   return true;
 }
 
+void UpdateTango()
+{
+  TangoService_updateTexture(TANGO_CAMERA_COLOR);
+}
+
 bool RenderFrame() {
-  ApplicationDoStep(app_handler);
-  CAPIErrorCodes ret_error;
-  ret_error = VideoOverlayRenderLatestFrame(app_handler, texture_id,
-                                            video_mode.width,
-                                            video_mode.height,
-                                            &video_overlay_timestamp);
-  if (ret_error != kCAPISuccess) {
-    LOGE("Video overlay init error: %d\n", ret_error);
-    return false;
-  }
+  UpdateTango();
 
   glUseProgram(shader_program);
   CheckGlError("glUseProgram");
@@ -234,7 +269,8 @@ bool RenderFrame() {
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
   glEnable (GL_BLEND);
-
+  glEnable(GL_TEXTURE_EXTERNAL_OES);
+  
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   glViewport(0, 0, screen_width, screen_height);
@@ -252,7 +288,28 @@ bool RenderFrame() {
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  
+//  // texture
+//  glActiveTexture (GL_TEXTURE0);
+//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
+//  CheckGlError("Texture");
+//  uniform_texture = glGetUniformLocation(shader_program, "texture");
+//  glUniform1i(uniform_texture, texture_id);
 
+//  // init texture
+//  glGenTextures(1, &texture_id);
+//  glActiveTexture (GL_TEXTURE0);
+//  glBindTexture(GL_TEXTURE_2D, texture_id);
+//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//
+//  CheckGlError("Texture");
+  
+  // texutre
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
+  uniform_texture = glGetUniformLocation(shader_program, "texture");
+  glUniform1i(uniform_texture, texture_id);
+  
   // bind element array buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffers[1]);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
@@ -268,8 +325,8 @@ extern "C" {
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnivideooverlay_TangoJNINative_init(
     JNIEnv * env, jobject obj, jint width, jint height)
 {
-  SetupTango();
   SetupGraphics(width, height);
+  SetupTango();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnivideooverlay_TangoJNINative_render(
