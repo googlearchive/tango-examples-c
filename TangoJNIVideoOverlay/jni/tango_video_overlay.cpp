@@ -23,9 +23,11 @@ static const char kVertexShader[] = "precision highp float;\n"
     "  gl_Position = vertex;\n"
     "}\n";
 
-static const char kFragmentShader[] = "precision highp float;\n"
+static const char kFragmentShader[] =
+    "#extension GL_OES_EGL_image_external : require\n"
+    "precision highp float;\n"
     "precision highp int;\n"
-    "uniform sampler2D texture;\n"
+    "uniform samplerExternalOES texture;\n"
     "varying vec2 f_textureCoords;\n"
     "void main() {\n"
     "  gl_FragColor = texture2D(texture, f_textureCoords);\n"
@@ -202,15 +204,16 @@ bool SetupGraphics(int w, int h) {
 //  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 //  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 //  CheckGlError("Texture");
-  
+  glEnable(GL_TEXTURE_EXTERNAL_OES);
   glGenTextures(1, &texture_id);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // texutre
-  uniform_texture = glGetUniformLocation(shader_program, "texture");
-  glUniform1i(uniform_texture, texture_id);
+//  uniform_texture = glGetUniformLocation(shader_program, "texture");
+//  glUniform1i(uniform_texture, texture_id);
+//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
 
   glGenBuffers(3, vertex_buffers);
   // vertice
@@ -270,6 +273,10 @@ bool RenderFrame() {
   glEnable (GL_CULL_FACE);
   glEnable (GL_BLEND);
   glEnable(GL_TEXTURE_EXTERNAL_OES);
+
+  glActiveTexture (GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
+  CheckGlError("Texture");
   
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -306,12 +313,15 @@ bool RenderFrame() {
 //  CheckGlError("Texture");
   
   // texutre
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-  uniform_texture = glGetUniformLocation(shader_program, "texture");
-  glUniform1i(uniform_texture, texture_id);
+//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
+//  uniform_texture = glGetUniformLocation(shader_program, "texture");
+//  glUniform1i(uniform_texture, texture_id);
+  
+  
   
   // bind element array buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffers[1]);
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
   CheckGlError("glDrawElements");
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
