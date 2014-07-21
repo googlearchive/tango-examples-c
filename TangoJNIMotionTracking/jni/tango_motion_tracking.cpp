@@ -175,14 +175,14 @@ bool SetupTango() {
     return false;
   }
 
-  // initialize VIO services.
+  // initialize motion tracking.
   CAPIErrorCodes ret_error;
   if ((ret_error = VIOInitialize(app_handler, 1, NULL)) != kCAPISuccess) {
     LOGI("motion tracking init failed: %d\n", ret_error);
     return false;
   }
 
-  LOGI("Application and VIO initialized success");
+  LOGI("Application and motion tracking initialized success");
   return true;
 }
 
@@ -194,7 +194,6 @@ bool SetupGraphics(int w, int h) {
   glEnable (GL_DEPTH_TEST);
   program_id = CreateProgram(vertex_shader, fragment_shader);
 
-  projection_matrix = glm::mat4(1.0f);
   projection_matrix = glm::perspective(75.0f, (GLfloat) w / h, 0.01f, 10.0f);
   glViewport(0, 0, w, h);
 
@@ -211,7 +210,7 @@ bool RenderFrame() {
 
   if ((ret_error = VIOGetLatestPoseOpenGL(app_handler, &viostatus))
       != kCAPISuccess) {
-    LOGE("Application do step failed: %d\n", ret_error);
+    LOGE("Application get latest pose failed: %d\n", ret_error);
     return false;
   }
 
