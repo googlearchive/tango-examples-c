@@ -139,7 +139,6 @@ GLuint CreateProgram(const char* vertex_source, const char* fragment_source) {
 }
 
 bool SetupTango() {
-  int i;
   TangoConfig* config;
   if (TangoService_initialize() != 0) {
     LOGI("TangoService_initialize(): Failed\n");
@@ -196,14 +195,7 @@ bool SetupGraphics(int w, int h) {
     LOGE("Could not create program.");
     return false;
   }
-
-  // init texture
-//  glGenTextures(1, &texture_id);
-//  glActiveTexture (GL_TEXTURE0);
-//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-//  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//  CheckGlError("Texture");
+  
   glEnable(GL_TEXTURE_EXTERNAL_OES);
   glGenTextures(1, &texture_id);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
@@ -211,9 +203,9 @@ bool SetupGraphics(int w, int h) {
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // texutre
-//  uniform_texture = glGetUniformLocation(shader_program, "texture");
-//  glUniform1i(uniform_texture, texture_id);
-//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
+  uniform_texture = glGetUniformLocation(shader_program, "texture");
+  glUniform1i(uniform_texture, texture_id);
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
 
   glGenBuffers(3, vertex_buffers);
   // vertice
@@ -273,10 +265,6 @@ bool RenderFrame() {
   glEnable (GL_CULL_FACE);
   glEnable (GL_BLEND);
   glEnable(GL_TEXTURE_EXTERNAL_OES);
-
-  glActiveTexture (GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-  CheckGlError("Texture");
   
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -296,32 +284,8 @@ bool RenderFrame() {
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   
-//  // texture
-//  glActiveTexture (GL_TEXTURE0);
-//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-//  CheckGlError("Texture");
-//  uniform_texture = glGetUniformLocation(shader_program, "texture");
-//  glUniform1i(uniform_texture, texture_id);
-
-//  // init texture
-//  glGenTextures(1, &texture_id);
-//  glActiveTexture (GL_TEXTURE0);
-//  glBindTexture(GL_TEXTURE_2D, texture_id);
-//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//
-//  CheckGlError("Texture");
-  
-  // texutre
-//  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
-//  uniform_texture = glGetUniformLocation(shader_program, "texture");
-//  glUniform1i(uniform_texture, texture_id);
-  
-  
-  
   // bind element array buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffers[1]);
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
   CheckGlError("glDrawElements");
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
