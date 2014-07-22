@@ -208,7 +208,7 @@ bool RenderFrame() {
     return false;
   }
 
-  if ((ret_error = VIOGetLatestPoseOpenGL(app_handler, &viostatus))
+  if ((ret_error = VIOGetLatestPoseUnity(app_handler, &viostatus))
       != kCAPISuccess) {
     LOGE("Application get latest pose failed: %d\n", ret_error);
     return false;
@@ -216,13 +216,13 @@ bool RenderFrame() {
 
   glm::mat4 translateMatrix = glm::translate(
       glm::mat4(1.0f),
-      glm::vec3(viostatus.translation[0] * -1.0f,
-                viostatus.translation[2] * -1.0f,
-                viostatus.translation[1] * -1.0f - 6.0f));
-  glm::quat rotationQuaterion = glm::quat(viostatus.rotation[3] * -1.0f,
+      glm::vec3(viostatus.translation[0],
+                viostatus.translation[1],
+                viostatus.translation[2] - 6.0f));
+  glm::quat rotationQuaterion = glm::quat(viostatus.rotation[3],
                                           viostatus.rotation[0],
-                                          viostatus.rotation[2],
-                                          viostatus.rotation[1]);
+                                          viostatus.rotation[1],
+                                          viostatus.rotation[2]);
   glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuaterion);
 
   modelview_matrix = translateMatrix * rotationMatrix;
