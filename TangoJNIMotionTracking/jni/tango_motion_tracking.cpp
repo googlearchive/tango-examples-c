@@ -1,24 +1,20 @@
-#include <stdlib.h>
-#include <jni.h>
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <jni.h>
+#include <stdlib.h>
 
-//#include <tango-api/application-interface.h>
-//#include <tango-api/vio-interface.h>
-#include <tango-api/tango_client_api.h>
+#include "tango-api/tango_client_api.h"
 
 #define GLM_FORCE_RADIANS
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/quaternion.hpp>
-#include <gtc/type_ptr.hpp>
+#include "glm.hpp"
+#include "gtc/matrix_transform.hpp"
+#include "gtc/quaternion.hpp"
+#include "gtc/type_ptr.hpp"
 
 #define  LOG_TAG    "tango_motion_tracking"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-
-//application_handle_t *app_handler;
 
 GLuint mvp_matrix_id = 0;
 GLuint position_id = 0;
@@ -105,7 +101,7 @@ static const GLfloat cube_colors[] = {
 
 static void CheckGlError(const char* operation) {
 	for (GLint error = glGetError(); error; error = glGetError()) {
-		LOGI("after %s() glError (0x%x)\n", operation, error);
+		LOGI("after %s() glError (0x%x)", operation, error);
 	}
 }
 
@@ -183,51 +179,48 @@ bool SetupTango() {
 	int i;
 	TangoConfig* config;
 	if (TangoService_initialize() != 0) {
-		LOGI("TangoService_initialize(): Failed\n");
-		return -1;
+		LOGI("TangoService_initialize(): Failed");
+		return false;
 	}
 	//Allocate a TangoConfig instance
 	if ((config = TangoConfig_alloc()) == NULL) {
-		LOGI("TangoService_allocConfig(): Failed\n");
-		return -1;
+		LOGI("TangoService_allocConfig(): Failed");
+		return false;
 	}
 
-//	//Set disable TangoMapper display as true
-//	if(TangoConfig_setBool(config,"disable_opengl",true)!=0){
-//		LOGI("TangoConfig_setBool(\"disable_opengl\", true): Failed\n");
-//		return -1;
-//	}
-
 	//Report the current TangoConfig
-	LOGI("TangoConfig:\n%s\n", TangoConfig_toString(config));
+	LOGI("TangoConfig:%s", TangoConfig_toString(config));
 
 	//Lock in this configuration
 	if(TangoService_lockConfig(config)!=0){
-		LOGI("TangoService_lockConfig(): Failed\n");
-		return -1;
+		LOGI("TangoService_lockConfig(): Failed");
+		return false;
 	}
 
 	//Attach the onPoseAvailable callback.
 	if(TangoService_connectOnPoseAvailable(onPoseAvailable)!=0){
-		LOGI("TangoService_connectOnPoseAvailable(): Failed\n");
-		return -1;
+		LOGI("TangoService_connectOnPoseAvailable(): Failed");
+		return false;
 	}
 
 	//Connect to the Tango Service
 	TangoService_connect();
-
 	LOGI("Tango Service connectOnPoseAvailable success!");
-
 	return true;
 }
 
 bool SetupGraphics(int w, int h) {
-	LOGI("setupGraphics(%d, %d)", w, h);
+	LOGI("SetupGraphics(%d, %d)", w, h);
 
 	glClearColor(0, 0, 0, 1.0f);
 	glEnable (GL_CULL_FACE);
 	glEnable (GL_DEPTH_TEST);
 	program_id = CreateProgram(vertex_shader, fragment_shader);
+
+	glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, cube_vertices);
+	glEnableVertexAttribArray(position_id);
+	glVertexAttribPointer(color_id, 4, GL_FLOAT, GL_FALSE, 0, cube_colors);
+	glEnableVertexAttribArray(color_id);
 
 	projection_matrix = glm::perspective(75.0f, (GLfloat) w / h, 0.01f, 10.0f);
 	glViewport(0, 0, w, h);
@@ -243,11 +236,6 @@ bool RenderFrame() {
 	mvp_matrix_id = glGetUniformLocation(program_id, "u_mvp_matrix");
 	position_id = glGetAttribLocation(program_id, "a_position");
 	color_id = glGetAttribLocation(program_id, "a_color");
-
-	glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, cube_vertices);
-	glEnableVertexAttribArray(position_id);
-	glVertexAttribPointer(color_id, 4, GL_FLOAT, GL_FALSE, 0, cube_colors);
-	glEnableVertexAttribArray(color_id);
 
 	mvp_matrix = projection_matrix * modelview_matrix;
 	glUniformMatrix4fv(mvp_matrix_id, 1, false, glm::value_ptr(mvp_matrix));
