@@ -2,7 +2,7 @@ C-APIExample
 ============
 
 Example JNI projects for C-API:
-- Get Started (in progress)
-- Motion Tracking Example (in progress)
-- Video Overlay Example (in progress)
-- Point Cloud Example (in progress)
+- Get Started (code finished, tutorial in review)
+- Motion Tracking Example (code finished, tutorial in review)
+- Video Overlay Example (code finished, tutorial in progress)
+- Point Cloud Example (code in progress)
