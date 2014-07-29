@@ -12,9 +12,30 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		TangoJNINative.init();
+		TangoJNINative.onCreate();
+	}
+	
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		TangoJNINative.onResume();
 	}
 
+	@Override
+	protected void onPause()
+	{
+		super.onPause();
+		TangoJNINative.onPause();
+	}
+	
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+		TangoJNINative.onDestory();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.

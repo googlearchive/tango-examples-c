@@ -5,5 +5,12 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void init();
+	public static native void onCreate();
+	
+	public static native void onResume();
+	
+	public static native void onPause();
+	
+	public static native void onDestory();
+	
 }
