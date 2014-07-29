@@ -105,15 +105,15 @@ static void CheckGlError(const char* operation) {
 	}
 }
 
-static void onPoseAvailable(TangoPoseData *pose){
-	glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f),
+static void onPoseAvailable(TangoPoseData *pose) {
+	glm::mat4 translation = glm::translate(glm::mat4(1.0f),
 			glm::vec3(pose->translation[0]*-1.0f, pose->translation[2]*-1.0f,
 					pose->translation[1] - 6.0f));
 	glm::quat rotationQuaterion = glm::quat(pose->orientation[3],
 			pose->orientation[0], pose->orientation[2],
 			pose->orientation[1]);
-	glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuaterion);
-	modelview_matrix = translateMatrix * rotationMatrix;
+	glm::mat4 rotation = glm::mat4_cast(rotationQuaterion);
+	modelview_matrix = translation * rotation;
 }
 
 GLuint LoadShader(GLenum shader_type, const char* shader_source) {
@@ -182,28 +182,28 @@ bool SetupTango() {
 		LOGI("TangoService_initialize(): Failed");
 		return false;
 	}
-	//Allocate a TangoConfig instance
+	// Allocate a TangoConfig instance
 	if ((config = TangoConfig_alloc()) == NULL) {
 		LOGI("TangoService_allocConfig(): Failed");
 		return false;
 	}
 
-	//Report the current TangoConfig
+	// Report the current TangoConfig
 	LOGI("TangoConfig:%s", TangoConfig_toString(config));
 
-	//Lock in this configuration
+	// Lock in this configuration
 	if(TangoService_lockConfig(config)!=0){
 		LOGI("TangoService_lockConfig(): Failed");
 		return false;
 	}
 
-	//Attach the onPoseAvailable callback.
-	if(TangoService_connectOnPoseAvailable(onPoseAvailable)!=0){
+	// Attach the onPoseAvailable callback.
+	if(TangoService_connectOnPoseAvailable(onPoseAvailable)!=0) {
 		LOGI("TangoService_connectOnPoseAvailable(): Failed");
 		return false;
 	}
 
-	//Connect to the Tango Service
+	// Connect to the Tango Service
 	TangoService_connect();
 	LOGI("Tango Service connectOnPoseAvailable succeeded!");
 	return true;
