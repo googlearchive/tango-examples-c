@@ -61,8 +61,7 @@ bool SetupGraphics(int w, int h) {
   return true;
 }
 
-bool UpdateTango()
-{
+bool UpdateTango() {
   ApplicationDoStep(app_handler);
   
   depth_buffer_size = kMaxVertCount * 3;
@@ -76,6 +75,8 @@ bool UpdateTango()
   }
   return true;
 }
+
+float a = 0.0f;
 
 bool RenderFrame() {
   UpdateTango();
@@ -93,6 +94,8 @@ bool RenderFrame() {
     depth_data_buffer[i] = depth_data_buffer[i] * 0.001f;
   }
   
+  a+=0.01f;
+  cam.Rotate(a, 0, 1, 0);
   pointcloud.Render(cam.get_projection_view_matrix(), 3 * depth_buffer_size, depth_data_buffer);
   
   return true;

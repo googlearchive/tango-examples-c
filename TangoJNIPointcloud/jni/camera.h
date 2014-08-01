@@ -24,10 +24,11 @@ public:
   glm::mat4 get_projection_view_matrix();
   void set_aspect_ratio(float _aspect_ratio);
   
-  void rotate();
-  void rotate_around();
-  void translate(float x, float y, float z);
+  void Rotate(float w, float x, float y, float z);
+  void Translate(float x, float y, float z);
 private:
+  glm::mat4 rotation_mat;
+  glm::mat4 translate_mat;
   float position_x, position_y, position_z;
   float field_of_view;
   float aspect_ratio;
