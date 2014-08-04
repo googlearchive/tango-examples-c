@@ -5,6 +5,10 @@ HelloTangoJNI/bin
 HelloTangoJNI/gen
 HelloTangoJNI/libs
 HelloTangoJNI/obj
+TangoJNIMotionTracking/bin
+TangoJNIMotionTracking/gen
+TangoJNIMotionTracking/libs
+TangoJNIMotionTracking/obj
 TangoJNIVideoOverlay/bin
 TangoJNIVideoOverlay/gen
 TangoJNIVideoOverlay/libs
