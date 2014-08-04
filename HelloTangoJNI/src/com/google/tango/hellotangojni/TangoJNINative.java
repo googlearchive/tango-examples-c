@@ -11,6 +11,4 @@ public class TangoJNINative {
 	
 	public static native void onPause();
 	
-	public static native void onDestory();
-	
 }

@@ -12,31 +12,52 @@
 // Tango Service.
 TangoConfig* config;
 
-bool StartTango() {
+bool TangoInitialize() {
   // Initialize Tango Service.
   if (TangoService_initialize() != 0) {
     LOGE("TangoService_initialize(): Failed");
     return false;
   }
-  
+  return true;
+}
+
+bool TangoSetConfig() {
   // Allocate a TangoConfig object.
   if ((config = TangoConfig_alloc()) == NULL) {
-    LOGE("TangoService_allocConfig(): Failed\n");
+    LOGE("TangoService_allocConfig(): Failed");
     return false;
   }
   
   // Get the default TangoConfig.
   if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
-    LOGE("TangoService_getConfig(): Failed\n");
+    LOGE("TangoService_getConfig(): Failed");
     return false;
   }
   
+  return true;
+}
+
+bool TangoLockConfig()
+{
   // Lock in this configuration.
   if (TangoService_lockConfig(config) != 0) {
-    LOGE("TangoService_lockConfig(): Failed\n");
+    LOGE("TangoService_lockConfig(): Failed");
     return false;
   }
+  return true;
+}
 
+bool TangoUnlockConfig()
+{
+  // Unlock current configuration.
+  if (TangoService_unlockConfig() != 0) {
+    LOGE("TangoService_unlockConfig(): Failed");
+    return false;
+  }
+  return true;
+}
+
+bool TangoConnect() {
   // Connect to the Tango Service.
   // Note: connecting Tango service will start the motion
   // tracking automatically.
@@ -44,29 +65,7 @@ bool StartTango() {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
-
   LOGI("HELLO TANGO, SERVICE CONNECTED!");
-  
-  return true;
-}
-
-bool LockConfig()
-{
-  // Lock in this configuration.
-  if (TangoService_lockConfig(config) != 0) {
-    LOGE("TangoService_lockConfig(): Failed\n");
-    return false;
-  }
-  return true;
-}
-
-bool UnlockConfig()
-{
-  // Unlock current configuration.
-  if (TangoService_unlockConfig() != 0) {
-    LOGE("TangoService_unlockConfig(): Failed\n");
-    return false;
-  }
   return true;
 }
 
@@ -78,20 +77,19 @@ void DisconnectTango()
 
 JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onCreate(JNIEnv * env, jobject obj)
 {
-  StartTango();
+  TangoInitialize();
+  TangoSetConfig();
+  TangoConnect();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onResume(JNIEnv * env, jobject obj)
 {
-  LockConfig();
+  TangoLockConfig();
+  TangoConnect();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onPause(JNIEnv * env, jobject obj)
 {
-  UnlockConfig();
-}
-
-JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onDestory(JNIEnv * env, jobject obj)
-{
+  TangoUnlockConfig();
   DisconnectTango();
 }
