@@ -15,7 +15,7 @@ Camera::Camera()
 glm::mat4 Camera::get_projection_view_matrix()
 {
   glm::mat4 projection_mat = glm::perspective(field_of_view, aspect_ratio, near_clip_plane, far_clip_plane);
-  glm::mat4 view_mat = glm::lookAt(glm::vec3(0, 3, 3),
+  glm::mat4 view_mat = glm::lookAt(glm::vec3(0, 1, 1),
                                    glm::vec3(0, 0, -1),
                                    glm::vec3(0, 1, 0));
   

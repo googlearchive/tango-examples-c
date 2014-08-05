@@ -5,10 +5,10 @@
 #include <GLES2/gl2ext.h>
 
 
-#include <tango-api/application-interface.h>
-#include <tango-api/hardware-control-interface.h>
-#include <tango-api/depth-interface.h>
-
+//#include <tango-api/application-interface.h>
+//#include <tango-api/hardware-control-interface.h>
+//#include <tango-api/depth-interface.h>
+#include "tango_client_api.h"
 #include "camera.h"
 #include "gl_util.h"
 #include "pointcloud.h"
@@ -23,13 +23,11 @@
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-static const int kMaxVertCount = 61440;
-
-double pointcloud_timestamp = 0.0;
-float depth_data_buffer[kMaxVertCount * 3];
-int depth_buffer_size = kMaxVertCount * 3;
-
-application_handle_t *app_handler;
+//static const int kMaxVertCount = 61440;
+//
+//double pointcloud_timestamp = 0.0;
+//float depth_data_buffer[kMaxVertCount * 3];
+//int depth_buffer_size = kMaxVertCount * 3;
 
 GLuint screen_width;
 GLuint screen_height;
@@ -37,18 +35,60 @@ GLuint screen_height;
 Camera cam;
 Pointcloud pointcloud;
 
+static int xyz_count = 0;
+static GLfloat vertices[30000*3];
+
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
+static void onXYZijAvailable(TangoXYZij *XYZ_ij) {
+  float max_point[3] = {-1000, -1000, -1000};
+  float min_point[3] = {1000, 1000, 1000};
+  xyz_count = XYZ_ij->xyz_count;
+  memcpy(vertices, XYZ_ij->xyz, xyz_count*3*sizeof(float));
+  for (int i = 0 ; i < xyz_count ; i++) {
+   for (int j = 0 ; j < 3 ; j++) {
+     max_point[j] = MAX(max_point[j], XYZ_ij->xyz[i][j]);
+     min_point[j] = MIN(min_point[j], XYZ_ij->xyz[i][j]);
+   }
+  }
+  LOGI("pointcloud: %lf %d points [%f %f %f] -> [%f %f %f]", XYZ_ij->timestamp,
+       xyz_count, max_point[0], max_point[1], max_point[2],
+       min_point[0], min_point[1], min_point[2]);
+}
+
+
 bool SetupTango() {
-  app_handler = ApplicationInitialize("[Superframes Small-Peanut]", 1);
-  if (app_handler == NULL) {
-    LOGI("Application initialize failed\n");
-    return false;
-  }
-  CAPIErrorCodes ret_error;
-  if ((ret_error = DepthStartBuffering(app_handler)) != kCAPISuccess) {
-    LOGI("DepthStartBuffering failed: %d\n", ret_error);
-    return false;
-  }
-  return true;
+  int i;
+	TangoConfig* config;
+	if (TangoService_initialize() != 0) {
+		LOGI("TangoService_initialize(): Failed");
+		return false;
+	}
+	// Allocate a TangoConfig instance
+	if ((config = TangoConfig_alloc()) == NULL) {
+		LOGI("TangoService_allocConfig(): Failed");
+		return false;
+	}
+  
+	// Report the current TangoConfig
+	LOGI("TangoConfig:%s", TangoConfig_toString(config));
+  
+	// Lock in this configuration
+	if(TangoService_lockConfig(config)!=0){
+		LOGI("TangoService_lockConfig(): Failed");
+		return false;
+	}
+  
+//  LOGI("TangoService_connectOnXYZij");
+  // Attach the onXYZijAvailable callback.
+	if(TangoService_connectOnXYZijAvailable(onXYZijAvailable)!=0) {
+		LOGI("TangoService_connectOnXYZijAvailable(): Failed");
+		return false;
+	}
+	// Connect to the Tango Service
+	TangoService_connect();
+	return true;
 }
 
 bool SetupGraphics(int w, int h) {
@@ -61,26 +101,9 @@ bool SetupGraphics(int w, int h) {
   return true;
 }
 
-bool UpdateTango() {
-  ApplicationDoStep(app_handler);
-  
-  depth_buffer_size = kMaxVertCount * 3;
-  pointcloud_timestamp = 0.0f;
-  CAPIErrorCodes ret_error;
-  if ((ret_error = DepthGetPointCloudUnity(
-                    app_handler, &pointcloud_timestamp,
-                    0.5f, depth_data_buffer, &depth_buffer_size)) != kCAPISuccess) {
-    LOGI("DepthGetPointCloud failed: %d\n", ret_error);
-    return false;
-  }
-  return true;
-}
-
 float a = 0.0f;
 
 bool RenderFrame() {
-  UpdateTango();
-  
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
 
@@ -89,14 +112,9 @@ bool RenderFrame() {
   
   glViewport(0, 0, screen_width, screen_height);
   
-  depth_buffer_size = glm::clamp(depth_buffer_size, 0, kMaxVertCount);
-  for (int i = 0; i < 3 * depth_buffer_size; i++) {
-    depth_data_buffer[i] = depth_data_buffer[i] * 0.001f;
-  }
-  
   a+=0.01f;
   cam.Rotate(a, 0, 1, 0);
-  pointcloud.Render(cam.get_projection_view_matrix(), 3 * depth_buffer_size, depth_data_buffer);
+  pointcloud.Render(cam.get_projection_view_matrix(), 3 * xyz_count, vertices);
   
   return true;
 }
