@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <jni.h>
+#include <vector>
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -27,7 +28,15 @@ GLuint vertex_buffer;
 
 static glm::mat4 projection_matrix;
 static glm::mat4 modelview_matrix;
+static glm::mat4 modelview_matrix2;
 static glm::mat4 mvp_matrix;
+
+typedef struct
+{
+float x,y,z;
+}
+Vertex;
+std::vector<Vertex> vertices;
 
 static const char vertex_shader[] = {
     "uniform mat4 u_mvp_matrix;      \n"
@@ -168,6 +177,8 @@ bool SetupGraphics(int w, int h) {
   mvp_matrix_id = glGetUniformLocation(program_id, "u_mvp_matrix");
   position_id = glGetAttribLocation(program_id, "a_position");
 
+  vertices.reserve(1000);
+
   glGenBuffers(1, &vertex_buffer);
 
   return true;
@@ -187,25 +198,41 @@ bool RenderFrame() {
     return false;
   }
 
+  Vertex vertexTemp;
+  vertexTemp.x=viostatus.translation[0]*-1.0f;
+  vertexTemp.y=viostatus.translation[1]*-1.0f;
+  vertexTemp.z=viostatus.translation[2];
+  vertices.push_back(vertexTemp);
+
+
   glm::mat4 translateMatrix = glm::translate(
       glm::mat4(1.0f),
-//      glm::vec3(viostatus.translation[0],
-//                viostatus.translation[1],
-//                viostatus.translation[2] - 6.0f));
+      glm::vec3(viostatus.translation[0]*-1.0f,
+                viostatus.translation[1]*-1.0f,
+                viostatus.translation[2] - 6.0f));
 
-  glm::vec3(0.0f,
-            0.0f,
-            0.0f - 6.0f));
   glm::quat rotationQuaterion = glm::quat(viostatus.rotation[3],
                                           viostatus.rotation[0],
                                           viostatus.rotation[1],
                                           viostatus.rotation[2]);
   glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuaterion);
+  modelview_matrix2 = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(0,
+                  0,
+                  0 - 6.0f));
 
-  modelview_matrix = translateMatrix * rotationMatrix;
+ modelview_matrix = translateMatrix*rotationMatrix;
+
+
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
   glUseProgram(program_id);
+
+
 
 //vertice binding
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -214,20 +241,19 @@ bool RenderFrame() {
   glEnableVertexAttribArray(position_id);
   glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  //color binding
-//  glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-//  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 64, cube_colors,
-//               GL_STATIC_DRAW);
-//  glEnableVertexAttribArray(color_id);
-//  glVertexAttribPointer(color_id, 4, GL_FLOAT, GL_FALSE, 0,
-//                        (const void*) 0);
-//  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
   mvp_matrix = projection_matrix * modelview_matrix;
   glUniformMatrix4fv(mvp_matrix_id, 1, false, glm::value_ptr(mvp_matrix));
-
   glDrawArrays(GL_LINES, 0, 16*3);
+//  mvp_matrix = projection_matrix * modelview_matrix;
+//  glUniformMatrix4fv(mvp_matrix_id, 1, false, glm::value_ptr(mvp_matrix));
+
+  glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), &vertices[0]) ;
+  glEnableVertexAttribArray(position_id);
+  mvp_matrix = projection_matrix * modelview_matrix2;
+  glUniformMatrix4fv(mvp_matrix_id, 1, false, glm::value_ptr(mvp_matrix));
+  glDrawArrays(GL_LINE_STRIP,0,vertices.size());
+
+
   glUseProgram(0);
 
   return true;
