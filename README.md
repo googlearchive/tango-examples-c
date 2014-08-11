@@ -2,7 +2,11 @@ C-APIExample
 ============
 
 Example JNI projects for C-API:
-- Get Started (code finished, tutorial in review)
-- Motion Tracking Example (code finished, tutorial in review)
-- Video Overlay Example (code finished, tutorial in progress)
-- Point Cloud Example (code in progress)
+
+[Getting Started](https://github.com/ProjectTango/C-APIExample/wiki/Getting-Started:-Hello-Tango-JNI)
+
+[Motion Tracking Example (in progress)](https://github.com/ProjectTango/C-APIExample/wiki/Creating-a-Motion-Tracking-Application)
+
+[Video Overlay Example (in progress)](https://github.com/ProjectTango/C-APIExample/wiki/Video-Overlay:-Getting-color-frame-from-Tango-Service)
+
+Point Cloud Example (in progress)
