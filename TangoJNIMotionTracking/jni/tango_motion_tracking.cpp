@@ -21,86 +21,55 @@ application_handle_t *app_handler;
 
 GLuint mvp_matrix_id = 0;
 GLuint position_id = 0;
-GLuint color_id = 0;
 GLuint program_id = 0;
+
+GLuint vertex_buffer;
 
 static glm::mat4 projection_matrix;
 static glm::mat4 modelview_matrix;
 static glm::mat4 mvp_matrix;
 
-static const char vertex_shader[] = { "uniform mat4 u_mvp_matrix;      \n"
+static const char vertex_shader[] = {
+    "uniform mat4 u_mvp_matrix;      \n"
     "attribute vec4 a_position;     \n"
-    "attribute vec4 a_color;        \n"
-    "varying vec4 v_color;          \n"
     "void main()                    \n"
     "{                              \n"
-    "   v_color = a_color;          \n"
     "   gl_Position = u_mvp_matrix   \n"
     "               * a_position;   \n"
     "}                              \n" };
 
-static const char fragment_shader[] = { "precision mediump float;       \n"
-    "varying vec4 v_color;          \n"
+static const char fragment_shader[] = {
+    "precision mediump float;       \n"
     "void main()                    \n"
     "{                              \n"
-    "   gl_FragColor = v_color;     \n"
+    "   gl_FragColor = vec4(0,1,0,1);     \n"
     "}                              \n" };
 
 static const GLfloat cube_vertices[] = {
-    // front
-    -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
-    -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
+0.0f,0.0f,0.0f,
+-0.5f,0.2f,-0.3f,
 
-    // right
-    0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
-    0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f,
+0.0f,0.0f,0.0f,
+0.5f,0.2f,-0.3f,
 
-    // back
-    0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f,
-    -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+0.0f,0.0f,0.0f,
+-0.5f,-0.2f,-0.3f,
 
-    // left
-    -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
-    0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,
+0.0f,0.0f,0.0f,
+0.5f,-0.2f,-0.3f,
 
-    // top
-    -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
-    -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+-0.5f,0.2f,-0.3f,
+0.5f,0.2f,-0.3f,
 
-    // bottom
-    -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f };
+0.5f,0.2f,-0.3f,
+0.5f,-0.2f,-0.3f,
 
-static const GLfloat cube_colors[] = {
-    // front, blue
-    0.0625f, 0.5742f, 0.9257f, 1.0f, 0.0625f, 0.5742f, 0.9257f, 1.0f, 0.0625f,
-    0.5742f, 0.9257f, 1.0f, 0.0625f, 0.5742f, 0.9257f, 1.0f, 0.0625f, 0.5742f,
-    0.9257f, 1.0f, 0.0625f, 0.5742f, 0.9257f, 1.0f,
+0.5f,-0.2f,-0.3f,
+-0.5f,-0.2f,-0.3f,
 
-    // right, purple
-    0.8549f, 0.4471f, 0.9176f, 1.0f, 0.8549f, 0.4471f, 0.9176f, 1.0f, 0.8549f,
-    0.4471f, 0.9176f, 1.0f, 0.8549f, 0.4471f, 0.9176f, 1.0f, 0.8549f, 0.4471f,
-    0.9176f, 1.0f, 0.8549f, 0.4471f, 0.9176f, 1.0f,
-
-    // back, yellow
-    0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f,
-    0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f,
-    0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f,
-
-    // left, yellow
-    0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f,
-    0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f, 0.9098f, 0.8706f,
-    0.4118f, 1.0f, 0.9098f, 0.8706f, 0.4118f, 1.0f,
-
-    // top, orange
-    0.8980f, 0.4627f, 0.1922f, 1.0f, 0.8980f, 0.4627f, 0.1922f, 1.0f, 0.8980f,
-    0.4627f, 0.1922f, 1.0f, 0.8980f, 0.4627f, 0.1922f, 1.0f, 0.8980f, 0.4627f,
-    0.1922f, 1.0f, 0.8980f, 0.4627f, 0.1922f, 1.0f,
-
-    // bottom, green
-    0.1921f, 0.8981f, 0.3019f, 1.0f, 0.1921f, 0.8981f, 0.3019f, 1.0f, 0.1921f,
-    0.8981f, 0.3019f, 1.0f, 0.1921f, 0.8981f, 0.3019f, 1.0f, 0.1921f, 0.8981f,
-    0.3019f, 1.0f, 0.1921f, 0.8981f, 0.3019f, 1.0f, };
+-0.5f,-0.2f,-0.3f,
+-0.5f,0.2f,-0.3f,
+};
 
 static void CheckGlError(const char* operation) {
   for (GLint error = glGetError(); error; error = glGetError()) {
@@ -147,7 +116,6 @@ GLuint CreateProgram(const char* vertex_shader_source,
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glBindAttribLocation(program, 0, "a_position");
-    glBindAttribLocation(program, 1, "a_color");
     glLinkProgram(program);
 
     GLint status = 0;
@@ -197,6 +165,11 @@ bool SetupGraphics(int w, int h) {
   projection_matrix = glm::perspective(75.0f, (GLfloat) w / h, 0.01f, 10.0f);
   glViewport(0, 0, w, h);
 
+  mvp_matrix_id = glGetUniformLocation(program_id, "u_mvp_matrix");
+  position_id = glGetAttribLocation(program_id, "a_position");
+
+  glGenBuffers(1, &vertex_buffer);
+
   return true;
 }
 
@@ -216,9 +189,13 @@ bool RenderFrame() {
 
   glm::mat4 translateMatrix = glm::translate(
       glm::mat4(1.0f),
-      glm::vec3(viostatus.translation[0],
-                viostatus.translation[1],
-                viostatus.translation[2] - 6.0f));
+//      glm::vec3(viostatus.translation[0],
+//                viostatus.translation[1],
+//                viostatus.translation[2] - 6.0f));
+
+  glm::vec3(0.0f,
+            0.0f,
+            0.0f - 6.0f));
   glm::quat rotationQuaterion = glm::quat(viostatus.rotation[3],
                                           viostatus.rotation[0],
                                           viostatus.rotation[1],
@@ -229,18 +206,29 @@ bool RenderFrame() {
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(program_id);
-  mvp_matrix_id = glGetUniformLocation(program_id, "u_mvp_matrix");
-  position_id = glGetAttribLocation(program_id, "a_position");
-  color_id = glGetAttribLocation(program_id, "a_color");
 
-  glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, cube_vertices);
+//vertice binding
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 48, cube_vertices,
+                GL_STATIC_DRAW);
   glEnableVertexAttribArray(position_id);
-  glVertexAttribPointer(color_id, 4, GL_FLOAT, GL_FALSE, 0, cube_colors);
-  glEnableVertexAttribArray(color_id);
+  glVertexAttribPointer(position_id, 3, GL_FLOAT, GL_FALSE, 0, (const void*) 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  //color binding
+//  glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+//  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 64, cube_colors,
+//               GL_STATIC_DRAW);
+//  glEnableVertexAttribArray(color_id);
+//  glVertexAttribPointer(color_id, 4, GL_FLOAT, GL_FALSE, 0,
+//                        (const void*) 0);
+//  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   mvp_matrix = projection_matrix * modelview_matrix;
   glUniformMatrix4fv(mvp_matrix_id, 1, false, glm::value_ptr(mvp_matrix));
-  glDrawArrays(GL_TRIANGLES, 0, 36);
+
+  glDrawArrays(GL_LINES, 0, 16*3);
+  glUseProgram(0);
 
   return true;
 }
