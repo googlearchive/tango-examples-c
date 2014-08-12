@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">TangoJNIPointcloud</string>
-    <string name="action_settings">Settings</string>
+	<string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="first_person_cam">First person Camera</string>
+	<string name="third_person_cam">Third person Camera</string>
+	<string name="top_down_cam">Top down Camera</string>
 </resources>

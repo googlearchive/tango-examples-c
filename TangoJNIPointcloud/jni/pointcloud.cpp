@@ -33,11 +33,13 @@ Pointcloud::Pointcloud()
     LOGE("Could not create program.");
   }
   uniform_mvp_mat = glGetUniformLocation(shader_program, "mvp");
+  attrib_vertices = glGetAttribLocation(shader_program, "vertex");
   glGenBuffers(1, &vertex_buffers);
 }
 
 void Pointcloud::Render(glm::mat4 model_view_mat, float depth_buffer_size, float *depth_data_buffer)
 {
+  
   glUseProgram(shader_program);
   // matrix stuff.
   glm::mat4 model_mat = glm::mat4(1.0f);
@@ -46,13 +48,16 @@ void Pointcloud::Render(glm::mat4 model_view_mat, float depth_buffer_size, float
   
   // vertice binding
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * depth_buffer_size, depth_data_buffer,
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * depth_buffer_size, depth_data_buffer,
                GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices);
   glVertexAttribPointer(attrib_vertices, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   
+  
+  
   glDrawArrays(GL_POINTS, 0, 3 * depth_buffer_size);
+  GlUtil::CheckGlError("draw array");
   glUseProgram(0);
 }
