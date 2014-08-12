@@ -31,12 +31,7 @@ static glm::mat4 modelview_matrix;
 static glm::mat4 modelview_matrix2;
 static glm::mat4 mvp_matrix;
 
-typedef struct
-{
-float x,y,z;
-}
-Vertex;
-std::vector<Vertex> vertices;
+std::vector<glm::vec3> vertices;
 
 static const char vertex_shader[] = {
     "uniform mat4 u_mvp_matrix;      \n"
@@ -198,11 +193,9 @@ bool RenderFrame() {
     return false;
   }
 
-  Vertex vertexTemp;
-  vertexTemp.x=viostatus.translation[0]*-1.0f;
-  vertexTemp.y=viostatus.translation[1]*-1.0f;
-  vertexTemp.z=viostatus.translation[2];
-  vertices.push_back(vertexTemp);
+  vertices.push_back(glm::vec3(viostatus.translation[0]*-1.0f,
+                               viostatus.translation[1]*-1.0f,
+                               viostatus.translation[2]));
 
 
   glm::mat4 translateMatrix = glm::translate(
