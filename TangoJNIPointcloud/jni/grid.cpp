@@ -17,28 +17,6 @@ static const char kFragmentShader[] =
 "  gl_FragColor = vec4(0.58f, 0.58f, 0.58f, 1.0f);\n"
 "}\n";
 
-//static const float vertices[] = {
-//  0.0f, 0.0f, 0.0f,
-//  1.0f, 0.0f, 0.0f,
-//  
-//  0.0f, 0.0f, 0.0f,
-//  0.0f, 1.0f, 0.0f,
-//  
-//  0.0f, 0.0f, 0.0f,
-//  0.0f, 0.0f, 1.0f
-//};
-//
-//static const float colors[] = {
-//  1.0f, 0.0f, 0.0f, 1.0f,
-//  1.0f, 0.0f, 0.0f, 1.0f,
-//  
-//  0.0f, 1.0f, 0.0f, 1.0f,
-//  0.0f, 1.0f, 0.0f, 1.0f,
-//  
-//  0.0f, 0.0f, 1.0f, 1.0f,
-//  0.0f, 0.0f, 1.0f, 1.0f
-//};
-
 Grid::Grid()
 {
   shader_program = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
@@ -46,11 +24,9 @@ Grid::Grid()
     LOGE("Could not create program.");
   }
   uniform_mvp_mat = glGetUniformLocation(shader_program, "mvp");
-//  attrib_colors = glGetAttribLocation(shader_program, "color");
   attrib_vertices = glGetAttribLocation(shader_program, "vertex");
   
   glGenBuffers(1, &vertex_buffer);
-//  glGenBuffers(1, &color_buffer);
   
   int counter = 0;
   vertices = new float[1200];
@@ -100,15 +76,6 @@ void Grid::Render(glm::mat4 view_projection_mat)
   glVertexAttribPointer(attrib_vertices, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  
-  // color binding
-//  glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-//  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 24, colors,
-//               GL_STATIC_DRAW);
-//  glEnableVertexAttribArray(attrib_colors);
-//  glVertexAttribPointer(attrib_colors, 4, GL_FLOAT, GL_FALSE, 0,
-//                        (const void*) 0);
-//  glBindBuffer(GL_ARRAY_BUFFER, 0);
   
   glDrawArrays(GL_LINES, 0, 1200);
   glUseProgram(0);

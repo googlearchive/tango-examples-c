@@ -8,14 +8,36 @@ import android.app.Activity;
 public class PointcloudActivity extends Activity {
 
 	PointcloudView pointcloudView;
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		pointcloudView = new PointcloudView(getApplication());
 		setContentView(pointcloudView);
+		TangoJNINative.OnCreate();
+	}
+	
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		pointcloudView.onResume();
+		TangoJNINative.OnResume();
 	}
 
+	@Override
+	protected void onPause()
+	{
+		super.onPause();
+		pointcloudView.onPause();
+		TangoJNINative.OnPause();
+	}
+	
+	protected void onDestroy(){
+		super.onDestroy();
+		TangoJNINative.OnDestroy();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.

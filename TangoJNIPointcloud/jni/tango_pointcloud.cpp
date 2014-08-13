@@ -24,22 +24,26 @@
 GLuint screen_width;
 GLuint screen_height;
 
-Camera cam;
-Pointcloud pointcloud;
-Axis axis;
-Grid grid;
+Camera *cam;
+Pointcloud *pointcloud;
+Axis *axis;
+Grid *grid;
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
   
   screen_width = w;
   screen_height = h;
-  cam.SetAspectRatio((float)(w/h));
-
+  
+  cam = new Camera();
+  pointcloud = new Pointcloud();
+  axis = new Axis();
+  grid = new Grid();
+  
+  cam->SetAspectRatio((float)(w/h));
   return true;
 }
 
-float a = 0.0f;
 bool RenderFrame() {
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
@@ -49,7 +53,8 @@ bool RenderFrame() {
   
   glViewport(0, 0, screen_width, screen_height);
   
-  grid.Render(cam.GetCurrentProjectionViewMatrix());
+  grid->Render(cam->GetCurrentProjectionViewMatrix());
+//  grid.Render(glm::mat4(1.0f));
   
 //  cam.SetPosition(TangoData::GetInstance().GetTangoPosition());
 //  cam.SetRotation(glm::quat(1,0,0,0));
@@ -60,33 +65,28 @@ bool RenderFrame() {
 //  cam.SetRotation(glm::quat(0,0,0,0));
 //  cam.SetRotation(glm::quat(0.90631f, 0.0f, 0.42262f, 0.0f));
   
-//  pointcloud.Render(cam.GetCurrentProjectionViewMatrix(), TangoData::GetInstance().GetDepthBufferSize(), TangoData::GetInstance().GetDepthBuffer());
+  pointcloud->Render(cam->GetCurrentProjectionViewMatrix(), TangoData::GetInstance().GetDepthBufferSize(), TangoData::GetInstance().GetDepthBuffer());
   
-//  a += 0.01f;
-  axis.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-//  axis.SetRotation(glm::quat(0.99905, 0.0f, 0.04362f, 0.0f));
-//  axis.Rotate(glm::quat(0.00000001f, 0.0f, 1.0f, 0.0f));
-//  axis.SetScale(glm::vec3(2.0f, 2.0f, 2.0f));
-  axis.Render(cam.GetCurrentProjectionViewMatrix());
+  axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+  axis->Render(cam->GetCurrentProjectionViewMatrix());
   return true;
 }
 
-void SetCamera(int camera_index)
-{
+void SetCamera(int camera_index){
   switch (camera_index) {
     case 0:
-      cam.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam.SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       LOGI("setting to third cam");
       break;
     case 1:
-      cam.SetPosition(glm::vec3(0.0f, 3.0f, 3.0f));
-      cam.SetRotation(glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 3.0f, 3.0f));
+      cam->SetRotation(glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f));
       LOGI("setting to third cam");
       break;
     case 2:
-      cam.SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
-      cam.SetRotation(glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+      cam->SetRotation(glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f));
       LOGI("setting to top down cam");
       break;
     default:
@@ -97,13 +97,38 @@ void SetCamera(int camera_index)
 #ifdef __cplusplus
 extern "C" {
 #endif
-  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_init(
-    JNIEnv * env, jobject obj, jint width, jint height){
-    SetupGraphics(width, height);
-    TangoData::GetInstance().SetupTango();
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnCreate(
+    JNIEnv * env, jobject obj){
+    TangoData::GetInstance().Initialize();
+    TangoData::GetInstance().SetConfig();
   }
   
-  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_render(
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnResume(
+    JNIEnv * env, jobject obj){
+    TangoData::GetInstance().LockConfig();
+    TangoData::GetInstance().Connect();
+  }
+  
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnPause(
+    JNIEnv * env, jobject obj){
+    TangoData::GetInstance().UnlockConfig();
+    TangoData::GetInstance().Disconnect();
+  }
+  
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnDestroy(
+    JNIEnv * env, jobject obj){
+    delete cam;
+    delete pointcloud;
+    delete axis;
+    delete grid;
+  }
+  
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_SetupGraphic(
+    JNIEnv * env, jobject obj, jint width, jint height){
+    SetupGraphics(width, height);
+  }
+  
+  JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_Render(
     JNIEnv * env, jobject obj){
     RenderFrame();
   }

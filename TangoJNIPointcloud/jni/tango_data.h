@@ -31,8 +31,12 @@ public:
   TangoData();
   ~TangoData();
   
-  bool SetupTango();
-  bool UpdateTango();
+  bool Initialize();
+  bool SetConfig();
+  bool LockConfig();
+  bool UnlockConfig();
+  bool Connect();
+  void Disconnect();
   
   float *GetDepthBuffer();
   int GetDepthBufferSize();
@@ -40,16 +44,13 @@ public:
   glm::vec3 GetTangoPosition();
   glm::quat GetTangoRotation();
   
-  void onXYZijAvailable(TangoXYZij *XYZ_ij);
-  void onPoseAvailable(TangoPoseData *pose);
-  
   double pointcloud_timestamp;
   float *depth_data_buffer;
   int depth_buffer_size;
 private:
   static const int kMaxVertCount = 61440;
   
-  
+  TangoConfig* config;
   
   glm::vec3 tango_position;
   glm::quat tango_rotation;
