@@ -2,14 +2,13 @@
 
 TangoData::TangoData(){
   pointcloud_timestamp = 0.0;
-  depth_data_buffer = new float[61440 * 3];
+  depth_data_buffer = new float[kMaxVertCount * 3];
   depth_buffer_size = kMaxVertCount * 3;
 }
 
 static void onXYZijAvailable(TangoXYZij *XYZ_ij){
   memcpy(TangoData::GetInstance().depth_data_buffer, XYZ_ij->xyz, XYZ_ij->xyz_count*3*sizeof(float));
   TangoData::GetInstance().depth_buffer_size = XYZ_ij->xyz_count * 3;
-  TangoData::GetInstance().pointcloud_timestamp = XYZ_ij->timestamp;
 }
 
 bool TangoData::Initialize() {

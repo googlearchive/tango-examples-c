@@ -35,7 +35,6 @@ private:
   float near_clip_plane, far_clip_plane;
   
   glm::mat4 rotation_mat;
-//  glm::quat rotation;
   glm::vec3 position;
   glm::vec3 scale;
 };

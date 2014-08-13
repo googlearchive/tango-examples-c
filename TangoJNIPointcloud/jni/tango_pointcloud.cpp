@@ -30,8 +30,6 @@ Axis *axis;
 Grid *grid;
 
 bool SetupGraphics(int w, int h) {
-  LOGI("setupGraphics(%d, %d)", w, h);
-  
   screen_width = w;
   screen_height = h;
   
@@ -53,22 +51,13 @@ bool RenderFrame() {
   
   glViewport(0, 0, screen_width, screen_height);
   
+  grid->SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
   grid->Render(cam->GetCurrentProjectionViewMatrix());
-//  grid.Render(glm::mat4(1.0f));
-  
-//  cam.SetPosition(TangoData::GetInstance().GetTangoPosition());
-//  cam.SetRotation(glm::quat(1,0,0,0));
-//  cam.SetRotation(TangoData::GetInstance().GetTangoRotation());
-  
-//  a+=0.001f;
-//  cam.SetPosition(glm::vec3(0.0, a, 2.0));
-//  cam.SetRotation(glm::quat(0,0,0,0));
-//  cam.SetRotation(glm::quat(0.90631f, 0.0f, 0.42262f, 0.0f));
+  axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+  axis->Render(cam->GetCurrentProjectionViewMatrix());
   
   pointcloud->Render(cam->GetCurrentProjectionViewMatrix(), TangoData::GetInstance().GetDepthBufferSize(), TangoData::GetInstance().GetDepthBuffer());
   
-  axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-  axis->Render(cam->GetCurrentProjectionViewMatrix());
   return true;
 }
 
@@ -77,17 +66,14 @@ void SetCamera(int camera_index){
     case 0:
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      LOGI("setting to third cam");
       break;
     case 1:
       cam->SetPosition(glm::vec3(0.0f, 3.0f, 3.0f));
       cam->SetRotation(glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f));
-      LOGI("setting to third cam");
       break;
     case 2:
       cam->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
       cam->SetRotation(glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f));
-      LOGI("setting to top down cam");
       break;
     default:
       break;

@@ -22,13 +22,9 @@ void DrawableObject::Rotate(glm::quat rot){
   rotation = rot;
 }
 
-static float a = 0.0f;
-
 glm::mat4 DrawableObject::GetCurrentModelMatrix(){
-//  a+=0.01f;
   glm::mat4 t = glm::translate(glm::mat4(1.0f), position);
   glm::mat4 r = glm::mat4_cast(rotation);
-//  glm::mat4 r = glm::rotate(glm::mat4(1.0f), a, glm::vec3(0,1,0));
   glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
   return t*r*s;
 }

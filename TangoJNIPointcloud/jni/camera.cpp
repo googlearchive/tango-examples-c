@@ -7,10 +7,10 @@ glm::mat4(-1.0, 0.0, 0.0, 0.0,
           0.0, 0.0, 0.0, 1.0);
 
 Camera::Camera(){
-  field_of_view = 45.f;
-  aspect_ratio = 4.f/3.f;
+  field_of_view = 45.0f;
+  aspect_ratio = 4.0f/3.0f;
   near_clip_plane = 0.1f;
-  far_clip_plane = 100.f;
+  far_clip_plane = 100.0f;
   
   rotation_mat = glm::mat4(1.0f);
 }
@@ -32,13 +32,9 @@ void Camera::SetPosition(glm::vec3 pos){
 }
 
 void Camera::SetRotation(glm::quat rot){
-//  rot = rot*glm::quat(0.99996f, 0.0f, 0.00873, 0.0f);
   rotation_mat = glm::inverse(glm::mat4_cast(rot));
-//  rotation_mat = glm::inverse(glm::rotate(glm::mat4(1.0f), 1.0f, glm::vec3()));
-//  rotation_mat = glm::rotate(rotation_mat, 0.01f, glm::vec3(0,1,0));
 }
 
-// this doesn't work as expected, don't use now.
 void Camera::LookAt(glm::vec3 up_vec, glm::vec3 look_at_pos){
   rotation_mat = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f),
                                    look_at_pos,
