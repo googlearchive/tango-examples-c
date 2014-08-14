@@ -6,7 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 
-public class MotionTrackingView extends GLSurfaceView{
+public class MotionTrackingView extends GLSurfaceView {
 	public MotionTrackingView(Context context) {
 		super(context);
 		setRenderer(new Renderer());
@@ -22,7 +22,7 @@ public class MotionTrackingView extends GLSurfaceView{
 		}
 
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-			
+
 		}
 	}
 }

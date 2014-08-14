@@ -9,3 +9,7 @@ TangoJNIVideoOverlay/bin
 TangoJNIVideoOverlay/gen
 TangoJNIVideoOverlay/libs
 TangoJNIVideoOverlay/obj
+TangoJNIMotionTracking/bin
+TangoJNIMotionTracking/obj/local/armeabi-v7a/objs
+TangoJNIMotionTracking/libs
+TangoJNIMotionTracking/obj

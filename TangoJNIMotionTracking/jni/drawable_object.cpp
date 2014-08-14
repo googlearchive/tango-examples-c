@@ -1,34 +1,30 @@
 #include "drawable_object.h"
 
-DrawableObject::DrawableObject(){
+DrawableObject::DrawableObject() {
   position = glm::vec3(0.0f, 0.0f, 0.0f);
   rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
   scale = glm::vec3(1.0f, 1.0f, 1.0f);
 }
 
-void DrawableObject::SetPosition(glm::vec3 pos){
+void DrawableObject::SetPosition(glm::vec3 pos) {
   position = pos;
 }
 
-void DrawableObject::SetRotation(glm::quat rot){
+void DrawableObject::SetRotation(glm::quat rot) {
   rotation = rot;
 }
 
-void DrawableObject::SetScale(glm::vec3 s){
+void DrawableObject::SetScale(glm::vec3 s) {
   scale = s;
 }
 
-void DrawableObject::Rotate(glm::quat rot){
+void DrawableObject::Rotate(glm::quat rot) {
   rotation = rot;
 }
 
-static float a = 0.0f;
-
-glm::mat4 DrawableObject::GetCurrentModelMatrix(){
-//  a+=0.01f;
+glm::mat4 DrawableObject::GetCurrentModelMatrix() {
   glm::mat4 t = glm::translate(glm::mat4(1.0f), position);
   glm::mat4 r = glm::mat4_cast(rotation);
-//  glm::mat4 r = glm::rotate(glm::mat4(1.0f), a, glm::vec3(0,1,0));
   glm::mat4 s = glm::scale(glm::mat4(1.0f), scale);
-  return t*r*s;
+  return t * r * s;
 }

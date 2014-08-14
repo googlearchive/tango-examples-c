@@ -1,8 +1,4 @@
-#include <stdlib.h>
-#include <jni.h>
-#include <android/log.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#define GLM_FORCE_RADIANS
 
 #include "tango_data.h"
 #include "camera.h"
@@ -12,12 +8,7 @@
 #include "frustum.h"
 #include "trace.h"
 
-#define GLM_FORCE_RADIANS
 #include "glm.hpp"
-
-#define  LOG_TAG    "tango_motion_tracking"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 GLuint screen_width;
 GLuint screen_height;
