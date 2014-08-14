@@ -9,4 +9,4 @@ Example JNI projects for C-API:
 
 [Video Overlay Example (on hold)](https://github.com/ProjectTango/C-APIExample/wiki/Video-Overlay:-Getting-color-frame-from-Tango-Service)
 
-Point Cloud Example (in progress)
+[Point Cloud Example (in progress)](https://github.com/ProjectTango/C-APIExample/wiki/Depth:-Point-Cloud-Viewer)
