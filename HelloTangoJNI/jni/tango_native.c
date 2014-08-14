@@ -79,7 +79,6 @@ JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onCrea
 {
   TangoInitialize();
   TangoSetConfig();
-  TangoConnect();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_hellotangojni_TangoJNINative_onResume(JNIEnv * env, jobject obj)
