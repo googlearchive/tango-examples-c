@@ -10,7 +10,6 @@ public class PointcloudView extends GLSurfaceView {
 
 	public PointcloudView(Context context) {
 		super(context);
-//		TangoJNINative.OnCreate();
 		setRenderer(new Renderer());
 	}
 
@@ -24,7 +23,7 @@ public class PointcloudView extends GLSurfaceView {
 		}
 
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-//			TangoJNINative.SetupGraphic(1920, 1080);
+
 		}
 	}
 

@@ -1,8 +1,7 @@
 #include "gl_util.h"
 
-GlUtil::GlUtil()
-{
-  
+GlUtil::GlUtil() {
+
 }
 
 void GlUtil::CheckGlError(const char* operation) {
@@ -36,17 +35,18 @@ GLuint GlUtil::LoadShader(GLenum shader_type, const char* shader_source) {
   return shader;
 }
 
-GLuint GlUtil::CreateProgram(const char* vertex_source, const char* fragment_source) {
+GLuint GlUtil::CreateProgram(const char* vertex_source,
+                             const char* fragment_source) {
   GLuint vertexShader = LoadShader(GL_VERTEX_SHADER, vertex_source);
   if (!vertexShader) {
     return 0;
   }
-  
+
   GLuint fragment_shader = LoadShader(GL_FRAGMENT_SHADER, fragment_source);
   if (!fragment_shader) {
     return 0;
   }
-  
+
   GLuint program = glCreateProgram();
   if (program) {
     glAttachShader(program, vertexShader);
@@ -74,7 +74,6 @@ GLuint GlUtil::CreateProgram(const char* vertex_source, const char* fragment_sou
   return program;
 }
 
-GlUtil::~GlUtil()
-{
-  
+GlUtil::~GlUtil() {
+
 }
