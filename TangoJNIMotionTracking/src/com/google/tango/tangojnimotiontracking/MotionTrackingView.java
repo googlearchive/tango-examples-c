@@ -14,11 +14,11 @@ public class MotionTrackingView extends GLSurfaceView{
 
 	private static class Renderer implements GLSurfaceView.Renderer {
 		public void onDrawFrame(GL10 gl) {
-			TangoJNINative.render();
+			TangoJNINative.Render();
 		}
 
 		public void onSurfaceChanged(GL10 gl, int width, int height) {
-			TangoJNINative.init(width, height);
+			TangoJNINative.SetupGraphic(width, height);
 		}
 
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
