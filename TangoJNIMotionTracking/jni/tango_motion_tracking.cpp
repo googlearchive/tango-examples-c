@@ -14,9 +14,6 @@
 
 #define GLM_FORCE_RADIANS
 #include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
-#include "gtc/quaternion.hpp"
-#include "gtc/type_ptr.hpp"
 
 #define  LOG_TAG    "tango_motion_tracking"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -67,29 +64,21 @@ bool RenderFrame() {
 
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  glm::vec3 p = glm::vec3(
-      TangoData::GetInstance().GetTangoPosition().x,
-      TangoData::GetInstance().GetTangoPosition().z,
-      TangoData::GetInstance().GetTangoPosition().y * -1.0f);
-
-  glm::quat r = glm::rotate(TangoData::GetInstance().GetTangoRotation(),
-                            1.57079f, glm::vec3(1.0f, 0.0f, 0.0f));
-  r = glm::rotate(r, 1.57079f, glm::vec3(0.0f, 0.0f, 1.0f));
-  r = glm::inverse(r);
+  glm::vec3 position = GlUtil::CorrectPosition(
+      TangoData::GetInstance().GetTangoPosition());
+  glm::quat rotation = GlUtil::CorrectRotation(
+      TangoData::GetInstance().GetTangoRotation());
 
   if (camera_type != FIRST_PERSON) {
-    frustum->SetPosition(p);
-    trace->UpdateVerticesArray(p);
+    frustum->SetPosition(position);
+    trace->UpdateVerticesArray(position);
     trace->Render(cam->GetCurrentProjectionViewMatrix());
 
-    frustum->SetRotation(r);
-
-    //frustum->SetRotation(TangoData::GetInstance().GetTangoRotation());
-
+    frustum->SetRotation(rotation);
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
   } else {
-    cam->SetPosition(p);
-    cam->SetRotation(r);
+    cam->SetPosition(position);
+    cam->SetRotation(rotation);
   }
   return true;
 }

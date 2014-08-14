@@ -1,26 +1,18 @@
 #include "tango_data.h"
 
-TangoData::TangoData(){
-//  pointcloud_timestamp = 0.0;
-//  depth_data_buffer = new float[61440 * 3];
-//  depth_buffer_size = kMaxVertCount * 3;
+TangoData::TangoData() {
+
 }
 
-//static void onXYZijAvailable(TangoXYZij *XYZ_ij){
-//  memcpy(TangoData::GetInstance().depth_data_buffer, XYZ_ij->xyz, XYZ_ij->xyz_count*3*sizeof(float));
-//  TangoData::GetInstance().depth_buffer_size = XYZ_ij->xyz_count * 3;
-//  TangoData::GetInstance().pointcloud_timestamp = XYZ_ij->timestamp;
-//}
-
-static void onPoseAvailable(TangoPoseData *pose){
-    TangoData::GetInstance().tango_position = glm::vec3(pose->translation[0],
-                               pose->translation[1],
-                               pose->translation[2]);
-    TangoData::GetInstance().tango_rotation = glm::quat(pose->orientation[3],
-                               pose->orientation[0],
-                               pose->orientation[2],
-                               pose->orientation[1]);
-    LOGI("%4.2f,%4.2f,%4.2f",pose->translation[0],pose->translation[1],pose->translation[2]);
+static void onPoseAvailable(TangoPoseData *pose) {
+  TangoData::GetInstance().tango_position = glm::vec3(pose->translation[0],
+                                                      pose->translation[1],
+                                                      pose->translation[2]);
+  TangoData::GetInstance().tango_rotation = glm::quat(pose->orientation[3],
+                                                      pose->orientation[0],
+                                                      pose->orientation[1],
+                                                      pose->orientation[2]);
+//    LOGI("%4.2f,%4.2f,%4.2f",pose->translation[0],pose->translation[1],pose->translation[2]);
 }
 
 bool TangoData::Initialize() {
@@ -38,36 +30,28 @@ bool TangoData::SetConfig() {
     LOGE("TangoService_allocConfig(): Failed");
     return false;
   }
-  
+
   // Get the default TangoConfig.
   if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
-  
+
   // Enable depth.
   if (TangoConfig_setBool(config, "config_enable_depth", true) != 0) {
     LOGI("config_enable_depth Failed");
     return false;
   }
-  
-  // Attach the onXYZijAvailable callback.
-//	if(TangoService_connectOnXYZijAvailable(onXYZijAvailable)!=0) {
-//		LOGI("TangoService_connectOnXYZijAvailable(): Failed");
-//		return false;
-//	}
 
-    if(TangoService_connectOnPoseAvailable(onPoseAvailable)!=0) {
-		LOGI("TangoService_connectOnXYZijAvailable(): Failed");
-		return false;
-	}
+  if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
+    LOGI("TangoService_connectOnXYZijAvailable(): Failed");
+    return false;
+  }
 
-    
   return true;
 }
 
-bool TangoData::LockConfig()
-{
+bool TangoData::LockConfig() {
   // Lock in this configuration.
   if (TangoService_lockConfig(config) != 0) {
     LOGE("TangoService_lockConfig(): Failed");
@@ -76,8 +60,7 @@ bool TangoData::LockConfig()
   return true;
 }
 
-bool TangoData::UnlockConfig()
-{
+bool TangoData::UnlockConfig() {
   // Unlock current configuration.
   if (TangoService_unlockConfig() != 0) {
     LOGE("TangoService_unlockConfig(): Failed");
@@ -97,30 +80,18 @@ bool TangoData::Connect() {
   return true;
 }
 
-void TangoData::Disconnect()
-{
+void TangoData::Disconnect() {
   // Disconnect Tango Service.
   TangoService_disconnect();
 }
 
-
-//float* TangoData::GetDepthBuffer(){
-//  return depth_data_buffer;
-//}
-//
-//int TangoData::GetDepthBufferSize(){
-//  return depth_buffer_size;
-//}
-
-glm::vec3 TangoData::GetTangoPosition(){
+glm::vec3 TangoData::GetTangoPosition() {
   return tango_position;
 }
 
-glm::quat TangoData:: GetTangoRotation(){
+glm::quat TangoData::GetTangoRotation() {
   return tango_rotation;
 }
 
-TangoData::~TangoData()
-{
-  //delete[] depth_data_buffer;
+TangoData::~TangoData() {
 }

@@ -15,34 +15,34 @@ static const char kFragmentShader[] =
 
 static const float vertices[] = {
     0.0f,0.0f,0.0f,
-    -0.5f,0.2f,-0.3f,
+    -0.35f,0.2f,-0.3f,
 
     0.0f,0.0f,0.0f,
-    0.5f,0.2f,-0.3f,
+    0.35f,0.2f,-0.3f,
 
     0.0f,0.0f,0.0f,
-    -0.5f,-0.2f,-0.3f,
+    -0.35f,-0.2f,-0.3f,
 
     0.0f,0.0f,0.0f,
-    0.5f,-0.2f,-0.3f,
+    0.35f,-0.2f,-0.3f,
 
-    -0.5f,0.2f,-0.3f,
-    0.5f,0.2f,-0.3f,
+    -0.35f,0.2f,-0.3f,
+    0.35f,0.2f,-0.3f,
 
-    0.5f,0.2f,-0.3f,
-    0.5f,-0.2f,-0.3f,
+    0.35f,0.2f,-0.3f,
+    0.35f,-0.2f,-0.3f,
 
-    0.5f,-0.2f,-0.3f,
-    -0.5f,-0.2f,-0.3f,
+    0.35f,-0.2f,-0.3f,
+    -0.35f,-0.2f,-0.3f,
 
-    -0.5f,-0.2f,-0.3f,
-    -0.5f,0.2f,-0.3f,
+    -0.35f,-0.2f,-0.3f,
+    -0.35f,0.2f,-0.3f
 
-    -0.5f,0.2f,-0.3f,
-    0.3f,0.4f,-0.3f,
-
-    0.3f,0.4f,-0.3f,
-    0.5f,0.2,-0.3f,
+//    -0.5f,0.2f,-0.3f,
+//    0.3f,0.4f,-0.3f,
+//
+//    0.3f,0.4f,-0.3f,
+//    0.5f,0.2,-0.3f,
 };
 
 Frustum::Frustum()
@@ -68,13 +68,13 @@ void Frustum::Render(glm::mat4 view_projection_mat)
 
   // vertice binding
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) *6*10, vertices,
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) *6*8, vertices,
                GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices);
   glVertexAttribPointer(attrib_vertices, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_LINES, 0, 6*10);
+  glDrawArrays(GL_LINES, 0, 6*8);
   glUseProgram(0);
 }
