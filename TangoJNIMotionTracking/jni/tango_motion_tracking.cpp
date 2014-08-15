@@ -75,8 +75,6 @@ bool RenderFrame() {
   } else {
     frustum->SetPosition(position);
     axis->SetPosition(TangoData::GetInstance().GetTangoPosition());
-    //trace->UpdateVertexArray(position);
-    //trace->Render(cam->GetCurrentProjectionViewMatrix());
 
     frustum->SetRotation(rotation);
     axis->SetRotation(TangoData::GetInstance().GetTangoRotation());
@@ -110,41 +108,59 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnCreate(
-    JNIEnv * env, jobject obj) {
-  TangoData::GetInstance().Initialize();
-  TangoData::GetInstance().SetConfig();
+    JNIEnv* env, jobject obj) {
+  LOGI("In onCreate: Initialing and setting config");
+  if (!TangoData::GetInstance().Initialize())
+  {
+    LOGE("Tango initialization failed");
+  }
+  if (!TangoData::GetInstance().SetConfig())
+  {
+    LOGE("Tango set config failed");
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnResume(
-    JNIEnv * env, jobject obj) {
-  TangoData::GetInstance().LockConfig();
-  TangoData::GetInstance().Connect();
+    JNIEnv* env, jobject obj) {
+  LOGI("In OnResume: Locking config and connecting service");
+  if (TangoData::GetInstance().LockConfig()) {
+    LOGE("Tango lock config failed");
+  }
+  if (TangoData::GetInstance().Connect()) {
+    LOGE("Tango connect failed");
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnPause(
-    JNIEnv * env, jobject obj) {
-  TangoData::GetInstance().UnlockConfig();
+    JNIEnv* env, jobject obj) {
+  LOGI("In OnPause: Unlocking config and disconnecting service");
+  if (TangoData::GetInstance().UnlockConfig()) {
+    LOGE("Tango unlock file failed");
+  }
   TangoData::GetInstance().Disconnect();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnDestroy(
-    JNIEnv * env, jobject obj) {
+    JNIEnv* env, jobject obj) {
   delete cam;
+  delete axis;
   delete grid;
+  delete frustum;
+  delete trace;
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetupGraphic(
-    JNIEnv * env, jobject obj, jint width, jint height) {
+    JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Render(
-    JNIEnv * env, jobject obj) {
+    JNIEnv* env, jobject obj) {
   RenderFrame();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetCamera(
-    JNIEnv * env, jobject obj, int camera_index) {
+    JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
 #ifdef __cplusplus
