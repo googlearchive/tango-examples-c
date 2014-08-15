@@ -2,6 +2,8 @@
 #define GL_UTIL_H
 #define GLM_FORCE_RADIANS
 
+#define GL_VERTEX_PROGRAM_POINT_SIZE 0x8642
+
 #include <stdlib.h>
 #include <jni.h>
 #include <android/log.h>
@@ -19,8 +21,6 @@
 
 class GlUtil {
  public:
-  GlUtil();
-  ~GlUtil();
   static void CheckGlError(const char* operation);
   static GLuint CreateProgram(const char* vertex_source,
                               const char* fragment_source);

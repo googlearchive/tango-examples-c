@@ -6,22 +6,20 @@
 
 class Grid : public DrawableObject {
  public:
-  Grid();
+  Grid(float density = 0.2f, int quantity = 100);
   ~Grid();
   void Render(glm::mat4 view_projection_mat);
  private:
-  float *vertices;
-  float density;
-  int quantity;
-  int traverse_len;
+  float* vertices_;
+  float density_;
+  int quantity_;
+  int traverse_len_;
 
-  GLuint vertex_buffer;
-  GLuint color_buffer;
+  GLuint vertex_buffer_;
 
-  GLuint shader_program;
-  GLuint attrib_vertices;
-  GLuint attrib_colors;
-  GLuint uniform_mvp_mat;
+  GLuint shader_program_;
+  GLuint attrib_vertices_;
+  GLuint uniform_mvp_mat_;
 };
 
 #endif  // GRID_H

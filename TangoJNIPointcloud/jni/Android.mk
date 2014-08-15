@@ -9,7 +9,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libtango-native-jni
 LOCAL_SHARED_LIBRARIES := libtango-prebuilt
-LOCAL_CFLAGS    := -Werror
+LOCAL_CFLAGS    := -Werror -std=c++11
 LOCAL_SRC_FILES := tango_pointcloud.cpp camera.cpp gl_util.cpp pointcloud.cpp axis.cpp drawable_object.cpp tango_data.cpp grid.cpp
 LOCAL_C_INCLUDES := ../glm/glm
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib

@@ -11,75 +11,80 @@ static const char kFragmentShader[] = "void main() {\n"
     "  gl_FragColor = vec4(0.58f, 0.58f, 0.58f, 1.0f);\n"
     "}\n";
 
-Grid::Grid() {
-  density = 0.2f;
-  quantity = 100;
+Grid::Grid(float density, int quantity) {
+  // Distance between two lines is 0.2f.
+  density_ = density;
+  
+  // 100 horizontal lines and 100 vertical lines.
+  quantity_ = quantity;
 
-  shader_program = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
-  if (!shader_program) {
+  shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
+  if (!shader_program_) {
     LOGE("Could not create program.");
   }
-  uniform_mvp_mat = glGetUniformLocation(shader_program, "mvp");
-  attrib_vertices = glGetAttribLocation(shader_program, "vertex");
+  uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
+  attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
 
-  glGenBuffers(1, &vertex_buffer);
+  glGenBuffers(1, &vertex_buffer_);
 
   int counter = 0;
-  // 3 float in 1 vertex, 2 vertices form a line
+  
+  // 3 float in 1 vertex, 2 vertices form a line.
   // Horizontal line and vertical line forms the grid.
-  traverse_len = quantity * 2 * 3 * 2;
-  vertices = new float[traverse_len];
-  float width = density * quantity / 2;
+  traverse_len_ = ((quantity_ * 3) * 2) * 2;
+  vertices_ = new float[traverse_len_];
+  float width = density_ * quantity_ / 2;
 
   // Horizontal line.
-  for (int i = 0; i < traverse_len / 2; i += 6) {
-    vertices[i] = -width;
-    vertices[i + 1] = 0.0f;
-    vertices[i + 2] = -width + counter * density;
+  for (int i = 0; i < traverse_len_ / 2; i += 6) {
+    vertices_[i] = -width;
+    vertices_[i + 1] = 0.0f;
+    vertices_[i + 2] = -width + counter * density_;
 
-    vertices[i + 3] = width;
-    vertices[i + 4] = 0.0f;
-    vertices[i + 5] = -width + counter * density;
+    vertices_[i + 3] = width;
+    vertices_[i + 4] = 0.0f;
+    vertices_[i + 5] = -width + counter * density_;
 
-    counter++;
+    ++counter;
   }
 
   // Vertical line.
   counter = 0;
-  for (int i = traverse_len / 2; i < traverse_len; i += 6) {
-    vertices[i] = -width + counter * density;
-    vertices[i + 1] = 0.0f;
-    vertices[i + 2] = -width;
+  for (int i = traverse_len_ / 2; i < traverse_len_; i += 6) {
+    vertices_[i] = -width + counter * density_;
+    vertices_[i + 1] = 0.0f;
+    vertices_[i + 2] = -width;
 
-    vertices[i + 3] = -width + counter * density;
-    vertices[i + 4] = 0.0f;
-    vertices[i + 5] = width;
+    vertices_[i + 3] = -width + counter * density_;
+    vertices_[i + 4] = 0.0f;
+    vertices_[i + 5] = width;
 
-    counter++;
+    ++counter;
   }
 }
 
 void Grid::Render(glm::mat4 view_projection_mat) {
-  glUseProgram(shader_program);
+  glUseProgram(shader_program_);
 
-  // matrix stuff.
+  // Calculate model view projection matrix.
   glm::mat4 model_mat = GetCurrentModelMatrix();
   glm::mat4 mvp_mat = view_projection_mat * model_mat;
-  glUniformMatrix4fv(uniform_mvp_mat, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+  glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
-  // vertice binding
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * traverse_len, vertices,
+  // Binding vertex buffer.
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * traverse_len_, vertices_,
                GL_STATIC_DRAW);
-  glEnableVertexAttribArray(attrib_vertices);
-  glVertexAttribPointer(attrib_vertices, 3, GL_FLOAT, GL_FALSE, 0,
+  glEnableVertexAttribArray(attrib_vertices_);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_LINES, 0, traverse_len);
+  glDrawArrays(GL_LINES, 0, traverse_len_);
   glUseProgram(0);
+  GlUtil::CheckGlError("glUseProgram()");
 }
 
 Grid::~Grid() {
-  delete[] vertices;
+  delete[] vertices_;
 }

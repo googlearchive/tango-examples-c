@@ -1,5 +1,5 @@
-#ifndef TangoData_H
-#define TangoData_H
+#ifndef TANGO_DATA_H
+#define TANGO_DATA_H
 #define GLM_FORCE_RADIANS
 
 #include <tango_client_api.h>
@@ -22,16 +22,16 @@ class TangoData {
   bool Connect();
   void Disconnect();
 
-  float *GetDepthBuffer();
+  float* GetDepthBuffer();
   void SetDepthBuffer(float *buffer);
   int GetDepthBufferSize();
   void SetDepthBufferSize(int size);
 
  private:
-  TangoConfig* config;
-  double pointcloud_timestamp;
-  float *depth_data_buffer;
-  int depth_buffer_size;
+  TangoConfig* config_;
+  double pointcloud_timestamp_;
+  float* depth_data_buffer_;
+  int depth_buffer_size_;
 };
 
-#endif  // TangoData_H
+#endif  // TANGO_DATA_H

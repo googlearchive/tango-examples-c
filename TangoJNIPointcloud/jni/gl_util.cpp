@@ -1,9 +1,5 @@
 #include "gl_util.h"
 
-GlUtil::GlUtil() {
-
-}
-
 void GlUtil::CheckGlError(const char* operation) {
   for (GLint error = glGetError(); error; error = glGetError()) {
     LOGI("after %s() glError (0x%x)\n", operation, error);
@@ -72,8 +68,4 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
     }
   }
   return program;
-}
-
-GlUtil::~GlUtil() {
-
 }
