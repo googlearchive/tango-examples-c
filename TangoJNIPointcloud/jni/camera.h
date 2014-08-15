@@ -8,7 +8,7 @@ class Camera {
   Camera();
   ~Camera();
 
-  void SetAspectRatio(float _aspect_ratio);
+  void SetAspectRatio(float aspect_ratio);
   void SetPosition(glm::vec3 pos);
   void SetRotation(glm::quat rot);
   void SetScale(glm::vec3 s);
