@@ -62,12 +62,12 @@ Grid::Grid() {
 void Grid::Render(glm::mat4 view_projection_mat) {
   glUseProgram(shader_program);
 
-  // matrix stuff.
+  // Calculate MVP matrix and pass it to shader.
   glm::mat4 model_mat = GetCurrentModelMatrix();
   glm::mat4 mvp_mat = view_projection_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
-  // vertice binding
+  // Vertice binding.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * traverse_len, vertices,
                GL_STATIC_DRAW);

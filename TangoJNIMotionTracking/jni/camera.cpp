@@ -1,9 +1,10 @@
 #include "camera.h"
 
-static const glm::mat4 inverse_all_mat = glm::mat4(-1.0, 0.0, 0.0, 0.0, 0.0,
-                                                   -1.0, 0.0, 0.0, 0.0, 0.0,
-                                                   -1.0, 0.0, 0.0, 0.0, 0.0,
-                                                   1.0);
+static const glm::mat4 inverse_all_mat = glm::mat4(
+  -1.0, 0.0, 0.0, 0.0,
+  0.0, -1.0, 0.0, 0.0,
+  0.0, 0.0, -1.0, 0.0,
+  0.0, 0.0, 0.0, 1.0);
 
 Camera::Camera() {
   field_of_view = 45.0f;
@@ -39,6 +40,4 @@ void Camera::LookAt(glm::vec3 up_vec, glm::vec3 look_at_pos) {
   rotation_mat = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), look_at_pos, up_vec);
 }
 
-Camera::~Camera() {
-
-}
+Camera::~Camera() { }

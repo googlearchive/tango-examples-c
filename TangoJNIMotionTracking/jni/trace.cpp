@@ -10,6 +10,8 @@ static const char kFragmentShader[] = "void main() {\n"
     "  gl_FragColor = vec4(0,0,0,1);\n"
     "}\n";
 
+static const int kMaxTraceLength = 1000;
+
 Trace::Trace() {
   shader_program = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
   if (!shader_program) {
@@ -18,10 +20,10 @@ Trace::Trace() {
   uniform_mvp_mat = glGetUniformLocation(shader_program, "mvp");
   attrib_vertices = glGetAttribLocation(shader_program, "vertex");
 
-  vertices.reserve(1000);
+  vertices.reserve(kMaxTraceLength);
 }
 
-void Trace::UpdateVerticesArray(glm::vec3 v) {
+void Trace::UpdateVertexArray(glm::vec3 v) {
   vertices.push_back(v);
 }
 

@@ -74,14 +74,14 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
   return program;
 }
 
-glm::quat GlUtil::CorrectRotation(glm::quat rotation) {
+glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
   glm::vec3 euler = glm::eulerAngles(rotation);
-  glm::vec3 euler_corrected((euler.x + HALF_PI) * -1.0f, euler.y * -1.0f,
-                            (euler.z - HALF_PI) * -1.0f);
-  return glm::quat(euler_corrected);
+  glm::vec3 euler_converted((euler.x + float(M_PI/2.0f)) * -1.0f, euler.y * -1.0f,
+                            (euler.z - float(M_PI/2.0f)) * -1.0f);
+  return glm::quat(euler_converted);
 }
 
-glm::vec3 GlUtil::CorrectPosition(glm::vec3 position) {
+glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
   return glm::vec3(position.x, position.z, position.y * -1.0f);
 }
 

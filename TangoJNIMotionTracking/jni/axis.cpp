@@ -1,6 +1,7 @@
 #include "axis.h"
 
-static const char kVertexShader[] = "attribute vec4 vertex;\n"
+static const char kVertexShader[] =
+    "attribute vec4 vertex;\n"
     "attribute vec4 color;\n"
     "uniform mat4 mvp;\n"
     "varying vec4 v_color;\n"
@@ -9,22 +10,33 @@ static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "  v_color = color;\n"
     "}\n";
 
-static const char kFragmentShader[] = "varying vec4 v_color;\n"
+static const char kFragmentShader[] =
+    "varying vec4 v_color;\n"
     "void main() {\n"
     "  gl_FragColor = v_color;\n"
     "}\n";
 
-static const float vertices[] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+static const float vertices[] = {
+  0.0f, 0.0f, 0.0f,
+  1.0f, 0.0f, 0.0f,
 
-0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+  0.0f, 0.0f, 0.0f,
+  0.0f, 1.0f, 0.0f,
 
-0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+  0.0f, 0.0f, 0.0f,
+  0.0f, 0.0f, 1.0f
+};
 
-static const float colors[] = { 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+static const float colors[] = {
+  1.0f, 0.0f, 0.0f, 1.0f,
+  1.0f, 0.0f, 0.0f, 1.0f,
 
-0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
 
-0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
+  0.0f, 0.0f, 1.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f
+};
 
 Axis::Axis() {
   shader_program = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
@@ -42,12 +54,12 @@ Axis::Axis() {
 void Axis::Render(glm::mat4 view_projection_mat) {
   glUseProgram(shader_program);
 
-  // matrix stuff.
+  // Calculate MVP matrix and pass it to shader.
   glm::mat4 model_mat = GetCurrentModelMatrix();
   glm::mat4 mvp_mat = view_projection_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
-  // vertice binding
+  // Vertice binding.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 18, vertices, GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices);
@@ -55,7 +67,7 @@ void Axis::Render(glm::mat4 view_projection_mat) {
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // color binding
+  // Color binding.
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 24, colors, GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_colors);

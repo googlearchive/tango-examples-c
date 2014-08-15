@@ -1,18 +1,15 @@
 #include "tango_data.h"
 
-TangoData::TangoData() {
+TangoData::TangoData() { }
 
-}
-
-static void onPoseAvailable(TangoPoseData *pose) {
-  TangoData::GetInstance().tango_position = glm::vec3(pose->translation[0],
-                                                      pose->translation[1],
-                                                      pose->translation[2]);
-  TangoData::GetInstance().tango_rotation = glm::quat(pose->orientation[3],
-                                                      pose->orientation[0],
-                                                      pose->orientation[1],
-                                                      pose->orientation[2]);
-//    LOGI("%4.2f,%4.2f,%4.2f",pose->translation[0],pose->translation[1],pose->translation[2]);
+//A callback function, it's get called when, _will allocate pose, ___is the pose memory good for
+static void onPoseAvailable(TangoPoseData* pose) {
+  TangoData::GetInstance().SetTangoPosition(
+      glm::vec3(pose->translation[0], pose->translation[1],
+                pose->translation[2]));
+  TangoData::GetInstance().SetTangoRotation(
+      glm::quat(pose->orientation[3], pose->orientation[0],
+                pose->orientation[1], pose->orientation[2]));
 }
 
 bool TangoData::Initialize() {
@@ -34,12 +31,6 @@ bool TangoData::SetConfig() {
   // Get the default TangoConfig.
   if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
     LOGE("TangoService_getConfig(): Failed");
-    return false;
-  }
-
-  // Enable depth.
-  if (TangoConfig_setBool(config, "config_enable_depth", true) != 0) {
-    LOGI("config_enable_depth Failed");
     return false;
   }
 
@@ -91,6 +82,14 @@ glm::vec3 TangoData::GetTangoPosition() {
 
 glm::quat TangoData::GetTangoRotation() {
   return tango_rotation;
+}
+
+void TangoData::SetTangoPosition(glm::vec3 position) {
+  tango_position = position;
+}
+
+void TangoData::SetTangoRotation(glm::quat rotation) {
+  tango_rotation = rotation;
 }
 
 TangoData::~TangoData() {

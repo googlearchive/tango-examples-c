@@ -1,14 +1,12 @@
 #define GLM_FORCE_RADIANS
 
-#include "tango_data.h"
-#include "camera.h"
-#include "gl_util.h"
 #include "axis.h"
-#include "grid.h"
+#include "camera.h"
 #include "frustum.h"
+#include "gl_util.h"
+#include "grid.h"
+#include "tango_data.h"
 #include "trace.h"
-
-#include "glm.hpp"
 
 GLuint screen_width;
 GLuint screen_height;
@@ -26,6 +24,12 @@ enum CameraType {
 };
 
 int camera_type;
+
+// Quaternion format of rotation.
+const glm::vec3 kThirdPersonCameraPosition=glm::vec3(0.0f, 3.0f, 3.0f);
+const glm::quat kThirdPersonCameraRotation= glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f);
+const glm::vec3 kTopDownCameraPosition=glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::quat kTopDownCameraRotation=glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -55,21 +59,23 @@ bool RenderFrame() {
 
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  glm::vec3 position = GlUtil::CorrectPosition(
+  glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
       TangoData::GetInstance().GetTangoPosition());
-  glm::quat rotation = GlUtil::CorrectRotation(
+  glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().GetTangoRotation());
 
-  if (camera_type != FIRST_PERSON) {
-    frustum->SetPosition(position);
-    trace->UpdateVerticesArray(position);
-    trace->Render(cam->GetCurrentProjectionViewMatrix());
-
-    frustum->SetRotation(rotation);
-    frustum->Render(cam->GetCurrentProjectionViewMatrix());
-  } else {
+  if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
     cam->SetRotation(rotation);
+  } else {
+    frustum->SetPosition(position);
+    axis->SetPosition(TangoData::GetInstance().GetTangoPosition());
+    //trace->UpdateVertexArray(position);
+    //trace->Render(cam->GetCurrentProjectionViewMatrix());
+
+    frustum->SetRotation(rotation);
+    axis->SetRotation(TangoData::GetInstance().GetTangoRotation());
+    frustum->Render(cam->GetCurrentProjectionViewMatrix());
   }
   return true;
 }
@@ -81,13 +87,13 @@ void SetCamera(int camera_index) {
       LOGI("setting to First Person Camera");
       break;
     case THIRD_PERSON:
-      cam->SetPosition(glm::vec3(0.0f, 3.0f, 3.0f));
-      cam->SetRotation(glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f));
+      cam->SetPosition(kThirdPersonCameraPosition);
+      cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      cam->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
-      cam->SetRotation(glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f));
+      cam->SetPosition(kTopDownCameraPosition);
+      cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
     default:

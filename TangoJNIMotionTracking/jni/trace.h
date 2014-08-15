@@ -10,7 +10,7 @@
 class Trace : public DrawableObject {
  public:
   Trace();
-  void UpdateVerticesArray(glm::vec3 v);
+  void UpdateVertexArray(glm::vec3 v);
   void Render(glm::mat4 view_projection_mat);
  private:
   std::vector<glm::vec3> vertices;
