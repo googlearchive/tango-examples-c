@@ -18,5 +18,4 @@ class DrawableObject {
   glm::vec3 position;
   glm::vec3 scale;
 };
-
 #endif  // DRAWABLE_OBJECT_H

@@ -1,9 +1,5 @@
 #include "gl_util.h"
 
-GlUtil::GlUtil() {
-
-}
-
 void GlUtil::CheckGlError(const char* operation) {
   for (GLint error = glGetError(); error; error = glGetError()) {
     LOGI("after %s() glError (0x%x)\n", operation, error);
@@ -83,8 +79,4 @@ glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
 
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
   return glm::vec3(position.x, position.z, position.y * -1.0f);
-}
-
-GlUtil::~GlUtil() {
-
 }
