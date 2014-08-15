@@ -1,6 +1,7 @@
 #include "tango_data.h"
 
-TangoData::TangoData() {
+TangoData::TangoData():config(nullptr), tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
+  tango_rotation(glm::quat(1.0f,0.0f,0.0f,0.0f)){
 }
 
 // This callback function is called when new POSE updates become available,
@@ -91,7 +92,4 @@ void TangoData::SetTangoPosition(glm::vec3 position) {
 
 void TangoData::SetTangoRotation(glm::quat rotation) {
   tango_rotation = rotation;
-}
-
-TangoData::~TangoData() {
 }

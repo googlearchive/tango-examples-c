@@ -4,10 +4,6 @@
 #include <tango_client_api.h>
 #include "gl_util.h"
 
-#define  LOG_TAG    "tango_motion_tracking"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-
 class TangoData {
  public:
   static TangoData& GetInstance() {
@@ -15,7 +11,6 @@ class TangoData {
     return instance;
   }
   TangoData();
-  ~TangoData();
 
   bool Initialize();
   bool SetConfig();
