@@ -13,9 +13,8 @@ class DrawableObject {
   void Rotate(glm::quat rot);
   glm::mat4 GetCurrentModelMatrix();
  private:
-  GLuint shader_program;
-  glm::quat rotation;
-  glm::vec3 position;
-  glm::vec3 scale;
+  glm::quat rotation_;
+  glm::vec3 position_;
+  glm::vec3 scale_;
 };
 #endif  // DRAWABLE_OBJECT_H
