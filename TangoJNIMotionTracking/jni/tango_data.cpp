@@ -1,8 +1,10 @@
 #include "tango_data.h"
 
-TangoData::TangoData() { }
+TangoData::TangoData() {
+}
 
-//A callback function, it's get called when, _will allocate pose, ___is the pose memory good for
+// This callback function is called when new POSE updates become available,
+// pose data must be allocated by the caller.
 static void onPoseAvailable(TangoPoseData* pose) {
   TangoData::GetInstance().SetTangoPosition(
       glm::vec3(pose->translation[0], pose->translation[1],
@@ -35,7 +37,7 @@ bool TangoData::SetConfig() {
   }
 
   if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
-    LOGI("TangoService_connectOnXYZijAvailable(): Failed");
+    LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
 
@@ -60,10 +62,9 @@ bool TangoData::UnlockConfig() {
   return true;
 }
 
+// Connect to Tango Service, service will start running, and
+// POSE can be queried.
 bool TangoData::Connect() {
-  // Connect to the Tango Service.
-  // Note: connecting Tango service will start the motion
-  // tracking automatically.
   if (TangoService_connect() != 0) {
     LOGE("TangoService_connect(): Failed");
     return false;

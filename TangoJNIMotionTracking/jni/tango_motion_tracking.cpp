@@ -26,10 +26,12 @@ enum CameraType {
 int camera_type;
 
 // Quaternion format of rotation.
-const glm::vec3 kThirdPersonCameraPosition=glm::vec3(0.0f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation= glm::quat(0.92388f, -0.38268f, 0.0f, 0.0f);
-const glm::vec3 kTopDownCameraPosition=glm::vec3(0.0f, 3.0f, 0.0f);
-const glm::quat kTopDownCameraRotation=glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
+const glm::vec3 kThirdPersonCameraPosition = glm::vec3(0.0f, 3.0f, 3.0f);
+const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
+                                                       0.0f, 0.0f);
+const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
+                                                   0.0f);
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -48,6 +50,9 @@ bool SetupGraphics(int w, int h) {
   return true;
 }
 
+// Render frustum and trace with current position and rotation
+// updated from TangoData, TangoPosition and TangoRotation is updated via callback function
+// OnPoseAvailable(), which is updated when new pose data is available.
 bool RenderFrame() {
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
