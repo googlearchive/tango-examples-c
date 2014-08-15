@@ -25,10 +25,10 @@ class TangoData {
   void SetTangoRotation(glm::quat rotation);
 
  private:
-  glm::vec3 tango_position;
-  glm::quat tango_rotation;
+  glm::vec3 tango_position_;
+  glm::quat tango_rotation_;
 
-  TangoConfig* config;
+  TangoConfig* config_;
 };
 
 #endif  // TangoData_H

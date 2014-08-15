@@ -1,11 +1,10 @@
 #include "tango_data.h"
 
-TangoData::TangoData():config(nullptr), tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
-  tango_rotation(glm::quat(1.0f,0.0f,0.0f,0.0f)){
+TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
+  tango_rotation_(glm::quat(1.0f,0.0f,0.0f,0.0f)){
 }
 
-// This callback function is called when new POSE updates become available,
-// pose data must be allocated by the caller.
+// This callback function is called when new POSE updates become available.
 static void onPoseAvailable(TangoPoseData* pose) {
   TangoData::GetInstance().SetTangoPosition(
       glm::vec3(pose->translation[0], pose->translation[1],
@@ -26,13 +25,13 @@ bool TangoData::Initialize() {
 
 bool TangoData::SetConfig() {
   // Allocate a TangoConfig object.
-  if ((config = TangoConfig_alloc()) == NULL) {
+  if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
     return false;
   }
 
   // Get the default TangoConfig.
-  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
+  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != 0) {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
@@ -47,7 +46,7 @@ bool TangoData::SetConfig() {
 
 bool TangoData::LockConfig() {
   // Lock in this configuration.
-  if (TangoService_lockConfig(config) != 0) {
+  if (TangoService_lockConfig(config_) != 0) {
     LOGE("TangoService_lockConfig(): Failed");
     return false;
   }
@@ -79,17 +78,17 @@ void TangoData::Disconnect() {
 }
 
 glm::vec3 TangoData::GetTangoPosition() {
-  return tango_position;
+  return tango_position_;
 }
 
 glm::quat TangoData::GetTangoRotation() {
-  return tango_rotation;
+  return tango_rotation_;
 }
 
 void TangoData::SetTangoPosition(glm::vec3 position) {
-  tango_position = position;
+  tango_position_ = position;
 }
 
 void TangoData::SetTangoRotation(glm::quat rotation) {
-  tango_rotation = rotation;
+  tango_rotation_ = rotation;
 }

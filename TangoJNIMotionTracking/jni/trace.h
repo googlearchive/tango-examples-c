@@ -13,11 +13,11 @@ class Trace : public DrawableObject {
   void UpdateVertexArray(glm::vec3 v);
   void Render(glm::mat4 view_projection_mat);
  private:
-  std::vector<glm::vec3> vertices;
+  std::vector<glm::vec3> vertices_;
 
-  GLuint shader_program;
-  GLuint attrib_vertices;
-  GLuint uniform_mvp_mat;
+  GLuint shader_program_;
+  GLuint attrib_vertices_;
+  GLuint uniform_mvp_mat_;
 };
 
 #endif  // TRACE_H
