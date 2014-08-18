@@ -74,11 +74,15 @@ bool RenderFrame() {
     cam->SetRotation(rotation);
   } else {
     frustum->SetPosition(position);
-    axis->SetPosition(TangoData::GetInstance().GetTangoPosition());
-
     frustum->SetRotation(rotation);
-    axis->SetRotation(TangoData::GetInstance().GetTangoRotation());
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
+
+    trace->UpdateVertexArray(position);
+    trace->Render(cam->GetCurrentProjectionViewMatrix());
+
+    axis->SetPosition(position);
+    axis->SetRotation(rotation);
+    axis->Render(cam->GetCurrentProjectionViewMatrix());
   }
   return true;
 }

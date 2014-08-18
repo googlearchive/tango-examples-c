@@ -71,10 +71,13 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
 }
 
 glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
-  glm::vec3 euler = glm::eulerAngles(rotation);
-  glm::vec3 euler_converted((euler.x + float(M_PI/2.0f)) * -1.0f, euler.y * -1.0f,
-                            (euler.z - float(M_PI/2.0f)) * -1.0f);
-  return glm::quat(euler_converted);
+  glm::quat rotation_offsetX = glm::rotate(rotation, 1.57079f,
+                                           glm::vec3(1.0f, 0.0f, 0.0f));
+  glm::quat rotation_offsetZ = glm::rotate(rotation_offsetX, 1.57079f,
+                                           glm::vec3(0.0f, 0.0f, -1.0f));
+  glm::quat rotation_inversed = glm::quat(glm::inverse(rotation_offsetZ));
+  return glm::quat(rotation_inversed.w, rotation_inversed.y,
+                   rotation_inversed.x * -1.0f, rotation_inversed.z);
 }
 
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
