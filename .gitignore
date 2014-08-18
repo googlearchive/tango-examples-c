@@ -13,7 +13,7 @@ TangoJNIVideoOverlay/bin
 TangoJNIVideoOverlay/gen
 TangoJNIVideoOverlay/libs
 TangoJNIVideoOverlay/obj
-TangoJNIPointcloud/bin
-TangoJNIPointcloud/gen
-TangoJNIPointcloud/obj
-TangoJNIPointcloud/libs
+TangoJNIMotionTracking/bin
+TangoJNIMotionTracking/obj/local/armeabi-v7a/objs
+TangoJNIMotionTracking/libs
+TangoJNIMotionTracking/obj
