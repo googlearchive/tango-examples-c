@@ -1,30 +1,32 @@
 // Copyright 2013 Motorola Mobility LLC. Part of the Trailmix project.
 // CONFIDENTIAL. AUTHORIZED USE ONLY. DO NOT REDISTRIBUTE.
-#ifndef TANGO_SERVICE_TANGO_CLIENT_API_H_
-#define TANGO_SERVICE_TANGO_CLIENT_API_H_
+#ifndef TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
+#define TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // Tango Camera enumerations.
 typedef enum {
-  TANGO_CAMERA_COLOR,
+  TANGO_CAMERA_COLOR = 0,
   TANGO_CAMERA_RGBIR,
   TANGO_CAMERA_FISHEYE,
-  TANGO_CAMERA_DEPTH
+  TANGO_CAMERA_DEPTH,
+  TANGO_MAX_CAMERA_ID
 } TangoCameraId;
 
 // Tango runtime configuration enumerations.
 typedef enum {
-  TANGO_CONFIG_DEFAULT,
+  TANGO_CONFIG_DEFAULT = 0,
   TANGO_CONFIG_CURRENT,
   TANGO_CONFIG_MOTION_TRACKING,
-  TANGO_CONFIG_AREA_DESCRIPTION
+  TANGO_CONFIG_AREA_DESCRIPTION,
+  TANGO_MAX_CONFIG_TYPE     // Maximum number allowable.
 } TangoConfigType;
 
 // Tango coordinate frame enumerations.
 typedef enum {
-  TANGO_COORDINATE_FRAME_GLOBAL,
+  TANGO_COORDINATE_FRAME_GLOBAL = 0,
   TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
   TANGO_COORDINATE_FRAME_START_OF_SERVICE,
   TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
@@ -33,8 +35,15 @@ typedef enum {
   TANGO_COORDINATE_FRAME_DISPLAY,
   TANGO_COORDINATE_FRAME_CAMERA_COLOR,
   TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
-  TANGO_COORDINATE_FRAME_CAMERA_FISHEYE
+  TANGO_COORDINATE_FRAME_CAMERA_FISHEYE,
+  TANGO_MAX_COORDINATE_FRAME_TYPE
 } TangoCoordinateFrameType;
+
+/// Tango Error types.
+typedef enum {
+  TANGO_ERROR = -1,
+  TANGO_SUCCESS = 0,
+} TangoErrorType;
 
 struct TangoConfig;
 typedef struct TangoConfig TangoConfig;
@@ -50,20 +59,36 @@ typedef struct TangoConfig TangoConfig;
 ///
 /// orientation: orientation, as a quaternion, of the pose of the target frame
 /// relative to the reference frame.
+/// Specified as (x,y,z,w) where RotationAngle is in radians:
+/// x = RotationAxis.x * sin(RotationAngle / 2)
+/// y = RotationAxis.y * sin(RotationAngle / 2)
+/// z = RotationAxis.z * sin(RotationAngle / 2)
+/// w = cos(RotationAngle / 2)
 ///
 /// translation: translation, ordered x, y, z, of the pose of the target frame
 /// relative to the reference frame.
+typedef enum {
+  TANGO_POSE_INITIALIZING = 0,
+  TANGO_POSE_VALID,
+  TANGO_POSE_INVALID,
+  TANGO_POSE_UNKNOWN
+} TangoPoseStatusType;
+
 typedef struct TangoPoseData {
   int version;
   double timestamp;
   double orientation[4];
   double translation[3];
+  TangoPoseStatusType status_code;
+  TangoCoordinateFrameType target_frame;
+  TangoCoordinateFrameType reference_frame;
+  int confidence;   // Unused.  Integer levels are determined by service.
 } TangoPoseData;
 
 /// The TangoXYZij struct contains information returned from the depth sensor.
 /// version: an integer denoting the version of the structure.
 ///
-/// timestamp:  a double timestamp of the time of capture of the depth data
+/// timestamp: a double timestamp of the time of capture of the depth data
 /// for this struct.
 ///
 /// xyz: An array of packed coordinate triplets, x,y,z as floating point values.
@@ -80,10 +105,11 @@ typedef struct TangoPoseData {
 ///
 /// ij_rows, ij_cols: The dimensions of the ij index buffer.
 ///
-/// ij: A 2D buffer, of size ij_rows x ij_cols that contains the index of a
-/// point in the xyz array that was generated at this "IJ" location.  A value of
-/// -1 denotes there was no corresponding point generated at that position.
-/// This buffer can be used to find neighbouring points in the point cloud.
+/// ij: A 2D buffer, of size ij_rows x ij_cols in raster ordering that contains
+/// the index of a point in the xyz array that was generated at this "IJ"
+/// location.  A value of -1 denotes there was no corresponding point generated
+/// at that position. This buffer can be used to find neighbouring points in the
+/// point cloud.
 typedef struct TangoXYZij {
   int version;
   double timestamp;
@@ -106,16 +132,15 @@ extern "C" {
 
 /// Allocate a TangoConfig object.
 /// Returns a handle (TangoConfig *) for a newly allocated TangoConfig object.
-TangoConfig *TangoConfig_alloc();
+TangoConfig* TangoConfig_alloc();
 
 /// Deallocate a TangoConfig object.
 /// Destroys the TangoConfig object for the handle specified by the config.
 /// variable.
-void TangoConfig_free(TangoConfig *config);
+void TangoConfig_free(TangoConfig* config);
 
 /// Allocates and return a string with one key=value pair per line.
-char *TangoConfig_toString(TangoConfig *config);
-
+char *TangoConfig_toString(TangoConfig* config);
 
 /// Tango Service Functions.  These functions are used to connect to, configure,
 /// and start the Tango Service.
@@ -129,19 +154,19 @@ char *TangoConfig_toString(TangoConfig *config);
 /// Tango Service: Lifecycle Interface.
 /// Initializes the TangoService.   This function must be called first before
 /// other Tango functions are called.
-int TangoService_initialize();
+TangoErrorType TangoService_initialize();
 
 /// Given an allocated TangoConfig, config, fill in config with configuration
 /// settings.  This can be used to find the current configuration, or
 /// to fill a config with a set of commonly used, default parameters before
 /// altering a few for the application's needs.
 ///    TANGO_CONFIG_DEFAULT = Default configuration of the service.
-int TangoService_getConfig(TangoConfigType config_type, TangoConfig *config);
+int TangoService_getConfig(TangoConfigType config_type, TangoConfig* config);
 
 /// Lock a new configuration.  This will place the service into the
 /// configuration given by config.  This will interrupt other client
 /// configurations.
-int TangoService_lockConfig(TangoConfig *config);
+int TangoService_lockConfig(TangoConfig* config);
 
 /// Unlock the Tango Service.   This function will unlock the Tango Services'
 /// configuration.  It should be called when the service's specific
@@ -163,7 +188,9 @@ void TangoService_disconnect();
 /// Attach an onPoseAvailable callback.   The callback is called as new
 /// pose updates become available.
 int TangoService_connectOnPoseAvailable(
-  void (*TangoService_onPoseAvailable)(TangoPoseData *pose));
+    TangoCoordinateFrameType target_frame,
+    TangoCoordinateFrameType reference_frame,
+    void (*TangoService_onPoseAvailable)(TangoPoseData* pose));
 
 /// Get a pose at a given timestamp from the reference to the target frame.
 ///
@@ -180,15 +207,14 @@ int TangoService_connectOnPoseAvailable(
 int TangoService_getPoseAtTime(double timestamp,
                                TangoCoordinateFrameType target_frame,
                                TangoCoordinateFrameType reference_frame,
-                               TangoPoseData *pose, int pose_size);
-
+                               TangoPoseData* pose);
 
 /// Tango Service: Depth Interface.
 /// Attach an onXYZijAvailable callback.  The callback is called each time new
 /// depth data is available, at an approximate nominal period given by the
 /// double key "depth_period_in_seconds".
 int TangoService_connectOnXYZijAvailable(
-    void (*TangoService_onXYZijAvailable)(TangoXYZij *xyz_ij));
+    void (*TangoService_onXYZijAvailable)(TangoXYZij* xyz_ij));
 
 /// Tango Service: Camera Interface.
 /// Connect a Texture ID to a camera. The camera is selected via TangoCameraId.
@@ -199,8 +225,8 @@ int TangoService_connectTextureId(TangoCameraId, int tex);
 
 /// Update the texture that has been connected to camera referenced by
 /// TangoCameraId. The texture is updated with the latest image from the camera.
-int TangoService_updateTexture(TangoCameraId);
-
+/// If timestamp is not NULL, it will be filled with the image timestamp.
+int TangoService_updateTexture(TangoCameraId, double* timestamp);
 
 /// Configuration Parameters Get and Set Functions.
 ///
@@ -235,30 +261,34 @@ int TangoService_updateTexture(TangoCameraId);
 /// Nominal time between successive frames of depth data.  Use the depth data
 /// structure fields to get more accurate depth frame times.
 ///
-int TangoConfig_setBool(TangoConfig *config, const char *key, bool value);
+///     int32 max_point_cloud_elements:
+/// Maximum number of points returned in depth point clouds.  For Yellowstone
+/// this is 60000.  Typically no more than to 15000 are returned.
 
-int TangoConfig_setInt32(TangoConfig *config, const char *key, int32_t value);
+int TangoConfig_setBool(TangoConfig* config, const char* key, bool value);
 
-int TangoConfig_setInt64(TangoConfig *config, const char *key, int64_t value);
+int TangoConfig_setInt32(TangoConfig* config, const char* key, int32_t value);
 
-int TangoConfig_setDouble(TangoConfig *config, const char *key, double value);
+int TangoConfig_setInt64(TangoConfig* config, const char* key, int64_t value);
 
-int TangoConfig_setString(TangoConfig *config, const char *key,
-                          const char *value);
+int TangoConfig_setDouble(TangoConfig* config, const char* key, double value);
 
-int TangoConfig_getBool(TangoConfig *config, const char *key, bool *value);
+int TangoConfig_setString(TangoConfig* config, const char* key,
+                          const char* value);
 
-int TangoConfig_getInt32(TangoConfig *config, const char *key, int32_t *value);
+int TangoConfig_getBool(TangoConfig* config, const char* key, bool* value);
 
-int TangoConfig_getInt64(TangoConfig *config, const char *key, int64_t *value);
+int TangoConfig_getInt32(TangoConfig* config, const char* key, int32_t* value);
 
-int TangoConfig_getDouble(TangoConfig *config, const char *key, double *value);
+int TangoConfig_getInt64(TangoConfig* config, const char* key, int64_t* value);
 
-int TangoConfig_getString(TangoConfig *config, const char *key, char *value,
+int TangoConfig_getDouble(TangoConfig* config, const char* key, double* value);
+
+int TangoConfig_getString(TangoConfig* config, const char* key, char* value,
                           size_t size);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // TANGO_SERVICE_TANGO_CLIENT_API_H_
+#endif  // TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
