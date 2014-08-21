@@ -1,0 +1,106 @@
+#include "tango_data.h"
+
+TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
+  tango_rotation_(glm::quat(1.0f,0.0f,0.0f,0.0f)){
+}
+
+// This callback function is called when new POSE updates become available.
+static void onPoseAvailable(TangoPoseData* pose) {
+  TangoData::GetInstance().SetTangoPosition(
+      glm::vec3(pose->translation[0], pose->translation[1],
+                pose->translation[2]));
+  TangoData::GetInstance().SetTangoRotation(
+      glm::quat(pose->orientation[3], pose->orientation[0],
+                pose->orientation[1], pose->orientation[2]));
+  TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+}
+
+bool TangoData::Initialize() {
+  // Initialize Tango Service.
+  if (TangoService_initialize() != 0) {
+    LOGE("TangoService_initialize(): Failed");
+    return false;
+  }
+  return true;
+}
+
+bool TangoData::SetConfig() {
+  // Allocate a TangoConfig object.
+  if ((config_ = TangoConfig_alloc()) == NULL) {
+    LOGE("TangoService_allocConfig(): Failed");
+    return false;
+  }
+
+  // Get the default TangoConfig.
+  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != 0) {
+    LOGE("TangoService_getConfig(): Failed");
+    return false;
+  }
+
+  if (TangoService_connectOnPoseAvailable(TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+                                          TANGO_COORDINATE_FRAME_DEVICE,
+                                          onPoseAvailable) != 0) {
+    LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
+
+  return true;
+}
+
+bool TangoData::LockConfig() {
+  // Lock in this configuration.
+  if (TangoService_lockConfig(config_) != 0) {
+    LOGE("TangoService_lockConfig(): Failed");
+    return false;
+  }
+  return true;
+}
+
+bool TangoData::UnlockConfig() {
+  // Unlock current configuration.
+  if (TangoService_unlockConfig() != 0) {
+    LOGE("TangoService_unlockConfig(): Failed");
+    return false;
+  }
+  return true;
+}
+
+// Connect to Tango Service, service will start running, and
+// POSE can be queried.
+bool TangoData::Connect() {
+  if (TangoService_connect() != 0) {
+    LOGE("TangoService_connect(): Failed");
+    return false;
+  }
+  return true;
+}
+
+void TangoData::Disconnect() {
+  // Disconnect Tango Service.
+  TangoService_disconnect();
+}
+
+glm::vec3 TangoData::GetTangoPosition() {
+  return tango_position_;
+}
+
+glm::quat TangoData::GetTangoRotation() {
+  return tango_rotation_;
+}
+
+void TangoData::SetTangoPosition(glm::vec3 position) {
+  tango_position_ = position;
+}
+
+void TangoData::SetTangoRotation(glm::quat rotation) {
+  tango_rotation_ = rotation;
+}
+
+void TangoData::SetTangoPoseStatus(int status) {
+  current_pose_status_ = status;
+}
+
+int TangoData::GetTangoPoseStatus() {
+  LOGI("status: %d", current_pose_status_);
+  return current_pose_status_;
+}
