@@ -20,7 +20,7 @@ static void onXYZijAvailable(TangoXYZij* XYZ_ij) {
 
 bool TangoData::Initialize() {
   // Initialize Tango Service.
-  if (TangoService_initialize() != 0) {
+  if (TangoService_initialize() != TANGO_SUCCESS) {
     LOGE("TangoService_initialize(): Failed");
     return false;
   }
@@ -35,19 +35,19 @@ bool TangoData::SetConfig() {
   }
 
   // Get the default TangoConfig.
-  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != 0) {
+  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != TANGO_SUCCESS) {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
 
   // Enable depth.
-  if (TangoConfig_setBool(config_, "config_enable_depth", true) != 0) {
+  if (TangoConfig_setBool(config_, "config_enable_depth", true) != TANGO_SUCCESS) {
     LOGI("config_enable_depth Failed");
     return false;
   }
 
   // Attach the onXYZijAvailable callback.
-  if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != 0) {
+  if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnXYZijAvailable(): Failed");
     return false;
   }
@@ -57,7 +57,7 @@ bool TangoData::SetConfig() {
 
 bool TangoData::LockConfig() {
   // Lock in this configuration.
-  if (TangoService_lockConfig(config_) != 0) {
+  if (TangoService_lockConfig(config_) != TANGO_SUCCESS) {
     LOGE("TangoService_lockConfig(): Failed");
     return false;
   }
@@ -66,7 +66,7 @@ bool TangoData::LockConfig() {
 
 bool TangoData::UnlockConfig() {
   // Unlock current configuration.
-  if (TangoService_unlockConfig() != 0) {
+  if (TangoService_unlockConfig() != TANGO_SUCCESS) {
     LOGE("TangoService_unlockConfig(): Failed");
     return false;
   }
@@ -77,7 +77,7 @@ bool TangoData::UnlockConfig() {
 /// Note: connecting Tango service will start the motion
 /// tracking automatically.
 bool TangoData::Connect() {
-  if (TangoService_connect() != 0) {
+  if (TangoService_connect() != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
