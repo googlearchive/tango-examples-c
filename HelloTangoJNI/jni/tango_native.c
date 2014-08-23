@@ -14,7 +14,7 @@ TangoConfig* config;
 
 bool TangoInitialize() {
   // Initialize Tango Service.
-  if (TangoService_initialize() != 0) {
+  if (TangoService_initialize() != TANGO_SUCCESS) {
     LOGE("TangoService_initialize(): Failed");
     return false;
   }
@@ -40,7 +40,7 @@ bool TangoSetConfig() {
 bool TangoLockConfig()
 {
   // Lock in this configuration.
-  if (TangoService_lockConfig(config) != 0) {
+  if (TangoService_lockConfig(config) != TANGO_SUCCESS) {
     LOGE("TangoService_lockConfig(): Failed");
     return false;
   }
@@ -50,7 +50,7 @@ bool TangoLockConfig()
 bool TangoUnlockConfig()
 {
   // Unlock current configuration.
-  if (TangoService_unlockConfig() != 0) {
+  if (TangoService_unlockConfig() != TANGO_SUCCESS) {
     LOGE("TangoService_unlockConfig(): Failed");
     return false;
   }
@@ -61,7 +61,7 @@ bool TangoConnect() {
   // Connect to the Tango Service.
   // Note: connecting Tango service will start the motion
   // tracking automatically.
-  if (TangoService_connect() != 0) {
+  if (TangoService_connect() != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
