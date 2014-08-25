@@ -16,6 +16,17 @@ static void onPoseAvailable(TangoPoseData* pose) {
                 pose->orientation[1], pose->orientation[2]));
 
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+
+//  glm::vec3 euler = glm::eulerAngles(
+//      glm::quat(pose->orientation[3], pose->orientation[0],
+//                pose->orientation[1], pose->orientation[2]));
+//  LOGI("%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%4.2f", pose->translation[0],
+//       pose->translation[1], pose->translation[2], euler.x * 57.32f,
+//       euler.y * 57.32f, euler.z * 57.32f);
+//  if (pose->status_code == TANGO_POSE_INITIALIZING)
+//    LOGI("%d", 0);
+//  if (pose->status_code == TANGO_POSE_VALID)
+//    LOGI("%d", 1);
 }
 
 bool TangoData::Initialize() {

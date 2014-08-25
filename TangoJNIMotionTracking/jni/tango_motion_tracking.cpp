@@ -68,6 +68,8 @@ bool RenderFrame() {
       TangoData::GetInstance().GetTangoPosition());
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().GetTangoRotation());
+//  glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
+//    glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
