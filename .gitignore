@@ -17,3 +17,7 @@ TangoJNIPointcloud/bin
 TangoJNIPointcloud/gen
 TangoJNIPointcloud/obj
 TangoJNIPointcloud/libs
+point-cloud-jni-example/bin
+point-cloud-jni-example/gen
+point-cloud-jni-example/libs
+point-cloud-jni-example/obj

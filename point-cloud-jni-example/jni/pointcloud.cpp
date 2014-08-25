@@ -31,7 +31,7 @@ static const char kFragmentShader[] = "varying vec4 v_color;\n"
     "}\n";
 
 static const glm::mat4 inverse_z_mat = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-                                                 0.0f, 1.0f, 0.0f, 0.0f,
+                                                 0.0f, -1.0f, 0.0f, 0.0f,
                                                  0.0f, 0.0f, -1.0f, 0.0f,
                                                  0.0f, 0.0f, 0.0f, 1.0f);
 
