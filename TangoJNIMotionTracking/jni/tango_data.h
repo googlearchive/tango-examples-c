@@ -21,13 +21,16 @@ class TangoData {
 
   glm::vec3 GetTangoPosition();
   glm::quat GetTangoRotation();
+  TangoPoseStatusType GetTangoPoseStatus();
+
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
+  void SetTangoPoseStatus(TangoPoseStatusType status);
 
  private:
   glm::vec3 tango_position_;
   glm::quat tango_rotation_;
-
+  TangoPoseStatusType status_;
   TangoConfig* config_;
 };
 

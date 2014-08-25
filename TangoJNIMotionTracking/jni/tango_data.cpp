@@ -1,7 +1,9 @@
 #include "tango_data.h"
 
-TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
-  tango_rotation_(glm::quat(1.0f,0.0f,0.0f,0.0f)){
+TangoData::TangoData()
+    : config_(nullptr),
+      tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
+      tango_rotation_(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)) {
 }
 
 // This callback function is called when new POSE updates become available.
@@ -12,6 +14,8 @@ static void onPoseAvailable(TangoPoseData* pose) {
   TangoData::GetInstance().SetTangoRotation(
       glm::quat(pose->orientation[3], pose->orientation[0],
                 pose->orientation[1], pose->orientation[2]));
+
+  TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
 }
 
 bool TangoData::Initialize() {
@@ -36,7 +40,9 @@ bool TangoData::SetConfig() {
     return false;
   }
 
-  if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
+  if (TangoService_connectOnPoseAvailable(
+      TANGO_COORDINATE_FRAME_DEVICE, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      onPoseAvailable) != 0) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
@@ -91,4 +97,8 @@ void TangoData::SetTangoPosition(glm::vec3 position) {
 
 void TangoData::SetTangoRotation(glm::quat rotation) {
   tango_rotation_ = rotation;
+}
+
+void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
+  status_ = status;
 }
