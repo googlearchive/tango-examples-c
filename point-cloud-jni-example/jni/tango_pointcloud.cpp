@@ -20,7 +20,6 @@
 #include "camera.h"
 #include "grid.h"
 #include "gl_util.h"
-#include "glm.hpp"
 #include "pointcloud.h"
 #include "tango_data.h"
 
