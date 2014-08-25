@@ -21,3 +21,8 @@ point-cloud-jni-example/bin
 point-cloud-jni-example/gen
 point-cloud-jni-example/libs
 point-cloud-jni-example/obj
+hello-tango-jni-example/bin
+R.java
+hello-tango-jni-example/gen
+hello-tango-jni-example/libs
+hello-tango-jni-example/obj

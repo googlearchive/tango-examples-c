@@ -12,6 +12,13 @@
 // Tango Service.
 TangoConfig* config;
 
+static void onPoseAvailable(TangoPoseData* pose) {
+  LOGI("Position: %f, %f, %f. Orientation: %f, %f, %f, %f",
+       pose->translation[0], pose->translation[1], pose->translation[2],
+       pose->orientation[0], pose->orientation[2], pose->orientation[3],
+       pose->orientation[3]);
+}
+
 bool TangoInitialize() {
   // Initialize Tango Service.
   if (TangoService_initialize() != TANGO_SUCCESS) {
@@ -34,6 +41,13 @@ bool TangoSetConfig() {
     return false;
   }
   
+  // Set the onPoseAvailable callback fucntion.
+  if (TangoService_connectOnPoseAvailable(TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+                                          TANGO_COORDINATE_FRAME_DEVICE,
+                                          onPoseAvailable) != 0) {
+    LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
   return true;
 }
 

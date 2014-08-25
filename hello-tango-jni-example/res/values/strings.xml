@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">HelloTangoJNI</string>
-    <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-
+	<string name="main_page_string">See Logcat for pose update :D</string>
+    
 </resources>
