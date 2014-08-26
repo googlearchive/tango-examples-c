@@ -58,8 +58,8 @@ bool TangoSetConfig() {
   }
   
   // Set the onPoseAvailable callback fucntion.
-  if (TangoService_connectOnPoseAvailable(TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-                                          TANGO_COORDINATE_FRAME_DEVICE,
+  if (TangoService_connectOnPoseAvailable(TANGO_COORDINATE_FRAME_DEVICE,
+                                          TANGO_COORDINATE_FRAME_START_OF_SERVICE,
                                           onPoseAvailable) != 0) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
