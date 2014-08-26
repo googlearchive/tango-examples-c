@@ -1,4 +1,8 @@
-C-APIExample
+Project Tango C API Example Projects
+===========================================
+Copyright (C) 2014 Google Inc.
+
+<h2>Contents</h2>
 ============
 
 Example JNI projects for C-API:
