@@ -15,4 +15,4 @@ First please take a look at [our FAQ](http://stackoverflow.com/questions/tagged/
 
 If you have general APIs question related to Tango, we encourage you to post your question to our [stack overflow page](http://stackoverflow.com/questions/tagged/google-project-tango).
 
-You are also welcome to visit [Project Tango Developer website](https://developers.google.com/project-tango/). for most of the concept and general questions.
+You are also welcome to visit [Project Tango Developer website](https://developers.google.com/project-tango/) for most of the concept and general questions.
