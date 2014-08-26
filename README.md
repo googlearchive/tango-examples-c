@@ -3,7 +3,7 @@ Project Tango C API Example Projects
 Copyright (C) 2014 Google Inc.
 
 <h2>Contents</h2>
-============
+
 These are the Tango C API Example:
 * [**Getting Started**](https://github.com/ProjectTango/C-APIExample/wiki/Getting-Started:-Hello-Tango-JNI) - most basic example to explain how to compile and run the Tango C API application, with printing out pose data through Logcat.
 * [**Motion Tracking Example**](https://github.com/ProjectTango/C-APIExample/wiki/Creating-a-Motion-Tracking-Application) - example shows how to use motion tracking APIs in OpenGL ES 2.0.
