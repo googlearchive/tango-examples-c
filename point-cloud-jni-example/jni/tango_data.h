@@ -42,12 +42,14 @@ class TangoData {
   void SetDepthBuffer(float *buffer);
   int GetDepthBufferSize();
   void SetDepthBufferSize(int size);
-
- private:
+  char* GetVersonString();
+  
+private:
   TangoConfig* config_;
   double pointcloud_timestamp_;
   float* depth_data_buffer_;
   int depth_buffer_size_;
+  char* lib_version_;
 };
 
 #endif  // TANGO_DATA_H
