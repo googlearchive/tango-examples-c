@@ -1,5 +1,7 @@
 #define GLM_FORCE_RADIANS
 
+#include <jni.h>
+
 #include "axis.h"
 #include "camera.h"
 #include "frustum.h"

@@ -1,5 +1,5 @@
-#ifndef TangoData_H
-#define TangoData_H
+#ifndef Tango_Data_H
+#define Tango_Data_H
 
 #include <tango_client_api.h>
 #include "gl_util.h"
@@ -34,4 +34,4 @@ class TangoData {
   TangoConfig* config_;
 };
 
-#endif  // TangoData_H
+#endif  // Tango_Data_H
