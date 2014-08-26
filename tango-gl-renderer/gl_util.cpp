@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "gl_util.h"
 
 void GlUtil::CheckGlError(const char* operation) {
@@ -71,15 +87,8 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
 }
 
 glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
-//  glm::quat rotation_offsetX = glm::rotate(rotation, 1.57079f,
-//                                           glm::vec3(1.0f, 0.0f, 0.0f));
-//  glm::quat rotation_offsetZ = glm::rotate(rotation_offsetX, 1.57079f,
-//                                           glm::vec3(0.0f, 0.0f, -1.0f));
-//  glm::quat rotation_inversed = glm::quat(glm::inverse(rotation_offsetZ));
-//  return glm::quat(rotation_inversed.w, rotation_inversed.y,
-//                   rotation_inversed.x * -1.0f, rotation_inversed.z);
-    glm::quat rotation_offsetX = glm::rotate(rotation, float(M_PI / 2.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    return glm::quat(rotation_offsetX.w, rotation_offsetX.x, rotation_offsetX.z , rotation_offsetX.y*-1.0f);
+    glm::quat rotation_offset_x = glm::rotate(rotation, float(M_PI / 2.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+    return glm::quat(rotation_offset_x.w, rotation_offset_x.x, rotation_offset_x.z , rotation_offset_x.y*-1.0f);
 }
 
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
