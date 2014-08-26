@@ -78,7 +78,7 @@ glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
 //  glm::quat rotation_inversed = glm::quat(glm::inverse(rotation_offsetZ));
 //  return glm::quat(rotation_inversed.w, rotation_inversed.y,
 //                   rotation_inversed.x * -1.0f, rotation_inversed.z);
-    glm::quat rotation_offsetX = glm::rotate(rotation, 1.57079f, glm::vec3(-1.0f, 0.0f, 0.0f));
+    glm::quat rotation_offsetX = glm::rotate(rotation, float(M_PI / 2.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
     return glm::quat(rotation_offsetX.w, rotation_offsetX.x, rotation_offsetX.z , rotation_offsetX.y*-1.0f);
 }
 
