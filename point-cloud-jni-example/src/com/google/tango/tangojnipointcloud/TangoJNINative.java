@@ -33,8 +33,8 @@ public class TangoJNINative {
 	public static native void Render();
 
 	public static native void SetCamera(int camera_index);
-	
+
 	public static native String GetVersionNumber();
-	
+
 	public static native int GetVerticesCount();
 }

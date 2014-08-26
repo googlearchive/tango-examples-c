@@ -28,33 +28,35 @@ public class PointcloudActivity extends Activity {
 	RelativeLayout layout;
 	TextView versionText;
 	TextView verticesCountText;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		TangoJNINative.OnCreate();
-		
+
 		setContentView(R.layout.activity_pointcloud);
 		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
 		glView.setRenderer(new Renderer());
-		
+
 		versionText = (TextView) findViewById(R.id.version);
 		verticesCountText = (TextView) findViewById(R.id.vertexCount);
-		
+
 		versionText.setText(TangoJNINative.GetVersionNumber());
-		
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(true){
+				while (true) {
 					try {
 						Thread.sleep(10);
-						final int verticesCount = TangoJNINative.GetVerticesCount();
+						final int verticesCount = TangoJNINative
+								.GetVerticesCount();
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									verticesCountText.setText(String.valueOf(verticesCount));
+									verticesCountText.setText(String
+											.valueOf(verticesCount));
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -63,7 +65,7 @@ public class PointcloudActivity extends Activity {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-				}			
+				}
 			}
 		}).start();
 	}
