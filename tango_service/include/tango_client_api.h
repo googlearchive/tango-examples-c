@@ -49,7 +49,7 @@ typedef enum {
   TANGO_COORDINATE_FRAME_CAMERA_COLOR,       /**< Color camera */
   TANGO_COORDINATE_FRAME_CAMERA_DEPTH,       /**< Depth camera */
   TANGO_COORDINATE_FRAME_CAMERA_FISHEYE,     /**< Fisheye camera */
-  TANGO_MAX_COORDINATE_FRAME_TYPE            /**< Maximum allowed */red
+  TANGO_MAX_COORDINATE_FRAME_TYPE            /**< Maximum allowed */
 } TangoCoordinateFrameType;
 
 /// @brief Tango Error types.

@@ -21,7 +21,7 @@ class TangoData {
 
   glm::vec3 GetTangoPosition();
   glm::quat GetTangoRotation();
-  TangoPoseStatusType GetTangoPoseStatus();
+  char GetTangoPoseStatus();
 
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);

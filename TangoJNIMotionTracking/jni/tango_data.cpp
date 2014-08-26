@@ -102,6 +102,20 @@ glm::quat TangoData::GetTangoRotation() {
   return tango_rotation_;
 }
 
+char TangoData::GetTangoPoseStatus(){
+  switch (status_) {
+    case TANGO_POSE_INITIALIZING:
+      return 1;
+    case TANGO_POSE_VALID:
+      return 2;
+    case TANGO_POSE_INVALID:
+      return 3;
+    default:
+      return 0;
+      break;
+  }
+}
+
 void TangoData::SetTangoPosition(glm::vec3 position) {
   tango_position_ = position;
 }

@@ -169,6 +169,11 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
+
+JNIEXPORT jchar JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UpdateStatus(
+    JNIEnv* env, jobject obj) {
+  return TangoData::GetInstance().GetTangoPoseStatus();
+}
 #ifdef __cplusplus
 }
 #endif

@@ -4,17 +4,63 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.TextView;
 
 public class MotionTrackingActivity extends Activity {
 
 	MotionTrackingView motionTrackingView;
+	TextView tangoPoseStatusText;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		motionTrackingView = new MotionTrackingView(getApplication());
+		motionTrackingView = new MotionTrackingView(this);
+		tangoPoseStatusText = new TextView(this);
+
 		setContentView(motionTrackingView);
+		addContentView(tangoPoseStatusText, new LayoutParams(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT));
 		TangoJNINative.OnCreate();
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						Thread.sleep(10);
+						final byte tangoPoseStatus = TangoJNINative
+								.UpdateStatus();
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									switch (tangoPoseStatus) {
+									case 0:
+										tangoPoseStatusText.setText("Pose Status: Unknown");
+										break;
+									case 1:
+										tangoPoseStatusText.setText("Pose Status: Initializing");
+										break;
+									case 2:
+										tangoPoseStatusText.setText("Pose Status: Valid");
+										break;
+									default:
+										tangoPoseStatusText.setText("Pose Status: Invalid");
+										break;
+									}
+
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}).start();
 	}
 
 	@Override
