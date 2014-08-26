@@ -6,4 +6,6 @@
     <string name="first_person_cam">First person Camera</string>
 	<string name="third_person_cam">Third person Camera</string>
 	<string name="top_down_cam">Top down Camera</string>
+	<string name="version">Version: </string>
+	<string name="vertex_count">Vertices Count: </string>
 </resources>

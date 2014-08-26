@@ -15,34 +15,68 @@
  */
 package com.google.tango.tangojnipointcloud;
 
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.app.Activity;
 
 public class PointcloudActivity extends Activity {
-
-	PointcloudView pointcloudView;
-
+	GLSurfaceView glView;
+	RelativeLayout layout;
+	TextView versionText;
+	TextView verticesCountText;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		pointcloudView = new PointcloudView(getApplication());
-		setContentView(pointcloudView);
 		TangoJNINative.OnCreate();
+		
+		setContentView(R.layout.activity_pointcloud);
+		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
+		glView.setRenderer(new Renderer());
+		
+		versionText = (TextView) findViewById(R.id.version);
+		verticesCountText = (TextView) findViewById(R.id.vertexCount);
+		
+		versionText.setText(TangoJNINative.GetVersionNumber());
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while(true){
+					try {
+						Thread.sleep(10);
+						final int verticesCount = TangoJNINative.GetVerticesCount();
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									verticesCountText.setText(String.valueOf(verticesCount));
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}			
+			}
+		}).start();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		pointcloudView.onResume();
 		TangoJNINative.OnResume();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		pointcloudView.onPause();
 		TangoJNINative.OnPause();
 	}
 

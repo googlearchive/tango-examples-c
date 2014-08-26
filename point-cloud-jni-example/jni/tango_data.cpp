@@ -22,6 +22,7 @@ static const int kMaxVertCount = 61440;
 TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
   depth_data_buffer_ = new float[kMaxVertCount * 3];
   depth_buffer_size_ = kMaxVertCount * 3;
+  lib_version_ = new char[26];
 }
 
 /// Callback function when new XYZij data available, caller is responsible
@@ -121,6 +122,12 @@ void TangoData::SetDepthBufferSize(int size) {
   depth_buffer_size_ = size;
 }
 
+char* TangoData::GetVersonString() {
+  TangoConfig_getString(config_, "tango_service_library_version", lib_version_, 26);
+  return lib_version_;
+}
+
 TangoData::~TangoData() {
   delete[] depth_data_buffer_;
+  delete[] lib_version_;
 }

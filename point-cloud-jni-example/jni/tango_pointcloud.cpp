@@ -16,6 +16,9 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <string.h>
+#include <jni.h>
+
 #include "axis.h"
 #include "camera.h"
 #include "grid.h"
@@ -158,11 +161,22 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_S
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
+  TangoData::GetInstance().GetVersonString();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
+}
+
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetVersionNumber(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
+}
+  
+JNIEXPORT jint JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetVerticesCount(
+    JNIEnv* env, jobject obj) {
+  return TangoData::GetInstance().GetDepthBufferSize();
 }
 #ifdef __cplusplus
 }
