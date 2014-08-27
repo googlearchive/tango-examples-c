@@ -1,18 +1,5 @@
-/*
- * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2013 Motorola Mobility LLC. Part of the Trailmix project.
+// CONFIDENTIAL. AUTHORIZED USE ONLY. DO NOT REDISTRIBUTE.
 #ifndef TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
 #define TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
 
@@ -65,6 +52,13 @@ typedef enum {
   TANGO_COORDINATE_FRAME_INVALID,
   TANGO_MAX_COORDINATE_FRAME_TYPE            /**< Maximum allowed */
 } TangoCoordinateFrameType;
+
+/// @brief Tango coordinate frame pairs, since individual frames are
+/// meaningless.
+typedef struct {
+  TangoCoordinateFrameType base;
+  TangoCoordinateFrameType target;
+} TangoCoordinateFramePair;
 
 /// @brief Tango Error types.
 /// Errors less then 0 should be dealt with by the program.
@@ -120,10 +114,8 @@ typedef struct TangoPoseData {
   double translation[3];
   /// The status of the pose, according to the pose lifecycle.
   TangoPoseStatusType status_code;
-  /// The target coordinate frame.
-  TangoCoordinateFrameType target_frame;
-  /// The reference coordinate frame.
-  TangoCoordinateFrameType reference_frame;
+  /// The pair of coordinate frames.
+  TangoCoordinateFramePair frame;
   int confidence;   // Unused.  Integer levels are determined by service.
 } TangoPoseData;
 
@@ -195,6 +187,37 @@ typedef struct {
   int num_entries;
   Metadata_entry* metadata_entries;
 } Metadata_list;
+
+/// Tango Event types.
+typedef enum {
+  TANGO_EVENT_UNKNOWN,
+  TANGO_EVENT_STATUS_UPDATE,
+  TANGO_EVENT_ADF_UPDATE,
+} TangoEventType;
+
+typedef enum {
+  TANGO_STATUS_UNKNOWN,
+  TANGO_STATUS_FOV_OVER_EXPOSED,
+  TANGO_STATUS_FOV_UNDER_EXPOSED,
+  TANGO_STATUS_TOO_FEW_FEATURES_TRACKED,
+  TANGO_STATUS_COLOR_OVER_EXPOSED,
+  TANGO_STATUS_COLOR_UNDER_EXPOSED,
+  TANGO_STATUS_COUNT
+} TangoStatusType;
+
+typedef struct TangoEvent {
+  int version;
+  double timestamp;
+  TangoEventType type;
+
+  union {
+    TangoStatusType status;
+    struct {
+      TangoCoordinateFrameType target_frame;
+      TangoCoordinateFrameType reference_frame;
+    } adf;
+  } data;
+} TangoEvent;
 
 #ifdef __cplusplus
 extern "C" {
@@ -303,9 +326,7 @@ void TangoService_disconnect();
 /// for example TANGO_COORDINATE_FRAME_START_OF_SERVICE.
 /// @param TangoService_onPoseAvailable function pointer to callback function.
 int TangoService_connectOnPoseAvailable(
-    TangoCoordinateFrameType target_frame,
-    TangoCoordinateFrameType reference_frame,
-    void (*TangoService_onPoseAvailable)(TangoPoseData* pose));
+    void (*TangoService_onPoseAvailable)(const TangoPoseData* pose));
 
 /// Get a pose at a given timestamp from the reference to the target frame.
 ///
@@ -315,16 +336,18 @@ int TangoService_connectOnPoseAvailable(
 /// of the returned pose is contained in the pose output structure and may
 /// differ from the queried timestamp.
 ///
-/// @param target_frame The target frame of reference, typically
-/// TANGO_COORDINATE_FRAME_DEVICE.
-/// @param reference_frame The reference frame, for example
+/// @param frame A pair of coordinate frames of which, the target frame is
+/// typically TANGO_COORDINATE_FRAME_DEVICE and the base frame is typically
 /// TANGO_COORDINATE_FRAME_START_OF_SERVICE.
 /// @param pose The pose of target with respect to reference.  Must be
 /// allocated by the caller, and is overwritten upon return.
-int TangoService_getPoseAtTime(double timestamp,
-                               TangoCoordinateFrameType target_frame,
-                               TangoCoordinateFrameType reference_frame,
+int TangoService_getPoseAtTime(double timestamp, TangoCoordinateFramePair frame,
                                TangoPoseData* pose);
+
+/// @brief Set the list of TangoCoordinateFramePairs for the onPoseAvailable
+/// callbacks.
+int TangoService_setPoseListenerFrames(int count,
+                                       const TangoCoordinateFramePair *frames);
 /**@}*/
 
 /// @defgroup depth Tango Service: Depth Interface
@@ -335,7 +358,7 @@ int TangoService_getPoseAtTime(double timestamp,
 /// depth data is available, at an approximate nominal period given by the
 /// double key "depth_period_in_seconds".
 int TangoService_connectOnXYZijAvailable(
-    void (*TangoService_onXYZijAvailable)(TangoXYZij* xyz_ij));
+    void (*TangoService_onXYZijAvailable)(const TangoXYZij* xyz_ij));
 
 /**@}*/
 
