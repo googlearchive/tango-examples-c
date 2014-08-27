@@ -29,7 +29,7 @@ TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
 /// for allocating the memory, and the memory will be released after the
 /// callback function is over.
 /// XYZij data updates in 5Hz.
-static void onXYZijAvailable(TangoXYZij* XYZ_ij) {
+static void onXYZijAvailable(const TangoXYZij* XYZ_ij) {
   memcpy(TangoData::GetInstance().GetDepthBuffer(), XYZ_ij->xyz,
          XYZ_ij->xyz_count * 3 * sizeof(float));
   TangoData::GetInstance().SetDepthBufferSize(XYZ_ij->xyz_count * 3);
