@@ -15,7 +15,7 @@
  */
 
 #include "tango_data.h"
-
+const TangoCoordinateFramePair tango_frame_pairs_[]={{TANGO_COORDINATE_FRAME_START_OF_SERVICE,TANGO_COORDINATE_FRAME_DEVICE}};
 TangoData::TangoData()
     : config_(nullptr),
       tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -23,7 +23,7 @@ TangoData::TangoData()
 }
 
 // This callback function is called when new POSE updates become available.
-static void onPoseAvailable(TangoPoseData* pose) {
+static void onPoseAvailable(const TangoPoseData* pose) {
   TangoData::GetInstance().SetTangoPosition(
       glm::vec3(pose->translation[0], pose->translation[1],
                 pose->translation[2]));
@@ -32,6 +32,17 @@ static void onPoseAvailable(TangoPoseData* pose) {
                 pose->orientation[1], pose->orientation[2]));
 
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+
+//  glm::vec3 euler = glm::eulerAngles(
+//      glm::quat(pose->orientation[3], pose->orientation[0],
+//                pose->orientation[1], pose->orientation[2]));
+//  LOGI("%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%4.2f", pose->translation[0],
+//       pose->translation[1], pose->translation[2], euler.x * 57.32f,
+//       euler.y * 57.32f, euler.z * 57.32f);
+//  if (pose->status_code == TANGO_POSE_INITIALIZING)
+//    LOGI("%d", 0);
+//  if (pose->status_code == TANGO_POSE_VALID)
+//    LOGI("%d", 1);
 }
 
 bool TangoData::Initialize() {
@@ -56,10 +67,19 @@ bool TangoData::SetConfig() {
     return false;
   }
 
-  if (TangoService_connectOnPoseAvailable(
-      TANGO_COORDINATE_FRAME_DEVICE, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-      onPoseAvailable) != 0) {
+  if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
+
+//  std::list<TangoCoordinateFramePair> list;
+//  TangoCoordinateFramePair frame_pair;
+//  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+//  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+//  list.push_back(frame_pair);
+
+  if(TangoService_setPoseListenerFrames(1, tango_frame_pairs_)!=0){
+    LOGE("TangoService_setPoseListenerFrames(): Failed");
     return false;
   }
 
