@@ -15,7 +15,6 @@
  */
 
 #include "tango_data.h"
-const TangoCoordinateFramePair tango_frame_pairs_[]={{TANGO_COORDINATE_FRAME_START_OF_SERVICE,TANGO_COORDINATE_FRAME_DEVICE}};
 TangoData::TangoData()
     : config_(nullptr),
       tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -71,18 +70,6 @@ bool TangoData::SetConfig() {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
-
-//  std::list<TangoCoordinateFramePair> list;
-//  TangoCoordinateFramePair frame_pair;
-//  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-//  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-//  list.push_back(frame_pair);
-
-  if(TangoService_setPoseListenerFrames(1, tango_frame_pairs_)!=0){
-    LOGE("TangoService_setPoseListenerFrames(): Failed");
-    return false;
-  }
-
   return true;
 }
 
@@ -111,6 +98,15 @@ bool TangoData::Connect() {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
+
+//Set the reference frame pair after connect to service.
+  TangoCoordinateFramePair pairs;
+  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+  if (TangoService_setPoseListenerFrames(1, &pairs) != 0) {
+    LOGE("TangoService_setPoseListenerFrames(): Failed");
+    return false;
+  }
   return true;
 }
 
@@ -127,7 +123,7 @@ glm::quat TangoData::GetTangoRotation() {
   return tango_rotation_;
 }
 
-char TangoData::GetTangoPoseStatus(){
+char TangoData::GetTangoPoseStatus() {
   switch (status_) {
     case TANGO_POSE_INITIALIZING:
       return 1;
