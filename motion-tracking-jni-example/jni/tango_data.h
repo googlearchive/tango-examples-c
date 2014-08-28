@@ -48,7 +48,7 @@ class TangoData {
  private:
   glm::vec3 tango_position_;
   glm::quat tango_rotation_;
-  TangoPoseStatusType status_;
+  TangoPoseStatusType tango_pose_status_;
   TangoConfig* config_;
 };
 

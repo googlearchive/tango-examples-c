@@ -38,10 +38,6 @@ static void onPoseAvailable(const TangoPoseData* pose) {
 //  LOGI("%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%4.2f", pose->translation[0],
 //       pose->translation[1], pose->translation[2], euler.x * 57.32f,
 //       euler.y * 57.32f, euler.z * 57.32f);
-//  if (pose->status_code == TANGO_POSE_INITIALIZING)
-//    LOGI("%d", 0);
-//  if (pose->status_code == TANGO_POSE_VALID)
-//    LOGI("%d", 1);
 }
 
 bool TangoData::Initialize() {
@@ -66,6 +62,7 @@ bool TangoData::SetConfig() {
     return false;
   }
 
+  //Attach onPoseAvailable callback.
   if (TangoService_connectOnPoseAvailable(onPoseAvailable) != 0) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
@@ -99,7 +96,8 @@ bool TangoData::Connect() {
     return false;
   }
 
-//Set the reference frame pair after connect to service.
+  //Set the reference frame pair after connect to service.
+  //Currently the API will set this set below as default.
   TangoCoordinateFramePair pairs;
   pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
   pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
@@ -124,7 +122,7 @@ glm::quat TangoData::GetTangoRotation() {
 }
 
 char TangoData::GetTangoPoseStatus() {
-  switch (status_) {
+  switch (tango_pose_status_) {
     case TANGO_POSE_INITIALIZING:
       return 1;
     case TANGO_POSE_VALID:
@@ -146,5 +144,5 @@ void TangoData::SetTangoRotation(glm::quat rotation) {
 }
 
 void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
-  status_ = status;
+  tango_pose_status_ = status;
 }

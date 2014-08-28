@@ -50,6 +50,7 @@ const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
 const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
+const glm::vec3 kGridPosition = glm::vec3(0.0f, -1.67f, 0.0f);
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -80,6 +81,7 @@ bool RenderFrame() {
 
   glViewport(0, 0, screen_width, screen_height);
 
+  grid->SetPosition(kGridPosition);
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
@@ -87,7 +89,7 @@ bool RenderFrame() {
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().GetTangoRotation());
 //  glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
-//    glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
+//  glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
