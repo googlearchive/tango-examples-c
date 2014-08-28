@@ -17,6 +17,8 @@
 #ifndef Tango_Data_H
 #define Tango_Data_H
 
+#include <stdlib.h>
+#include <list>
 #include <tango_client_api.h>
 #include "gl_util.h"
 
