@@ -5,11 +5,11 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void OnCreate(int isRecording);
+	public static native void Initialize(int isRecording);
 
-	public static native void OnResume();
+	public static native void ConnectService();
 
-	public static native void OnPause();
+	public static native void DisconnectService();
 
 	public static native void OnDestroy();
 
@@ -25,6 +25,11 @@ public class TangoJNINative {
 	
 	public static native void RemoveAllAdfs();
 	
-	public static native int GetEnabledLearn();
 	public static native String GetUUID();
+	
+	public static native String GetIsEnabledLearn();
+	
+	public static native String GetIsRelocalized();
+	
+	public static native String GetPoseString(int index);
 }

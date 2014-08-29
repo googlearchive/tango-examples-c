@@ -3,7 +3,6 @@ package com.projecttango.ctangojniareadescription;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,6 +13,7 @@ import android.widget.TextView;
 public class AreaDescriptionActivity extends Activity {
 	GLSurfaceView glView;
 	RelativeLayout layout;
+	
 	TextView device2StartText;
 	TextView device2ADFText;
 	TextView start2ADFText;
@@ -21,6 +21,9 @@ public class AreaDescriptionActivity extends Activity {
 	
 	TextView learningModeText;
 	TextView uuidText;
+	TextView relocalizedText;
+	
+	Button saveADFButton;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,18 +40,13 @@ public class AreaDescriptionActivity extends Activity {
 		
 		learningModeText = (TextView) findViewById(R.id.learning_mode);
 		uuidText = (TextView) findViewById(R.id.uuid);
+		relocalizedText = (TextView) findViewById(R.id.relocalized_text);
 		
-		final Button button = (Button) findViewById(R.id.save_adf);
-		button.setOnClickListener(new View.OnClickListener() {
+		saveADFButton = (Button) findViewById(R.id.save_adf);
+		saveADFButton.setVisibility(View.GONE);
+		saveADFButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 TangoJNINative.SaveADF();
-            }
-        });
-		
-		final Button button1 = (Button) findViewById(R.id.remove_adf);
-		button1.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                TangoJNINative.RemoveAllAdfs();
             }
         });
 		
@@ -58,22 +56,22 @@ public class AreaDescriptionActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						final String d_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(0));
-						final String d_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(1));
-						final String s_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(2));
-						final String a_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(3));
+//						final String d_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(0));
+//						final String d_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(1));
+//						final String s_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(2));
+//						final String a_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(3));
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									device2StartText.setText(d_t_s);
-									device2ADFText.setText(d_t_a);
-									start2ADFText.setText(s_t_a);
-									start2ADFText.setText(a_t_s);
+									device2StartText.setText(TangoJNINative.GetPoseString(0));
+									device2ADFText.setText(TangoJNINative.GetPoseString(1));
+									start2ADFText.setText(TangoJNINative.GetPoseString(2));
+									start2ADFText.setText(TangoJNINative.GetPoseString(3));
 									
-									learningModeText.setText(String.valueOf(TangoJNINative.GetEnabledLearn()));
 									uuidText.setText(TangoJNINative.GetUUID());
-
+									learningModeText.setText(TangoJNINative.GetIsEnabledLearn());
+									relocalizedText.setText(TangoJNINative.GetIsRelocalized());
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -95,7 +93,7 @@ public class AreaDescriptionActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		TangoJNINative.OnPause();
+		TangoJNINative.DisconnectService();
 	}
 
 	protected void onDestroy() {
@@ -113,12 +111,13 @@ public class AreaDescriptionActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.load_adf:
-			TangoJNINative.OnCreate(0);
-			TangoJNINative.OnResume();
+			TangoJNINative.Initialize(0);
+			TangoJNINative.ConnectService();
 			return true;
 		case R.id.record_adf:
-			TangoJNINative.OnCreate(1);
-			TangoJNINative.OnResume();
+			TangoJNINative.Initialize(1);
+			saveADFButton.setVisibility(View.VISIBLE);
+			TangoJNINative.ConnectService();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);

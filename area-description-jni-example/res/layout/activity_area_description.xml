@@ -21,7 +21,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to start timestamp: " />
+                android:text="device with respect to start translation: " />
             <TextView
                 android:id="@+id/device_start"
                 android:layout_width="wrap_content"
@@ -36,7 +36,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to ADF timestamp: " />
+                android:text="device with respect to ADF translation: " />
             <TextView
                 android:id="@+id/device_adf"
                 android:layout_width="wrap_content"
@@ -51,7 +51,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start with respect to adf timestamp: " />
+                android:text="start with respect to adf translation: " />
             <TextView
                 android:id="@+id/start_adf"
                 android:layout_width="wrap_content"
@@ -66,7 +66,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="adf with respect to start timestamp: " />
+                android:text="adf with respect to start translation: " />
             <TextView
                 android:id="@+id/adf_start"
                 android:layout_width="wrap_content"
@@ -101,7 +101,22 @@
                 android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:text="n/a" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Relocalized: " />
+            <TextView
+                android:id="@+id/relocalized_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="n/a" />
         </LinearLayout>
     </LinearLayout>
 
@@ -113,15 +128,5 @@
      android:layout_alignParentBottom="true"
      android:layout_alignParentRight="true"
      android:text="@string/save_adf" />
-
- <Button
-     android:id="@+id/remove_adf"
-     style="?android:attr/buttonStyleSmall"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_above="@+id/save_adf"
-     android:layout_alignLeft="@+id/save_adf"
-     android:layout_alignParentRight="true"
-     android:text="Remove All ADF" />
 
 </RelativeLayout>

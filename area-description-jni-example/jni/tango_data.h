@@ -19,31 +19,26 @@ class TangoData {
   bool Connect();
   void Disconnect();
 
-  glm::vec3 GetTangoPosition();
-  glm::quat GetTangoRotation();
-  void SetTangoPosition(glm::vec3 position);
-  void SetTangoRotation(glm::quat rotation);
-  void SetTangoPoseStatus(int index, int status);
-  int GetTangoPoseStatus(int index);
   bool SaveADF();
   void RemoveAllAdfs();
   
-  double GetTimestamp(int index);
-  void SetTimestamp(int index, double time);
-  void SetUUID(char* id);
-  char* GetUUID();
-  int GetEnableLearning();
+  void LogAllUUIDs();
+  
+  // 0: device_wrt_start
+  // 1: device_wrt_adf
+  // 2: start_wrt_adf
+  // 3: adf_wrt_start
+  glm::vec3 tango_position_[4];
+  glm::quat tango_rotation_[4];
+  float current_timestamp_[4];
+  
+  bool is_learning_mode_enabled;
+  bool is_relocalized;
+  
+  char uuid_[5];
   
  private:
-  glm::vec3 tango_position_;
-  glm::quat tango_rotation_;
-
   TangoConfig* config_;
-  int current_pose_status_[3];
-  int is_recording_;
-  float current_timestamp_[4];
-  char uuid_[5];
-  int learning_mode_enabled_;
 };
 
 #endif  // TangoData_H

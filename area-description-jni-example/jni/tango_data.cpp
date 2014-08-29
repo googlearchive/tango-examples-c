@@ -1,43 +1,51 @@
 #include "tango_data.h"
 
-TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
-  tango_rotation_(glm::quat(1.0f,0.0f,0.0f,0.0f)){
-    current_pose_status_[0] = -1;
-    current_pose_status_[1] = -1;
-    current_pose_status_[2] = -1;
+TangoData::TangoData():config_(nullptr){
+  is_relocalized = false;
+  is_learning_mode_enabled = false;
+  for (int i = 0; i<4; i++) {
+    current_timestamp_[i] = 0.0;
+  }
 }
 
 // This callback function is called when new POSE updates become available.
 static void onPoseAvailable(void* context, const TangoPoseData* pose) {
-  
+  int current_index = -1;
+  // Set pose for device wrt start.
   if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE &&
-    pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
-    TangoData::GetInstance().SetTangoPosition(
-      glm::vec3(pose->translation[0], pose->translation[1],
-                pose->translation[2]));
-    TangoData::GetInstance().SetTangoRotation(
-      glm::quat(pose->orientation[3], pose->orientation[0],
-                  pose->orientation[1], pose->orientation[2]));
-    
-    TangoData::GetInstance().SetTimestamp(0, pose->timestamp);
+      pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE){
+    current_index = 0;
   }
   
+  // Set pose for device wrt ADF.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
            pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
-    TangoData::GetInstance().SetTimestamp(1, pose->timestamp);
+    current_index = 1;
+    TangoData::GetInstance().is_relocalized = true;
   }
+  // Set pose for start wrt ADF.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE &&
            pose->frame.target == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION){
-    TangoData::GetInstance().SetTangoPoseStatus(2, pose->timestamp);
+    current_index = 2;
   }
+  // Set pose for ADF wrt start.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
            pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE){
-    TangoData::GetInstance().SetTangoPoseStatus(3, pose->timestamp);
+    current_index = 3;
   }
-  else
-  {
-    //
+  else {
+    return;
   }
+  TangoData::GetInstance().tango_position_[current_index] =
+    glm::vec3(pose->translation[0], pose->translation[1],
+              pose->translation[2]);
+  
+  TangoData::GetInstance().tango_rotation_[current_index] =
+    glm::quat(pose->orientation[3], pose->orientation[0],
+              pose->orientation[1], pose->orientation[2]);
+    
+  TangoData::GetInstance().current_timestamp_[current_index] =
+    pose->timestamp;
 }
 
 bool TangoData::Initialize() {
@@ -50,8 +58,6 @@ bool TangoData::Initialize() {
 }
 
 bool TangoData::SetConfig(int is_recording) {
-  is_recording_ = is_recording;
-  
   // Allocate a TangoConfig object.
   if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
@@ -65,38 +71,27 @@ bool TangoData::SetConfig(int is_recording) {
   }
 
   // Define is recording or loading a map.
-  if (is_recording_) {
+  if (is_recording) {
+    is_learning_mode_enabled = true;
     if (TangoConfig_setBool(config_, "config_enable_learning_mode", true) != TANGO_SUCCESS) {
       LOGI("config_enable_learning_mode Failed");
       return false;
     }
-    learning_mode_enabled_ = 1;
   }
   else {
-    learning_mode_enabled_ = 0;
-    if (TangoConfig_setBool(config_, "config_enable_learning_mode", true) != TANGO_SUCCESS) {
-      LOGI("config_enable_learning_mode Failed");
-      return false;
-    }
-    
+    is_learning_mode_enabled = false;
     UUID_list uuid_list;
     TangoService_getAreaDescriptionUUIDList(&uuid_list);
-    
-    LOGI("List of maps: ");
-    for (int i = 0; i<uuid_list.count; i++) {
-      LOGI("%d: %s", i, uuid_list.uuid[i].data);
-    }
-    
     if (TangoConfig_setString(config_, "config_load_area_description_UUID",
                               uuid_list.uuid[uuid_list.count-1].data) != TANGO_SUCCESS) {
       LOGI("config_load_area_description_uuid Failed");
       return false;
     }
     LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count-1].data);
-    
-    SetUUID(uuid_list.uuid[uuid_list.count-1].data);
+    memcpy(uuid_, uuid_list.uuid[uuid_list.count-1].data, 5*sizeof(char));
   }
   
+  // Set listening pairs. Connenct pose callback.
   TangoCoordinateFramePair pairs[4] =
   {
     {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
@@ -104,7 +99,6 @@ bool TangoData::SetConfig(int is_recording) {
     {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_START_OF_SERVICE},
     {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION}
   };
-  
   if (TangoService_connectOnPoseAvailable(4, pairs, onPoseAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
@@ -137,16 +131,7 @@ bool TangoData::Connect() {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
-  
-  // Listing the maps.
-  UUID_list uuid_list;
-  TangoService_getAreaDescriptionUUIDList(&uuid_list);
-  
-  LOGI("List of maps: ");
-  for (int i = 0; i<uuid_list.count; i++) {
-    LOGI("%d: %s", i, uuid_list.uuid[i].data);
-  }
-  
+  LogAllUUIDs();
   return true;
 }
 
@@ -173,55 +158,12 @@ void TangoData::Disconnect() {
   TangoService_disconnect();
 }
 
-glm::vec3 TangoData::GetTangoPosition() {
-  return tango_position_;
-}
-
-glm::quat TangoData::GetTangoRotation() {
-  return tango_rotation_;
-}
-
-void TangoData::SetTangoPosition(glm::vec3 position) {
-  tango_position_ = position;
-}
-
-void TangoData::SetTangoRotation(glm::quat rotation) {
-  tango_rotation_ = rotation;
-}
-
-void TangoData::SetTangoPoseStatus(int index, int status) {
-  current_pose_status_[index] = status;
-}
-
-int TangoData::GetTangoPoseStatus(int index) {
-  return current_pose_status_[index];
-}
-
-double TangoData::GetTimestamp(int index)
+void TangoData::LogAllUUIDs()
 {
-  return current_timestamp_[index];
+  UUID_list uuid_list;
+  TangoService_getAreaDescriptionUUIDList(&uuid_list);
+  LOGI("List of maps: ");
+  for (int i = 0; i<uuid_list.count; i++) {
+    LOGI("%d: %s", i, uuid_list.uuid[i].data);
+  }
 }
-
-
-void TangoData::SetTimestamp(int index, double time)
-{
-  current_timestamp_[index] = time;
-}
-
-void TangoData::SetUUID(char* id)
-{
-  memcpy(uuid_, id, 5*sizeof(char));
-}
-
-char* TangoData::GetUUID()
-{
-  return uuid_;
-}
-
-int TangoData::GetEnableLearning()
-{
-  return learning_mode_enabled_;
-}
-
-
-

@@ -1,5 +1,7 @@
 #define GLM_FORCE_RADIANS
 
+#include <string>
+
 #include "axis.h"
 #include "camera.h"
 #include "frustum.h"
@@ -65,10 +67,11 @@ bool RenderFrame() {
   grid->SetPosition(glm::vec3(0.0f, -0.8f, 0.0f));
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
-      TangoData::GetInstance().GetTangoPosition());
-  glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
-      TangoData::GetInstance().GetTangoRotation());
+  int pose_index = TangoData::GetInstance().is_relocalized?1:0;
+  glm::vec3 position =
+    GlUtil::ConvertPositionToOpenGL(TangoData::GetInstance().tango_position_[pose_index]);
+  glm::quat rotation =
+    GlUtil::ConvertRotationToOpenGL(TangoData::GetInstance().tango_rotation_[pose_index]);
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
@@ -100,9 +103,8 @@ void SetCamera(int camera_index) {
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-//      cam->SetPosition(kTopDownCameraPosition);
-//      cam->SetRotation(kTopDownCameraRotation);
-      TangoData::GetInstance().SaveADF();
+      cam->SetPosition(kTopDownCameraPosition);
+      cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
     default:
@@ -113,7 +115,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnCreate(
+JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Initialize(
     JNIEnv* env, jobject obj, int isRecording) {
   LOGI("In onCreate: Initialing and setting config");
   if (!TangoData::GetInstance().Initialize())
@@ -126,7 +128,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnResume(
+JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
   if (!TangoData::GetInstance().LockConfig()) {
@@ -137,7 +139,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnPause(
+JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnPause: Unlocking config and disconnecting service");
   if (TangoData::GetInstance().UnlockConfig()) {
@@ -184,19 +186,37 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
   JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetUUID());
+  return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
 }
 
-JNIEXPORT int JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetEnabledLearn(
+JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
    JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().GetEnableLearning();
+  return (env)->NewStringUTF(
+              TangoData::GetInstance().is_learning_mode_enabled?"True":"false");
 }
   
-JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
+JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsRelocalized(
+   JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(
+              TangoData::GetInstance().is_relocalized?"True":"false");
+}
+  
+JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
     JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().GetTimestamp(index);
+  return TangoData::GetInstance().current_timestamp_[index];
 }
 
+JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
+     JNIEnv* env, jobject obj, int index) {
+  char pose[24];
+  sprintf(pose, "%4.2f, %4.2f, %4.2f",
+          TangoData::GetInstance().tango_position_[index].x,
+          TangoData::GetInstance().tango_position_[index].y,
+          TangoData::GetInstance().tango_position_[index].z);
+  
+  return (env)->NewStringUTF(pose);
+}
+  
 #ifdef __cplusplus
 }
 #endif
