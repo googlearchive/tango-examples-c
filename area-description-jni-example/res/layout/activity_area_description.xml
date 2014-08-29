@@ -21,7 +21,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device_2_start: " />
+                android:text="device with respect to start timestamp: " />
             <TextView
                 android:id="@+id/device_start"
                 android:layout_width="wrap_content"
@@ -36,7 +36,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device_2_ADF: " />
+                android:text="device with respect to ADF timestamp: " />
             <TextView
                 android:id="@+id/device_adf"
                 android:layout_width="wrap_content"
@@ -51,7 +51,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start_2_adf: " />
+                android:text="start with respect to adf timestamp: " />
             <TextView
                 android:id="@+id/start_adf"
                 android:layout_width="wrap_content"
@@ -66,7 +66,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="adf_2_start: " />
+                android:text="adf with respect to start timestamp: " />
             <TextView
                 android:id="@+id/adf_start"
                 android:layout_width="wrap_content"
