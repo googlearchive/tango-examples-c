@@ -5,7 +5,7 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void OnCreate();
+	public static native void OnCreate(int isRecording);
 
 	public static native void OnResume();
 
@@ -20,4 +20,8 @@ public class TangoJNINative {
 	public static native void SetCamera(int camera_index);
 	
 	public static native int GetCurrentStatus();
+	
+	public static native void SaveADF();
+	
+	public static native void RemoveAllAdfs();
 }

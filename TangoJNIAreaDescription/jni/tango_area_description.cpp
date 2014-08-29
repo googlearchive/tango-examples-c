@@ -34,6 +34,8 @@ const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
 
 bool SetupGraphics(int w, int h) {
+  // hack
+  TangoData::GetInstance().SetTangoPoseStatus(-1);
   LOGI("setupGraphics(%d, %d)", w, h);
 
   screen_width = w;
@@ -100,8 +102,9 @@ void SetCamera(int camera_index) {
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      cam->SetPosition(kTopDownCameraPosition);
-      cam->SetRotation(kTopDownCameraRotation);
+//      cam->SetPosition(kTopDownCameraPosition);
+//      cam->SetRotation(kTopDownCameraRotation);
+      TangoData::GetInstance().SaveADF();
       LOGI("setting to Top Down Camera");
       break;
     default:
@@ -113,13 +116,13 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnCreate(
-    JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject obj, int isRecording) {
   LOGI("In onCreate: Initialing and setting config");
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
-  if (!TangoData::GetInstance().SetConfig())
+  if (!TangoData::GetInstance().SetConfig(isRecording))
   {
     LOGE("Tango set config failed");
   }
@@ -128,10 +131,10 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
 JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnResume(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
-  if (TangoData::GetInstance().LockConfig()) {
+  if (!TangoData::GetInstance().LockConfig()) {
     LOGE("Tango lock config failed");
   }
-  if (TangoData::GetInstance().Connect()) {
+  if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
   }
 }
@@ -168,7 +171,19 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
+  
+JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
+    JNIEnv* env, jobject obj) {
+  // Save ADF.
+  TangoData::GetInstance().SaveADF();
+}
 
+JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_RemoveAllAdfs(
+    JNIEnv* env, jobject obj) {
+  // Save ADF.
+  TangoData::GetInstance().RemoveAllAdfs();
+}
+  
 JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
     JNIEnv* env, jobject obj, int camera_index) {
   return TangoData::GetInstance().GetTangoPoseStatus();

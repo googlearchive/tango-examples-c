@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <item
+<!--     <item
         android:id="@+id/action_first_camera"
         android:orderInCategory="1"
         android:showAsAction="never"
@@ -14,6 +14,17 @@
         android:id="@+id/action_top_camera"
         android:orderInCategory="3"
         android:showAsAction="never"
-        android:title="@string/top_down_cam"/>
+        android:title="@string/top_down_cam"/> -->
+        
+	<item
+        android:id="@+id/record_adf"
+        android:orderInCategory="1"
+        android:showAsAction="never"
+        android:title="@string/record_adf"/>
+    <item
+        android:id="@+id/load_adf"
+        android:orderInCategory="2"
+        android:showAsAction="never"
+        android:title="@string/load_adf"/>
 
 </menu>

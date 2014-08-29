@@ -3,16 +3,9 @@ package com.projecttango.ctangojniareadescription;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import android.content.Context;
 import android.opengl.GLSurfaceView;
 
-public class AreaDescriptionView extends GLSurfaceView {
-	public AreaDescriptionView(Context context) {
-		super(context);
-		setRenderer(new Renderer());
-	}
-
-	private static class Renderer implements GLSurfaceView.Renderer {
+public class Renderer implements GLSurfaceView.Renderer {
 		public void onDrawFrame(GL10 gl) {
 			TangoJNINative.Render();
 		}
@@ -24,5 +17,4 @@ public class AreaDescriptionView extends GLSurfaceView {
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 
 		}
-	}
 }

@@ -27,3 +27,6 @@ hello-tango-jni-example/gen
 hello-tango-jni-example/libs
 hello-tango-jni-example/obj
 >>>>>>> b9fef5ccb8f5e2828b7bcddf9784e61b60711752
+TangoJNIAreaDescription/bin
+TangoJNIAreaDescription/obj
+TangoJNIAreaDescription/libs

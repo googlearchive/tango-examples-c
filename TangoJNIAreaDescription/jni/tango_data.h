@@ -13,7 +13,7 @@ class TangoData {
   TangoData();
 
   bool Initialize();
-  bool SetConfig();
+  bool SetConfig(int is_recording);
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
@@ -25,13 +25,16 @@ class TangoData {
   void SetTangoRotation(glm::quat rotation);
   void SetTangoPoseStatus(int status);
   int GetTangoPoseStatus();
-
+  bool SaveADF();
+  void RemoveAllAdfs();
+  
  private:
   glm::vec3 tango_position_;
   glm::quat tango_rotation_;
 
   TangoConfig* config_;
   int current_pose_status_;
+  int is_recording_;
 };
 
 #endif  // TangoData_H

@@ -1,64 +1,76 @@
 package com.projecttango.ctangojniareadescription;
 
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-@SuppressLint("ResourceAsColor")
 public class AreaDescriptionActivity extends Activity {
-	AreaDescriptionView areaDescriptionView;
+	GLSurfaceView glView;
 	RelativeLayout layout;
-	TextView text;
-	
+	TextView relocalizeText;
+	TextView uuidText;
+
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		layout = new RelativeLayout(this);
-		areaDescriptionView = new AreaDescriptionView(getApplication());
+
+		setContentView(R.layout.activity_area_description);
+		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
+		glView.setRenderer(new Renderer());
+
+		relocalizeText = (TextView) findViewById(R.id.relocalizationStatus);
+		uuidText = (TextView) findViewById(R.id.adfUuid);
+
+		final Button button = (Button) findViewById(R.id.save_adf);
+		button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                TangoJNINative.SaveADF();
+            }
+        });
 		
-		text= new TextView(this);
-		text.setText("Status");
-		text.setWidth(250);
-		text.setHeight(70);
-		text.setPadding(10, 10, 10, 10);
-		text.setBackgroundColor(R.color.black);
-		
-		layout.addView(areaDescriptionView);
-		layout.addView(text);
-		
-		setContentView(layout);
-		TangoJNINative.OnCreate();
+		final Button button1 = (Button) findViewById(R.id.remove_adf);
+		button1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                TangoJNINative.RemoveAllAdfs();
+            }
+        });
 		
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(true){
+				while (true) {
 					try {
 						Thread.sleep(10);
+						final int status = TangoJNINative.GetCurrentStatus();
+						if(status == 0)
+						{
+							Log.i("jjj", "initialize");
+						}
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									String status = "";
-									int statusValue = TangoJNINative.GetCurrentStatus();
-									switch (statusValue) {
+									switch (status) {
 									case 0:
-										status = "Status: Initializing";
+										relocalizeText.setText(" TANGO_POSE_INITIALIZING");
 										break;
 									case 1:
-										status = "Status: Valid";
+										relocalizeText.setText(" TANGO_POSE_VALID");
 										break;
 									case 2:
-										status = "Status: Invalid";
+										relocalizeText.setText(" TANGO_POSE_INVALID");
 										break;
 									default:
-										status = "Status: Unknown";
+										relocalizeText.setText(" n/a");
 										break;
 									}
-									text.setText(status);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -67,7 +79,7 @@ public class AreaDescriptionActivity extends Activity {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-				}			
+				}
 			}
 		}).start();
 	}
@@ -75,14 +87,11 @@ public class AreaDescriptionActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		areaDescriptionView.onResume();
-		TangoJNINative.OnResume();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		areaDescriptionView.onPause();
 		TangoJNINative.OnPause();
 	}
 
@@ -93,7 +102,6 @@ public class AreaDescriptionActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.area_description, menu);
 		return true;
 	}
@@ -101,14 +109,13 @@ public class AreaDescriptionActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.action_first_camera:
-			TangoJNINative.SetCamera(0);
+		case R.id.load_adf:
+			TangoJNINative.OnCreate(0);
+			TangoJNINative.OnResume();
 			return true;
-		case R.id.action_third_camera:
-			TangoJNINative.SetCamera(1);
-			return true;
-		case R.id.action_top_camera:
-			TangoJNINative.SetCamera(2);
+		case R.id.record_adf:
+			TangoJNINative.OnCreate(1);
+			TangoJNINative.OnResume();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
