@@ -8,7 +8,7 @@ TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0
 }
 
 // This callback function is called when new POSE updates become available.
-static void onPoseAvailable(const TangoPoseData* pose) {
+static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   
   if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE &&
     pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
@@ -26,7 +26,7 @@ static void onPoseAvailable(const TangoPoseData* pose) {
     TangoData::GetInstance().SetTangoPoseStatus(1, pose->status_code);
   }
   else {
-    
+    //
   }
 }
 
@@ -62,18 +62,34 @@ bool TangoData::SetConfig(int is_recording) {
     }
   }
   else {
-    UUID_list uuid_list;
-    TangoService_getAreaDescriptionUUIDList(&uuid_list);
-    if (TangoConfig_setBool(config_,
-                            "config_load_area_description_uuid",
-                            uuid_list.uuid[uuid_list.count].data) != TANGO_SUCCESS) {
+    if (TangoConfig_setBool(config_, "config_enable_learning_mode", true) != TANGO_SUCCESS) {
       LOGI("config_enable_learning_mode Failed");
       return false;
     }
-    LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count].data);
+    
+    UUID_list uuid_list;
+    TangoService_getAreaDescriptionUUIDList(&uuid_list);
+    
+    LOGI("List of maps: ");
+    for (int i = 0; i<uuid_list.count; i++) {
+      LOGI("%d: %s", i, uuid_list.uuid[i].data);
+    }
+    
+    if (TangoConfig_setString(config_, "config_load_area_description_UUID",
+                              uuid_list.uuid[uuid_list.count-1].data) != TANGO_SUCCESS) {
+      LOGI("config_load_area_description_uuid Failed");
+      return false;
+    }
+    LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count-1].data);
   }
   
-  if (TangoService_connectOnPoseAvailable(onPoseAvailable) != TANGO_SUCCESS) {
+  TangoCoordinateFramePair pairs[2] =
+  {
+    {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
+    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE}
+  };
+  
+  if (TangoService_connectOnPoseAvailable(2, pairs, onPoseAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
@@ -101,30 +117,12 @@ bool TangoData::UnlockConfig() {
 // Connect to Tango Service, service will start running, and
 // POSE can be queried.
 bool TangoData::Connect() {
-  if (TangoService_connect() != TANGO_SUCCESS) {
+  if (TangoService_connect(nullptr) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
   
-  TangoCoordinateFramePair pairs[2] =
-  {
-    {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
-    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE}
-  };
-  
-//  if(is_recording_) {
-//    pairs = {TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-//             TANGO_COORDINATE_FRAME_DEVICE};
-//  }
-//  else {
-//    pairs = {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-//             TANGO_COORDINATE_FRAME_DEVICE};
-//  }
-  if (TangoService_setPoseListenerFrames(1, pairs) != TANGO_SUCCESS) {
-    LOGE("TangoService_setPoseListenerFrames(): Failed");
-    return false;
-  }
-  
+  // Listing the maps.
   UUID_list uuid_list;
   TangoService_getAreaDescriptionUUIDList(&uuid_list);
   
@@ -149,14 +147,9 @@ void TangoData::RemoveAllAdfs(){
   LOGI("Removing all ADFs");
   UUID_list uuid_list;
   TangoService_getAreaDescriptionUUIDList(&uuid_list);
-  TangoService_destroyAreaDescriptionUUIDList(&uuid_list);
-  
-  TangoService_getAreaDescriptionUUIDList(&uuid_list);
-  LOGI("List of maps: ");
-  for (int i = 0; i<uuid_list.count; i++) {
-    LOGI("%d: %s", i, uuid_list.uuid[i].data);
+  if (&uuid_list != nullptr) {
+    TangoService_destroyAreaDescriptionUUIDList(&uuid_list);
   }
-  LOGI("Removed all ADFs");
 }
 
 void TangoData::Disconnect() {

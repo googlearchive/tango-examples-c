@@ -30,3 +30,6 @@ hello-tango-jni-example/obj
 TangoJNIAreaDescription/bin
 TangoJNIAreaDescription/obj
 TangoJNIAreaDescription/libs
+area-description-jni-example/bin
+area-description-jni-example/libs
+area-description-jni-example/obj

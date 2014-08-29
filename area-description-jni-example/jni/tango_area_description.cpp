@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
-  
+
 JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
     JNIEnv* env, jobject obj) {
   // Save ADF.
