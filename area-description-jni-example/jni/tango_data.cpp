@@ -18,14 +18,24 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
     TangoData::GetInstance().SetTangoRotation(
       glm::quat(pose->orientation[3], pose->orientation[0],
                   pose->orientation[1], pose->orientation[2]));
-    TangoData::GetInstance().SetTangoPoseStatus(0, pose->status_code);
+    
+    TangoData::GetInstance().SetTimestamp(0, pose->timestamp);
   }
   
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
            pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
-    TangoData::GetInstance().SetTangoPoseStatus(1, pose->status_code);
+    TangoData::GetInstance().SetTimestamp(1, pose->timestamp);
   }
-  else {
+  else if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE &&
+           pose->frame.target == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION){
+    TangoData::GetInstance().SetTangoPoseStatus(2, pose->timestamp);
+  }
+  else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
+           pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE){
+    TangoData::GetInstance().SetTangoPoseStatus(3, pose->timestamp);
+  }
+  else
+  {
     //
   }
 }
@@ -60,8 +70,10 @@ bool TangoData::SetConfig(int is_recording) {
       LOGI("config_enable_learning_mode Failed");
       return false;
     }
+    learning_mode_enabled_ = 1;
   }
   else {
+    learning_mode_enabled_ = 0;
     if (TangoConfig_setBool(config_, "config_enable_learning_mode", true) != TANGO_SUCCESS) {
       LOGI("config_enable_learning_mode Failed");
       return false;
@@ -81,15 +93,19 @@ bool TangoData::SetConfig(int is_recording) {
       return false;
     }
     LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count-1].data);
+    
+    SetUUID(uuid_list.uuid[uuid_list.count-1].data);
   }
   
-  TangoCoordinateFramePair pairs[2] =
+  TangoCoordinateFramePair pairs[4] =
   {
     {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
-    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE}
+    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE},
+    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_START_OF_SERVICE},
+    {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION}
   };
   
-  if (TangoService_connectOnPoseAvailable(2, pairs, onPoseAvailable) != TANGO_SUCCESS) {
+  if (TangoService_connectOnPoseAvailable(4, pairs, onPoseAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
@@ -180,3 +196,32 @@ void TangoData::SetTangoPoseStatus(int index, int status) {
 int TangoData::GetTangoPoseStatus(int index) {
   return current_pose_status_[index];
 }
+
+double TangoData::GetTimestamp(int index)
+{
+  return current_timestamp_[index];
+}
+
+
+void TangoData::SetTimestamp(int index, double time)
+{
+  current_timestamp_[index] = time;
+}
+
+void TangoData::SetUUID(char* id)
+{
+  memcpy(uuid_, id, 5*sizeof(char));
+}
+
+char* TangoData::GetUUID()
+{
+  return uuid_;
+}
+
+int TangoData::GetEnableLearning()
+{
+  return learning_mode_enabled_;
+}
+
+
+

@@ -182,9 +182,19 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   TangoData::GetInstance().RemoveAllAdfs();
 }
   
-JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
+JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
+  JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetUUID());
+}
+
+JNIEXPORT int JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetEnabledLearn(
+   JNIEnv* env, jobject obj) {
+  return TangoData::GetInstance().GetEnableLearning();
+}
+  
+JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
     JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().GetTangoPoseStatus(index);
+  return TangoData::GetInstance().GetTimestamp(index);
 }
 
 #ifdef __cplusplus

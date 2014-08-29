@@ -21,9 +21,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/relocalization_status" />
+                android:text="device_2_start: " />
             <TextView
-                android:id="@+id/relocalizationStatus"
+                android:id="@+id/device_start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="" />
@@ -34,7 +34,71 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
             <TextView
-                android:id="@+id/adfUuid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="device_2_ADF: " />
+            <TextView
+                android:id="@+id/device_adf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="start_2_adf: " />
+            <TextView
+                android:id="@+id/start_adf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="adf_2_start: " />
+            <TextView
+                android:id="@+id/adf_start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Learning Mode: " />
+            <TextView
+                android:id="@+id/learning_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="UUID: " />
+            <TextView
+                android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="" />

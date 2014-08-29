@@ -14,9 +14,14 @@ import android.widget.TextView;
 public class AreaDescriptionActivity extends Activity {
 	GLSurfaceView glView;
 	RelativeLayout layout;
-	TextView relocalizeText;
+	TextView device2StartText;
+	TextView device2ADFText;
+	TextView start2ADFText;
+	TextView adf2StartText;
+	
+	TextView learningModeText;
 	TextView uuidText;
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -25,9 +30,14 @@ public class AreaDescriptionActivity extends Activity {
 		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
 		glView.setRenderer(new Renderer());
 
-		relocalizeText = (TextView) findViewById(R.id.relocalizationStatus);
-		uuidText = (TextView) findViewById(R.id.adfUuid);
-
+		device2StartText = (TextView) findViewById(R.id.device_start);
+		device2ADFText = (TextView) findViewById(R.id.device_adf);
+		start2ADFText = (TextView) findViewById(R.id.start_adf);
+		start2ADFText = (TextView) findViewById(R.id.adf_start);
+		
+		learningModeText = (TextView) findViewById(R.id.learning_mode);
+		uuidText = (TextView) findViewById(R.id.uuid);
+		
 		final Button button = (Button) findViewById(R.id.save_adf);
 		button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -48,28 +58,22 @@ public class AreaDescriptionActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						final int status = TangoJNINative.GetCurrentStatus(0);
-						final int status_adf = TangoJNINative.GetCurrentStatus(1);
-						final String s = String.valueOf(status) + String.valueOf(status_adf);
+						final String d_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(0));
+						final String d_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(1));
+						final String s_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(2));
+						final String a_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(3));
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									relocalizeText.setText(s);
-//									switch (status) {
-//									case 0:
-//										relocalizeText.setText(" TANGO_POSE_INITIALIZING");
-//										break;
-//									case 1:
-//										relocalizeText.setText(" TANGO_POSE_VALID");
-//										break;
-//									case 2:
-//										relocalizeText.setText(" TANGO_POSE_INVALID");
-//										break;
-//									default:
-//										relocalizeText.setText(" n/a");
-//										break;
-//									}
+									device2StartText.setText(d_t_s);
+									device2ADFText.setText(d_t_a);
+									start2ADFText.setText(s_t_a);
+									start2ADFText.setText(a_t_s);
+									
+									learningModeText.setText(String.valueOf(TangoJNINative.GetEnabledLearn()));
+									uuidText.setText(TangoJNINative.GetUUID());
+
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

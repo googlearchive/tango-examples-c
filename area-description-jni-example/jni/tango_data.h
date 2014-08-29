@@ -28,6 +28,12 @@ class TangoData {
   bool SaveADF();
   void RemoveAllAdfs();
   
+  double GetTimestamp(int index);
+  void SetTimestamp(int index, double time);
+  void SetUUID(char* id);
+  char* GetUUID();
+  int GetEnableLearning();
+  
  private:
   glm::vec3 tango_position_;
   glm::quat tango_rotation_;
@@ -35,6 +41,9 @@ class TangoData {
   TangoConfig* config_;
   int current_pose_status_[3];
   int is_recording_;
+  float current_timestamp_[4];
+  char uuid_[5];
+  int learning_mode_enabled_;
 };
 
 #endif  // TangoData_H
