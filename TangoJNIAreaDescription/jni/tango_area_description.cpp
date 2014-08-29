@@ -34,8 +34,6 @@ const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
 
 bool SetupGraphics(int w, int h) {
-  // hack
-  TangoData::GetInstance().SetTangoPoseStatus(-1);
   LOGI("setupGraphics(%d, %d)", w, h);
 
   screen_width = w;
@@ -185,8 +183,8 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
 }
   
 JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
-    JNIEnv* env, jobject obj, int camera_index) {
-  return TangoData::GetInstance().GetTangoPoseStatus();
+    JNIEnv* env, jobject obj, int index) {
+  return TangoData::GetInstance().GetTangoPoseStatus(index);
 }
 
 #ifdef __cplusplus

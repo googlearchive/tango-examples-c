@@ -48,29 +48,28 @@ public class AreaDescriptionActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						final int status = TangoJNINative.GetCurrentStatus();
-						if(status == 0)
-						{
-							Log.i("jjj", "initialize");
-						}
+						final int status = TangoJNINative.GetCurrentStatus(0);
+						final int status_adf = TangoJNINative.GetCurrentStatus(1);
+						final String s = String.valueOf(status) + String.valueOf(status_adf);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									switch (status) {
-									case 0:
-										relocalizeText.setText(" TANGO_POSE_INITIALIZING");
-										break;
-									case 1:
-										relocalizeText.setText(" TANGO_POSE_VALID");
-										break;
-									case 2:
-										relocalizeText.setText(" TANGO_POSE_INVALID");
-										break;
-									default:
-										relocalizeText.setText(" n/a");
-										break;
-									}
+									relocalizeText.setText(s);
+//									switch (status) {
+//									case 0:
+//										relocalizeText.setText(" TANGO_POSE_INITIALIZING");
+//										break;
+//									case 1:
+//										relocalizeText.setText(" TANGO_POSE_VALID");
+//										break;
+//									case 2:
+//										relocalizeText.setText(" TANGO_POSE_INVALID");
+//										break;
+//									default:
+//										relocalizeText.setText(" n/a");
+//										break;
+//									}
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

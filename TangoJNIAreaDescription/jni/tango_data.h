@@ -23,8 +23,8 @@ class TangoData {
   glm::quat GetTangoRotation();
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
-  void SetTangoPoseStatus(int status);
-  int GetTangoPoseStatus();
+  void SetTangoPoseStatus(int index, int status);
+  int GetTangoPoseStatus(int index);
   bool SaveADF();
   void RemoveAllAdfs();
   
@@ -33,7 +33,7 @@ class TangoData {
   glm::quat tango_rotation_;
 
   TangoConfig* config_;
-  int current_pose_status_;
+  int current_pose_status_[3];
   int is_recording_;
 };
 

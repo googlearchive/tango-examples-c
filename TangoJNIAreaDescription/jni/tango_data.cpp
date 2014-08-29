@@ -2,17 +2,32 @@
 
 TangoData::TangoData():config_(nullptr), tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
   tango_rotation_(glm::quat(1.0f,0.0f,0.0f,0.0f)){
+    current_pose_status_[0] = -1;
+    current_pose_status_[1] = -1;
+    current_pose_status_[2] = -1;
 }
 
 // This callback function is called when new POSE updates become available.
 static void onPoseAvailable(const TangoPoseData* pose) {
-  TangoData::GetInstance().SetTangoPosition(
+  
+  if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE &&
+    pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+    TangoData::GetInstance().SetTangoPosition(
       glm::vec3(pose->translation[0], pose->translation[1],
                 pose->translation[2]));
-  TangoData::GetInstance().SetTangoRotation(
+    TangoData::GetInstance().SetTangoRotation(
       glm::quat(pose->orientation[3], pose->orientation[0],
-                pose->orientation[1], pose->orientation[2]));
-  TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+                  pose->orientation[1], pose->orientation[2]));
+    TangoData::GetInstance().SetTangoPoseStatus(0, pose->status_code);
+  }
+  
+  else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
+           pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+    TangoData::GetInstance().SetTangoPoseStatus(1, pose->status_code);
+  }
+  else {
+    
+  }
 }
 
 bool TangoData::Initialize() {
@@ -91,16 +106,21 @@ bool TangoData::Connect() {
     return false;
   }
   
-  TangoCoordinateFramePair pairs;
-  if(is_recording_) {
-    pairs = {TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-             TANGO_COORDINATE_FRAME_DEVICE};
-  }
-  else {
-    pairs = {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-             TANGO_COORDINATE_FRAME_DEVICE};
-  }
-  if (TangoService_setPoseListenerFrames(1, &pairs) != TANGO_SUCCESS) {
+  TangoCoordinateFramePair pairs[2] =
+  {
+    {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
+    {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE}
+  };
+  
+//  if(is_recording_) {
+//    pairs = {TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+//             TANGO_COORDINATE_FRAME_DEVICE};
+//  }
+//  else {
+//    pairs = {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+//             TANGO_COORDINATE_FRAME_DEVICE};
+//  }
+  if (TangoService_setPoseListenerFrames(1, pairs) != TANGO_SUCCESS) {
     LOGE("TangoService_setPoseListenerFrames(): Failed");
     return false;
   }
@@ -160,10 +180,10 @@ void TangoData::SetTangoRotation(glm::quat rotation) {
   tango_rotation_ = rotation;
 }
 
-void TangoData::SetTangoPoseStatus(int status) {
-  current_pose_status_ = status;
+void TangoData::SetTangoPoseStatus(int index, int status) {
+  current_pose_status_[index] = status;
 }
 
-int TangoData::GetTangoPoseStatus() {
-  return current_pose_status_;
+int TangoData::GetTangoPoseStatus(int index) {
+  return current_pose_status_[index];
 }

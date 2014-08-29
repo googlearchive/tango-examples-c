@@ -19,7 +19,7 @@ public class TangoJNINative {
 
 	public static native void SetCamera(int camera_index);
 	
-	public static native int GetCurrentStatus();
+	public static native int GetCurrentStatus(int index);
 	
 	public static native void SaveADF();
 	
