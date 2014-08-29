@@ -95,6 +95,11 @@ bool RenderFrame() {
     cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
+    if(camera_type == TOP_DOWN){
+      cam->SetPosition(position+kTopDownCameraPosition);
+    }else{
+      cam->SetPosition(position+kThirdPersonCameraPosition);
+    }
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
@@ -116,12 +121,10 @@ void SetCamera(int camera_index) {
       LOGI("setting to First Person Camera");
       break;
     case THIRD_PERSON:
-      cam->SetPosition(kThirdPersonCameraPosition);
       cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      cam->SetPosition(kTopDownCameraPosition);
       cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
