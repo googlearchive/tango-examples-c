@@ -62,6 +62,12 @@ bool TangoData::SetConfig() {
     return false;
   }
 
+  if (TangoConfig_setBool(config_, "config_enable_auto_reset", false)
+      != TANGO_SUCCESS) {
+    LOGI("config_enable_auto_reset Disable Failed");
+    return false;
+  }
+
   //Set the reference frame pair after connect to service.
   //Currently the API will set this set below as default.
   TangoCoordinateFramePair pairs;
