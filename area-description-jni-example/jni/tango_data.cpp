@@ -57,7 +57,7 @@ bool TangoData::Initialize() {
   return true;
 }
 
-bool TangoData::SetConfig(int is_recording) {
+bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
   // Allocate a TangoConfig object.
   if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
@@ -71,15 +71,15 @@ bool TangoData::SetConfig(int is_recording) {
   }
 
   // Define is recording or loading a map.
-  if (is_recording) {
-    is_learning_mode_enabled = true;
+  if (is_learning) {
     if (TangoConfig_setBool(config_, "config_enable_learning_mode", true) != TANGO_SUCCESS) {
       LOGI("config_enable_learning_mode Failed");
       return false;
     }
   }
-  else {
-    is_learning_mode_enabled = false;
+  
+  // If load ADF, load the most recent one.
+  if (is_load_adf) {
     UUID_list uuid_list;
     TangoService_getAreaDescriptionUUIDList(&uuid_list);
     if (TangoConfig_setString(config_, "config_load_area_description_UUID",

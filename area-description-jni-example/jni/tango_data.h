@@ -13,7 +13,7 @@ class TangoData {
   TangoData();
 
   bool Initialize();
-  bool SetConfig(int is_recording);
+  bool SetConfig(bool is_learning, bool is_load_adf);
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();

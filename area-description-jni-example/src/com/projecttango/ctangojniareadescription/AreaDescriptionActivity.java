@@ -1,5 +1,6 @@
 package com.projecttango.ctangojniareadescription;
 
+import android.R.bool;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class AreaDescriptionActivity extends Activity {
 	GLSurfaceView glView;
@@ -23,7 +25,17 @@ public class AreaDescriptionActivity extends Activity {
 	TextView uuidText;
 	TextView relocalizedText;
 	
+	TextView learning_mode_toggle_button_text;
+	TextView load_adf_button_text;
+	
 	Button saveADFButton;
+	Button startButton;
+	
+	ToggleButton isUsingADFToggleButton;
+	ToggleButton isLearningToggleButton;
+	
+	boolean isUsingADF = false;
+	boolean isLearning = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,13 +54,48 @@ public class AreaDescriptionActivity extends Activity {
 		uuidText = (TextView) findViewById(R.id.uuid);
 		relocalizedText = (TextView) findViewById(R.id.relocalized_text);
 		
-		saveADFButton = (Button) findViewById(R.id.save_adf);
+		learning_mode_toggle_button_text = (TextView) findViewById(R.id.learning_mode_toggle_button_text);
+		load_adf_button_text = (TextView) findViewById(R.id.load_adf_button_text);
+		
+		saveADFButton = (Button) findViewById(R.id.save_adf_button);
 		saveADFButton.setVisibility(View.GONE);
 		saveADFButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 TangoJNINative.SaveADF();
             }
         });
+		
+		startButton = (Button) findViewById(R.id.start_button);
+		
+		startButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+            	if(isLearning)
+                {
+                	saveADFButton.setVisibility(View.VISIBLE);
+                }
+                TangoJNINative.Initialize(isLearning, isUsingADF);
+                TangoJNINative.ConnectService();
+                startButton.setVisibility(View.GONE);
+                isUsingADFToggleButton.setVisibility(View.GONE);
+                isLearningToggleButton.setVisibility(View.GONE);
+                learning_mode_toggle_button_text.setVisibility(View.GONE);
+                load_adf_button_text.setVisibility(View.GONE);
+                
+            }
+        });
+		
+		isUsingADFToggleButton = (ToggleButton)findViewById(R.id.load_adf_toggle_button);
+		isUsingADFToggleButton.setOnClickListener(new View.OnClickListener(){
+		    public void onClick(View v) {
+		    	isUsingADF = isUsingADFToggleButton.isChecked();
+            }
+		});
+		isLearningToggleButton = (ToggleButton)findViewById(R.id.learning_mode_toggle_button);
+		isLearningToggleButton.setOnClickListener(new View.OnClickListener(){
+		    public void onClick(View v) {
+		    	isLearning = isLearningToggleButton.isChecked();
+            }
+		});
 		
 		new Thread(new Runnable() {
 			@Override
@@ -70,7 +117,7 @@ public class AreaDescriptionActivity extends Activity {
 									start2ADFText.setText(TangoJNINative.GetPoseString(3));
 									
 									uuidText.setText(TangoJNINative.GetUUID());
-									learningModeText.setText(TangoJNINative.GetIsEnabledLearn());
+									learningModeText.setText(String.valueOf(isLearning));
 									relocalizedText.setText(TangoJNINative.GetIsRelocalized());
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -107,20 +154,20 @@ public class AreaDescriptionActivity extends Activity {
 		return true;
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.load_adf:
-			TangoJNINative.Initialize(0);
-			TangoJNINative.ConnectService();
-			return true;
-		case R.id.record_adf:
-			TangoJNINative.Initialize(1);
-			saveADFButton.setVisibility(View.VISIBLE);
-			TangoJNINative.ConnectService();
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		switch (item.getItemId()) {
+//		case R.id.load_adf:
+//			TangoJNINative.Initialize();
+//			TangoJNINative.ConnectService();
+//			return true;
+//		case R.id.record_adf:
+//			TangoJNINative.Initialize(1);
+//			saveADFButton.setVisibility(View.VISIBLE);
+//			TangoJNINative.ConnectService();
+//			return true;
+//		default:
+//			return super.onOptionsItemSelected(item);
+//		}
+//	}
 }

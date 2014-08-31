@@ -116,13 +116,14 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj, int isRecording) {
+    JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
+  LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
   LOGI("In onCreate: Initialing and setting config");
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
-  if (!TangoData::GetInstance().SetConfig(isRecording))
+  if (!TangoData::GetInstance().SetConfig(is_learning, is_load_adf))
   {
     LOGE("Tango set config failed");
   }

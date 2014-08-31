@@ -5,7 +5,7 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void Initialize(int isRecording);
+	public static native void Initialize(boolean isLearning, boolean isLoadedADF);
 
 	public static native void ConnectService();
 

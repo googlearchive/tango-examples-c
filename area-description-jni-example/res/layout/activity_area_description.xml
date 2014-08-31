@@ -121,12 +121,52 @@
     </LinearLayout>
 
  <Button
-     android:id="@+id/save_adf"
+     android:id="@+id/save_adf_button"
      style="?android:attr/buttonStyleSmall"
      android:layout_width="wrap_content"
      android:layout_height="wrap_content"
      android:layout_alignParentBottom="true"
      android:layout_alignParentRight="true"
      android:text="@string/save_adf" />
+
+ <TextView
+     android:id="@+id/learning_mode_toggle_button_text"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:layout_above="@+id/learning_mode_toggle_button"
+     android:text="Learning Mode" />
+
+ <ToggleButton
+     android:id="@+id/learning_mode_toggle_button"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:layout_alignParentBottom="true"
+     android:layout_alignParentLeft="true"
+     android:text="Learning Mode" />
+
+ <TextView
+     android:id="@+id/load_adf_button_text"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:layout_alignBottom="@+id/learning_mode_toggle_button_text"
+     android:layout_marginLeft="24dp"
+     android:layout_toRightOf="@+id/learning_mode_toggle_button_text"
+     android:text="Load ADF (Most recent one)" />
+
+ <ToggleButton
+     android:id="@+id/load_adf_toggle_button"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:layout_alignLeft="@+id/load_adf_button_text"
+     android:layout_alignParentBottom="true"
+     android:text="Load ADF" />
+
+ <Button
+     android:id="@+id/start_button"
+     android:layout_width="wrap_content"
+     android:layout_height="wrap_content"
+     android:layout_alignParentRight="true"
+     android:layout_alignParentTop="true"
+     android:text="Start" />
 
 </RelativeLayout>
