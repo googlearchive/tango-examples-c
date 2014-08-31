@@ -18,7 +18,7 @@
 #define Tango_Data_H
 
 #include <stdlib.h>
-#include <list>
+#include <string>
 #include <tango_client_api.h>
 #include "gl_util.h"
 
@@ -40,7 +40,7 @@ class TangoData {
   glm::vec3 GetTangoPosition();
   glm::quat GetTangoRotation();
   char GetTangoPoseStatus();
-
+  char* PoseToString();
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
   void SetTangoPoseStatus(TangoPoseStatusType status);
@@ -50,6 +50,7 @@ class TangoData {
   glm::quat tango_rotation_;
   TangoPoseStatusType tango_pose_status_;
   TangoConfig* config_;
+  char poseString_[100];
 };
 
 #endif  // Tango_Data_H
