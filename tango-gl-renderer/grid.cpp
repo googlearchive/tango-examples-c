@@ -22,10 +22,10 @@ static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "  gl_Position = mvp*vertex;\n"
     "}\n";
 
-static const char kFragmentShader[] = "void main() {\n"
-    "  // Gray color."
-    "  gl_FragColor = vec4(0.58f, 0.58f, 0.58f, 1.0f);\n"
-    "}\n";
+static const char kFragmentShader[] =
+"void main() {\n"
+"  gl_FragColor = vec4(0.85f,0.85f,0.85f,1);\n"
+"}\n";
 
 Grid::Grid(float density, int quantity) {
   // Distance between two lines is 0.2f.
