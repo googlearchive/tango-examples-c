@@ -28,9 +28,10 @@ class TangoData {
   // 1: device_wrt_adf
   // 2: start_wrt_adf
   // 3: adf_wrt_start
-  glm::vec3 tango_position_[4];
-  glm::quat tango_rotation_[4];
-  float current_timestamp_[4];
+  glm::vec3 tango_position_[3];
+  glm::quat tango_rotation_[3];
+  float current_timestamp_[3];
+  int current_pose_status_[3];
   
   bool is_learning_mode_enabled;
   bool is_relocalized;

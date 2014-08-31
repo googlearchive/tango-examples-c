@@ -184,7 +184,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   // Save ADF.
   TangoData::GetInstance().RemoveAllAdfs();
 }
-  
+
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
   JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
@@ -193,13 +193,13 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJN
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
    JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-              TangoData::GetInstance().is_learning_mode_enabled?"True":"false");
+              TangoData::GetInstance().is_learning_mode_enabled?"True":"False");
 }
   
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsRelocalized(
    JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-              TangoData::GetInstance().is_relocalized?"True":"false");
+              TangoData::GetInstance().is_relocalized?"True":"False");
 }
   
 JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
@@ -207,6 +207,11 @@ JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJN
   return TangoData::GetInstance().current_timestamp_[index];
 }
 
+JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
+    JNIEnv* env, jobject obj, int index) {
+  return TangoData::GetInstance().current_pose_status_[index];
+}
+  
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
      JNIEnv* env, jobject obj, int index) {
   char pose[24];

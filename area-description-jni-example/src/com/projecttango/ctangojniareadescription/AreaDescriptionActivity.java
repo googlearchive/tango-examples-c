@@ -4,6 +4,7 @@ import android.R.bool;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,7 +20,6 @@ public class AreaDescriptionActivity extends Activity {
 	TextView device2StartText;
 	TextView device2ADFText;
 	TextView start2ADFText;
-	TextView adf2StartText;
 	
 	TextView learningModeText;
 	TextView uuidText;
@@ -48,7 +48,6 @@ public class AreaDescriptionActivity extends Activity {
 		device2StartText = (TextView) findViewById(R.id.device_start);
 		device2ADFText = (TextView) findViewById(R.id.device_adf);
 		start2ADFText = (TextView) findViewById(R.id.start_adf);
-		start2ADFText = (TextView) findViewById(R.id.adf_start);
 		
 		learningModeText = (TextView) findViewById(R.id.learning_mode);
 		uuidText = (TextView) findViewById(R.id.uuid);
@@ -102,7 +101,7 @@ public class AreaDescriptionActivity extends Activity {
 			public void run() {
 				while (true) {
 					try {
-						Thread.sleep(10);
+						Thread.sleep(100);
 //						final String d_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(0));
 //						final String d_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(1));
 //						final String s_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(2));
@@ -111,10 +110,12 @@ public class AreaDescriptionActivity extends Activity {
 							@Override
 							public void run() {
 								try {
-									device2StartText.setText(TangoJNINative.GetPoseString(0));
-									device2ADFText.setText(TangoJNINative.GetPoseString(1));
-									start2ADFText.setText(TangoJNINative.GetPoseString(2));
-									start2ADFText.setText(TangoJNINative.GetPoseString(3));
+									device2StartText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(0)) + ", " +
+											TangoJNINative.GetPoseString(0));
+									device2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(1)) + ", " +
+											TangoJNINative.GetPoseString(1));
+									start2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(2)) + ", " +
+											TangoJNINative.GetPoseString(2));
 									
 									uuidText.setText(TangoJNINative.GetUUID());
 									learningModeText.setText(String.valueOf(isLearning));
@@ -150,10 +151,32 @@ public class AreaDescriptionActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.area_description, menu);
+//		getMenuInflater().inflate(R.menu.area_description, menu);
 		return true;
 	}
 
+	private String getStringFromPoseStatusCode(int poseStatus){
+		
+		String retString = "";
+		switch (poseStatus){
+		case 0:
+			retString = "Initializing";
+			break;
+		case 1:
+			retString = "Valid";
+			break;
+		case 2:
+			retString = "Invalid";
+			break;
+		case 3:
+			retString = "Unkown";
+			break;	
+		default:
+			retString = "N/A";
+			break;
+		}
+		return retString;
+	}
 //	@Override
 //	public boolean onOptionsItemSelected(MenuItem item) {
 //		switch (item.getItemId()) {
