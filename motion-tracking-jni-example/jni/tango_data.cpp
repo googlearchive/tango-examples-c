@@ -31,9 +31,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
                 pose->orientation[1], pose->orientation[2]));
 
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
-
-  //  LOGI("STATUS:%d",(int)TangoData::GetInstance().GetTangoPoseStatus());
-
+  LOGI("%d", (int) pose->status_code);
   //  glm::vec3 euler = glm::eulerAngles(
   //      glm::quat(pose->orientation[3], pose->orientation[0],
   //                pose->orientation[1], pose->orientation[2]));
@@ -133,14 +131,16 @@ void TangoData::SetTangoRotation(glm::quat rotation) {
 
 void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
   tango_pose_status_ = status;
+  if ((int) status < 3)
+    statusCount_[(int) status]++;
 }
 
 char* TangoData::PoseToString() {
   sprintf(
       poseString_,
-      "Position:x--%4.2f   y--%4.2f   z--%4.2f\nRotation:x--%4.3f   y--%4.3f   z--%4.3f   w--%4.3f\n",
-      tango_position_.x, tango_position_.y, tango_position_.z,
-      tango_rotation_.x, tango_rotation_.y, tango_rotation_.z,
-      tango_rotation_.w);
+      "StatusCount:Initialzing--%d   Valid--%d   Invalid--%d\nPosition:x--%4.2f   y--%4.2f   z--%4.2f\nRotation:x--%4.3f   y--%4.3f   z--%4.3f   w--%4.3f\n",
+      statusCount_[0], statusCount_[1], statusCount_[2], tango_position_.x,
+      tango_position_.y, tango_position_.z, tango_rotation_.x,
+      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w);
   return poseString_;
 }

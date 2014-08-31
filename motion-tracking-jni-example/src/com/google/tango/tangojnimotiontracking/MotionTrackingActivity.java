@@ -28,7 +28,6 @@ public class MotionTrackingActivity extends Activity {
 	MotionTrackingView motionTrackingView;
 	TextView tangoPoseStatusText;
 	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
-	int[] statusCount = { 0, 0, 0 };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +48,6 @@ public class MotionTrackingActivity extends Activity {
 						Thread.sleep(10);
 						final byte statusIndex = TangoJNINative.UpdateStatus();
 						final String tangoPoseStatusString = poseStatuses[statusIndex];
-						if (statusIndex < 3)
-							statusCount[statusIndex]++;
 						final String tangoPoseString = TangoJNINative
 								.PoseToString();
 						runOnUiThread(new Runnable() {
@@ -59,10 +56,6 @@ public class MotionTrackingActivity extends Activity {
 								try {
 									tangoPoseStatusText.setText("Pose Status: "
 											+ tangoPoseStatusString + "\n"
-											+ "StatusCount: Initializing--"
-											+ statusCount[0] + "   Valid--"
-											+ statusCount[1] + "   Invalid--"
-											+ statusCount[2] + "\n"
 											+ tangoPoseString);
 								} catch (Exception e) {
 									e.printStackTrace();
