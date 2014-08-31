@@ -102,10 +102,6 @@ public class AreaDescriptionActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(100);
-//						final String d_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(0));
-//						final String d_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(1));
-//						final String s_t_a = String.valueOf(TangoJNINative.GetCurrentTimestamp(2));
-//						final String a_t_s = String.valueOf(TangoJNINative.GetCurrentTimestamp(3));
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {

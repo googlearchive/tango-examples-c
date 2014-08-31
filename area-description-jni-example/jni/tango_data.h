@@ -36,7 +36,7 @@ class TangoData {
   bool is_learning_mode_enabled;
   bool is_relocalized;
   
-  char uuid_[5];
+  char uuid_[36];
   
  private:
   TangoConfig* config_;
