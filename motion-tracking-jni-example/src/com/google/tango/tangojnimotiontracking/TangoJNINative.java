@@ -35,6 +35,8 @@ public class TangoJNINative {
 
 	public static native void SetCamera(int camera_index);
 	
+	public static native void ResetMotionTracking();
+	
 	public static native byte UpdateStatus();
 	
 	public static native String PoseToString();

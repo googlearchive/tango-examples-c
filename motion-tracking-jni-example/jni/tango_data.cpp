@@ -100,6 +100,11 @@ bool TangoData::UnlockConfig() {
   return true;
 }
 
+void TangoData::ResetMotionTracking() {
+  // Manually reset the Motion Tracking
+  TangoService_resetMotionTracking();
+}
+
 // Connect to Tango Service, service will start running, and
 // POSE can be queried.
 bool TangoData::Connect() {

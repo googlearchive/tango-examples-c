@@ -20,7 +20,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class MotionTrackingActivity extends Activity {
@@ -29,15 +31,30 @@ public class MotionTrackingActivity extends Activity {
 	TextView tangoPoseStatusText;
 	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
 
+	Button resetButton;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		motionTrackingView = new MotionTrackingView(this);
+
 		tangoPoseStatusText = new TextView(this);
 
+		resetButton = new Button(this);
+		//resetButton.setVisibility(View.GONE);
 		setContentView(motionTrackingView);
+		resetButton.setText("Reset");
+		resetButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.ResetMotionTracking();
+			}
+		});
+
 		addContentView(tangoPoseStatusText, new LayoutParams(
 				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+		addContentView(resetButton, new LayoutParams(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT));
+		
 		TangoJNINative.OnCreate();
 
 		new Thread(new Runnable() {

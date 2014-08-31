@@ -35,6 +35,7 @@ class TangoData {
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
+  void ResetMotionTracking();
   void Disconnect();
 
   glm::vec3 GetTangoPosition();

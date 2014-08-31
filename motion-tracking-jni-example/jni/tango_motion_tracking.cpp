@@ -188,6 +188,12 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   RenderFrame();
 }
 
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ResetMotionTracking(
+    JNIEnv* env, jobject obj) {
+  TangoData::GetInstance().ResetMotionTracking();
+  LOGI("Reset Tango Motion Tracking");
+}
+
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
