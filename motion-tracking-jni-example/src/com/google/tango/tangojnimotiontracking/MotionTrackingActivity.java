@@ -27,7 +27,8 @@ public class MotionTrackingActivity extends Activity {
 
 	MotionTrackingView motionTrackingView;
 	TextView tangoPoseStatusText;
-	String[] poseStatuses = {"Initializing", "Valid", "Invalid", "Unknown"};
+	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
+	int[] statusCount = { 0, 0, 0 };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +37,8 @@ public class MotionTrackingActivity extends Activity {
 		tangoPoseStatusText = new TextView(this);
 
 		setContentView(motionTrackingView);
-		addContentView(tangoPoseStatusText, new LayoutParams(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT));
+		addContentView(tangoPoseStatusText, new LayoutParams(
+				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		TangoJNINative.OnCreate();
 
 		new Thread(new Runnable() {
@@ -46,21 +47,29 @@ public class MotionTrackingActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						final byte statusIndex = TangoJNINative
-								.UpdateStatus();
+						final byte statusIndex = TangoJNINative.UpdateStatus();
 						final String tangoPoseStatusString = poseStatuses[statusIndex];
-						final String tangoPoseString = TangoJNINative.PoseToString();
+						if (statusIndex < 3)
+							statusCount[statusIndex]++;
+						final String tangoPoseString = TangoJNINative
+								.PoseToString();
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									tangoPoseStatusText.setText("Pose Status: "+tangoPoseStatusString+"\n"+tangoPoseString);
+									tangoPoseStatusText.setText("Pose Status: "
+											+ tangoPoseStatusString + "\n"
+											+ "StatusCount: Initializing--"
+											+ statusCount[0] + "   Valid--"
+											+ statusCount[1] + "   Invalid--"
+											+ statusCount[2] + "\n"
+											+ tangoPoseString);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
 							}
 						});
-						
+
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
