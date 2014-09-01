@@ -19,6 +19,7 @@
 #define GLM_FORCE_RADIANS
 
 #include <tango_client_api.h>
+#include <sys/time.h>
 
 #include "gl_util.h"
 
@@ -44,12 +45,16 @@ class TangoData {
   void SetDepthBufferSize(int size);
   char* GetVersonString();
   
+  float average_depth;
+  float depth_fps;
+  float previous_frame_time_;
 private:
   TangoConfig* config_;
   double pointcloud_timestamp_;
   float* depth_data_buffer_;
   int depth_buffer_size_;
   char* lib_version_;
+  
 };
 
 #endif  // TANGO_DATA_H

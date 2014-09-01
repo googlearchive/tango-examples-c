@@ -38,4 +38,8 @@ public class TangoJNINative {
 	public static native String GetVersionNumber();
 
 	public static native int GetVerticesCount();
+	
+	public static native float GetAverageZ();
+	
+	public static native float GetDepthFPS();
 }
