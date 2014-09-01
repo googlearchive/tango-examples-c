@@ -49,7 +49,7 @@ bool TangoData::Initialize() {
   return true;
 }
 
-bool TangoData::SetConfig() {
+bool TangoData::SetConfig(bool isAutoReset) {
   // Allocate a TangoConfig object.
   if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
@@ -62,9 +62,12 @@ bool TangoData::SetConfig() {
     return false;
   }
 
-  if (TangoConfig_setBool(config_, "config_enable_auto_reset", false)
+  if (TangoConfig_setBool(config_, "config_enable_auto_reset", isAutoReset)
       != TANGO_SUCCESS) {
-    LOGI("config_enable_auto_reset Disable Failed");
+    if (isAutoReset)
+      LOGE("Set to Auto Reset Failed");
+    else
+      LOGE("Set Manual Reset Failed");
     return false;
   }
 
@@ -143,14 +146,14 @@ void TangoData::SetTangoRotation(glm::quat rotation) {
 void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
   tango_pose_status_ = status;
   if ((int) status < 3)
-    statusCount_[(int) status]++;
+    statusCount[(int) status]++;
 }
 
 char* TangoData::PoseToString() {
   sprintf(
       poseString_,
       "StatusCount:Initialzing--%d   Valid--%d   Invalid--%d\nPosition:x--%4.2f   y--%4.2f   z--%4.2f\nRotation:x--%4.3f   y--%4.3f   z--%4.3f   w--%4.3f\n",
-      statusCount_[0], statusCount_[1], statusCount_[2], tango_position_.x,
+      statusCount[0], statusCount[1], statusCount[2], tango_position_.x,
       tango_position_.y, tango_position_.z, tango_rotation_.x,
       tango_rotation_.y, tango_rotation_.z, tango_rotation_.w);
   return poseString_;
