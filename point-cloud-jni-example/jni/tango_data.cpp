@@ -75,6 +75,12 @@ bool TangoData::SetConfig() {
     LOGI("config_enable_depth Failed");
     return false;
   }
+  
+  // Disable motion tracking.
+  if (TangoConfig_setBool(config_, "config_enable_motion_tracking", false) != TANGO_SUCCESS) {
+    LOGI("config_disable_motion_tracking Failed");
+    return false;
+  }
 
   // Attach the onXYZijAvailable callback.
   if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != TANGO_SUCCESS) {
