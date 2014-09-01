@@ -35,7 +35,7 @@ class TangoData {
   bool Connect();
   void Disconnect();
 
-  bool SaveADF();
+  char* SaveADF();
   void RemoveAllAdfs();
 
   void LogAllUUIDs();
@@ -52,7 +52,7 @@ class TangoData {
   bool is_learning_mode_enabled;
   bool is_relocalized;
 
-  char uuid_[36];
+  char uuid_[UUID_LEN];
 
  private:
   TangoConfig* config_;

@@ -118,7 +118,7 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
       return false;
     }
     LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count - 1].data);
-    memcpy(uuid_, uuid_list.uuid[uuid_list.count - 1].data, 36 * sizeof(char));
+    memcpy(uuid_, uuid_list.uuid[uuid_list.count - 1].data, UUID_LEN * sizeof(char));
   }
 
   // Set listening pairs. Connenct pose callback.
@@ -176,13 +176,15 @@ bool TangoData::Connect() {
   return true;
 }
 
-bool TangoData::SaveADF() {
+char* TangoData::SaveADF() {
   UUID uuid;
   if (TangoService_saveAreaDescription(&uuid) != TANGO_SUCCESS) {
     LOGE("TangoService_saveAreaDescription(): Failed");
-    return false;
+    return nullptr;
   }
-  LOGI("ADF Saved, uuid: %s", uuid.data);
+  memcpy(uuid_, uuid.data, UUID_LEN * sizeof(char));
+  LOGI("ADF Saved, uuid: %s", uuid_);
+  return uuid_;
 }
 
 void TangoData::RemoveAllAdfs() {

@@ -23,6 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 public class AreaDescriptionActivity extends Activity {
@@ -74,7 +75,11 @@ public class AreaDescriptionActivity extends Activity {
 		saveADFButton.setVisibility(View.GONE);
 		saveADFButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				TangoJNINative.SaveADF();
+				String uuid = TangoJNINative.SaveADF();
+				CharSequence text = "Saved Map: " + uuid;
+				Toast toast = Toast.makeText(getApplicationContext(), text,
+						Toast.LENGTH_SHORT);
+				toast.show();
 			}
 		});
 
@@ -92,7 +97,6 @@ public class AreaDescriptionActivity extends Activity {
 				isLearningToggleButton.setVisibility(View.GONE);
 				learning_mode_toggle_button_text.setVisibility(View.GONE);
 				load_adf_button_text.setVisibility(View.GONE);
-
 			}
 		});
 

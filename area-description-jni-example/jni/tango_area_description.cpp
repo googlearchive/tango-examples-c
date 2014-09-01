@@ -189,15 +189,14 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   SetCamera(camera_index);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
+JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
     JNIEnv* env, jobject obj) {
   // Save ADF.
-  TangoData::GetInstance().SaveADF();
+  return (env)->NewStringUTF(TangoData::GetInstance().SaveADF());
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_RemoveAllAdfs(
     JNIEnv* env, jobject obj) {
-  // Save ADF.
   TangoData::GetInstance().RemoveAllAdfs();
 }
 

@@ -37,7 +37,7 @@ public class TangoJNINative {
 
 	public static native double GetCurrentTimestamp(int index);
 
-	public static native void SaveADF();
+	public static native String SaveADF();
 
 	public static native void RemoveAllAdfs();
 
