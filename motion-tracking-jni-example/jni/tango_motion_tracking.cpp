@@ -136,33 +136,37 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnCreate(
-    JNIEnv* env, jobject obj) {
-  LOGI("In onCreate: Initialing and setting config");
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Initialize(
+    JNIEnv* env, jobject obj, bool isAutoReset) {
+  if(isAutoReset){
+    LOGI("Initialize with auto reset");
+  }else{
+    LOGI("Initialize with manual reset");
+  }
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
-  if (!TangoData::GetInstance().SetConfig())
+  if (!TangoData::GetInstance().SetConfig(isAutoReset))
   {
     LOGE("Tango set config failed");
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnResume(
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
-  LOGI("In OnResume: Locking config and connecting service");
-  if (TangoData::GetInstance().LockConfig()) {
+  LOGI("ConnectService:Locking config and connecting service");
+  if (!TangoData::GetInstance().LockConfig()) {
     LOGE("Tango lock config failed");
   }
-  if (TangoData::GetInstance().Connect()) {
+  if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnPause(
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
-  LOGI("In OnPause: Unlocking config and disconnecting service");
+  LOGI("DisconectService: Unlocking config and disconnecting service");
   if (TangoData::GetInstance().UnlockConfig()) {
     LOGE("Tango unlock file failed");
   }
@@ -186,6 +190,12 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
+}
+
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ResetMotionTracking(
+    JNIEnv* env, jobject obj) {
+  TangoData::GetInstance().ResetMotionTracking();
+  LOGI("Reset Tango Motion Tracking");
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetCamera(

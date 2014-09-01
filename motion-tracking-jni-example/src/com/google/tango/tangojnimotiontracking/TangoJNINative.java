@@ -21,11 +21,11 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void OnCreate();
-
-	public static native void OnResume();
-
-	public static native void OnPause();
+	public static native void Initialize(boolean isAutoReset);
+	
+	public static native void ConnectService();
+	
+	public static native void DisconnectService();
 
 	public static native void OnDestroy();
 
@@ -34,6 +34,8 @@ public class TangoJNINative {
 	public static native void Render();
 
 	public static native void SetCamera(int camera_index);
+	
+	public static native void ResetMotionTracking();
 	
 	public static native byte UpdateStatus();
 	

@@ -31,10 +31,11 @@ class TangoData {
   TangoData();
 
   bool Initialize();
-  bool SetConfig();
+  bool SetConfig(bool isAutoReset);
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
+  void ResetMotionTracking();
   void Disconnect();
 
   glm::vec3 GetTangoPosition();
@@ -44,6 +45,7 @@ class TangoData {
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
   void SetTangoPoseStatus(TangoPoseStatusType status);
+  int statusCount[3];
 
  private:
   glm::vec3 tango_position_;

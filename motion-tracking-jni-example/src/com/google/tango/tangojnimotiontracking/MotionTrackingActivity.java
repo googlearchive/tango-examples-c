@@ -17,29 +17,78 @@
 package com.google.tango.tangojnimotiontracking;
 
 import android.app.Activity;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup.LayoutParams;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class MotionTrackingActivity extends Activity {
+	RelativeLayout layout;
 
-	MotionTrackingView motionTrackingView;
+	GLSurfaceView motionTrackingView;
 	TextView tangoPoseStatusText;
+
+	TextView isAutoResetText;
+	Button startButton;
+	Button resetButton;
+	ToggleButton isAutoResetButton;
+
 	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
-	int[] statusCount = { 0, 0, 0 };
+	boolean isAutoReset = false;
+	boolean isStarted = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		motionTrackingView = new MotionTrackingView(this);
-		tangoPoseStatusText = new TextView(this);
+		setContentView(R.layout.activity_motion_tracking);
 
-		setContentView(motionTrackingView);
-		addContentView(tangoPoseStatusText, new LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-		TangoJNINative.OnCreate();
+		motionTrackingView = (GLSurfaceView) findViewById(R.id.surfaceview);
+		motionTrackingView.setRenderer(new MotionTrackingView());
+		motionTrackingView.setVisibility(View.GONE);
+
+		isAutoResetText = (TextView) findViewById(R.id.auto_reset_text);
+
+		tangoPoseStatusText = (TextView) findViewById(R.id.debug_info);
+		tangoPoseStatusText.setVisibility(View.GONE);
+
+		resetButton = (Button) findViewById(R.id.reset);
+		isAutoResetButton = (ToggleButton) findViewById(R.id.auto_reset);
+		isAutoResetButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				isAutoReset = isAutoResetButton.isChecked();
+			}
+		});
+
+		resetButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.ResetMotionTracking();
+			}
+		});
+		resetButton.setVisibility(View.GONE);
+
+		startButton = (Button) findViewById(R.id.start);
+		startButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				startButton.setVisibility(View.GONE);
+				isAutoResetText.setVisibility(View.GONE);
+				isAutoResetButton.setVisibility(View.GONE);
+
+				tangoPoseStatusText.setVisibility(View.VISIBLE);
+				motionTrackingView.setVisibility(View.VISIBLE);
+				if (!isAutoReset) {
+					resetButton.setVisibility(View.VISIBLE);
+				}
+				System.out.println(isAutoReset);
+				TangoJNINative.Initialize(isAutoReset);
+				TangoJNINative.ConnectService();
+				isStarted = true;
+			}
+		});
 
 		new Thread(new Runnable() {
 			@Override
@@ -49,8 +98,6 @@ public class MotionTrackingActivity extends Activity {
 						Thread.sleep(10);
 						final byte statusIndex = TangoJNINative.UpdateStatus();
 						final String tangoPoseStatusString = poseStatuses[statusIndex];
-						if (statusIndex < 3)
-							statusCount[statusIndex]++;
 						final String tangoPoseString = TangoJNINative
 								.PoseToString();
 						runOnUiThread(new Runnable() {
@@ -59,10 +106,6 @@ public class MotionTrackingActivity extends Activity {
 								try {
 									tangoPoseStatusText.setText("Pose Status: "
 											+ tangoPoseStatusString + "\n"
-											+ "StatusCount: Initializing--"
-											+ statusCount[0] + "   Valid--"
-											+ statusCount[1] + "   Invalid--"
-											+ statusCount[2] + "\n"
 											+ tangoPoseString);
 								} catch (Exception e) {
 									e.printStackTrace();
@@ -81,15 +124,12 @@ public class MotionTrackingActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		motionTrackingView.onResume();
-		TangoJNINative.OnResume();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		motionTrackingView.onPause();
-		TangoJNINative.OnPause();
+		TangoJNINative.DisconnectService();
 	}
 
 	protected void onDestroy() {
@@ -99,7 +139,6 @@ public class MotionTrackingActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.motion_tracking, menu);
 		return true;
 	}
