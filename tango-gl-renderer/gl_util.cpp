@@ -87,8 +87,18 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
 }
 
 glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
-    glm::quat rotation_offset_x = glm::rotate(rotation, float(M_PI / 2.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    return glm::quat(rotation_offset_x.w, rotation_offset_x.x, rotation_offset_x.z , rotation_offset_x.y*-1.0f);
+//Direct conversion in quaternion will be provided.
+    float conversionArray[16] = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f,-1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    glm::mat4 conversionMatrix;
+    memcpy(glm::value_ptr(conversionMatrix), conversionArray, sizeof(conversionArray));
+    
+    glm::mat4 resultMatrix= conversionMatrix*glm::mat4_cast(rotation);
+    return glm::quat_cast(resultMatrix);
 }
 
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
