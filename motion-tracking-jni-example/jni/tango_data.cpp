@@ -31,6 +31,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
                 pose->orientation[1], pose->orientation[2]));
 
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+  TangoData::GetInstance().timestamp = pose->timestamp;
   LOGI("%d", (int) pose->status_code);
   //  glm::vec3 euler = glm::eulerAngles(
   //      glm::quat(pose->orientation[3], pose->orientation[0],
@@ -50,6 +51,7 @@ bool TangoData::Initialize() {
 }
 
 bool TangoData::SetConfig(bool isAutoReset) {
+  isMTAutoReset = isAutoReset;
   // Allocate a TangoConfig object.
   if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
@@ -62,9 +64,9 @@ bool TangoData::SetConfig(bool isAutoReset) {
     return false;
   }
 
-  if (TangoConfig_setBool(config_, "config_enable_auto_reset", isAutoReset)
+  if (TangoConfig_setBool(config_, "config_enable_auto_reset", isMTAutoReset)
       != TANGO_SUCCESS) {
-    if (isAutoReset)
+    if (isMTAutoReset)
       LOGE("Set to Auto Reset Failed");
     else
       LOGE("Set Manual Reset Failed");
@@ -152,9 +154,9 @@ void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
 char* TangoData::PoseToString() {
   sprintf(
       poseString_,
-      "StatusCount:Initialzing--%d   Valid--%d   Invalid--%d\nPosition:x--%4.2f   y--%4.2f   z--%4.2f\nRotation:x--%4.3f   y--%4.3f   z--%4.3f   w--%4.3f\n",
+      "StatusCount(frame)   Initialzing:%d   Valid:%d   Invalid:%d\nPosition(meter)   x:%4.2f   y:%4.2f   z:%4.2f\nRotation(quat)   x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nTimestamp: %f",
       statusCount[0], statusCount[1], statusCount[2], tango_position_.x,
       tango_position_.y, tango_position_.z, tango_rotation_.x,
-      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w);
+      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp);
   return poseString_;
 }
