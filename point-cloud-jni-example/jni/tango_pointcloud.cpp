@@ -178,6 +178,16 @@ JNIEXPORT jint JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_G
     JNIEnv* env, jobject obj) {
   return TangoData::GetInstance().GetDepthBufferSize();
 }
+
+JNIEXPORT float JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetAverageZ(
+     JNIEnv* env, jobject obj) {
+  return TangoData::GetInstance().average_depth;
+}
+  
+JNIEXPORT float JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetDepthFPS(
+     JNIEnv* env, jobject obj) {
+  return TangoData::GetInstance().depth_fps;
+}
 #ifdef __cplusplus
 }
 #endif
