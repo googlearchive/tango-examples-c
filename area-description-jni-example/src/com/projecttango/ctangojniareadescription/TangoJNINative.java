@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnipointcloud;
+package com.projecttango.ctangojniareadescription;
 
 public class TangoJNINative {
 	static {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void OnCreate();
+	public static native void Initialize(boolean isLearning, boolean isLoadedADF);
 
-	public static native void OnResume();
+	public static native void ConnectService();
 
-	public static native void OnPause();
+	public static native void DisconnectService();
 
 	public static native void OnDestroy();
 
@@ -35,11 +35,19 @@ public class TangoJNINative {
 
 	public static native void SetCamera(int camera_index);
 
-	public static native String GetVersionNumber();
+	public static native double GetCurrentTimestamp(int index);
 
-	public static native int GetVerticesCount();
-	
-	public static native float GetAverageZ();
-	
-	public static native float GetDepthFPS();
+	public static native void SaveADF();
+
+	public static native void RemoveAllAdfs();
+
+	public static native String GetUUID();
+
+	public static native String GetIsEnabledLearn();
+
+	public static native String GetIsRelocalized();
+
+	public static native String GetPoseString(int index);
+
+	public static native int GetCurrentStatus(int index);
 }

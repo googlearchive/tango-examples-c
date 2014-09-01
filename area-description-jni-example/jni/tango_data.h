@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_DATA_H
-#define TANGO_DATA_H
-#define GLM_FORCE_RADIANS
+#ifndef TangoData_H
+#define TangoData_H
 
 #include <tango_client_api.h>
-#include <sys/time.h>
-
 #include "gl_util.h"
 
 class TangoData {
@@ -30,31 +27,35 @@ class TangoData {
     return instance;
   }
   TangoData();
-  ~TangoData();
 
   bool Initialize();
-  bool SetConfig();
+  bool SetConfig(bool is_learning, bool is_load_adf);
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
   void Disconnect();
 
-  float* GetDepthBuffer();
-  void SetDepthBuffer(float *buffer);
-  int GetDepthBufferSize();
-  void SetDepthBufferSize(int size);
-  char* GetVersonString();
-  
-  float average_depth;
-  float depth_fps;
-  float previous_frame_time_;
-private:
+  bool SaveADF();
+  void RemoveAllAdfs();
+
+  void LogAllUUIDs();
+
+  // 0: device_wrt_start
+  // 1: device_wrt_adf
+  // 2: start_wrt_adf
+  // 3: adf_wrt_start
+  glm::vec3 tango_position_[4];
+  glm::quat tango_rotation_[4];
+  float current_timestamp_[4];
+  int current_pose_status_[4];
+
+  bool is_learning_mode_enabled;
+  bool is_relocalized;
+
+  char uuid_[36];
+
+ private:
   TangoConfig* config_;
-  double pointcloud_timestamp_;
-  float* depth_data_buffer_;
-  int depth_buffer_size_;
-  char* lib_version_;
-  
 };
 
-#endif  // TANGO_DATA_H
+#endif  // TangoData_H

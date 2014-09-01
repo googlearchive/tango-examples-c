@@ -8,4 +8,6 @@
 	<string name="top_down_cam">Top down Camera</string>
 	<string name="version">Version: </string>
 	<string name="vertex_count">Vertices Count: </string>
+	<string name="average_distance">Average Distance: </string>
+	<string name="delta_time">Depth FPS: </string>
 </resources>

@@ -30,9 +30,22 @@ TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
 /// callback function is over.
 /// XYZij data updates in 5Hz.
 static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
+  float total_z = 0.0f;
+  int vertices_count = XYZ_ij->xyz_count;
+  for (int i = 0; i < vertices_count; i++) {
+    total_z += XYZ_ij->xyz[i][2];
+  }
   memcpy(TangoData::GetInstance().GetDepthBuffer(), XYZ_ij->xyz,
-         XYZ_ij->xyz_count * 3 * sizeof(float));
-  TangoData::GetInstance().SetDepthBufferSize(XYZ_ij->xyz_count * 3);
+         vertices_count * 3 * sizeof(float));
+  TangoData::GetInstance().SetDepthBufferSize(vertices_count * 3);
+  TangoData::GetInstance().average_depth = total_z/(float)vertices_count;\
+  
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  float current_frame_time = (float)((time.tv_sec * 1000) + (time.tv_usec / 1000));
+  TangoData::GetInstance().depth_fps = 1000.0f/
+    (current_frame_time - TangoData::GetInstance().previous_frame_time_);
+  TangoData::GetInstance().previous_frame_time_ = current_frame_time;
 }
 
 bool TangoData::Initialize() {

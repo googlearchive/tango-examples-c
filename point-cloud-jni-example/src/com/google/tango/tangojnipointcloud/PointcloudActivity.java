@@ -29,6 +29,8 @@ public class PointcloudActivity extends Activity {
 	RelativeLayout layout;
 	TextView versionText;
 	TextView verticesCountText;
+	TextView averageZText;
+	TextView deltaTimeText;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,8 @@ public class PointcloudActivity extends Activity {
 
 		versionText = (TextView) findViewById(R.id.version);
 		verticesCountText = (TextView) findViewById(R.id.vertexCount);
+		averageZText = (TextView) findViewById(R.id.averageZ);
+		deltaTimeText = (TextView) findViewById(R.id.deltaTime);
 
 		versionText.setText(TangoJNINative.GetVersionNumber());
 
@@ -58,6 +62,11 @@ public class PointcloudActivity extends Activity {
 								try {
 									verticesCountText.setText(String
 											.valueOf(verticesCount));
+									averageZText.setText(String
+											.valueOf(TangoJNINative
+													.GetAverageZ()));
+									deltaTimeText.setText(String.valueOf(TangoJNINative
+											.GetDepthFPS()));
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
