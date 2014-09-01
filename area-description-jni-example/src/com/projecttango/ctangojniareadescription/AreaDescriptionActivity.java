@@ -1,12 +1,24 @@
+/*
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.projecttango.ctangojniareadescription;
 
-import android.R.bool;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -16,27 +28,28 @@ import android.widget.ToggleButton;
 public class AreaDescriptionActivity extends Activity {
 	GLSurfaceView glView;
 	RelativeLayout layout;
-	
+
 	TextView device2StartText;
 	TextView device2ADFText;
 	TextView start2ADFText;
-	
+	TextView start2PrePoseText;
+
 	TextView learningModeText;
 	TextView uuidText;
 	TextView relocalizedText;
-	
+
 	TextView learning_mode_toggle_button_text;
 	TextView load_adf_button_text;
-	
+
 	Button saveADFButton;
 	Button startButton;
-	
+
 	ToggleButton isUsingADFToggleButton;
 	ToggleButton isLearningToggleButton;
-	
+
 	boolean isUsingADF = false;
 	boolean isLearning = false;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -48,54 +61,54 @@ public class AreaDescriptionActivity extends Activity {
 		device2StartText = (TextView) findViewById(R.id.device_start);
 		device2ADFText = (TextView) findViewById(R.id.device_adf);
 		start2ADFText = (TextView) findViewById(R.id.start_adf);
-		
+		start2PrePoseText = (TextView) findViewById(R.id.start_prepose);
+
 		learningModeText = (TextView) findViewById(R.id.learning_mode);
 		uuidText = (TextView) findViewById(R.id.uuid);
 		relocalizedText = (TextView) findViewById(R.id.relocalized_text);
-		
+
 		learning_mode_toggle_button_text = (TextView) findViewById(R.id.learning_mode_toggle_button_text);
 		load_adf_button_text = (TextView) findViewById(R.id.load_adf_button_text);
-		
+
 		saveADFButton = (Button) findViewById(R.id.save_adf_button);
 		saveADFButton.setVisibility(View.GONE);
 		saveADFButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                TangoJNINative.SaveADF();
-            }
-        });
-		
+			public void onClick(View v) {
+				TangoJNINative.SaveADF();
+			}
+		});
+
 		startButton = (Button) findViewById(R.id.start_button);
-		
+
 		startButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-            	if(isLearning)
-                {
-                	saveADFButton.setVisibility(View.VISIBLE);
-                }
-                TangoJNINative.Initialize(isLearning, isUsingADF);
-                TangoJNINative.ConnectService();
-                startButton.setVisibility(View.GONE);
-                isUsingADFToggleButton.setVisibility(View.GONE);
-                isLearningToggleButton.setVisibility(View.GONE);
-                learning_mode_toggle_button_text.setVisibility(View.GONE);
-                load_adf_button_text.setVisibility(View.GONE);
-                
-            }
-        });
-		
-		isUsingADFToggleButton = (ToggleButton)findViewById(R.id.load_adf_toggle_button);
-		isUsingADFToggleButton.setOnClickListener(new View.OnClickListener(){
-		    public void onClick(View v) {
-		    	isUsingADF = isUsingADFToggleButton.isChecked();
-            }
+			public void onClick(View v) {
+				if (isLearning) {
+					saveADFButton.setVisibility(View.VISIBLE);
+				}
+				TangoJNINative.Initialize(isLearning, isUsingADF);
+				TangoJNINative.ConnectService();
+				startButton.setVisibility(View.GONE);
+				isUsingADFToggleButton.setVisibility(View.GONE);
+				isLearningToggleButton.setVisibility(View.GONE);
+				learning_mode_toggle_button_text.setVisibility(View.GONE);
+				load_adf_button_text.setVisibility(View.GONE);
+
+			}
 		});
-		isLearningToggleButton = (ToggleButton)findViewById(R.id.learning_mode_toggle_button);
-		isLearningToggleButton.setOnClickListener(new View.OnClickListener(){
-		    public void onClick(View v) {
-		    	isLearning = isLearningToggleButton.isChecked();
-            }
+
+		isUsingADFToggleButton = (ToggleButton) findViewById(R.id.load_adf_toggle_button);
+		isUsingADFToggleButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				isUsingADF = isUsingADFToggleButton.isChecked();
+			}
 		});
-		
+		isLearningToggleButton = (ToggleButton) findViewById(R.id.learning_mode_toggle_button);
+		isLearningToggleButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				isLearning = isLearningToggleButton.isChecked();
+			}
+		});
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -106,16 +119,28 @@ public class AreaDescriptionActivity extends Activity {
 							@Override
 							public void run() {
 								try {
-									device2StartText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(0)) + ", " +
-											TangoJNINative.GetPoseString(0));
-									device2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(1)) + ", " +
-											TangoJNINative.GetPoseString(1));
-									start2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative.GetCurrentStatus(2)) + ", " +
-											TangoJNINative.GetPoseString(2));
-									
+									device2StartText.setText(getStringFromPoseStatusCode(TangoJNINative
+											.GetCurrentStatus(0))
+											+ ", "
+											+ TangoJNINative.GetPoseString(0));
+									device2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative
+											.GetCurrentStatus(1))
+											+ ", "
+											+ TangoJNINative.GetPoseString(1));
+									start2ADFText.setText(getStringFromPoseStatusCode(TangoJNINative
+											.GetCurrentStatus(2))
+											+ ", "
+											+ TangoJNINative.GetPoseString(2));
+									start2PrePoseText.setText(getStringFromPoseStatusCode(TangoJNINative
+											.GetCurrentStatus(2))
+											+ ", "
+											+ TangoJNINative.GetPoseString(3));
+
 									uuidText.setText(TangoJNINative.GetUUID());
-									learningModeText.setText(String.valueOf(isLearning));
-									relocalizedText.setText(TangoJNINative.GetIsRelocalized());
+									learningModeText.setText(String
+											.valueOf(isLearning));
+									relocalizedText.setText(TangoJNINative
+											.GetIsRelocalized());
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -145,16 +170,10 @@ public class AreaDescriptionActivity extends Activity {
 		TangoJNINative.OnDestroy();
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-//		getMenuInflater().inflate(R.menu.area_description, menu);
-		return true;
-	}
+	private String getStringFromPoseStatusCode(int poseStatus) {
 
-	private String getStringFromPoseStatusCode(int poseStatus){
-		
 		String retString = "";
-		switch (poseStatus){
+		switch (poseStatus) {
 		case 0:
 			retString = "Initializing";
 			break;
@@ -166,27 +185,11 @@ public class AreaDescriptionActivity extends Activity {
 			break;
 		case 3:
 			retString = "Unkown";
-			break;	
+			break;
 		default:
 			retString = "N/A";
 			break;
 		}
 		return retString;
 	}
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		switch (item.getItemId()) {
-//		case R.id.load_adf:
-//			TangoJNINative.Initialize();
-//			TangoJNINative.ConnectService();
-//			return true;
-//		case R.id.record_adf:
-//			TangoJNINative.Initialize(1);
-//			saveADFButton.setVisibility(View.VISIBLE);
-//			TangoJNINative.ConnectService();
-//			return true;
-//		default:
-//			return super.onOptionsItemSelected(item);
-//		}
-//	}
 }

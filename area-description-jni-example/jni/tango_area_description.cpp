@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #define GLM_FORCE_RADIANS
 
 #include <string>
@@ -67,11 +83,11 @@ bool RenderFrame() {
   grid->SetPosition(glm::vec3(0.0f, -0.8f, 0.0f));
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  int pose_index = TangoData::GetInstance().is_relocalized?1:0;
-  glm::vec3 position =
-    GlUtil::ConvertPositionToOpenGL(TangoData::GetInstance().tango_position_[pose_index]);
-  glm::quat rotation =
-    GlUtil::ConvertRotationToOpenGL(TangoData::GetInstance().tango_rotation_[pose_index]);
+  int pose_index = TangoData::GetInstance().is_relocalized ? 1 : 0;
+  glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
+      TangoData::GetInstance().tango_position_[pose_index]);
+  glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
+      TangoData::GetInstance().tango_rotation_[pose_index]);
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
@@ -186,22 +202,22 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
-  JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
-   JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-              TangoData::GetInstance().is_learning_mode_enabled?"True":"False");
+      TangoData::GetInstance().is_learning_mode_enabled ? "True" : "False");
 }
-  
+
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsRelocalized(
-   JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-              TangoData::GetInstance().is_relocalized?"True":"False");
+      TangoData::GetInstance().is_relocalized ? "True" : "False");
 }
-  
+
 JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
     JNIEnv* env, jobject obj, int index) {
   return TangoData::GetInstance().current_timestamp_[index];
@@ -211,18 +227,18 @@ JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
     JNIEnv* env, jobject obj, int index) {
   return TangoData::GetInstance().current_pose_status_[index];
 }
-  
+
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
-     JNIEnv* env, jobject obj, int index) {
+    JNIEnv* env, jobject obj, int index) {
   char pose[24];
   sprintf(pose, "%4.2f, %4.2f, %4.2f",
           TangoData::GetInstance().tango_position_[index].x,
           TangoData::GetInstance().tango_position_[index].y,
           TangoData::GetInstance().tango_position_[index].z);
-  
+
   return (env)->NewStringUTF(pose);
 }
-  
+
 #ifdef __cplusplus
 }
 #endif
