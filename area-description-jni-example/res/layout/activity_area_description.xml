@@ -40,7 +40,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/device_wrt_start" />
+                android:text="@string/device_wrt_adf" />
 
             <TextView
                 android:id="@+id/device_adf"
