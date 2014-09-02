@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.ctangojniareadescription;
+package com.projecttango.areadescriptionnative;
 
 public class TangoJNINative {
 	static {

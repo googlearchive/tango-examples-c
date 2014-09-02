@@ -134,7 +134,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Initialize(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
     JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
   LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
   LOGI("In onCreate: Initialing and setting config");
@@ -148,7 +148,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_ConnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
   if (!TangoData::GetInstance().LockConfig()) {
@@ -159,7 +159,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_DisconnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnPause: Unlocking config and disconnecting service");
   if (TangoData::GetInstance().UnlockConfig()) {
@@ -168,7 +168,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnDestroy(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
   delete cam;
   delete axis;
@@ -177,44 +177,44 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   delete trace;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SetupGraphic(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupGraphic(
     JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Render(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SetCamera(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(
     JNIEnv* env, jobject obj) {
   // Save ADF.
   return (env)->NewStringUTF(TangoData::GetInstance().SaveADF());
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_RemoveAllAdfs(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_RemoveAllAdfs(
     JNIEnv* env, jobject obj) {
   TangoData::GetInstance().RemoveAllAdfs();
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetIsEnabledLearn(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
       TangoData::GetInstance().is_learning_mode_enabled ? "Enabled" : "Disable");
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj, int index) {
   char pose_string[100];
   char status[30];
