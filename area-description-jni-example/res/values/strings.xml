@@ -4,9 +4,9 @@
     <string name="app_name">TangoJNIAreaDescription</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-	<string name="first_person_cam">First person Camera</string>
-	<string name="third_person_cam">Third person Camera</string>
-	<string name="top_down_cam">Top down Camera</string>
+	<string name="first_person_cam">First Person</string>
+	<string name="third_person_cam">Third Person</string>
+	<string name="top_down_cam">Top Down</string>
 	<string name="relocalization_status">Relocalization Status: </string>
 	<string name="adf_uuid">ADF UUID: </string>
 	<string name="record_adf">Record ADF</string>

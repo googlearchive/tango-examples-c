@@ -42,6 +42,8 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
       && pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE) {
     current_index = 2;
+    LOGI("%d", (int)pose
+         ->status_code);
   }
   // Set pose for device wrt previous pose.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE

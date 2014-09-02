@@ -47,10 +47,9 @@ int camera_type;
 const glm::vec3 kThirdPersonCameraPosition = glm::vec3(0.0f, 3.0f, 3.0f);
 const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
                                                        0.0f, 0.0f);
-const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 10.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
-
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
 
@@ -90,10 +89,15 @@ bool RenderFrame() {
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().tango_rotation[pose_index]);
 
+  cam->SetPosition(position);
   if (camera_type == FIRST_PERSON) {
-    cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
+    if(camera_type == TOP_DOWN){
+      cam->SetPosition(position+kTopDownCameraPosition);
+    }else{
+      cam->SetPosition(position+kThirdPersonCameraPosition);
+    }
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
@@ -115,12 +119,10 @@ void SetCamera(int camera_index) {
       LOGI("setting to First Person Camera");
       break;
     case THIRD_PERSON:
-      cam->SetPosition(kThirdPersonCameraPosition);
       cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      cam->SetPosition(kTopDownCameraPosition);
       cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;

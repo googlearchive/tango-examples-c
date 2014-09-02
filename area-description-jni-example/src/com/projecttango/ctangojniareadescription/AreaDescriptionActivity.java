@@ -39,7 +39,10 @@ public class AreaDescriptionActivity extends Activity {
 
 	Button saveADFButton;
 	Button startButton;
-
+	Button firstPersonCamButton;
+	Button thirdPersonCamButton;
+	Button topDownCamButton;
+	
 	ToggleButton isUsingADFToggleButton;
 	ToggleButton isLearningToggleButton;
 
@@ -74,7 +77,6 @@ public class AreaDescriptionActivity extends Activity {
 		});
 
 		startButton = (Button) findViewById(R.id.start_button);
-
 		startButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				if (isLearning) {
@@ -88,6 +90,25 @@ public class AreaDescriptionActivity extends Activity {
 			}
 		});
 
+		firstPersonCamButton = (Button) findViewById(R.id.first_person_cam_btn);
+		firstPersonCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(0);
+			}
+		});
+		thirdPersonCamButton = (Button) findViewById(R.id.third_poerson_cam_btn);
+		thirdPersonCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(1);
+			}
+		});
+		topDownCamButton = (Button) findViewById(R.id.top_down_cam_btn);
+		topDownCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(2);
+			}
+		});
+		
 		isUsingADFToggleButton = (ToggleButton) findViewById(R.id.load_adf_toggle_button);
 		isUsingADFToggleButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {

@@ -118,6 +118,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/top_down_cam_btn"
         android:textOff="@string/load_adf_btn_off"
         android:textOn="@string/load_adf_btn_on" />
 
@@ -135,7 +136,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/third_poerson_cam_btn"
         android:layout_below="@+id/load_adf_toggle_button"
         android:text="@string/start_btn" />
+
+    <Button
+        android:id="@+id/first_person_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="@string/first_person_cam" />
+
+    <Button
+        android:id="@+id/third_poerson_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/first_person_cam_btn"
+        android:text="@string/third_person_cam" />
+
+    <Button
+        android:id="@+id/top_down_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/third_poerson_cam_btn"
+        android:text="@string/top_down_cam" />
 
 </RelativeLayout>
