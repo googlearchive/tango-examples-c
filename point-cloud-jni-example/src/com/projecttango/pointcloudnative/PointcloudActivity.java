@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnipointcloud;
+package com.projecttango.pointcloudnative;
 
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.app.Activity;
@@ -31,6 +31,10 @@ public class PointcloudActivity extends Activity {
 	TextView verticesCountText;
 	TextView averageZText;
 	TextView deltaTimeText;
+
+	Button firstPersonCamButton;
+	Button thirdPersonCamButton;
+	Button topDownCamButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +51,25 @@ public class PointcloudActivity extends Activity {
 		deltaTimeText = (TextView) findViewById(R.id.deltaTime);
 
 		versionText.setText(TangoJNINative.GetVersionNumber());
+
+		firstPersonCamButton = (Button) findViewById(R.id.first_person_cam_btn);
+		firstPersonCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(0);
+			}
+		});
+		thirdPersonCamButton = (Button) findViewById(R.id.third_poerson_cam_btn);
+		thirdPersonCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(1);
+			}
+		});
+		topDownCamButton = (Button) findViewById(R.id.top_down_cam_btn);
+		topDownCamButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(2);
+			}
+		});
 
 		new Thread(new Runnable() {
 			@Override
@@ -65,8 +88,9 @@ public class PointcloudActivity extends Activity {
 									averageZText.setText(String
 											.valueOf(TangoJNINative
 													.GetAverageZ()));
-									deltaTimeText.setText(String.valueOf(TangoJNINative
-											.GetDepthFPS()));
+									deltaTimeText.setText(String
+											.valueOf(TangoJNINative
+													.GetDepthFPS()));
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -97,26 +121,4 @@ public class PointcloudActivity extends Activity {
 		TangoJNINative.OnDestroy();
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.pointcloud, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.action_first_camera:
-			TangoJNINative.SetCamera(0);
-			return true;
-		case R.id.action_third_camera:
-			TangoJNINative.SetCamera(1);
-			return true;
-		case R.id.action_top_camera:
-			TangoJNINative.SetCamera(2);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
 }

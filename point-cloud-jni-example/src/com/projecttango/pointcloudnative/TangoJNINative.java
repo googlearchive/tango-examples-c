@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnipointcloud;
+package com.projecttango.pointcloudnative;
 
 public class TangoJNINative {
 	static {
