@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnipointcloud;
+package com.projecttango.pointcloudnative;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

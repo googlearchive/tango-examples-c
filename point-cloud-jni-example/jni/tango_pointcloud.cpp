@@ -21,7 +21,6 @@
 
 #include "axis.h"
 #include "camera.h"
-#include "grid.h"
 #include "gl_util.h"
 #include "pointcloud.h"
 #include "tango_data.h"
@@ -50,7 +49,6 @@ GLuint screen_height;
 Camera* cam;
 Pointcloud* pointcloud;
 Axis* axis;
-Grid* grid;
 
 bool SetupGraphics(int w, int h) {
   screen_width = w;
@@ -59,7 +57,6 @@ bool SetupGraphics(int w, int h) {
   cam = new Camera();
   pointcloud = new Pointcloud();
   axis = new Axis();
-  grid = new Grid();
 
   cam->SetAspectRatio((float)w / (float)h);
 
@@ -78,8 +75,6 @@ bool RenderFrame() {
   /// vector of the camera.
   glViewport(0, 0, screen_width, screen_height);
   
-  grid->SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
-  grid->Render(cam->GetCurrentProjectionViewMatrix());
   axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
   axis->Render(cam->GetCurrentProjectionViewMatrix());
 
@@ -112,7 +107,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnCreate(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnCreate(
     JNIEnv* env, jobject obj) {
   LOGI("In onCreate: Initialing and setting config");
   if (!TangoData::GetInstance().Initialize())
@@ -125,7 +120,7 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_O
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnResume(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnResume(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
   if (TangoData::GetInstance().LockConfig()){
@@ -136,7 +131,7 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_O
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnPause(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnPause(
     JNIEnv* env, jobject obj) {
   LOGI("In OnPause: Unlocking config and disconnecting service");
   if (TangoData::GetInstance().UnlockConfig()){
@@ -145,48 +140,47 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_O
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_OnDestroy(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
   delete cam;
   delete pointcloud;
   delete axis;
-  delete grid;
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_SetupGraphic(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetupGraphic(
     JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_Render(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
   TangoData::GetInstance().GetVersonString();
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_SetCamera(
+JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetVersionNumber(
+JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
 }
   
-JNIEXPORT jint JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetVerticesCount(
+JNIEXPORT jint JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVerticesCount(
     JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().GetDepthBufferSize();
+  return TangoData::GetInstance().GetDepthBufferSize()/3;
 }
 
-JNIEXPORT float JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetAverageZ(
+JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetAverageZ(
      JNIEnv* env, jobject obj) {
   return TangoData::GetInstance().average_depth;
 }
   
-JNIEXPORT float JNICALL Java_com_google_tango_tangojnipointcloud_TangoJNINative_GetDepthFPS(
+JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetDepthFPS(
      JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().depth_fps;
+  return TangoData::GetInstance().depth_frame_delta_time;
 }
 #ifdef __cplusplus
 }
