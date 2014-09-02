@@ -97,6 +97,7 @@ void Grid::Render(glm::mat4 view_projection_mat) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_LINES, 0, traverse_len_);
+  GlUtil::CheckGlError("grid glDrawArray()");
   glUseProgram(0);
   GlUtil::CheckGlError("glUseProgram()");
 }
