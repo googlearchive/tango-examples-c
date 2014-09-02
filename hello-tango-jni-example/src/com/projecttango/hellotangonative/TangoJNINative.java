@@ -14,34 +14,17 @@
  * limitations under the License.
  */
 
-package com.google.tango.hellotangojni;
+package com.projecttango.hellotangonative;
 
-import android.os.Bundle;
-import android.app.Activity;
+public class TangoJNINative {
+	static {
+		System.loadLibrary("tango-native-jni");
+	}
 
-public class MainActivity extends Activity {
-
-	TangoJNINative tangoJNINative;
+	public static native void onCreate();
 	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		TangoJNINative.onCreate();
-	}
+	public static native void onResume();
 	
-	@Override
-	protected void onResume()
-	{
-		super.onResume();
-		TangoJNINative.onResume();
-	}
-
-	@Override
-	protected void onPause()
-	{
-		super.onPause();
-		TangoJNINative.onPause();
-	}
-
+	public static native void onPause();
+	
 }
