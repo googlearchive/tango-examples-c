@@ -17,46 +17,50 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to start translation: " />
+                android:text="@string/device_wrt_start" />
+
             <TextView
                 android:id="@+id/device_start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to ADF translation: " />
+                android:text="@string/device_wrt_start" />
             <TextView
                 android:id="@+id/device_adf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
         
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start with respect to adf translation: " />
+                android:text="@string/start_wrt_adf" />
             <TextView
                 android:id="@+id/start_adf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
         
         <LinearLayout
@@ -66,27 +70,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start with respect to previous pose: " />
-            <TextView
-                android:id="@+id/start_prepose"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
-        </LinearLayout>
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Learning Mode: " />
+                android:text="@string/learning_mode" />
             <TextView
                 android:id="@+id/learning_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:text="@string/na" />
         </LinearLayout>
         
         <LinearLayout
@@ -96,27 +85,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="UUID: " />
+                android:text="@string/uuid" />
             <TextView
                 android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="n/a" />
-        </LinearLayout>
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Relocalized: " />
-            <TextView
-                android:id="@+id/relocalized_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="n/a" />
+                android:text="@string/na" />
         </LinearLayout>
     </LinearLayout>
 
@@ -134,7 +108,7 @@
      android:layout_width="wrap_content"
      android:layout_height="wrap_content"
      android:layout_above="@+id/learning_mode_toggle_button"
-     android:text="Learning Mode" />
+     android:text="@string/learning_mode_btn" />
 
  <ToggleButton
      android:id="@+id/learning_mode_toggle_button"
@@ -142,7 +116,7 @@
      android:layout_height="wrap_content"
      android:layout_alignParentBottom="true"
      android:layout_alignParentLeft="true"
-     android:text="Learning Mode" />
+     android:text="@string/learning_mode_btn" />
 
  <TextView
      android:id="@+id/load_adf_button_text"
@@ -151,7 +125,7 @@
      android:layout_alignBottom="@+id/learning_mode_toggle_button_text"
      android:layout_marginLeft="24dp"
      android:layout_toRightOf="@+id/learning_mode_toggle_button_text"
-     android:text="Load ADF (Most recent one)" />
+     android:text="@string/load_adf_btn" />
 
  <ToggleButton
      android:id="@+id/load_adf_toggle_button"
@@ -159,7 +133,7 @@
      android:layout_height="wrap_content"
      android:layout_alignLeft="@+id/load_adf_button_text"
      android:layout_alignParentBottom="true"
-     android:text="Load ADF" />
+     android:text="@string/load_adf_btn" />
 
  <Button
      android:id="@+id/start_button"
@@ -167,6 +141,6 @@
      android:layout_height="wrap_content"
      android:layout_alignParentRight="true"
      android:layout_alignParentTop="true"
-     android:text="Start" />
+     android:text="@string/start_btn" />
 
 </RelativeLayout>

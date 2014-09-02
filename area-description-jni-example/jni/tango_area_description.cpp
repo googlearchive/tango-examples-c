@@ -83,11 +83,12 @@ bool RenderFrame() {
   grid->SetPosition(glm::vec3(0.0f, -0.8f, 0.0f));
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  int pose_index = TangoData::GetInstance().is_relocalized ? 1 : 0;
+  int pose_index =
+    TangoData::GetInstance().current_pose_status[1]==TANGO_POSE_VALID ? 1 : 0;
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
-      TangoData::GetInstance().tango_position_[pose_index]);
+      TangoData::GetInstance().tango_position[pose_index]);
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
-      TangoData::GetInstance().tango_rotation_[pose_index]);
+      TangoData::GetInstance().tango_rotation[pose_index]);
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
@@ -208,34 +209,40 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJN
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-      TangoData::GetInstance().is_learning_mode_enabled ? "True" : "False");
-}
-
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsRelocalized(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(
-      TangoData::GetInstance().is_relocalized ? "True" : "False");
-}
-
-JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
-    JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().current_timestamp_[index];
-}
-
-JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
-    JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().current_pose_status_[index];
+      TangoData::GetInstance().is_learning_mode_enabled ? "Enabled" : "Disable");
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj, int index) {
-  char pose[24];
-  sprintf(pose, "%4.2f, %4.2f, %4.2f",
-          TangoData::GetInstance().tango_position_[index].x,
-          TangoData::GetInstance().tango_position_[index].y,
-          TangoData::GetInstance().tango_position_[index].z);
+  char pose_string[100];
+  char status[30];
+  
+  switch (TangoData::GetInstance().current_pose_status[index]) {
+    case TANGO_POSE_INITIALIZING:
+      sprintf(status,"Initializing");
+      break;
+    case TANGO_POSE_VALID:
+      sprintf(status, "Valid");
+      break;
+    case TANGO_POSE_INVALID:
+      sprintf(status, "Invalid");
+      break;
+    case TANGO_POSE_UNKNOWN:
+      sprintf(status, "Unknown");
+      break;
+    default:
+      break;
+  }
+  
+  sprintf(pose_string, "status:%s, count:%d, pose:%4.2f %4.2f %4.2f, delta_time: %4.2fms",
+          status,
+          TangoData::GetInstance().frame_count[index],
+          TangoData::GetInstance().tango_position[index].x,
+          TangoData::GetInstance().tango_position[index].y,
+          TangoData::GetInstance().tango_position[index].z,
+          TangoData::GetInstance().frame_delta_time[index]*1000.0f);
 
-  return (env)->NewStringUTF(pose);
+  return (env)->NewStringUTF(pose_string);
 }
 
 #ifdef __cplusplus

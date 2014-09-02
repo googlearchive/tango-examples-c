@@ -18,23 +18,10 @@
 
 TangoData::TangoData()
     : config_(nullptr) {
-  is_relocalized = false;
   is_learning_mode_enabled = false;
   for (int i = 0; i < 4; i++) {
-    current_timestamp_[i] = 0.0;
-    current_pose_status_[i] = 0;
+    current_pose_status[i] = 0;
   }
-}
-
-// Tango event callback.
-static void onTangoEvent(void* context, const TangoEvent* event) {
-  if (strcmp(event->description, "ADFEvent:Relocalized") == 0) {
-    TangoData::GetInstance().is_relocalized = true;
-  }
-  if (strcmp(event->description, "ADFEvent:NotRelocalized") == 0) {
-    TangoData::GetInstance().is_relocalized = false;
-  }
-  LOGI("Tango Event Fired: %s", event->description);
 }
 
 // This callback function is called when new POSE updates become available.
@@ -63,16 +50,27 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   } else {
     return;
   }
-  TangoData::GetInstance().tango_position_[current_index] = glm::vec3(
+  TangoData::GetInstance().tango_position[current_index] = glm::vec3(
       pose->translation[0], pose->translation[1], pose->translation[2]);
 
-  TangoData::GetInstance().tango_rotation_[current_index] = glm::quat(
+  TangoData::GetInstance().tango_rotation[current_index] = glm::quat(
       pose->orientation[3], pose->orientation[0], pose->orientation[1],
       pose->orientation[2]);
 
-  TangoData::GetInstance().current_timestamp_[current_index] = pose->timestamp;
-
-  TangoData::GetInstance().current_pose_status_[current_index] = (int) pose
+  // Calculate delta frame time.
+  TangoData::GetInstance().frame_delta_time[current_index] = pose->timestamp - TangoData::GetInstance().prev_frame_time[current_index];
+  TangoData::GetInstance().prev_frame_time[current_index] = pose->timestamp;
+  
+  // Set/reset frame counter.
+  if (pose->status_code == TANGO_POSE_VALID) {
+    TangoData::GetInstance().frame_count[current_index]++;
+  }
+  else {
+    TangoData::GetInstance().frame_count[current_index] = 0;
+  }
+  
+  // Set pose status.
+  TangoData::GetInstance().current_pose_status[current_index] = (int) pose
       ->status_code;
 }
 
@@ -135,12 +133,6 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
   if (TangoService_connectOnPoseAvailable(4, pairs, onPoseAvailable)
       != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
-    return false;
-  }
-
-  // Set the event callback listener.
-  if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
-    LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
 

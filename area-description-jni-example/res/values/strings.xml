@@ -12,5 +12,13 @@
 	<string name="record_adf">Record ADF</string>
 	<string name="load_adf">Load Most Recent ADF</string>
 	<string name="save_adf">Save ADF</string>
-	
+	<string name="device_wrt_start">Target->Device, Base->Start: </string>
+	<string name="device_wrt_adf">Target->Device, Base->ADF: </string>
+	<string name="start_wrt_adf">Target->Start, Base->ADF: </string>
+	<string name="learning_mode">Learning Mode: </string>
+	<string name="learning_mode_btn">Learning Mode</string>
+	<string name="load_adf_btn">Load ADF (most recent one)</string>
+	<string name="start_btn">Start</string>
+	<string name="uuid">UUID: </string>
+	<string name="na">N/A</string>
 </resources>

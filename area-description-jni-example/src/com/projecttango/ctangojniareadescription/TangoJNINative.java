@@ -45,9 +45,5 @@ public class TangoJNINative {
 
 	public static native String GetIsEnabledLearn();
 
-	public static native String GetIsRelocalized();
-
 	public static native String GetPoseString(int index);
-
-	public static native int GetCurrentStatus(int index);
 }
