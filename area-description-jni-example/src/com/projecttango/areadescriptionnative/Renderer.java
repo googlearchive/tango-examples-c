@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.ctangojniareadescription;
+package com.projecttango.areadescriptionnative;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

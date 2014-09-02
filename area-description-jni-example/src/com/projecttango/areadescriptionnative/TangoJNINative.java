@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.ctangojniareadescription;
+package com.projecttango.areadescriptionnative;
 
 public class TangoJNINative {
 	static {
@@ -37,7 +37,7 @@ public class TangoJNINative {
 
 	public static native double GetCurrentTimestamp(int index);
 
-	public static native void SaveADF();
+	public static native String SaveADF();
 
 	public static native void RemoveAllAdfs();
 
@@ -45,9 +45,5 @@ public class TangoJNINative {
 
 	public static native String GetIsEnabledLearn();
 
-	public static native String GetIsRelocalized();
-
 	public static native String GetPoseString(int index);
-
-	public static native int GetCurrentStatus(int index);
 }

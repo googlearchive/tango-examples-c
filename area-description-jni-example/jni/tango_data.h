@@ -35,7 +35,7 @@ class TangoData {
   bool Connect();
   void Disconnect();
 
-  bool SaveADF();
+  char* SaveADF();
   void RemoveAllAdfs();
 
   void LogAllUUIDs();
@@ -44,15 +44,16 @@ class TangoData {
   // 1: device_wrt_adf
   // 2: start_wrt_adf
   // 3: adf_wrt_start
-  glm::vec3 tango_position_[4];
-  glm::quat tango_rotation_[4];
-  float current_timestamp_[4];
-  int current_pose_status_[4];
-
+  glm::vec3 tango_position[4];
+  glm::quat tango_rotation[4];
+  int current_pose_status[4];
+  float frame_delta_time[4];
+  float prev_frame_time[4];
+  int frame_count[4];
+  
   bool is_learning_mode_enabled;
-  bool is_relocalized;
 
-  char uuid_[36];
+  char uuid_[UUID_LEN];
 
  private:
   TangoConfig* config_;

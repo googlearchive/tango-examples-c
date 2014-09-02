@@ -47,10 +47,9 @@ int camera_type;
 const glm::vec3 kThirdPersonCameraPosition = glm::vec3(0.0f, 3.0f, 3.0f);
 const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
                                                        0.0f, 0.0f);
-const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 10.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
-
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
 
@@ -83,16 +82,22 @@ bool RenderFrame() {
   grid->SetPosition(glm::vec3(0.0f, -0.8f, 0.0f));
   grid->Render(cam->GetCurrentProjectionViewMatrix());
 
-  int pose_index = TangoData::GetInstance().is_relocalized ? 1 : 0;
+  int pose_index =
+    TangoData::GetInstance().current_pose_status[1]==TANGO_POSE_VALID ? 1 : 0;
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
-      TangoData::GetInstance().tango_position_[pose_index]);
+      TangoData::GetInstance().tango_position[pose_index]);
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
-      TangoData::GetInstance().tango_rotation_[pose_index]);
+      TangoData::GetInstance().tango_rotation[pose_index]);
 
+  cam->SetPosition(position);
   if (camera_type == FIRST_PERSON) {
-    cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
+    if(camera_type == TOP_DOWN){
+      cam->SetPosition(position+kTopDownCameraPosition);
+    }else{
+      cam->SetPosition(position+kThirdPersonCameraPosition);
+    }
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
@@ -114,12 +119,10 @@ void SetCamera(int camera_index) {
       LOGI("setting to First Person Camera");
       break;
     case THIRD_PERSON:
-      cam->SetPosition(kThirdPersonCameraPosition);
       cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      cam->SetPosition(kTopDownCameraPosition);
       cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
@@ -131,7 +134,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Initialize(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
     JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
   LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
   LOGI("In onCreate: Initialing and setting config");
@@ -145,7 +148,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_ConnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
   if (!TangoData::GetInstance().LockConfig()) {
@@ -156,7 +159,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_DisconnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
   LOGI("In OnPause: Unlocking config and disconnecting service");
   if (TangoData::GetInstance().UnlockConfig()) {
@@ -165,7 +168,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_OnDestroy(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
   delete cam;
   delete axis;
@@ -174,69 +177,74 @@ JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINa
   delete trace;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SetupGraphic(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupGraphic(
     JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_Render(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SetCamera(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_SaveADF(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(
     JNIEnv* env, jobject obj) {
   // Save ADF.
-  TangoData::GetInstance().SaveADF();
+  return (env)->NewStringUTF(TangoData::GetInstance().SaveADF());
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_RemoveAllAdfs(
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_RemoveAllAdfs(
     JNIEnv* env, jobject obj) {
-  // Save ADF.
   TangoData::GetInstance().RemoveAllAdfs();
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetUUID(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsEnabledLearn(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetIsEnabledLearn(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(
-      TangoData::GetInstance().is_learning_mode_enabled ? "True" : "False");
+      TangoData::GetInstance().is_learning_mode_enabled ? "Enabled" : "Disable");
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetIsRelocalized(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(
-      TangoData::GetInstance().is_relocalized ? "True" : "False");
-}
-
-JNIEXPORT jdouble JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentTimestamp(
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().current_timestamp_[index];
-}
+  char pose_string[100];
+  char status[30];
+  
+  switch (TangoData::GetInstance().current_pose_status[index]) {
+    case TANGO_POSE_INITIALIZING:
+      sprintf(status,"Initializing");
+      break;
+    case TANGO_POSE_VALID:
+      sprintf(status, "Valid");
+      break;
+    case TANGO_POSE_INVALID:
+      sprintf(status, "Invalid");
+      break;
+    case TANGO_POSE_UNKNOWN:
+      sprintf(status, "Unknown");
+      break;
+    default:
+      break;
+  }
+  
+  sprintf(pose_string, "status:%s, count:%d, pose:%4.2f %4.2f %4.2f, delta_time: %4.2fms",
+          status,
+          TangoData::GetInstance().frame_count[index],
+          TangoData::GetInstance().tango_position[index].x,
+          TangoData::GetInstance().tango_position[index].y,
+          TangoData::GetInstance().tango_position[index].z,
+          TangoData::GetInstance().frame_delta_time[index]*1000.0f);
 
-JNIEXPORT jint JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetCurrentStatus(
-    JNIEnv* env, jobject obj, int index) {
-  return TangoData::GetInstance().current_pose_status_[index];
-}
-
-JNIEXPORT jstring JNICALL Java_com_projecttango_ctangojniareadescription_TangoJNINative_GetPoseString(
-    JNIEnv* env, jobject obj, int index) {
-  char pose[24];
-  sprintf(pose, "%4.2f, %4.2f, %4.2f",
-          TangoData::GetInstance().tango_position_[index].x,
-          TangoData::GetInstance().tango_position_[index].y,
-          TangoData::GetInstance().tango_position_[index].z);
-
-  return (env)->NewStringUTF(pose);
+  return (env)->NewStringUTF(pose_string);
 }
 
 #ifdef __cplusplus
