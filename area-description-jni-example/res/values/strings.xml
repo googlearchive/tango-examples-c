@@ -16,9 +16,11 @@
 	<string name="device_wrt_adf">Target->Device, Base->ADF: </string>
 	<string name="start_wrt_adf">Target->Start, Base->ADF: </string>
 	<string name="learning_mode">Learning Mode: </string>
-	<string name="learning_mode_btn">Learning Mode</string>
-	<string name="load_adf_btn">Load ADF (most recent one)</string>
-	<string name="start_btn">Start</string>
+	<string name="learning_mode_btn_on">Learning Mode On</string>
+	<string name="learning_mode_btn_off">Learning Mode Off</string>
+	<string name="load_adf_btn_on">Load ADF On (most recent one)</string>
+	<string name="load_adf_btn_off">Load ADF Off (most recent one)</string>
+	<string name="start_btn">Start With Current Config</string>
 	<string name="uuid">UUID: </string>
 	<string name="na">N/A</string>
 </resources>

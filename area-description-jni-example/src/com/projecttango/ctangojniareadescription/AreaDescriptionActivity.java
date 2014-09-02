@@ -37,9 +37,6 @@ public class AreaDescriptionActivity extends Activity {
 	TextView learningModeText;
 	TextView uuidText;
 
-	TextView learning_mode_toggle_button_text;
-	TextView load_adf_button_text;
-
 	Button saveADFButton;
 	Button startButton;
 
@@ -63,9 +60,6 @@ public class AreaDescriptionActivity extends Activity {
 
 		learningModeText = (TextView) findViewById(R.id.learning_mode);
 		uuidText = (TextView) findViewById(R.id.uuid);
-
-		learning_mode_toggle_button_text = (TextView) findViewById(R.id.learning_mode_toggle_button_text);
-		load_adf_button_text = (TextView) findViewById(R.id.load_adf_button_text);
 
 		saveADFButton = (Button) findViewById(R.id.save_adf_button);
 		saveADFButton.setVisibility(View.GONE);
@@ -91,8 +85,6 @@ public class AreaDescriptionActivity extends Activity {
 				startButton.setVisibility(View.GONE);
 				isUsingADFToggleButton.setVisibility(View.GONE);
 				isLearningToggleButton.setVisibility(View.GONE);
-				learning_mode_toggle_button_text.setVisibility(View.GONE);
-				load_adf_button_text.setVisibility(View.GONE);
 			}
 		});
 
