@@ -4,9 +4,9 @@
     <string name="app_name">AreaDescriptionNative</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-	<string name="first_person_cam">First Person</string>
-	<string name="third_person_cam">Third Person</string>
-	<string name="top_down_cam">Top Down</string>
+	<string name="first_person_cam">First</string>
+	<string name="third_person_cam">Third</string>
+	<string name="top_down_cam">Top</string>
 	<string name="relocalization_status">Relocalization Status: </string>
 	<string name="adf_uuid">ADF UUID: </string>
 	<string name="record_adf">Record ADF</string>
@@ -22,5 +22,7 @@
 	<string name="load_adf_btn_off">Load ADF Off (most recent one)</string>
 	<string name="start_btn">Start With Current Config</string>
 	<string name="uuid">UUID: </string>
+	<string name="tango_service_version">Tango Service Version: </string>
+	<string name="app_version"><![CDATA[Sample App Version: 2014-09-02-a]]></string>
 	<string name="na">N/A</string>
 </resources>
