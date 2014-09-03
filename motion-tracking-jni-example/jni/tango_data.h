@@ -48,6 +48,7 @@ class TangoData {
   void SetTangoPoseStatus(TangoPoseStatusType status);
   int statusCount[3];
   double timestamp;
+  double prevTimestamp;
   bool isMTAutoReset;
   char eventString[30];
   char lib_version[26];

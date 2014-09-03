@@ -31,6 +31,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
                 pose->orientation[1], pose->orientation[2]));
 
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
+  TangoData::GetInstance().prevTimestamp=TangoData::GetInstance().timestamp;
   TangoData::GetInstance().timestamp = pose->timestamp;
   LOGI("%d", (int) pose->status_code);
   //  glm::vec3 euler = glm::eulerAngles(
