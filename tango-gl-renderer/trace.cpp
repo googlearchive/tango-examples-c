@@ -23,7 +23,7 @@ static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "}\n";
 
 static const char kFragmentShader[] = "void main() {\n"
-    "  gl_FragColor = vec4(0,0,0,1);\n"
+    "  gl_FragColor = vec4(1,0,0,1);\n"
     "}\n";
 
 static const int kMaxTraceLength = 1000;
