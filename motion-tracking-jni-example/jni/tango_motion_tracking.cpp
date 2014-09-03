@@ -44,9 +44,9 @@ enum CameraType {
 int camera_type;
 
 // Quaternion format of rotation.
-const glm::vec3 kThirdPersonCameraPosition = glm::vec3(0.0f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
-                                                       0.0f, 0.0f);
+const glm::vec3 kThirdPersonCameraPosition = glm::vec3(-1.5f, 3.0f, 3.0f);
+const glm::quat kThirdPersonCameraRotation = glm::quat(0.91598f, -0.37941f,
+                                                       -0.12059f, -0.04995f);
 const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);

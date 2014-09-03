@@ -19,8 +19,8 @@ package com.google.tango.tangojnimotiontracking;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+//import android.view.Menu;
+//import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -36,6 +36,9 @@ public class MotionTrackingActivity extends Activity {
 	TextView isAutoResetText;
 	Button startButton;
 	Button resetButton;
+	Button thirdCamera;
+	Button firstCamera;
+	Button topCamera;
 	ToggleButton isAutoResetButton;
 
 	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
@@ -70,6 +73,30 @@ public class MotionTrackingActivity extends Activity {
 			}
 		});
 		resetButton.setVisibility(View.GONE);
+		
+		thirdCamera=(Button)findViewById(R.id.third);
+		thirdCamera.setVisibility(View.GONE);
+		thirdCamera.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(1);
+			}
+		});
+		
+		firstCamera=(Button)findViewById(R.id.first);
+		firstCamera.setVisibility(View.GONE);
+		firstCamera.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(0);
+			}
+		});
+		
+		topCamera=(Button)findViewById(R.id.top);
+		topCamera.setVisibility(View.GONE);
+		topCamera.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				TangoJNINative.SetCamera(2);
+			}
+		});
 
 		startButton = (Button) findViewById(R.id.start);
 		startButton.setOnClickListener(new View.OnClickListener() {
@@ -77,7 +104,10 @@ public class MotionTrackingActivity extends Activity {
 				startButton.setVisibility(View.GONE);
 				isAutoResetText.setVisibility(View.GONE);
 				isAutoResetButton.setVisibility(View.GONE);
-
+				
+				thirdCamera.setVisibility(View.VISIBLE);
+				firstCamera.setVisibility(View.VISIBLE);
+				topCamera.setVisibility(View.VISIBLE);
 				tangoPoseStatusText.setVisibility(View.VISIBLE);
 				motionTrackingView.setVisibility(View.VISIBLE);
 				if (!isAutoReset) {
@@ -90,23 +120,31 @@ public class MotionTrackingActivity extends Activity {
 			}
 		});
 
+		
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						final byte statusIndex = TangoJNINative.UpdateStatus();
-						final String tangoPoseStatusString = poseStatuses[statusIndex];
+						// final byte statusIndex =
+						// TangoJNINative.UpdateStatus();
+						// final String tangoPoseStatusString =
+						// poseStatuses[statusIndex];
+						final String tangoEventString = TangoJNINative
+								.EventToString();
 						final String tangoPoseString = TangoJNINative
 								.PoseToString();
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									tangoPoseStatusText.setText("Pose Status: "
-											+ tangoPoseStatusString + "\n"
-											+ tangoPoseString);
+									tangoPoseStatusText
+											.setText("Tango Service Version:"+TangoJNINative.GetVersionNumber()+"\nSample App Version: 2014-09-02-a\n\n"
+													+ tangoPoseString
+													+ "\n"
+													+ tangoEventString);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -137,26 +175,26 @@ public class MotionTrackingActivity extends Activity {
 		TangoJNINative.OnDestroy();
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.motion_tracking, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.action_first_camera:
-			TangoJNINative.SetCamera(0);
-			return true;
-		case R.id.action_third_camera:
-			TangoJNINative.SetCamera(1);
-			return true;
-		case R.id.action_top_camera:
-			TangoJNINative.SetCamera(2);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
+//	@Override
+//	public boolean onCreateOptionsMenu(Menu menu) {
+//		getMenuInflater().inflate(R.menu.motion_tracking, menu);
+//		return true;
+//	}
+//
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		switch (item.getItemId()) {
+//		case R.id.action_first_camera:
+//			TangoJNINative.SetCamera(0);
+//			return true;
+//		case R.id.action_third_camera:
+//			TangoJNINative.SetCamera(1);
+//			return true;
+//		case R.id.action_top_camera:
+//			TangoJNINative.SetCamera(2);
+//			return true;
+//		default:
+//			return super.onOptionsItemSelected(item);
+//		}
+//	}
 }
