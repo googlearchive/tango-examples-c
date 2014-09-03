@@ -44,6 +44,7 @@ static const GLfloat kTextureCoords[] =
   { 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 };
 
 TangoConfig* config;
+double timestamp;
 
 GLuint screen_width;
 GLuint screen_height;
@@ -158,7 +159,7 @@ bool SetupTango() {
                                 texture_id);
   
   // Connect to the Tango Service.
-  TangoService_connect();
+  TangoService_connect(NULL);
   
   return true;
 }
@@ -228,8 +229,9 @@ bool SetupGraphics(int w, int h) {
 
 void UpdateTango()
 {
+
   // Update Tango color camera's texture.
-  TangoService_updateTexture(TANGO_CAMERA_COLOR);
+  TangoService_updateTexture(TANGO_CAMERA_COLOR, &timestamp);
 }
 
 bool RenderFrame() {
