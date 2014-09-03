@@ -17,6 +17,8 @@
 #ifndef TangoData_H
 #define TangoData_H
 
+#include <string>
+
 #include <tango_client_api.h>
 #include "gl_util.h"
 
@@ -39,6 +41,7 @@ class TangoData {
   void RemoveAllAdfs();
 
   void LogAllUUIDs();
+  char* GetVersonString();
 
   // 0: device_wrt_start
   // 1: device_wrt_adf
@@ -54,6 +57,7 @@ class TangoData {
   bool is_learning_mode_enabled;
 
   char uuid_[UUID_LEN];
+  char lib_version[26];
 
  private:
   TangoConfig* config_;

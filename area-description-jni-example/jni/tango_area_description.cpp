@@ -247,6 +247,11 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINa
   return (env)->NewStringUTF(pose_string);
 }
 
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
+}
+  
 #ifdef __cplusplus
 }
 #endif

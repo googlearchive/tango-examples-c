@@ -203,3 +203,12 @@ void TangoData::LogAllUUIDs() {
     LOGI("%d: %s", i, uuid_list.uuid[i].data);
   }
 }
+
+char* TangoData::GetVersonString() {
+  if (config_ == nullptr) {
+    sprintf(lib_version, "N/A");
+    return lib_version;
+  }
+  TangoConfig_getString(config_, "tango_service_library_version", lib_version, 26);
+  return lib_version;
+}

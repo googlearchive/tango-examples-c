@@ -30,6 +30,7 @@ public class AreaDescriptionActivity extends Activity {
 	GLSurfaceView glView;
 	RelativeLayout layout;
 
+	TextView versionString;
 	TextView device2StartText;
 	TextView device2ADFText;
 	TextView start2ADFText;
@@ -57,6 +58,7 @@ public class AreaDescriptionActivity extends Activity {
 		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
 		glView.setRenderer(new Renderer());
 
+		versionString = (TextView) findViewById(R.id.tango_service_version);
 		device2StartText = (TextView) findViewById(R.id.device_start);
 		device2ADFText = (TextView) findViewById(R.id.device_adf);
 		start2ADFText = (TextView) findViewById(R.id.start_adf);
@@ -132,6 +134,8 @@ public class AreaDescriptionActivity extends Activity {
 							@Override
 							public void run() {
 								try {
+									versionString.setText(TangoJNINative.GetVersionString());
+									
 									device2StartText.setText(TangoJNINative.GetPoseString(0));
 									device2ADFText.setText(TangoJNINative.GetPoseString(1));
 									start2ADFText.setText(TangoJNINative.GetPoseString(2));
