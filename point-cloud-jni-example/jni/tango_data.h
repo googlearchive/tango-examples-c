@@ -47,6 +47,7 @@ class TangoData {
   
   float average_depth;
   float depth_fps;
+  float depth_frame_delta_time;
   float previous_frame_time_;
 private:
   TangoConfig* config_;

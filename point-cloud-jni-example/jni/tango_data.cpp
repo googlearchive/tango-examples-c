@@ -38,11 +38,14 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
   memcpy(TangoData::GetInstance().GetDepthBuffer(), XYZ_ij->xyz,
          vertices_count * 3 * sizeof(float));
   TangoData::GetInstance().SetDepthBufferSize(vertices_count * 3);
-  TangoData::GetInstance().average_depth = total_z/(float)vertices_count;\
+  TangoData::GetInstance().average_depth = total_z/(float)vertices_count;
   
+  // Computing the callback delta time.
   struct timeval time;
   gettimeofday(&time, NULL);
   float current_frame_time = (float)((time.tv_sec * 1000) + (time.tv_usec / 1000));
+  TangoData::GetInstance().depth_frame_delta_time =
+    current_frame_time - TangoData::GetInstance().previous_frame_time_;
   TangoData::GetInstance().depth_fps = 1000.0f/
     (current_frame_time - TangoData::GetInstance().previous_frame_time_);
   TangoData::GetInstance().previous_frame_time_ = current_frame_time;

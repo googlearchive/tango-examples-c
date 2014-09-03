@@ -21,12 +21,21 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/version" />
+                android:text="@string/tango_service_version" />
             <TextView
                 android:id="@+id/version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_version" />
         </LinearLayout>
 
         <LinearLayout
@@ -74,5 +83,29 @@
                 android:text="" />
         </LinearLayout>
     </LinearLayout>
+
+ 	<Button
+        android:id="@+id/third_poerson_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"        
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="@string/third_person_cam" />
+    
+    <Button
+        android:id="@+id/first_person_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/third_poerson_cam_btn"
+        android:text="@string/first_person_cam" />
+
+    <Button
+        android:id="@+id/top_down_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/first_person_cam_btn"
+        android:text="@string/top_down_cam" />
 
 </RelativeLayout>

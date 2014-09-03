@@ -46,7 +46,7 @@ Pointcloud::Pointcloud() {
   glGenBuffers(1, &vertex_buffers_);
 }
 
-void Pointcloud::Render(glm::mat4 view_projection_mat, float depth_buffer_size,
+void Pointcloud::Render(glm::mat4 view_projection_mat, int depth_buffer_size,
                         float *depth_data_buffer) {
 
   glUseProgram(shader_program_);

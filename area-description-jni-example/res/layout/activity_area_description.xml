@@ -5,11 +5,11 @@
     <android.opengl.GLSurfaceView
         android:id="@+id/surfaceview"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" 
-       	android:layout_gravity="top"
-        />
+        android:layout_height="fill_parent"
+        android:layout_gravity="top" />
 
- <LinearLayout
+    <LinearLayout
+        android:id="@+id/linearLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical" >
@@ -18,155 +18,175 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to start translation: " />
+                android:text="@string/tango_service_version" />
+
+            <TextView
+                android:id="@+id/tango_service_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/na" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_version" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_wrt_start" />
+
             <TextView
                 android:id="@+id/device_start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="device with respect to ADF translation: " />
+                android:text="@string/device_wrt_adf" />
+
             <TextView
                 android:id="@+id/device_adf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
-        
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start with respect to adf translation: " />
+                android:text="@string/start_wrt_adf" />
+
             <TextView
                 android:id="@+id/start_adf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:layout_marginLeft="20dip"
+                android:text="@string/na" />
         </LinearLayout>
-        
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="start with respect to previous pose: " />
-            <TextView
-                android:id="@+id/start_prepose"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
-        </LinearLayout>
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Learning Mode: " />
+                android:text="@string/learning_mode" />
+
             <TextView
                 android:id="@+id/learning_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="" />
+                android:text="@string/na" />
         </LinearLayout>
-        
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="UUID: " />
+                android:text="@string/uuid" />
+
             <TextView
                 android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="n/a" />
-        </LinearLayout>
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Relocalized: " />
-            <TextView
-                android:id="@+id/relocalized_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="n/a" />
+                android:text="@string/na" />
         </LinearLayout>
     </LinearLayout>
 
- <Button
-     android:id="@+id/save_adf_button"
-     style="?android:attr/buttonStyleSmall"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_alignParentBottom="true"
-     android:layout_alignParentRight="true"
-     android:text="@string/save_adf" />
+    <Button
+        android:id="@+id/save_adf_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:text="@string/save_adf" />
 
- <TextView
-     android:id="@+id/learning_mode_toggle_button_text"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_above="@+id/learning_mode_toggle_button"
-     android:text="Learning Mode" />
+    <ToggleButton
+        android:id="@+id/learning_mode_toggle_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/linearLayout1"
+        android:textOff="@string/learning_mode_btn_off"
+        android:textOn="@string/learning_mode_btn_on" />
+    
+    <ToggleButton
+        android:id="@+id/load_adf_toggle_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_below="@+id/learning_mode_toggle_button"
+        android:textOff="@string/load_adf_btn_off"
+        android:textOn="@string/load_adf_btn_on" />
 
- <ToggleButton
-     android:id="@+id/learning_mode_toggle_button"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_alignParentBottom="true"
-     android:layout_alignParentLeft="true"
-     android:text="Learning Mode" />
+    <Button
+        android:id="@+id/start_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/load_adf_toggle_button"
+        android:text="@string/start_btn" />
 
- <TextView
-     android:id="@+id/load_adf_button_text"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_alignBottom="@+id/learning_mode_toggle_button_text"
-     android:layout_marginLeft="24dp"
-     android:layout_toRightOf="@+id/learning_mode_toggle_button_text"
-     android:text="Load ADF (Most recent one)" />
+    <Button
+        android:id="@+id/third_poerson_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"        
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="@string/third_person_cam" />
+    
+    <Button
+        android:id="@+id/first_person_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/third_poerson_cam_btn"
+        android:text="@string/first_person_cam" />
 
- <ToggleButton
-     android:id="@+id/load_adf_toggle_button"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_alignLeft="@+id/load_adf_button_text"
-     android:layout_alignParentBottom="true"
-     android:text="Load ADF" />
-
- <Button
-     android:id="@+id/start_button"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     android:layout_alignParentRight="true"
-     android:layout_alignParentTop="true"
-     android:text="Start" />
+    <Button
+        android:id="@+id/top_down_cam_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/first_person_cam_btn"
+        android:text="@string/top_down_cam" />
 
 </RelativeLayout>
