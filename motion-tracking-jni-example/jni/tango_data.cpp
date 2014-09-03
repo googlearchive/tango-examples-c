@@ -41,6 +41,13 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   //       euler.y * 57.32f, euler.z * 57.32f);
 }
 
+// Tango event callback.
+static void onTangoEvent(void* context, const TangoEvent* event) {
+  if (strstr(event->description, "Exposed") != 0) {
+    strncpy( TangoData::GetInstance().eventString,event->description, 30);
+  }
+}
+
 bool TangoData::Initialize() {
   // Initialize Tango Service.
   if (TangoService_initialize() != TANGO_SUCCESS) {
@@ -84,6 +91,13 @@ bool TangoData::SetConfig(bool isAutoReset) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
+
+  // Set the event callback listener.
+  if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
+    LOGI("TangoService_connectOnTangoEvent(): Failed");
+    return false;
+  }
+  TangoConfig_getString(config_, "tango_service_library_version",TangoData::GetInstance().lib_version, 26);
   return true;
 }
 
@@ -154,9 +168,9 @@ void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
 char* TangoData::PoseToString() {
   sprintf(
       poseString_,
-      "StatusCount(frame)   Initialzing:%d   Valid:%d   Invalid:%d\nPosition(meter)   x:%4.2f   y:%4.2f   z:%4.2f\nRotation(quat)   x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nTimestamp: %f",
+      "Status Count (frames):  Initializing:%d   Valid:%d   Invalid:%d\nPosition (m):  x:%4.2f   y:%4.2f   z:%4.2f\nRotation (quat):  x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nFrame Delta Time (ms):  %f",
       statusCount[0], statusCount[1], statusCount[2], tango_position_.x,
       tango_position_.y, tango_position_.z, tango_rotation_.x,
-      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp);
+      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp-prevTimestamp);
   return poseString_;
 }

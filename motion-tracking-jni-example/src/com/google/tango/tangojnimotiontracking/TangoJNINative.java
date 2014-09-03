@@ -40,4 +40,8 @@ public class TangoJNINative {
 	public static native byte UpdateStatus();
 	
 	public static native String PoseToString();
+	
+	public static native String EventToString();
+	
+	public static native String GetVersionNumber();
 }

@@ -208,9 +208,19 @@ JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNIN
   return (env)->NewStringUTF(TangoData::GetInstance().PoseToString());
 }
 
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_EventToString(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().eventString);
+}
+
 JNIEXPORT jchar JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UpdateStatus(
     JNIEnv* env, jobject obj) {
   return TangoData::GetInstance().GetTangoPoseStatus();
+}
+
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetVersionNumber(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().lib_version);
 }
 #ifdef __cplusplus
 }

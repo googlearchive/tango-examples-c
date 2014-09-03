@@ -42,12 +42,15 @@ class TangoData {
   glm::quat GetTangoRotation();
   char GetTangoPoseStatus();
   char* PoseToString();
+  char* GetVersionString();
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
   void SetTangoPoseStatus(TangoPoseStatusType status);
   int statusCount[3];
   double timestamp;
   bool isMTAutoReset;
+  char eventString[30];
+  char lib_version[26];
 
  private:
   glm::vec3 tango_position_;
