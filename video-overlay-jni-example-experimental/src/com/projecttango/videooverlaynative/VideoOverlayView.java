@@ -1,4 +1,4 @@
-package com.google.tango.tangojnivideooverlay;
+package com.projecttango.videooverlaynative;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

@@ -1,4 +1,4 @@
-package com.google.tango.tangojnivideooverlay;
+package com.projecttango.videooverlaynative;
 
 import android.os.Bundle;
 import android.app.Activity;

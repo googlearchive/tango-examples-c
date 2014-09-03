@@ -1,4 +1,4 @@
-package com.google.tango.tangojnivideooverlay;
+package com.projecttango.videooverlaynative;
 
 public class TangoJNINative {
 	static {

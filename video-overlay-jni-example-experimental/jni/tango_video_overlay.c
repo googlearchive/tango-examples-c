@@ -270,14 +270,14 @@ bool RenderFrame() {
   return true;
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnivideooverlay_TangoJNINative_init(
+JNIEXPORT void JNICALL Java_com_projecttango_videooverlaynative_TangoJNINative_init(
     JNIEnv * env, jobject obj, jint width, jint height)
 {
   SetupTango();
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnivideooverlay_TangoJNINative_render(
+JNIEXPORT void JNICALL Java_com_projecttango_videooverlaynative_TangoJNINative_render(
     JNIEnv * env, jobject obj)
 {
   UpdateTango();
