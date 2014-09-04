@@ -103,6 +103,7 @@ VideoOverlay::VideoOverlay() {
 }
 
 void VideoOverlay::Render() {
+  glDisable (GL_DEPTH_TEST);
   glUseProgram(shader_program_);
   
   // Bind vertices buffer.

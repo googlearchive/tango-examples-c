@@ -69,7 +69,7 @@ bool SetupGraphics(int w, int h) {
 bool RenderFrame() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
+  glEnable (GL_DEPTH_TEST);
   /// Viewport set to full screen, and camera at origin
   /// facing on negative z direction, y axis is the up
   /// vector of the camera.
@@ -77,8 +77,8 @@ bool RenderFrame() {
   
   TangoData::GetInstance().UpdateColorTexture();
   video_overlay->Render();
-//  axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-//  axis->Render(cam->GetCurrentProjectionViewMatrix());
+  axis->SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+  axis->Render(cam->GetCurrentProjectionViewMatrix());
   
   return true;
 }
