@@ -39,3 +39,7 @@ video-overlay-jni-example/bin
 video-overlay-jni-example/gen
 video-overlay-jni-example/libs
 video-overlay-jni-example/obj
+video-overlay-jni-example-experimental/bin
+video-overlay-jni-example-experimental/gen
+video-overlay-jni-example-experimental/libs
+video-overlay-jni-example-experimental/objs
