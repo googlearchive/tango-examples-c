@@ -1,14 +1,13 @@
-obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
- jni/../jni/tango_video_overlay.cpp \
- /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/string.h \
+obj/local/armeabi-v7a/objs/tango-native-jni/__/tango-gl-renderer/camera.o: \
+ jni/../../tango-gl-renderer/camera.cpp \
+ jni/../../tango-gl-renderer/camera.h \
+ jni/../../tango-gl-renderer/gl_util.h \
+ /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/stdlib.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/cdefs.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/cdefs_elf.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/android/api-level.h \
+ /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/string.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/malloc.h \
- /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/jni.h \
- ../tango-gl-renderer/axis.h ../tango-gl-renderer/drawable_object.h \
- ../tango-gl-renderer/gl_util.h \
- /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/stdlib.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/alloca.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/strings.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/types.h \
@@ -24,6 +23,7 @@ obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/machine/kernel.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/sysmacros.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/memory.h \
+ /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/jni.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/android/log.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/GLES2/gl2.h \
  /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/GLES2/gl2platform.h \
@@ -163,13 +163,13 @@ obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
  ../third-party/glm/glm/gtc/../mat4x2.hpp \
  ../third-party/glm/glm/gtc/../mat4x3.hpp \
  /Users/jasonguo/Development/android-ndk-r10/sources/cxx-stl/gnu-libstdc++/4.6/include/cstring \
- ../third-party/glm/glm/gtc/type_ptr.inl ../tango-gl-renderer/camera.h \
- ../tango-gl-renderer/gl_util.h jni/../jni/video_overlay.h \
- jni/../jni/tango_data.h ../tango-service-sdk/include/tango_client_api.h \
- /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/time.h \
- /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/linux/time.h
+ ../third-party/glm/glm/gtc/type_ptr.inl
 
-/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/string.h:
+jni/../../tango-gl-renderer/camera.h:
+
+jni/../../tango-gl-renderer/gl_util.h:
+
+/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/stdlib.h:
 
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/cdefs.h:
 
@@ -177,17 +177,9 @@ obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
 
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/android/api-level.h:
 
+/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/string.h:
+
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/malloc.h:
-
-/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/jni.h:
-
-../tango-gl-renderer/axis.h:
-
-../tango-gl-renderer/drawable_object.h:
-
-../tango-gl-renderer/gl_util.h:
-
-/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/stdlib.h:
 
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/alloca.h:
 
@@ -218,6 +210,8 @@ obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/sysmacros.h:
 
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/memory.h:
+
+/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/jni.h:
 
 /Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/android/log.h:
 
@@ -500,17 +494,3 @@ obj/local/armeabi-v7a/objs/tango-native-jni/jni/tango_video_overlay.o: \
 /Users/jasonguo/Development/android-ndk-r10/sources/cxx-stl/gnu-libstdc++/4.6/include/cstring:
 
 ../third-party/glm/glm/gtc/type_ptr.inl:
-
-../tango-gl-renderer/camera.h:
-
-../tango-gl-renderer/gl_util.h:
-
-jni/../jni/video_overlay.h:
-
-jni/../jni/tango_data.h:
-
-../tango-service-sdk/include/tango_client_api.h:
-
-/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/sys/time.h:
-
-/Users/jasonguo/Development/android-ndk-r10/platforms/android-17/arch-arm/usr/include/linux/time.h:

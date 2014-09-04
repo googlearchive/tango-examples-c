@@ -229,7 +229,6 @@ bool SetupGraphics(int w, int h) {
 
 void UpdateTango()
 {
-
   // Update Tango color camera's texture.
   TangoService_updateTexture(TANGO_CAMERA_COLOR, &timestamp);
 }
