@@ -104,13 +104,14 @@ bool RenderFrame() {
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetCurrentProjectionViewMatrix());
 
-    trace->UpdateVertexArray(position);
-    trace->Render(cam->GetCurrentProjectionViewMatrix());
-
     axis->SetPosition(position);
     axis->SetRotation(rotation);
     axis->Render(cam->GetCurrentProjectionViewMatrix());
   }
+
+  trace->UpdateVertexArray(position);
+  trace->Render(cam->GetCurrentProjectionViewMatrix());
+
   return true;
 }
 
