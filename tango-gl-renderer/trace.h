@@ -30,7 +30,8 @@ class Trace : public DrawableObject {
   void Render(glm::mat4 view_projection_mat);
  private:
   std::vector<glm::vec3> vertices_;
-
+  int vertices_count_;
+  
   GLuint shader_program_;
   GLuint attrib_vertices_;
   GLuint uniform_mvp_mat_;

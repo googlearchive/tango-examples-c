@@ -26,7 +26,8 @@ static const char kFragmentShader[] = "void main() {\n"
     "  gl_FragColor = vec4(1,0,0,1);\n"
     "}\n";
 
-static const int kMaxTraceLength = 1000;
+static const int kMaxTraceLength = 5000;
+static const float kDistanceCheck = 0.05f;
 
 Trace::Trace() {
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
@@ -35,12 +36,16 @@ Trace::Trace() {
   }
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
-
   vertices_.reserve(kMaxTraceLength);
+  vertices_count_ = 0;
 }
 
 void Trace::UpdateVertexArray(glm::vec3 v) {
+  float dist = glm::distance(vertices_[vertices_count_-1], v);
+  if (dist < kDistanceCheck)
+    return;
   vertices_.push_back(v);
+  ++vertices_count_;
 }
 
 void Trace::Render(glm::mat4 view_projection_mat) {
