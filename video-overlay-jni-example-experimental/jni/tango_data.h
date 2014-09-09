@@ -14,27 +14,38 @@
  * limitations under the License.
  */
 
-#ifndef TRACE_H
-#define TRACE_H
+#ifndef TANGO_DATA_H
+#define TANGO_DATA_H
+#define GLM_FORCE_RADIANS
 
-#include <stdlib.h>
-#include <vector>
+#include <tango_client_api.h>
+#include <sys/time.h>
 
-#include "drawable_object.h"
 #include "gl_util.h"
 
-class Trace : public DrawableObject {
+class TangoData {
  public:
-  Trace();
-  void UpdateVertexArray(glm::vec3 v);
-  void Render(glm::mat4 view_projection_mat);
- private:
-  std::vector<glm::vec3> vertices_;
-  int vertices_count_;
+  static TangoData& GetInstance() {
+    static TangoData instance;
+    return instance;
+  }
+  TangoData();
+  ~TangoData();
+
+  bool Initialize();
+  bool SetConfig();
+  bool LockConfig();
+  bool UnlockConfig();
+  bool Connect();
+  void Disconnect();
   
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
+  void ConnectTexture(GLuint texture_id);
+  void UpdateColorTexture();
+  
+private:
+  TangoConfig* config_;
+  double timestamp;
+  
 };
 
-#endif  // TRACE_H
+#endif  // TANGO_DATA_H

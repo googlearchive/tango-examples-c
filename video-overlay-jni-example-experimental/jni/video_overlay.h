@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef TRACE_H
-#define TRACE_H
+#ifndef VIDEO_OVERLAY_H
+#define VIDEO_OVERLAY_H
 
-#include <stdlib.h>
-#include <vector>
-
-#include "drawable_object.h"
 #include "gl_util.h"
 
-class Trace : public DrawableObject {
+class VideoOverlay {
  public:
-  Trace();
-  void UpdateVertexArray(glm::vec3 v);
-  void Render(glm::mat4 view_projection_mat);
- private:
-  std::vector<glm::vec3> vertices_;
-  int vertices_count_;
+  VideoOverlay();
+  void Render();
+  GLuint texture_id;
   
+ private:
+  GLuint vertex_buffers_;
+
   GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
+  
+  GLuint attrib_vertices;
+  GLuint attrib_textureCoords;
+  GLuint uniform_texture;
+  
+  GLuint vertex_buffers[3];
 };
 
-#endif  // TRACE_H
+#endif  // VIDEO_OVERLAY_H

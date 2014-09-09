@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef TRACE_H
-#define TRACE_H
+package com.projecttango.videooverlaynative;
 
-#include <stdlib.h>
-#include <vector>
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
-#include "drawable_object.h"
-#include "gl_util.h"
+import android.opengl.GLSurfaceView;
 
-class Trace : public DrawableObject {
- public:
-  Trace();
-  void UpdateVertexArray(glm::vec3 v);
-  void Render(glm::mat4 view_projection_mat);
- private:
-  std::vector<glm::vec3> vertices_;
-  int vertices_count_;
-  
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
-};
+public class Renderer implements GLSurfaceView.Renderer {
+	public void onDrawFrame(GL10 gl) {
+		TangoJNINative.Render();
+	}
 
-#endif  // TRACE_H
+	public void onSurfaceChanged(GL10 gl, int width, int height) {
+		TangoJNINative.SetupGraphic(width, height);
+		TangoJNINative.OnCreate();
+		TangoJNINative.OnResume();
+	}
+
+	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+
+	}
+}
