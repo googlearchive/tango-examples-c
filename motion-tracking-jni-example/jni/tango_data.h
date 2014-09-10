@@ -46,7 +46,9 @@ class TangoData {
   void SetTangoPosition(glm::vec3 position);
   void SetTangoRotation(glm::quat rotation);
   void SetTangoPoseStatus(TangoPoseStatusType status);
+  void UpdateEvent(int index);
   int statusCount[3];
+  int eventCount[5];
   double timestamp;
   double prevTimestamp;
   bool isMTAutoReset;
