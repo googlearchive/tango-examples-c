@@ -21,17 +21,19 @@ Camera::Camera() {
   aspect_ratio_ = 4.0f / 3.0f;
   near_clip_plane_ = 0.1f;
   far_clip_plane_ = 100.0f;
-
-  rotation_mat_ = glm::mat4(1.0f);
 }
 
 glm::mat4 Camera::GetCurrentProjectionViewMatrix() {
   glm::mat4 projection_mat = glm::perspective(field_of_view_, aspect_ratio_,
                                               near_clip_plane_, far_clip_plane_);
-
   glm::mat4 translate_mat = glm::translate(glm::mat4(1.0f), -position_);
+  glm::mat4 rotation_mat = glm::inverse(glm::mat4_cast(rotation_));
+  return projection_mat * rotation_mat * translate_mat;
+}
 
-  return projection_mat * rotation_mat_ * translate_mat;
+glm::mat4 Camera::GetCurrentProjectionMatrix() {
+  return glm::perspective(field_of_view_, aspect_ratio_,
+                          near_clip_plane_, far_clip_plane_);
 }
 
 void Camera::SetAspectRatio(float aspect_ratio) {
@@ -42,12 +44,16 @@ void Camera::SetPosition(glm::vec3 pos) {
   position_ = pos;
 }
 
-void Camera::SetRotation(glm::quat rot) {
-  rotation_mat_ = glm::inverse(glm::mat4_cast(rot));
+glm::vec3 Camera::GetPosition() {
+  return position_;
 }
 
-void Camera::LookAt(glm::vec3 cam_pos, glm::vec3 look_at_pos, glm::vec3 up_vec) {
-  rotation_mat_ = glm::lookAt(cam_pos, look_at_pos, up_vec);
+void Camera::SetRotation(glm::quat rot) {
+  rotation_ = rot;
+}
+
+glm::quat Camera::GetRotation() {
+  return rotation_;
 }
 
 Camera::~Camera() {
