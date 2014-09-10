@@ -31,6 +31,11 @@ glm::mat4 Camera::GetCurrentProjectionViewMatrix() {
   return projection_mat * rotation_mat * translate_mat;
 }
 
+glm::mat4 Camera::GetCurrentProjectionMatrix() {
+  return glm::perspective(field_of_view_, aspect_ratio_,
+                          near_clip_plane_, far_clip_plane_);
+}
+
 void Camera::SetAspectRatio(float aspect_ratio) {
   aspect_ratio_ = aspect_ratio;
 }
