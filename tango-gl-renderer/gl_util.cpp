@@ -87,24 +87,29 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
 }
 
 glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
-//The conversion quaternion is equivalent to this conversion matrix below
-//    float conversionArray[16] = {
-//        1.0f, 0.0f, 0.0f, 0.0f,
-//        0.0f, 0.0f, -1.0f, 0.0f,
-//        0.0f, 1.0f, 0.0f, 0.0f,
-//        0.0f, 0.0f, 0.0f, 1.0f
-//    };
-//  glm::mat4 conversionMatrix;
-//  memcpy(glm::value_ptr(conversionMatrix), conversionArray, sizeof(conversionArray));
-//  
-//  glm::mat4 resultMatrix= conversionMatrix*glm::mat4_cast(rotation);
-//  return glm::quat_cast(resultMatrix);
+  // The conversion quaternion is equivalent to this conversion matrix below
+  // NOTE: the following matrix is a column major matrix, both openGL and glm
+  // take column major matrix.
+  //
+  // float conversionArray[16] = {
+  //     1.0f, 0.0f, 0.0f, 0.0f,
+  //     0.0f, 0.0f, -1.0f, 0.0f,
+  //     0.0f, 1.0f, 0.0f, 0.0f,
+  //     0.0f, 0.0f, 0.0f, 1.0f
+  // };
+  // glm::mat4 conversionMatrix;
+  // memcpy(glm::value_ptr(conversionMatrix), conversionArray, sizeof(conversionArray));
+  //
+  // glm::mat4 resultMatrix= conversionMatrix*glm::mat4_cast(rotation);
+  // return glm::quat_cast(resultMatrix);
 
   const float M_SQRT_2_OVER_2 = sqrt(2) / 2.0f;
   glm::quat conversionQuaternion = glm::quat(M_SQRT_2_OVER_2, -M_SQRT_2_OVER_2,
                                              0.0f, 0.0f);
+  
+  // Quaternion cumulate in the reverse way (like matrix multiplication).
+  // The following line is applying the conversionQuaternion to the rotation.
   return conversionQuaternion * rotation;
-
 }
 
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
