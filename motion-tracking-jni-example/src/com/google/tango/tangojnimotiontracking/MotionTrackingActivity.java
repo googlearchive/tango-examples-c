@@ -128,10 +128,6 @@ public class MotionTrackingActivity extends Activity {
 				while (true) {
 					try {
 						Thread.sleep(10);
-						// final byte statusIndex =
-						// TangoJNINative.UpdateStatus();
-						// final String tangoPoseStatusString =
-						// poseStatuses[statusIndex];
 						final String tangoEventString = TangoJNINative
 								.EventToString();
 						final String tangoPoseString = TangoJNINative
@@ -143,8 +139,8 @@ public class MotionTrackingActivity extends Activity {
 									tangoPoseStatusText
 											.setText("Tango Service Version:"+TangoJNINative.GetVersionNumber()+"\nSample App Version: 2014-09-02-a\n\n"
 													+ tangoPoseString
-													+ "\n"
-													+ tangoEventString);
+													+ "\n\n"
+													+ "Last Event: "+tangoEventString);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

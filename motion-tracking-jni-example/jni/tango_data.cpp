@@ -33,7 +33,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
   TangoData::GetInstance().prevTimestamp=TangoData::GetInstance().timestamp;
   TangoData::GetInstance().timestamp = pose->timestamp;
-  LOGI("%d", (int) pose->status_code);
+  //LOGI("%d", (int) pose->status_code);
   //  glm::vec3 euler = glm::eulerAngles(
   //      glm::quat(pose->orientation[3], pose->orientation[0],
   //                pose->orientation[1], pose->orientation[2]));
@@ -46,6 +46,27 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 static void onTangoEvent(void* context, const TangoEvent* event) {
   if (strstr(event->description, "Exposed") != 0) {
     strncpy( TangoData::GetInstance().eventString,event->description, 30);
+    LOGI("JEvent: %s", event->description);
+  }
+  if (strstr(event->description, "FOVOver") != 0) {
+    TangoData::GetInstance().UpdateEvent(0);
+    return;
+  }
+  if (strstr(event->description, "FOVUnder") != 0) {
+    TangoData::GetInstance().UpdateEvent(1);
+    return;
+  }
+  if (strstr(event->description, "ColorOver") != 0) {
+    TangoData::GetInstance().UpdateEvent(2);
+    return;
+  }
+  if (strstr(event->description, "ColorUnder") != 0) {
+    TangoData::GetInstance().UpdateEvent(3);
+    return;
+  }
+  if (strstr(event->description, "Too") != 0) {
+    TangoData::GetInstance().UpdateEvent(4);
+    return;
   }
 }
 
@@ -166,12 +187,16 @@ void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
     statusCount[(int) status]++;
 }
 
+void TangoData::UpdateEvent(int index) {
+  eventCount[index]++;
+}
+
 char* TangoData::PoseToString() {
   sprintf(
       poseString_,
-      "Status Count (frames):  Initializing:%d   Valid:%d   Invalid:%d\nPosition (m):  x:%4.2f   y:%4.2f   z:%4.2f\nRotation (quat):  x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nFrame Delta Time (ms):  %f",
+      "Status Count (frames):  Initializing:%d   Valid:%d   Invalid:%d\nPosition (m):  x:%4.2f   y:%4.2f   z:%4.2f\nRotation (quat):  x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nFrame Delta Time (ms):  %f\n\nFOver:%d\nFUnder:%d\nCOver:%d\nCUnder:%d\nTooFewFeature:%d",
       statusCount[0], statusCount[1], statusCount[2], tango_position_.x,
       tango_position_.y, tango_position_.z, tango_rotation_.x,
-      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp-prevTimestamp);
+      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp-prevTimestamp,eventCount[0], eventCount[1], eventCount[2],eventCount[3], eventCount[4]);
   return poseString_;
 }
