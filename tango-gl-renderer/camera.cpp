@@ -23,15 +23,14 @@ Camera::Camera() {
   far_clip_plane_ = 100.0f;
 }
 
-glm::mat4 Camera::GetCurrentProjectionViewMatrix() {
-  glm::mat4 projection_mat = glm::perspective(field_of_view_, aspect_ratio_,
-                                              near_clip_plane_, far_clip_plane_);
-  glm::mat4 translate_mat = glm::translate(glm::mat4(1.0f), -position_);
-  glm::mat4 rotation_mat = glm::inverse(glm::mat4_cast(rotation_));
-  return projection_mat * rotation_mat * translate_mat;
+glm::mat4 Camera::GetViewMatrix() {
+  glm::mat4 translate_mat = glm::translate(glm::mat4(1.0f), position_);
+  glm::mat4 rotation_mat = glm::mat4_cast(rotation_);
+  glm::mat4 view_mat = glm::inverse(translate_mat*rotation_mat);
+  return view_mat;
 }
 
-glm::mat4 Camera::GetCurrentProjectionMatrix() {
+glm::mat4 Camera::GetProjectionMatrix() {
   return glm::perspective(field_of_view_, aspect_ratio_,
                           near_clip_plane_, far_clip_plane_);
 }

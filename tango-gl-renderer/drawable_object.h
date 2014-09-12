@@ -22,7 +22,7 @@
 class DrawableObject {
  public:
   DrawableObject();
-  virtual void Render(glm::mat4 view_projection_mat) = 0;
+  virtual void Render(glm::mat4 projection_mat, glm::mat4 view_mat) = 0;
   void SetPosition(glm::vec3 pos);
   void SetRotation(glm::quat rot);
   void SetScale(glm::vec3 s);

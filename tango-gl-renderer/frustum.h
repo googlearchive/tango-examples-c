@@ -23,7 +23,7 @@
 class Frustum : public DrawableObject {
  public:
   Frustum();
-  void Render(glm::mat4 view_projection_mat);
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   GLuint vertex_buffer_;
   GLuint shader_program_;

@@ -31,8 +31,8 @@ class Camera {
   void SetRotation(glm::quat rot);
   glm::quat GetRotation();
 
-  glm::mat4 GetCurrentProjectionViewMatrix();
-  glm::mat4 GetCurrentProjectionMatrix();
+  glm::mat4 GetViewMatrix();
+  glm::mat4 GetProjectionMatrix();
  private:
   float field_of_view_;
   float aspect_ratio_;

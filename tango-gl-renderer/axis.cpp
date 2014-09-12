@@ -57,12 +57,12 @@ Axis::Axis() {
   glGenBuffers(1, &color_buffer_);
 }
 
-void Axis::Render(glm::mat4 view_projection_mat) {
+void Axis::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram(shader_program_);
 
   // Calculate model view projection matrix of this object.
   glm::mat4 model_mat = GetCurrentModelMatrix();
-  glm::mat4 mvp_mat = view_projection_mat * model_mat;
+  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   // Binding vertex buffer.
