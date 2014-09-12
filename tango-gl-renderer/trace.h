@@ -27,7 +27,7 @@ class Trace : public DrawableObject {
  public:
   Trace();
   void UpdateVertexArray(glm::vec3 v);
-  void Render(glm::mat4 view_projection_mat);
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   std::vector<glm::vec3> vertices_;
   int vertices_count_;

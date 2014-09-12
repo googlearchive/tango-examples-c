@@ -82,7 +82,7 @@ bool RenderFrame() {
   glViewport(0, 0, screen_width, screen_height);
 
   grid->SetPosition(kGridPosition);
-  grid->Render(cam->GetCurrentProjectionViewMatrix());
+  grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
       TangoData::GetInstance().GetTangoPosition());
@@ -102,15 +102,15 @@ bool RenderFrame() {
     }
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
-    frustum->Render(cam->GetCurrentProjectionViewMatrix());
+    frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
     axis->SetPosition(position);
     axis->SetRotation(rotation);
-    axis->Render(cam->GetCurrentProjectionViewMatrix());
+    axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   }
 
   trace->UpdateVertexArray(position);
-  trace->Render(cam->GetCurrentProjectionViewMatrix());
+  trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   return true;
 }

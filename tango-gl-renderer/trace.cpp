@@ -48,11 +48,11 @@ void Trace::UpdateVertexArray(glm::vec3 v) {
   ++vertices_count_;
 }
 
-void Trace::Render(glm::mat4 view_projection_mat) {
+void Trace::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram(shader_program_);
 
   glm::mat4 model_mat = GetCurrentModelMatrix();
-  glm::mat4 mvp_mat = view_projection_mat * model_mat;
+  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   glEnableVertexAttribArray(attrib_vertices_);

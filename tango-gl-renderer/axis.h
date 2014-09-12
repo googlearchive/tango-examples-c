@@ -23,7 +23,7 @@
 class Axis : public DrawableObject {
  public:
   Axis();
-  void Render(glm::mat4 view_projection_mat);
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   GLuint vertex_buffer_;
   GLuint color_buffer_;

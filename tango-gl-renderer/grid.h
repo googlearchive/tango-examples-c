@@ -24,7 +24,7 @@ class Grid : public DrawableObject {
  public:
   Grid(float density = 1.0f, int quantity = 100);
   ~Grid();
-  void Render(glm::mat4 view_projection_mat);
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   float* vertices_;
   float density_;
