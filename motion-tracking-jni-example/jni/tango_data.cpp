@@ -44,23 +44,21 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 
 // Tango event callback.
 static void onTangoEvent(void* context, const TangoEvent* event) {
-  if (strstr(event->description, "Exposed") != 0) {
     strncpy( TangoData::GetInstance().eventString,event->description, 30);
-    LOGI("JEvent: %s", event->description);
-  }
-  if (strstr(event->description, "FOVOver") != 0) {
+
+  if (strstr(event->description, "FisheyeO") != 0) {
     TangoData::GetInstance().UpdateEvent(0);
     return;
   }
-  if (strstr(event->description, "FOVUnder") != 0) {
+  if (strstr(event->description, "FisheyeU") != 0) {
     TangoData::GetInstance().UpdateEvent(1);
     return;
   }
-  if (strstr(event->description, "ColorOver") != 0) {
+  if (strstr(event->description, "ColorO") != 0) {
     TangoData::GetInstance().UpdateEvent(2);
     return;
   }
-  if (strstr(event->description, "ColorUnder") != 0) {
+  if (strstr(event->description, "ColorU") != 0) {
     TangoData::GetInstance().UpdateEvent(3);
     return;
   }
