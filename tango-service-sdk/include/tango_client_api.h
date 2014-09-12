@@ -57,8 +57,9 @@ typedef enum {
 /// Errors less then 0 should be dealt with by the program.
 /// Success is denoted by TANGO_SUCCESS = 0.
 typedef enum {
-  TANGO_ERROR = -1,    /**< Hard error */
-  TANGO_SUCCESS = 0,   /**< Success */
+  TANGO_INVALID = -2, /**< Input argument invalid */
+  TANGO_ERROR = -1,   /**< Hard error */
+  TANGO_SUCCESS = 0,  /**< Success */
 } TangoErrorType;
 
 /// @brief Tango pose status lifecycle enumerations.  Every pose has a state
@@ -93,7 +94,7 @@ typedef struct TangoConfig TangoConfig;
 ///
 /// Tango pose data is calculated as a transformation between two frames
 /// of reference (so, for example, you can be asking for the pose of the
-/// device within a learned area).  
+/// device within a learned area).
 ///
 /// This struct is used to specify the desired base and target frames of
 /// reference when requesting pose data.  You can also use it when you have
@@ -184,6 +185,60 @@ typedef struct TangoXYZij {
   int *ij;
 } TangoXYZij;
 
+typedef struct TangoImageBuffer {
+  /// The width of the image data.
+  uint32_t width;
+  /// The height of the image data.
+  uint32_t height;
+  /// The number of pixels per scanline of image data.
+  uint32_t stride;
+  /// The timestamp of this image.
+  double timestamp;
+  /// The frame number of this image.
+  int64_t frame_number;
+  /// Pixels in HAL_PIXEL_FORMAT_YV12 format.
+  uint8_t *data;
+} TangoImageBuffer;
+
+
+/// The TangoIntrinsics struct contains intrinsic parameters for a camera.
+/// For image coordinates, the obervations, [u, v]^T in pixels.
+/// Normalized image plane coordinates refer to:
+///
+/// x = (u - cx) / fx
+///
+/// y = (v - cy) / fy
+///
+/// Distortion parameters are distortion[] = {k1, k2 ,k3} and
+///
+/// x_corr_px = x_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
+/// y_corr_px = y_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
+///
+/// where r2, r4, r6 are the 2nd, 4th, and 6th powers of the r, where r is the
+/// distance (normalized image plane coordinates) of (x,y) to (cx,cy), and
+/// for a pixel at point (x_px, y_px) in pixel coordinates, the corrected output
+/// position would be (x_corr, y_corr).
+typedef struct TangoIntrinsics {
+  /// ID of the camera which the intrinsics reference.
+  TangoCameraId camera_id;
+  /// The width of the image in pixels.
+  uint32_t width;
+  /// The height of the image in pixels.
+  uint32_t height;
+
+  /// Focal length, x axis, in pixels.
+  double fx;
+  /// Focal length, y axis, in pixels.
+  double fy;
+  /// Principal point x coordinate on the image, in pixels.
+  double cx;
+  /// Principal point y coordinate on the image, in pixels.
+  double cy;
+
+  /// Distortion coefficients, k1, k2, k3 for color image.
+  double distortion[5];
+} TangoIntrinsics;
+
 #define UUID_LEN 37
 
 /// The UUID struct contains the unique id associated with a single area
@@ -226,16 +281,16 @@ typedef struct {
   Metadata_entry* metadata_entries;
 } Metadata_list;
 
-/// @brief The TangoEvent structure signals important sensor and tracking 
+/// @brief The TangoEvent structure signals important sensor and tracking
 /// events.
-/// Each event comes with a timestamp, a type, and a description which 
+/// Each event comes with a timestamp, a type, and a description which
 /// describes the event and pertinent information.
 ///
 /// Possible descriptions are:
 /// - "Unknown:"
-/// - "FOVOverExposed:X" - the fisheye image is over exposed with average pixel
-/// value X px.
-/// - "FOVUnderExposed:X" - the fisheye image is under exposed with average
+/// - "FisheyeOverExposed:X" - the fisheye image is over exposed with average
+/// pixel value X px.
+/// - "FisheyeUnderExposed:X" - the fisheye image is under exposed with average
 /// pixel value X px.
 /// - "ColorOverExposed:X" - the color image is over exposed with average pixel
 /// value X px.
@@ -402,7 +457,7 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 /// INVALID.
 ///
 /// @param timestamp Time specified in seconds. If not set to 0.0, getPoseAtTime
-/// retrieves the interpolated pose closest to this timestamp.  If set to 0.0, 
+/// retrieves the interpolated pose closest to this timestamp.  If set to 0.0,
 /// the most
 /// recent pose estimate for the target-base pair is returned.  The time
 /// of the returned pose is contained in the pose output structure and may
@@ -450,18 +505,25 @@ TangoErrorType TangoService_connectOnTangoEvent(
 /**@} devsitenav Event Notification */
 
 /// @defgroup camera Tango Service: Camera Interface
-/// @brief Functions for getting input from the device's cameras.
+/// @brief Functions for getting input from the device's cameras.  Use either
+/// TangoService_connectTextureId or TangoService_connectOnFrameAvailable but
+/// not both.
 /// @{
 
 /// Connect a Texture ID to a camera. The camera is selected via TangoCameraId.
 /// Currently only TANGO_CAMERA_COLOR is supported.  The texture must be the ID
 /// of a texture that has been allocated and initialized by the calling
-/// application.
+/// application.  Note: The first scan-line of the color image is reserved for
+/// metadata instead of image pixels.
 /// @param id The ID of the camera to connect this texture to.  Only
 /// TANGO_CAMERA_COLOR is supported.
+/// @param context The context returned during the onFrameAvailable callback.
 /// @param tex The texture ID of the texture to connect the camera to.  Must be
 /// a valid texture in the applicaton.
-TangoErrorType TangoService_connectTextureId(TangoCameraId id, int tex);
+TangoErrorType TangoService_connectTextureId(TangoCameraId id, int tex,
+                                             void *context,
+                                             void (*callback)(void *,
+                                                              TangoCameraId));
 
 /// Update the texture that has been connected to camera referenced by
 /// TangoCameraId. The texture is updated with the latest image from the
@@ -472,6 +534,36 @@ TangoErrorType TangoService_connectTextureId(TangoCameraId id, int tex);
 /// @param timestamp Upon return, if not NULL upon calling, timestamp contains
 /// the timestamp of the image that has been pushed to the connected texture.
 TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
+
+/// Connect a callback to a camera for access to the pixels. This is not
+/// recommended for display but for applications requiring access to the
+/// HAL_PIXEL_FORMAT_YV12 pixel data.  The camera is selected via
+/// TangoCameraId.  Currently only TANGO_CAMERA_COLOR is supported.  The
+/// onFrameAvailable callback will be called when a new frame of is available
+/// from the camera.
+/// Note: The first scan-line of the color image is reserved for metadata
+/// instead of image pixels.
+/// @param id The ID of the camera to connect this texture to.  Only
+/// TANGO_CAMERA_COLOR is supported.
+/// @param context The context returned during the onFrameAvailable callback.
+/// @param onFrameAvailable Function called when a new frame is available
+/// from the camera.
+TangoErrorType TangoService_connectOnFrameAvailable(
+    TangoCameraId id, void *context,
+    void (*onFrameAvailable)(void *context, TangoCameraId id,
+                             const TangoImageBuffer *buffer));
+
+/// Get the intrinsic calibration parameters for a given camera.  The intrinsics
+/// are as specified by the TangoIntrinsics struct.
+/// @param camera_id The camera ID to retrieve the calibration intrinsics for.
+/// @param intrinsics A TangoIntrinsics struct that must be allocated before
+/// calling, and is filled with calibration intrinsics for the camera camera_id
+/// upon successful return.
+/// @return Returns TANGO_SUCCESS on successfully retrieving calibration
+/// intrinsics.  Returns TANGO_ERROR on failure, and TANGO_INVALID if inputs
+/// are invalid.
+TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
+    TangoIntrinsics* intrinsics);
 
 /**@} devsitenav Camera */
 
@@ -532,6 +624,22 @@ TangoErrorType TangoService_saveAreaDescriptionMetadata(UUID uuid,
 TangoErrorType TangoService_destroyAreaDescriptionMetadata(
     Metadata_list* metadata_list);
 
+/// Import an area description from the source file path to the default
+/// area storage location and rename the area with its uuid.
+/// @param uuid To store the uuid of the area.
+/// @param src_file_path The source file path of the area to be imported.
+/// @return Returns TANGO_SUCCESS.
+TangoErrorType TangoService_importAreaDescription(UUID* uuid,
+                                                  char* src_file_path);
+
+/// Export an area with the uuid from the default area storage location to
+/// the destination file directory with the uuid as its name.
+/// @param uuid the uuid of the area.
+/// @param dst_file_dir The destination file directory.
+/// @return Returns TANGO_SUCCESS.
+TangoErrorType TangoService_exportAreaDescription(UUID uuid,
+                                                  char* dst_file_dir);
+
 /// Searches through the metadata list for a key that matches the parameter
 /// 'key'.  If such a key is found, returns the value_size and value associated
 /// with that key.
@@ -572,6 +680,12 @@ TangoErrorType TangoAreaDescriptionMetadata_set(
 ///
 /// The supported configuration parameters that can be set are:
 /// (denoted below as "type" "name"):
+///
+/// -   int32 config_color_iso: ISO value for the color camera.  For example use
+///         100, 200, or 400.  Default is  100.
+///
+/// -   int32 config_color_exp: Exposure value for the color camera, in
+///         nanoseconds.  Default is 11100000 (11.1 ms).
 ///
 /// -   boolean config_enable_auto_reset:
 ///         If tracking is lost, this will automatically reset the tracking and
@@ -720,7 +834,7 @@ TangoErrorType TangoConfig_getDouble(TangoConfig *config, const char *key,
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.  This array must be
 /// allocated by the caller.
-/// @param size The size in bytes of value, as allocated by the caller.  value 
+/// @param size The size in bytes of value, as allocated by the caller.  value
 /// will be written only up to this size in bytes.
 /// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
 /// on success.
