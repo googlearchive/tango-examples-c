@@ -78,7 +78,7 @@ bool RenderFrame() {
   TangoData::GetInstance().UpdateColorTexture();
   video_overlay->Render();
   axis->SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-  axis->Render(cam->GetCurrentProjectionViewMatrix());
+  axis->Render(cam->GetProjectionMatrix(),cam->GetViewMatrix());
   
   return true;
 }
