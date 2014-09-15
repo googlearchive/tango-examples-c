@@ -58,7 +58,7 @@ const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
 const glm::vec3 kGridPosition = glm::vec3(0.0f, -1.67f, 0.0f);
-const glm::vec3 kCubePosition = glm::vec3(-1.0f, 0.1-1.67f, -3.0f);
+const glm::vec3 kCubePosition = glm::vec3(-1.0f, 0.1 - 1.67f, -3.0f);
 
 glm::mat4 projectionMat;
 glm::mat4 viewMat;
@@ -67,6 +67,31 @@ glm::mat4 dToIMUMat;
 glm::mat4 cToIMUMat;
 glm::mat4 ocToCMat;
 glm::mat4 ocToDMat;
+
+void printMatrix(glm::mat4 matrix) {
+  int i;
+  for (i = 0; i < 4; i++) {
+    LOGI("%f,%f,%f,%f", matrix[i][0], matrix[i][1], matrix[i][2], matrix[i][3]);
+  }
+  LOGI("  ");
+}
+void printVector(glm::vec3 vector) {
+  LOGI("%f,%f,%f", vector[0], vector[1], vector[2]);
+  LOGI("  ");
+}
+
+void SetupExtrinsics() {
+  dToIMUMat = glm::translate(glm::mat4(1.0f),
+                             TangoData::GetInstance().dToIMU_position)
+      * glm::mat4_cast(TangoData::GetInstance().dToIMU_rotation);
+  printMatrix(glm::inverse(dToIMUMat));
+  cToIMUMat = glm::translate(glm::mat4(1.0f),
+                             TangoData::GetInstance().cToIMU_position)
+      * glm::mat4_cast(TangoData::GetInstance().cToIMU_rotation);
+  printMatrix(cToIMUMat);
+  printMatrix(glm::inverse(dToIMUMat) * cToIMUMat);
+
+}
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -79,38 +104,41 @@ bool SetupGraphics(int w, int h) {
   frustum = new Frustum();
   trace = new Trace();
   grid = new Grid();
-  arRuler =new ArRuler();
-  cube= new Cube();
+  arRuler = new ArRuler();
+  cube = new Cube();
   video_overlay = new VideoOverlay();
 
   camera_type = FIRST_PERSON;
   //cam->SetAspectRatio((float) (w / h));
-  projectionMat = glm::perspective(45.0f, (float) (w / h), 0.1f, 100.0f);
-    float ssToOWArray[16] = {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, -1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f };
+  projectionMat = glm::perspective(38.16f, (float) (1280.0f / 720.0f),
+                                   1.625875f, 100.0f);
+  float ssToOWArray[16] = {
+      1.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, -1.0f, 0.0f,
+      0.0f, 1.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 1.0f
+  };
 
-    float ocToCArray[16]={
-        1.0f,0.0f,0.0f,0.0f,
-        0.0f,-1.0f,0.0f,0.0f,
-        0.0f,0.0f,-1.0f,0.0f,
-        0.0f,0.0f,0.0f,1.0f};
+  float ocToCArray[16] = {
+      1.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, -1.0f, 0.0f,
+      0.0f, 0.0f, 0.0f, 1.0f
+  };
 
-    float ocToDArray[16]={
-        1,0,0,0,
-        0,cos(13*3.14f/180.0f),sin(13*3.14f/180.0f),0,
-        0,-sin(13*3.14f/180.0f),cos(13*3.14f/180.0f),0,
-        0,0,0,1
-    };
+  float ocToDArray[16] = {
+      1, 0, 0, 0,
+      0, cos(13 * 3.14f / 180.0f), sin(13 * 3.14f / 180.0f), 0,
+      0, -sin(13 * 3.14f / 180.0f), cos(13 * 3.14f / 180.0f), 0,
+      0, 0, 0, 1
+  };
 
-    memcpy(glm::value_ptr(ssToOWMat), ssToOWArray, sizeof(ssToOWArray));
-    memcpy(glm::value_ptr(ocToCMat), ocToCArray, sizeof(ocToCArray));
-    memcpy(glm::value_ptr(ocToDMat), ocToDArray, sizeof(ocToDArray));
+  memcpy(glm::value_ptr(ssToOWMat), ssToOWArray, sizeof(ssToOWArray));
+  //  printMatrix(ssToOWMat);
+  memcpy(glm::value_ptr(ocToCMat), ocToCArray, sizeof(ocToCArray));
 
-    dToIMUMat = glm::translate(glm::mat4(1.0f),TangoData::GetInstance().dToIMU_position) * glm::mat4_cast(TangoData::GetInstance().dToIMU_rotation);
-    cToIMUMat = glm::translate(glm::mat4(1.0f),TangoData::GetInstance().cToIMU_position) * glm::mat4_cast(TangoData::GetInstance().cToIMU_rotation);
+  memcpy(glm::value_ptr(ocToDMat), ocToDArray, sizeof(ocToDArray));
+  //  printMatrix(ocToDMat);
   return true;
 }
 
@@ -127,18 +155,20 @@ bool RenderFrame() {
   glViewport(0, 0, screen_width, screen_height);
 
   TangoData::GetInstance().UpdateColorTexture();
-    video_overlay->Render();
+  video_overlay->Render();
 
   glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
   glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
 
-  glm::mat4 dToSSMat = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation) ;
+  glm::mat4 dToSSMat = glm::translate(glm::mat4(1.0f), position)
+      * glm::mat4_cast(rotation);
 
-    //glm::mat4 viewInversed = ssToOWMat*dToSSMat*glm::inverse(dToIMUMat)*cToIMUMat*ocToCMat;
-    glm::mat4 viewInversed = ssToOWMat*dToSSMat*ocToDMat;
+  //glm::mat4 viewInversed = ssToOWMat*dToSSMat*glm::inverse(dToIMUMat)*cToIMUMat*ocToCMat;
+  glm::mat4 after = glm::inverse(
+      ocToCMat * cToIMUMat * glm::inverse(dToIMUMat));
+  glm::mat4 viewInversed = ssToOWMat * dToSSMat * after;
 
-    viewMat=glm::inverse(viewInversed);
-
+  viewMat = glm::inverse(viewInversed);
 
 //  if (camera_type == FIRST_PERSON) {
 //    cam->SetPosition(position);
@@ -161,15 +191,15 @@ bool RenderFrame() {
 //    axis->Render(cam->GetCurrentProjectionViewMatrix());
 //  }
 
-    grid->SetPosition(kGridPosition);
-    grid->Render(projectionMat,viewMat);
+  grid->SetPosition(kGridPosition);
+  grid->Render(projectionMat, viewMat);
 
-    arRuler->SetPosition(kGridPosition);
-    arRuler->Render(projectionMat,viewMat);
+  arRuler->SetPosition(kGridPosition);
+  arRuler->Render(projectionMat, viewMat);
 
-    cube->SetPosition(kCubePosition);
-    cube->SetScale(glm::vec3(0.2f,0.2f,0.2f));
-    cube->Render(projectionMat,viewMat);
+  cube->SetPosition(kCubePosition);
+  cube->SetScale(glm::vec3(0.2f, 0.2f, 0.2f));
+  cube->Render(projectionMat, viewMat);
   return true;
 }
 
@@ -197,9 +227,9 @@ extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_projecttango_augmentedrealitynative_TangoJNINative_Initialize(
     JNIEnv* env, jobject obj, bool isAutoReset) {
-  if(isAutoReset){
+  if(isAutoReset) {
     LOGI("Initialize with auto reset");
-  }else{
+  } else {
     LOGI("Initialize with manual reset");
   }
   if (!TangoData::GetInstance().Initialize())
@@ -210,6 +240,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_augmentedrealitynative_TangoJNINati
   {
     LOGE("Tango set config failed");
   }
+  SetupExtrinsics();
   TangoData::GetInstance().ConnectTexture(video_overlay->texture_id);
 }
 
