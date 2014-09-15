@@ -34,7 +34,18 @@ static const char kFragmentShader[] =
 "uniform samplerExternalOES texture;\n"
 "varying vec2 f_textureCoords;\n"
 "void main() {\n"
-"  gl_FragColor = texture2D(texture, f_textureCoords);\n"
+    "  float k1 = 0.220545;                                  \n"
+    "  float k2 =-0.634778;                               \n"
+    "  float k3 = 0.603205;                               \n"
+    "  vec2 cxy = vec2(639.358/1280.0, 355.708/720.0);\n"
+    "  vec2 xy = f_textureCoords - cxy;\n"
+    "  float r2 = xy[0] * xy[0] + xy[1] * xy[1];\n"
+    "  float r4 = r2 * r2;\n"
+    "  float r6 = r2 * r2 * r2;\n"
+    "  vec2 delta_px = vec2( (xy[0] * 640.0) * (k1 * r2 + k2 * r4 + k3 * r6),\n"
+    "                        (xy[1] * 360.0) * (k1 * r2 + k2 * r4 + k3 * r6));\n"
+    "  vec2 delta = vec2(delta_px[0]/1280.0, delta_px[1]/720.0);\n"
+"  gl_FragColor = texture2D(texture, f_textureCoords+delta);\n"
 "}\n";
 
 static const GLfloat kVertices[] =
