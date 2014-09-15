@@ -68,13 +68,15 @@ glm::mat4 cToIMUMat;
 glm::mat4 ocToCMat;
 glm::mat4 ocToDMat;
 
+// Print out a column major matrix.
 void printMatrix(glm::mat4 matrix) {
   int i;
   for (i = 0; i < 4; i++) {
-    LOGI("%f,%f,%f,%f", matrix[i][0], matrix[i][1], matrix[i][2], matrix[i][3]);
+    LOGI("%f,%f,%f,%f", matrix[0][i], matrix[1][i], matrix[2][i], matrix[3][i]);
   }
   LOGI("  ");
 }
+
 void printVector(glm::vec3 vector) {
   LOGI("%f,%f,%f", vector[0], vector[1], vector[2]);
   LOGI("  ");
@@ -83,12 +85,14 @@ void printVector(glm::vec3 vector) {
 void SetupExtrinsics() {
   dToIMUMat = glm::translate(glm::mat4(1.0f),
                              TangoData::GetInstance().dToIMU_position)
-      * glm::mat4_cast(TangoData::GetInstance().dToIMU_rotation);
-  printMatrix(glm::inverse(dToIMUMat));
-  cToIMUMat = glm::translate(glm::mat4(1.0f),
-                             TangoData::GetInstance().cToIMU_position)
-      * glm::mat4_cast(TangoData::GetInstance().cToIMU_rotation);
+      * glm::inverse(glm::mat4_cast(TangoData::GetInstance().dToIMU_rotation));
+  LOGI("I_T_D = \n");
+  printMatrix(dToIMUMat);
+  cToIMUMat = glm::translate(glm::mat4(1.0f),TangoData::GetInstance().cToIMU_position) *
+      glm::inverse(glm::mat4_cast(TangoData::GetInstance().cToIMU_rotation));
+  LOGI("I_T_C = \n");
   printMatrix(cToIMUMat);
+  LOGI("I_T_D^-1 * I_T_C = \n");
   printMatrix(glm::inverse(dToIMUMat) * cToIMUMat);
 
 }
@@ -134,11 +138,13 @@ bool SetupGraphics(int w, int h) {
   };
 
   memcpy(glm::value_ptr(ssToOWMat), ssToOWArray, sizeof(ssToOWArray));
-  //  printMatrix(ssToOWMat);
+  LOGI("OW_T_SS = \n");
+  printMatrix(ssToOWMat);
   memcpy(glm::value_ptr(ocToCMat), ocToCArray, sizeof(ocToCArray));
 
   memcpy(glm::value_ptr(ocToDMat), ocToDArray, sizeof(ocToDArray));
-  //  printMatrix(ocToDMat);
+  LOGI("D_T_Oc = \n");
+  printMatrix(ocToDMat);
   return true;
 }
 
@@ -163,10 +169,7 @@ bool RenderFrame() {
   glm::mat4 dToSSMat = glm::translate(glm::mat4(1.0f), position)
       * glm::mat4_cast(rotation);
 
-  //glm::mat4 viewInversed = ssToOWMat*dToSSMat*glm::inverse(dToIMUMat)*cToIMUMat*ocToCMat;
-  glm::mat4 after = glm::inverse(
-      ocToCMat * cToIMUMat * glm::inverse(dToIMUMat));
-  glm::mat4 viewInversed = ssToOWMat * dToSSMat * after;
+  glm::mat4 viewInversed = ssToOWMat * dToSSMat * glm::inverse(dToIMUMat) * cToIMUMat * ocToCMat;
 
   viewMat = glm::inverse(viewInversed);
 
