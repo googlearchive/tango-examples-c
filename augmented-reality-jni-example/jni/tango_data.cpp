@@ -152,23 +152,46 @@ bool TangoData::SetConfig(bool isAutoReset) {
                                                        poseData.orientation[0],
                                                        poseData.orientation[1],
                                                        poseData.orientation[2]);
-  LOGI("IMU-TO-COLOR:%f,%f,%f,%f,%f,%f,%f", poseData.translation[0],
-       poseData.translation[1], poseData.translation[2],
-       poseData.orientation[3], poseData.orientation[0],
-       poseData.orientation[1], poseData.orientation[2]);
+//  LOGI("IMU-TO-COLOR:%f,%f,%f,%f,%f,%f,%f", poseData.translation[0],
+//       poseData.translation[1], poseData.translation[2],
+//       poseData.orientation[3], poseData.orientation[0],
+//       poseData.orientation[1], poseData.orientation[2]);
 
+  //Retrieve the Intrinsic
+  TangoIntrinsics ccIntrinsics;
+  if (TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR, &ccIntrinsics)
+      != TANGO_SUCCESS) {
+    LOGE("TangoService_getCameraIntrinsics(): Failed");
+    return false;
+  }
+  TangoData::GetInstance().cc_Width = ccIntrinsics.width;
+  TangoData::GetInstance().cc_Height = ccIntrinsics.height;
+  TangoData::GetInstance().cc_fx = ccIntrinsics.fx;
+  TangoData::GetInstance().cc_fy = ccIntrinsics.fy;
+  TangoData::GetInstance().cc_cx = ccIntrinsics.cx;
+  TangoData::GetInstance().cc_cy = ccIntrinsics.cy;
+  for (int i = 0; i < 5; i++) {
+    TangoData::GetInstance().cc_distortion[i] = ccIntrinsics.distortion[i];
+  }
+
+//  LOGI("width:%d,height:%d,fx:%f,fy:%f,cx:%f,cy:%f,k1:%f,k2:%f,k3:%f",
+//       ccIntrinsics.width, ccIntrinsics.height, ccIntrinsics.fx,
+//       ccIntrinsics.fy, ccIntrinsics.cx, ccIntrinsics.cy,
+//       ccIntrinsics.distortion[0], ccIntrinsics.distortion[1],
+//       ccIntrinsics.distortion[2]);
   return true;
 }
 
-void TangoData::ConnectTexture(GLuint texture_id){
-  if (TangoService_connectTextureId(TANGO_CAMERA_COLOR,
-                                      texture_id, nullptr, nullptr) != TANGO_SUCCESS) {
+void TangoData::ConnectTexture(GLuint texture_id) {
+  if (TangoService_connectTextureId(TANGO_CAMERA_COLOR, texture_id, nullptr,
+                                    nullptr) != TANGO_SUCCESS) {
     LOGE("TangoService_connectTextureId(): Failed");
   }
 }
 
-void TangoData::UpdateColorTexture(){
-  if (TangoService_updateTexture(TANGO_CAMERA_COLOR, &timestamp) != TANGO_SUCCESS) {
+void TangoData::UpdateColorTexture() {
+  if (TangoService_updateTexture(TANGO_CAMERA_COLOR, &timestamp)
+      != TANGO_SUCCESS) {
     LOGE("TangoService_updateTexture(): Failed");
   }
 }

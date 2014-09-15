@@ -56,10 +56,21 @@ class TangoData {
   bool isMTAutoReset;
   char eventString[30];
   char lib_version[26];
+  //Extrinsic
   glm::vec3 dToIMU_position;
   glm::quat dToIMU_rotation;
   glm::vec3 cToIMU_position;
   glm::quat cToIMU_rotation;
+
+  //Intrinsic
+  int cc_Width;
+  int cc_Height;
+  double cc_fx;
+  double cc_fy;
+  double cc_cx;
+  double cc_cy;
+  double cc_distortion[5];
+
 
  private:
   glm::vec3 tango_position_;
