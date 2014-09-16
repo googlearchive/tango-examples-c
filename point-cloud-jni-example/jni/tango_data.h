@@ -52,10 +52,15 @@ class TangoData {
   float depth_frame_delta_time;
   float previous_frame_time_;
   
+  // Start service to opengl world matrix.
   glm::mat4 ss_2_ow_mat;
+  // Device to start service matrix.
   glm::mat4 d_2_ss_mat;
+  // Device to IMU matrix.
   glm::mat4 d_2_imu_mat;
+  // Color camera to IMU matrix.
   glm::mat4 c_2_imu_mat;
+  // Opengl camera to color camera matrix.
   glm::mat4 oc_2_c_mat;
 private:
   void SetExtrinsicsMatrics();
