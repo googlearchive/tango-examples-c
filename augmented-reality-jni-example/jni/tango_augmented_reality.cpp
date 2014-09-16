@@ -106,6 +106,7 @@ bool SetupGraphics(int w, int h) {
   //cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
+  frustum->SetScale(glm::vec3(0.8f,0.6f,1.0f));
   trace = new Trace();
   grid = new Grid();
   arRuler = new ArRuler();

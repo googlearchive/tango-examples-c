@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "frustum.h"
 #include "gl_util.h"
 
@@ -31,28 +30,28 @@ static const char kFragmentShader[] =
 
 static const float vertices[] = {
     0.0f, 0.0f, 0.0f,
-    -0.4f, 0.3f, -0.5f,
+    -1.0f, 1.0f, -1.0f,
 
     0.0f, 0.0f, 0.0f,
-    0.4f, 0.3f, -0.5f,
+    1.0f, 1.0f, -1.0f,
 
     0.0f, 0.0f, 0.0f,
-    -0.4f, -0.3f, -0.5f,
+    -1.0f, -1.0f, -1.0f,
 
     0.0f, 0.0f, 0.0f,
-    0.4f, -0.3f, -0.5f,
+    1.0f, -1.0f, -1.0f,
 
-    -0.4f, 0.3f, -0.5f,
-    0.4f, 0.3f, -0.5f,
+    -1.0f, 1.0f, -1.0f,
+    1.0f, 1.0f, -1.0f,
 
-    0.4f, 0.3f, -0.5f,
-    0.4f, -0.3f, -0.5f,
+    1.0f, 1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
 
-    0.4f, -0.3f, -0.5f,
-    -0.4f, -0.3f, -0.5f,
+    1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
 
-    -0.4f, -0.3f, -0.5f,
-    -0.4f, 0.3f, -0.5f
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, 1.0f, -1.0f
 };
 
 Frustum::Frustum() {
@@ -67,7 +66,7 @@ Frustum::Frustum() {
 }
 
 void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
-  glUseProgram(shader_program_);
+  glUseProgram (shader_program_);
 
   // Calculate MVP matrix and pass it to shader.
   glm::mat4 model_mat = GetCurrentModelMatrix();
@@ -78,7 +77,7 @@ void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 8, vertices,
                GL_STATIC_DRAW);
-  glEnableVertexAttribArray(attrib_vertices_);
+  glEnableVertexAttribArray (attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
