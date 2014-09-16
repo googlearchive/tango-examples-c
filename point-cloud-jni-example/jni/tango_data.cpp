@@ -41,14 +41,9 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
   TangoData::GetInstance().average_depth = total_z/(float)vertices_count;
   
   // Computing the callback delta time.
-  struct timeval time;
-  gettimeofday(&time, NULL);
-  float current_frame_time = (float)((time.tv_sec * 1000) + (time.tv_usec / 1000));
   TangoData::GetInstance().depth_frame_delta_time =
-    current_frame_time - TangoData::GetInstance().previous_frame_time_;
-  TangoData::GetInstance().depth_fps = 1000.0f/
-    (current_frame_time - TangoData::GetInstance().previous_frame_time_);
-  TangoData::GetInstance().previous_frame_time_ = current_frame_time;
+    (XYZ_ij->timestamp - TangoData::GetInstance().previous_frame_time_)*1000.0f;
+  TangoData::GetInstance().previous_frame_time_ = XYZ_ij->timestamp;
 }
 
 bool TangoData::Initialize() {
