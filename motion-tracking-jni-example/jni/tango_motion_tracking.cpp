@@ -44,10 +44,10 @@ enum CameraType {
 int camera_type;
 
 // Quaternion format of rotation.
-const glm::vec3 kThirdPersonCameraPosition = glm::vec3(-1.5f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation = glm::quat(0.91598f, -0.37941f,
-                                                       -0.12059f, -0.04995f);
-const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::vec3 kThirdPersonCameraPosition = glm::vec3(5.0f, 5.0f, 5.0f);
+const glm::quat kThirdPersonCameraRotation = glm::quat(0.85355f, -0.35355f,
+                                                       0.35355f, 0.14645f);
+const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 8.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
 const glm::vec3 kGridPosition = glm::vec3(0.0f, -1.67f, 0.0f);
@@ -85,11 +85,9 @@ bool RenderFrame() {
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
-      TangoData::GetInstance().GetTangoPosition());
+      TangoData::GetInstance().tango_position);
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
-      TangoData::GetInstance().GetTangoRotation());
-//  glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
-//  glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
+      TangoData::GetInstance().tango_rotation);
 
   if (camera_type == FIRST_PERSON) {
     cam->SetPosition(position);
@@ -138,39 +136,44 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj, bool isAutoReset) {
-  if(isAutoReset){
-    LOGI("Initialize with auto reset");
-  }else{
-    LOGI("Initialize with manual reset");
-  }
+    JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
+}
+
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetupConfig(
+    JNIEnv* env, jobject obj, bool isAutoReset) {
   if (!TangoData::GetInstance().SetConfig(isAutoReset))
   {
     LOGE("Tango set config failed");
   }
 }
-
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_LockConfig(
     JNIEnv* env, jobject obj) {
-  LOGI("ConnectService:Locking config and connecting service");
   if (!TangoData::GetInstance().LockConfig()) {
     LOGE("Tango lock config failed");
   }
+}
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
+    JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
+  }
+}
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UnlockConfig(
+    JNIEnv* env, jobject obj) {
+  if (TangoData::GetInstance().UnlockConfig()) {
+    LOGE("Tango unlock file failed");
   }
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
-  LOGI("DisconectService: Unlocking config and disconnecting service");
-  if (TangoData::GetInstance().UnlockConfig()) {
-    LOGE("Tango unlock file failed");
-  }
   TangoData::GetInstance().Disconnect();
 }
 
@@ -204,24 +207,19 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   SetCamera(camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_PoseToString(
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().PoseToString());
+  return (env)->NewStringUTF(TangoData::GetInstance().GetPoseDataString());
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_EventToString(
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetEventString(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().eventString);
-}
-
-JNIEXPORT jchar JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UpdateStatus(
-    JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().GetTangoPoseStatus();
+  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
 }
 
 JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().lib_version);
+  return (env)->NewStringUTF(TangoData::GetInstance().GetVersionString());
 }
 #ifdef __cplusplus
 }

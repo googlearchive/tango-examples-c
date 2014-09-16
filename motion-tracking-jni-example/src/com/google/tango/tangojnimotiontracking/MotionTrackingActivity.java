@@ -17,111 +17,122 @@
 package com.google.tango.tangojnimotiontracking;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-//import android.view.Menu;
-//import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
-public class MotionTrackingActivity extends Activity {
-	RelativeLayout layout;
+public class MotionTrackingActivity extends Activity implements
+		View.OnClickListener {
 
-	GLSurfaceView motionTrackingView;
-	TextView tangoPoseStatusText;
+	private static String TAG = MotionTrackingActivity.class.getSimpleName();
 
-	TextView isAutoResetText;
-	Button startButton;
-	Button resetButton;
-	Button thirdCamera;
-	Button firstCamera;
-	Button topCamera;
-	ToggleButton isAutoResetButton;
+	private TextView mPoseData;
+	private TextView mVersion;
+	private TextView mEvent;
 
-	String[] poseStatuses = { "Initializing", "Valid", "Invalid", "Unknown" };
-	boolean isAutoReset = false;
-	boolean isStarted = false;
+	private Button mMotionReset;
+
+	private boolean mIsAutoReset;
+	private MotionTrackingRenderer mRenderer;
+	private GLSurfaceView mGLView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_motion_tracking);
-
-		motionTrackingView = (GLSurfaceView) findViewById(R.id.surfaceview);
-		motionTrackingView.setRenderer(new MotionTrackingView());
-		motionTrackingView.setVisibility(View.GONE);
-
-		isAutoResetText = (TextView) findViewById(R.id.auto_reset_text);
-
-		tangoPoseStatusText = (TextView) findViewById(R.id.debug_info);
-		tangoPoseStatusText.setVisibility(View.GONE);
-
-		resetButton = (Button) findViewById(R.id.reset);
-		isAutoResetButton = (ToggleButton) findViewById(R.id.auto_reset);
-		isAutoResetButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				isAutoReset = isAutoResetButton.isChecked();
-			}
-		});
-
-		resetButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.ResetMotionTracking();
-			}
-		});
-		resetButton.setVisibility(View.GONE);
+		Intent intent = getIntent();
+		mIsAutoReset = intent.getBooleanExtra(
+				StartActivity.KEY_MOTIONTRACKING_AUTORESET, false);
 		
-		thirdCamera=(Button)findViewById(R.id.third);
-		thirdCamera.setVisibility(View.GONE);
-		thirdCamera.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(1);
-			}
-		});
-		
-		firstCamera=(Button)findViewById(R.id.first);
-		firstCamera.setVisibility(View.GONE);
-		firstCamera.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(0);
-			}
-		});
-		
-		topCamera=(Button)findViewById(R.id.top);
-		topCamera.setVisibility(View.GONE);
-		topCamera.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(2);
-			}
-		});
+		// Text views for displaying translation and rotation data
+		mPoseData = (TextView) findViewById(R.id.pose_data_textview);
 
-		startButton = (Button) findViewById(R.id.start);
-		startButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				startButton.setVisibility(View.GONE);
-				isAutoResetText.setVisibility(View.GONE);
-				isAutoResetButton.setVisibility(View.GONE);
-				
-				thirdCamera.setVisibility(View.VISIBLE);
-				firstCamera.setVisibility(View.VISIBLE);
-				topCamera.setVisibility(View.VISIBLE);
-				tangoPoseStatusText.setVisibility(View.VISIBLE);
-				motionTrackingView.setVisibility(View.VISIBLE);
-				if (!isAutoReset) {
-					resetButton.setVisibility(View.VISIBLE);
-				}
-				System.out.println(isAutoReset);
-				TangoJNINative.Initialize(isAutoReset);
-				TangoJNINative.ConnectService();
-				isStarted = true;
-			}
-		});
+		// Text views for displaying most recent Tango Event
+		mEvent = (TextView) findViewById(R.id.tango_event_textview);
 
-		
+		// Text views for the status of the pose data and Tango library versions
+		mVersion = (TextView) findViewById(R.id.version_textview);
 
+		// Buttons for selecting camera view and Set up button click listeners
+		findViewById(R.id.first_person_button).setOnClickListener(this);
+		findViewById(R.id.third_person_button).setOnClickListener(this);
+		findViewById(R.id.top_down_button).setOnClickListener(this);
+
+		// Button to reset motion tracking
+		mMotionReset = (Button) findViewById(R.id.resetmotion);
+
+		// OpenGL view where all of the graphics are drawn
+		mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+
+		// Set up button click listeners
+		mMotionReset.setOnClickListener(this);
+
+		// Configure OpenGL renderer
+		mRenderer = new MotionTrackingRenderer();
+		mGLView.setRenderer(mRenderer);
+		mMotionReset.setVisibility(View.GONE);
+
+		// Initialize the Tango service
+		TangoJNINative.Initialize();
+
+		// Set up Tango configuration file with auto-reset on
+		TangoJNINative.SetupConfig(mIsAutoReset);
+
+		mVersion.setText(TangoJNINative.GetVersionNumber());
+
+		startUIThread();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		TangoJNINative.UnlockConfig();
+		TangoJNINative.DisconnectService();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onPause();
+		// Lock Tango configuration file
+		TangoJNINative.LockConfig();
+
+		// Connect Tango Service
+		TangoJNINative.ConnectService();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		TangoJNINative.UnlockConfig();
+		TangoJNINative.OnDestroy();
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.first_person_button:
+			TangoJNINative.SetCamera(0);
+			break;
+		case R.id.top_down_button:
+			TangoJNINative.SetCamera(2);
+			break;
+		case R.id.third_person_button:
+			TangoJNINative.SetCamera(1);
+			break;
+		case R.id.resetmotion:
+			TangoJNINative.ResetMotionTracking();
+			break;
+		default:
+			Log.w(TAG, "Unknown button click");
+			return;
+		}
+	}
+
+	private void startUIThread() {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -129,18 +140,15 @@ public class MotionTrackingActivity extends Activity {
 					try {
 						Thread.sleep(10);
 						final String tangoEventString = TangoJNINative
-								.EventToString();
+								.GetEventString();
 						final String tangoPoseString = TangoJNINative
-								.PoseToString();
+								.GetPoseString();
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									tangoPoseStatusText
-											.setText("Tango Service Version:"+TangoJNINative.GetVersionNumber()+"\nSample App Version: 2014-09-02-a\n\n"
-													+ tangoPoseString
-													+ "\n\n"
-													+ "Last Event: "+tangoEventString);
+									mEvent.setText(tangoEventString);
+									mPoseData.setText(tangoPoseString);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -154,43 +162,4 @@ public class MotionTrackingActivity extends Activity {
 			}
 		}).start();
 	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		TangoJNINative.DisconnectService();
-	}
-
-	protected void onDestroy() {
-		super.onDestroy();
-		TangoJNINative.OnDestroy();
-	}
-
-//	@Override
-//	public boolean onCreateOptionsMenu(Menu menu) {
-//		getMenuInflater().inflate(R.menu.motion_tracking, menu);
-//		return true;
-//	}
-//
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		switch (item.getItemId()) {
-//		case R.id.action_first_camera:
-//			TangoJNINative.SetCamera(0);
-//			return true;
-//		case R.id.action_third_camera:
-//			TangoJNINative.SetCamera(1);
-//			return true;
-//		case R.id.action_top_camera:
-//			TangoJNINative.SetCamera(2);
-//			return true;
-//		default:
-//			return super.onOptionsItemSelected(item);
-//		}
-//	}
 }
