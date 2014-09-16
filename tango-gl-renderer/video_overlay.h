@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef POINTCLOUD_H
-#define POINTCLOUD_H
+#ifndef VIDEO_OVERLAY_H
+#define VIDEO_OVERLAY_H
 
+#include "drawable_object.h"
 #include "gl_util.h"
 
-class Pointcloud {
+class VideoOverlay : public DrawableObject {
  public:
-  Pointcloud();
-  
-  /// Render function take in the depth buffer and the buffer size, and render
-  /// the points base on current transformation.
-  
-  /// model_view_mat: Current view projection matrix.
-  ///
-  /// depth_buffer_size: Number of vertices in of the data. Example: 60 floats in
-  /// the buffer, the size should be 60/3 = 20;
-  ///
-  /// depth_data_buffer: Pointer to float array contains float triplet of each
-  /// vertices in the point cloud.
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat, int depth_buffer_size,
-              float* depth_data_buffer);
+  VideoOverlay();
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  GLuint texture_id;
+  void SetupIntrinsics(float k1, float k2, float k3, float cx, float cy, float w, float h);
+
  private:
   GLuint vertex_buffers_;
 
-  GLuint shader_program_;
   GLuint attrib_vertices_;
+  GLuint attrib_textureCoords;
+  GLuint uniform_texture;
+  GLuint vertex_buffers[3];
+  GLuint shader_program_;
+
   GLuint uniform_mvp_mat_;
 };
-
-#endif  // POINTCLOUD_H
+#endif  // VIDEO_OVERLAY_H

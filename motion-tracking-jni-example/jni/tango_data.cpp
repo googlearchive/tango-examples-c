@@ -94,6 +94,44 @@ bool TangoData::SetConfig(bool is_auto_reset) {
     return false;
   }
   TangoConfig_getString(config_, "tango_service_library_version",TangoData::GetInstance().lib_version, 26);
+
+  //Retrieve the Extrinsic
+   TangoPoseData poseData;
+   TangoCoordinateFramePair pair1;
+   pair1.base = TANGO_COORDINATE_FRAME_IMU;
+   pair1.target = TANGO_COORDINATE_FRAME_DEVICE;
+   if (TangoService_getPoseAtTime(0.0, pair1, &poseData) != TANGO_SUCCESS) {
+     LOGE("TangoService_getPoseAtTime(): Failed");
+     return false;
+   }
+   TangoData::GetInstance().dToIMU_position = glm::vec3(poseData.translation[0],
+                                                        poseData.translation[1],
+                                                        poseData.translation[2]);
+   TangoData::GetInstance().dToIMU_rotation = glm::quat(poseData.orientation[3],
+                                                        poseData.orientation[0],
+                                                        poseData.orientation[1],
+                                                        poseData.orientation[2]);
+ //  LOGI("IMU-TO-DEVICE:%f,%f,%f,%f,%f,%f,%f",poseData.translation[0], poseData.translation[1],
+ //       poseData.translation[2],poseData.orientation[3], poseData.orientation[0],
+ //       poseData.orientation[1], poseData.orientation[2]);
+
+   pair1.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
+   if (TangoService_getPoseAtTime(0.0, pair1, &poseData) != TANGO_SUCCESS) {
+     LOGE("TangoService_getPoseAtTime(): Failed");
+     return false;
+   }
+   TangoData::GetInstance().cToIMU_position = glm::vec3(poseData.translation[0],
+                                                        poseData.translation[1],
+                                                        poseData.translation[2]);
+   TangoData::GetInstance().cToIMU_rotation = glm::quat(poseData.orientation[3],
+                                                        poseData.orientation[0],
+                                                        poseData.orientation[1],
+                                                        poseData.orientation[2]);
+//   LOGI("IMU-TO-COLOR:%f,%f,%f,%f,%f,%f,%f", poseData.translation[0],
+//        poseData.translation[1], poseData.translation[2],
+//        poseData.orientation[3], poseData.orientation[0],
+//        poseData.orientation[1], poseData.orientation[2]);
+
   return true;
 }
 

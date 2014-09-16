@@ -47,7 +47,7 @@ bool TangoData::SetConfig() {
 
 void TangoData::ConnectTexture(GLuint texture_id){
   if (TangoService_connectTextureId(TANGO_CAMERA_COLOR,
-                                      texture_id) != TANGO_SUCCESS) {
+                                      texture_id,nullptr,nullptr) != TANGO_SUCCESS) {
     LOGE("TangoService_connectTextureId(): Failed");
   }
 }
