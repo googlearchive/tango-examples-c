@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.tango.tangojnimotiontracking"
+    package="com.projecttango.motiontrackingnative"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.google.tango.tangojnimotiontracking.StartActivity"
+            android:name="com.projecttango.motiontrackingnative.StartActivity"
             android:screenOrientation="landscape"
             android:label="@string/app_name" >
             <intent-filter>
@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.google.tango.tangojnimotiontracking.MotionTrackingActivity"
+            android:name="com.projecttango.motiontrackingnative.MotionTrackingActivity"
         	android:label="@string/app_name" 
             android:screenOrientation="landscape"> 
         </activity>

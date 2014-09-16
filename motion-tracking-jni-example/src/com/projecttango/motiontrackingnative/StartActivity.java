@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnimotiontracking;
+package com.projecttango.motiontrackingnative;
 
 import android.app.Activity;
 import android.content.Intent;

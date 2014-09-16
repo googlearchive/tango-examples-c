@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnimotiontracking;
+package com.projecttango.motiontrackingnative;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
