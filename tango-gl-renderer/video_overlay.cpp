@@ -22,9 +22,10 @@ static const char kVertexShader[] =
 "attribute vec4 vertex;\n"
 "attribute vec2 textureCoords;\n"
 "varying vec2 f_textureCoords;\n"
+"uniform mat4 mvp;\n"
 "void main() {\n"
 "  f_textureCoords = textureCoords;\n"
-"  gl_Position = vertex;\n"
+"  gl_Position = mvp * vertex;\n"
 "}\n";
 
 static const char kFragmentShader[] =
