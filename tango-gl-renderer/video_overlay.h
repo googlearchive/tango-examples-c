@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef DRAWABLE_OBJECT_H
-#define DRAWABLE_OBJECT_H
+#ifndef VIDEO_OVERLAY_H
+#define VIDEO_OVERLAY_H
 
+#include "drawable_object.h"
 #include "gl_util.h"
 
-class DrawableObject {
+class VideoOverlay : public DrawableObject {
  public:
-  DrawableObject();
-  virtual void Render(glm::mat4 projection_mat, glm::mat4 view_mat) = 0;
-  void SetPosition(glm::vec3 pos);
-  void SetRotation(glm::quat rot);
-  void SetScale(glm::vec3 s);
-  void Rotate(glm::quat rot);
-  void SetOffset(glm::vec3 offset);
-  glm::mat4 GetCurrentModelMatrix();
+  VideoOverlay();
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  GLuint texture_id;
+  void SetupIntrinsics(float k1, float k2, float k3, float cx, float cy, float w, float h);
+
  private:
-  glm::quat rotation_;
-  glm::vec3 position_;
-  glm::vec3 scale_;
-  glm::vec3 offset_;
+  GLuint vertex_buffers_;
+
+  GLuint attrib_vertices_;
+  GLuint attrib_textureCoords;
+  GLuint uniform_texture;
+  GLuint vertex_buffers[3];
+  GLuint shader_program_;
+
+  GLuint uniform_mvp_mat_;
 };
-#endif  // DRAWABLE_OBJECT_H
+#endif  // VIDEO_OVERLAY_H

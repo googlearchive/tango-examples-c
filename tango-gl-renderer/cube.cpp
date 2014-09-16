@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "frustum.h"
+
+#include "cube.h"
 #include "gl_util.h"
 
 static const char kVertexShader[] =
@@ -25,36 +26,36 @@ static const char kVertexShader[] =
 
 static const char kFragmentShader[] =
     "void main() {\n"
-    "  gl_FragColor = vec4(0,0,0,1);\n"
+    "  gl_FragColor = vec4(0,1,0,1);\n"
     "}\n";
 
 static const float vertices[] = {
-    0.0f, 0.0f, 0.0f,
-    -1.0f, 1.0f, -1.0f,
+    // front
+        -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+        0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
 
-    0.0f, 0.0f, 0.0f,
-    1.0f, 1.0f, -1.0f,
+        // right
+        0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f,
 
-    0.0f, 0.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f,
+        // back
+        0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f,
+        -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
 
-    0.0f, 0.0f, 0.0f,
-    1.0f, -1.0f, -1.0f,
+        // left
+        -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
+        0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,
 
-    -1.0f, 1.0f, -1.0f,
-    1.0f, 1.0f, -1.0f,
+        // top
+        -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
 
-    1.0f, 1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-
-    1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, 1.0f, -1.0f
+        // bottom
+        -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f 
 };
 
-Frustum::Frustum() {
+Cube::Cube() {
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
   if (!shader_program_) {
     LOGE("Could not create program.");
@@ -65,8 +66,8 @@ Frustum::Frustum() {
   glGenBuffers(1, &vertex_buffer_);
 }
 
-void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
-  glUseProgram (shader_program_);
+void Cube::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+  glUseProgram(shader_program_);
 
   // Calculate MVP matrix and pass it to shader.
   glm::mat4 model_mat = GetCurrentModelMatrix();
@@ -74,14 +75,14 @@ void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   // Vertice binding
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 8, vertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray (attrib_vertices_);
+//  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+//  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * 12, vertices,
+//               GL_STATIC_DRAW);
+  glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+                        vertices);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_LINES, 0, 6 * 8);
+  glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
   glUseProgram(0);
 }

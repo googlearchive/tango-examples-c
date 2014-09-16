@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef DRAWABLE_OBJECT_H
-#define DRAWABLE_OBJECT_H
+#ifndef AR_RULER_H
+#define AR_RULER_H
 
+#include "drawable_object.h"
 #include "gl_util.h"
 
-class DrawableObject {
+class ArRuler : public DrawableObject {
  public:
-  DrawableObject();
-  virtual void Render(glm::mat4 projection_mat, glm::mat4 view_mat) = 0;
-  void SetPosition(glm::vec3 pos);
-  void SetRotation(glm::quat rot);
-  void SetScale(glm::vec3 s);
-  void Rotate(glm::quat rot);
-  void SetOffset(glm::vec3 offset);
-  glm::mat4 GetCurrentModelMatrix();
+  ArRuler();
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
-  glm::quat rotation_;
-  glm::vec3 position_;
-  glm::vec3 scale_;
-  glm::vec3 offset_;
+  GLuint vertex_buffer_;
+  GLuint color_buffer_;
+
+  GLuint shader_program_;
+  GLuint attrib_vertices_;
+  GLuint attrib_colors_;
+  GLuint uniform_mvp_mat_;
 };
-#endif  // DRAWABLE_OBJECT_H
+
+#endif  // AR_RULER_H
