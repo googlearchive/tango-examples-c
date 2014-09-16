@@ -20,7 +20,7 @@
 #include <math.h>
 
 #include "axis.h"
-//#include "camera.h"
+#include "camera.h"
 #include "frustum.h"
 #include "gl_util.h"
 #include "grid.h"
@@ -33,7 +33,7 @@
 GLuint screen_width;
 GLuint screen_height;
 
-//Camera *cam;
+Camera *cam;
 Axis *axis;
 Frustum *frustum;
 Grid *grid;
@@ -52,21 +52,21 @@ int camera_type;
 
 // Quaternion format of rotation.
 const glm::vec3 kThirdPersonCameraPosition = glm::vec3(-1.5f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation = glm::quat(0.91598f, -0.37941f,
-                                                       -0.12059f, -0.04995f);
+const glm::quat kThirdPersonCameraRotation = glm::quat(0.91598f, -0.37941f, -0.12059f, -0.04995f);
 const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
-const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
-                                                   0.0f);
+const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
 const glm::vec3 kGridPosition = glm::vec3(0.0f, -1.67f, 0.0f);
 const glm::vec3 kCubePosition = glm::vec3(-1.0f, 0.1 - 1.67f, -3.0f);
 
 glm::mat4 projectionMat;
+glm::mat4 projectionMatAR;
 glm::mat4 viewMat;
 glm::mat4 ssToOWMat;
 glm::mat4 dToIMUMat;
 glm::mat4 cToIMUMat;
 glm::mat4 ocToCMat;
 glm::mat4 ocToDMat;
+glm::mat4 viewInversed;
 
 // Print out a column major matrix.
 void printMatrix(glm::mat4 matrix) {
@@ -103,7 +103,7 @@ bool SetupGraphics(int w, int h) {
   screen_width = w;
   screen_height = h;
 
-  //cam = new Camera();
+  cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
   frustum->SetScale(glm::vec3(0.8f,0.6f,1.0f));
@@ -114,9 +114,8 @@ bool SetupGraphics(int w, int h) {
   video_overlay = new VideoOverlay();
 
   camera_type = FIRST_PERSON;
-  //cam->SetAspectRatio((float) (w / h));
-  projectionMat = glm::perspective(38.16f, (float) (1280.0f / 720.0f),
-                                   1.625875f, 100.0f);
+  cam->SetAspectRatio((float)(w/h));
+  projectionMatAR = glm::perspective(38.16f, (float) (1280.0f / 720.0f), 1.625875f, 100.0f);
   float ssToOWArray[16] = {
       1.0f, 0.0f, 0.0f, 0.0f,
       0.0f, 0.0f, -1.0f, 0.0f,
@@ -146,6 +145,7 @@ bool SetupGraphics(int w, int h) {
   memcpy(glm::value_ptr(ocToDMat), ocToDArray, sizeof(ocToDArray));
   LOGI("D_T_Oc = \n");
   printMatrix(ocToDMat);
+
   return true;
 }
 
@@ -161,39 +161,48 @@ bool RenderFrame() {
 
   glViewport(0, 0, screen_width, screen_height);
 
-  TangoData::GetInstance().UpdateColorTexture();
-  video_overlay->Render();
-
   glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
   glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
 
   glm::mat4 dToSSMat = glm::translate(glm::mat4(1.0f), position)
       * glm::mat4_cast(rotation);
 
-  glm::mat4 viewInversed = ssToOWMat * dToSSMat * glm::inverse(dToIMUMat) * cToIMUMat * ocToCMat;
+  viewInversed = ssToOWMat * dToSSMat * glm::inverse(dToIMUMat) * cToIMUMat * ocToCMat;
 
-  viewMat = glm::inverse(viewInversed);
+ glm::vec3 modelPosition=GlUtil::ConvertPositionToOpenGL(position);
+ glm::quat modelRotation=GlUtil::ConvertRotationToOpenGL(rotation);
 
-//  if (camera_type == FIRST_PERSON) {
-//    cam->SetPosition(position);
-//    cam->SetRotation(rotation);
-//  } else {
-//    if(camera_type == TOP_DOWN){
-//      cam->SetPosition(position+kTopDownCameraPosition);
-//    }else{
-//      cam->SetPosition(position+kThirdPersonCameraPosition);
-//    }
-//    frustum->SetPosition(position);
-//    frustum->SetRotation(rotation);
-//    frustum->Render(cam->GetCurrentProjectionViewMatrix());
-//
-//    trace->UpdateVertexArray(position);
-//    trace->Render(cam->GetCurrentProjectionViewMatrix());
-//
-//    axis->SetPosition(position);
-//    axis->SetRotation(rotation);
-//    axis->Render(cam->GetCurrentProjectionViewMatrix());
-//  }
+ TangoData::GetInstance().UpdateColorTexture();
+  if (camera_type == FIRST_PERSON) {
+    glDisable (GL_DEPTH_TEST);
+    video_overlay->Render(glm::mat4(1.0f),glm::mat4(1.0f));
+    projectionMat=projectionMatAR;
+    viewMat = glm::inverse(viewInversed);
+  } else {
+    if(camera_type == TOP_DOWN){
+      cam->SetPosition(modelPosition+kTopDownCameraPosition);
+    }else{
+      cam->SetPosition(modelPosition+kThirdPersonCameraPosition);
+    }
+    video_overlay->SetPosition(modelPosition);
+    projectionMat=cam->GetProjectionMatrix();
+    viewMat=cam->GetViewMatrix();
+
+    frustum->SetPosition(modelPosition);
+    frustum->SetRotation(modelRotation);
+    frustum->Render(projectionMat, viewMat);
+
+    trace->UpdateVertexArray(modelPosition);
+    trace->Render(projectionMat, viewMat);
+
+    axis->SetPosition(modelPosition);
+    axis->SetRotation(modelRotation);
+    axis->Render(projectionMat,viewMat);
+
+    video_overlay->SetPosition(modelPosition);
+    video_overlay->SetRotation(modelRotation);
+    video_overlay->Render(projectionMat,viewMat);
+  }
 
   grid->SetPosition(kGridPosition);
   grid->Render(projectionMat, viewMat);
@@ -212,13 +221,21 @@ void SetCamera(int camera_index) {
   switch (camera_index) {
     case FIRST_PERSON:
       LOGI("setting to First Person Camera");
+      video_overlay->SetScale(glm::vec3(1.0f,1.0f,1.0f));
+      video_overlay->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      video_overlay->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      video_overlay->SetOffset(glm::vec3(0.0f,0.0f,0.0f));
       break;
     case THIRD_PERSON:
-      //cam->SetRotation(kThirdPersonCameraRotation);
+      video_overlay->SetScale(glm::vec3(0.8f,0.6f,1.0f));
+      video_overlay->SetOffset(glm::vec3(0.0f,0.0f,-1.0f));
+      cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-      //cam->SetRotation(kTopDownCameraRotation);
+      video_overlay->SetScale(glm::vec3(0.8f,0.6f,1.0f));
+      video_overlay->SetOffset(glm::vec3(0.0f,0.0f,-1.0f));
+      cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
     default:
@@ -245,6 +262,15 @@ JNIEXPORT void JNICALL Java_com_projecttango_augmentedrealitynative_TangoJNINati
     LOGE("Tango set config failed");
   }
   SetupExtrinsics();
+  video_overlay->SetupIntrinsics(
+      (float)TangoData::GetInstance().cc_distortion[0],
+      (float)TangoData::GetInstance().cc_distortion[1],
+      (float)TangoData::GetInstance().cc_distortion[2],
+      (float)TangoData::GetInstance().cc_cx,
+      (float)TangoData::GetInstance().cc_cy,
+      (float)TangoData::GetInstance().cc_width,
+      (float)TangoData::GetInstance().cc_height
+  );
   TangoData::GetInstance().ConnectTexture(video_overlay->texture_id);
 }
 
@@ -270,7 +296,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_augmentedrealitynative_TangoJNINati
 
 JNIEXPORT void JNICALL Java_com_projecttango_augmentedrealitynative_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
-//  delete cam;
+  delete cam;
   delete axis;
   delete grid;
   delete frustum;
