@@ -23,7 +23,7 @@
 #include "gl_util.h"
 
 class TangoData {
- public:
+public:
   static TangoData& GetInstance() {
     static TangoData instance;
     return instance;
@@ -35,36 +35,29 @@ class TangoData {
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
-  void ResetMotionTracking();
   void Disconnect();
-
-  glm::vec3 GetTangoPosition();
-  glm::quat GetTangoRotation();
-  char GetTangoPoseStatus();
-  char* PoseToString();
+  
+  void ResetMotionTracking();
+  
+  char* GetPoseDataString();
+  char* GetEventString();
   char* GetVersionString();
-  void SetTangoPosition(glm::vec3 position);
-  void SetTangoRotation(glm::quat rotation);
-  void SetTangoPoseStatus(TangoPoseStatusType status);
-  void UpdateEvent(int index);
-  int statusCount[3];
-  int eventCount[5];
-  double timestamp;
-  double prevTimestamp;
-  bool isMTAutoReset;
-  char eventString[30];
-  char lib_version[26];
-  glm::vec3 dToIMU_position;
-  glm::quat dToIMU_rotation;
-  glm::vec3 cToIMU_position;
-  glm::quat cToIMU_rotation;
+  
+  glm::vec3 tango_position;
+  glm::quat tango_rotation;
+  
+  int pose_status_count;
+  TangoPoseStatusType cur_pose_status;
+  TangoPoseStatusType prev_pose_status;
+  
+  float frame_delta_time;
+  double prev_pose_timestamp;
 
- private:
-  glm::vec3 tango_position_;
-  glm::quat tango_rotation_;
-  TangoPoseStatusType tango_pose_status_;
+  char event_string[30];
+  char lib_version[26];
+private:
   TangoConfig* config_;
-  char poseString_[100];
+  char pose_string_[100];
 };
 
 #endif  // Tango_Data_H

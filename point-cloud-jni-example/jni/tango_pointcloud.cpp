@@ -76,9 +76,9 @@ bool RenderFrame() {
   glViewport(0, 0, screen_width, screen_height);
   
   axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-  axis->Render(cam->GetCurrentProjectionViewMatrix());
+  axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
-  pointcloud->Render(cam->GetCurrentProjectionViewMatrix(),
+  pointcloud->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix(),
                      TangoData::GetInstance().GetDepthBufferSize(),
                      TangoData::GetInstance().GetDepthBuffer());
 

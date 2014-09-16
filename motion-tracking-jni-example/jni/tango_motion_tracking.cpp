@@ -17,10 +17,9 @@
 #define GLM_FORCE_RADIANS
 
 #include <jni.h>
-#include <math.h>
 
 #include "axis.h"
-//#include "camera.h"
+#include "camera.h"
 #include "frustum.h"
 #include "gl_util.h"
 #include "grid.h"
@@ -30,7 +29,7 @@
 GLuint screen_width;
 GLuint screen_height;
 
-//Camera *cam;
+Camera *cam;
 Axis *axis;
 Frustum *frustum;
 Grid *grid;
@@ -45,21 +44,13 @@ enum CameraType {
 int camera_type;
 
 // Quaternion format of rotation.
-const glm::vec3 kThirdPersonCameraPosition = glm::vec3(-1.5f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation = glm::quat(0.91598f, -0.37941f,
-                                                       -0.12059f, -0.04995f);
-const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+const glm::vec3 kThirdPersonCameraPosition = glm::vec3(5.0f, 5.0f, 5.0f);
+const glm::quat kThirdPersonCameraRotation = glm::quat(0.85355f, -0.35355f,
+                                                       0.35355f, 0.14645f);
+const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 8.0f, 0.0f);
 const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
                                                    0.0f);
 const glm::vec3 kGridPosition = glm::vec3(0.0f, -1.67f, 0.0f);
-
-glm::mat4 projectionMat;
-glm::mat4 viewMat;
-glm::mat4 ssToOWMat;
-glm::mat4 dToIMUMat;
-glm::mat4 cToIMUMat;
-glm::mat4 ocToCMat;
-glm::mat4 ocToDMat;
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -67,35 +58,14 @@ bool SetupGraphics(int w, int h) {
   screen_width = w;
   screen_height = h;
 
-//  cam = new Camera();
+  cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
   trace = new Trace();
   grid = new Grid();
 
   camera_type = FIRST_PERSON;
-//  cam->SetAspectRatio((float) (w / h));
-  projectionMat = glm::perspective(45.0f, (float) (w / h), 0.1f, 100.0f);
-  float ssToOWArray[16] = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-      0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-
-  float ocToCArray[16] = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-      0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-
-  float ocToDArray[16] = { 1, 0, 0, 0, 0, cos(13 * 3.14f / 180.0f), sin(
-      13 * 3.14f / 180.0f), 0, 0, -sin(13 * 3.14f / 180.0f), cos(
-      13 * 3.14f / 180.0f), 0, 0, 0, 0, 1 };
-
-  memcpy(glm::value_ptr(ssToOWMat), ssToOWArray, sizeof(ssToOWArray));
-  memcpy(glm::value_ptr(ocToCMat), ocToCArray, sizeof(ocToCArray));
-  memcpy(glm::value_ptr(ocToDMat), ocToDArray, sizeof(ocToDArray));
-
-  dToIMUMat = glm::translate(glm::mat4(1.0f),
-                             TangoData::GetInstance().dToIMU_position)
-      * glm::mat4_cast(TangoData::GetInstance().dToIMU_rotation);
-  cToIMUMat = glm::translate(glm::mat4(1.0f),
-                             TangoData::GetInstance().cToIMU_position)
-      * glm::mat4_cast(TangoData::GetInstance().cToIMU_rotation);
+  cam->SetAspectRatio((float) (w / h));
   return true;
 }
 
@@ -111,39 +81,34 @@ bool RenderFrame() {
 
   glViewport(0, 0, screen_width, screen_height);
 
-  glm::vec3 position = TangoData::GetInstance().GetTangoPosition();
-  glm::quat rotation = TangoData::GetInstance().GetTangoRotation();
-  glm::mat4 dToSSMat = glm::translate(glm::mat4(1.0f), position)
-      * glm::mat4_cast(rotation);
-
-  //glm::mat4 viewInversed = ssToOWMat*dToSSMat*glm::inverse(dToIMUMat)*cToIMUMat*ocToCMat;
-  glm::mat4 viewInversed = ssToOWMat * dToSSMat * ocToDMat;
-
-  viewMat = glm::inverse(viewInversed);
-
   grid->SetPosition(kGridPosition);
-  grid->Render(projectionMat, viewMat);
+  grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
-//  if (camera_type == FIRST_PERSON) {
-//    cam->SetPosition(position);
-//    cam->SetRotation(rotation);
-//  } else {
-//    if (camera_type == TOP_DOWN) {
-//      cam->SetPosition(position + kTopDownCameraPosition);
-//    } else {
-//      cam->SetPosition(position + kThirdPersonCameraPosition);
-//    }
-//    frustum->SetPosition(position);
-//    frustum->SetRotation(rotation);
-//    frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-//
-//    axis->SetPosition(position);
-//    axis->SetRotation(rotation);
-//    axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-//  }
-//
-//  trace->UpdateVertexArray(position);
-//  trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+  glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
+      TangoData::GetInstance().tango_position);
+  glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
+      TangoData::GetInstance().tango_rotation);
+
+  if (camera_type == FIRST_PERSON) {
+    cam->SetPosition(position);
+    cam->SetRotation(rotation);
+  } else {
+    if(camera_type == TOP_DOWN){
+      cam->SetPosition(position+kTopDownCameraPosition);
+    }else{
+      cam->SetPosition(position+kThirdPersonCameraPosition);
+    }
+    frustum->SetPosition(position);
+    frustum->SetRotation(rotation);
+    frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+
+    axis->SetPosition(position);
+    axis->SetRotation(rotation);
+    axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+  }
+
+  trace->UpdateVertexArray(position);
+  trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   return true;
 }
@@ -155,11 +120,11 @@ void SetCamera(int camera_index) {
       LOGI("setting to First Person Camera");
       break;
     case THIRD_PERSON:
-//      cam->SetRotation(kThirdPersonCameraRotation);
+      cam->SetRotation(kThirdPersonCameraRotation);
       LOGI("setting to Third Person Camera");
       break;
     case TOP_DOWN:
-//      cam->SetRotation(kTopDownCameraRotation);
+      cam->SetRotation(kTopDownCameraRotation);
       LOGI("setting to Top Down Camera");
       break;
     default:
@@ -171,45 +136,50 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj, bool isAutoReset) {
-  if(isAutoReset) {
-    LOGI("Initialize with auto reset");
-  } else {
-    LOGI("Initialize with manual reset");
-  }
+    JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
+}
+
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetupConfig(
+    JNIEnv* env, jobject obj, bool isAutoReset) {
   if (!TangoData::GetInstance().SetConfig(isAutoReset))
   {
     LOGE("Tango set config failed");
   }
 }
-
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_LockConfig(
     JNIEnv* env, jobject obj) {
-  LOGI("ConnectService:Locking config and connecting service");
   if (!TangoData::GetInstance().LockConfig()) {
     LOGE("Tango lock config failed");
   }
+}
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
+    JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
+  }
+}
+  
+JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UnlockConfig(
+    JNIEnv* env, jobject obj) {
+  if (TangoData::GetInstance().UnlockConfig()) {
+    LOGE("Tango unlock file failed");
   }
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
-  LOGI("DisconectService: Unlocking config and disconnecting service");
-  if (TangoData::GetInstance().UnlockConfig()) {
-    LOGE("Tango unlock file failed");
-  }
   TangoData::GetInstance().Disconnect();
 }
 
 JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
-//  delete cam;
+  delete cam;
   delete axis;
   delete grid;
   delete frustum;
@@ -237,24 +207,19 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   SetCamera(camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_PoseToString(
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().PoseToString());
+  return (env)->NewStringUTF(TangoData::GetInstance().GetPoseDataString());
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_EventToString(
+JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetEventString(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().eventString);
-}
-
-JNIEXPORT jchar JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UpdateStatus(
-    JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().GetTangoPoseStatus();
+  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
 }
 
 JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().lib_version);
+  return (env)->NewStringUTF(TangoData::GetInstance().GetVersionString());
 }
 #ifdef __cplusplus
 }

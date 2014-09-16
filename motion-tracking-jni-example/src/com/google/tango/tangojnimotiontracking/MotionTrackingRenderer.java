@@ -21,7 +21,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.opengl.GLSurfaceView;
 
-public class MotionTrackingView implements GLSurfaceView.Renderer {
+public class MotionTrackingRenderer implements GLSurfaceView.Renderer {
 
 		public void onDrawFrame(GL10 gl) {
 			TangoJNINative.Render();

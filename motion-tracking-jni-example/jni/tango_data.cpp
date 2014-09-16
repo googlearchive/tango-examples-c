@@ -17,55 +17,35 @@
 #include "tango_data.h"
 TangoData::TangoData()
     : config_(nullptr),
-      tango_position_(glm::vec3(0.0f, 0.0f, 0.0f)),
-      tango_rotation_(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)) {
+      tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
+      tango_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)) {
 }
 
 // This callback function is called when new POSE updates become available.
 static void onPoseAvailable(void* context, const TangoPoseData* pose) {
-  TangoData::GetInstance().SetTangoPosition(
+  TangoData::GetInstance().tango_position =
       glm::vec3(pose->translation[0], pose->translation[1],
-                pose->translation[2]));
-  TangoData::GetInstance().SetTangoRotation(
+                pose->translation[2]);
+  TangoData::GetInstance().tango_rotation =
       glm::quat(pose->orientation[3], pose->orientation[0],
-                pose->orientation[1], pose->orientation[2]));
+                pose->orientation[1], pose->orientation[2]);
 
-  TangoData::GetInstance().SetTangoPoseStatus(pose->status_code);
-  TangoData::GetInstance().prevTimestamp=TangoData::GetInstance().timestamp;
-  TangoData::GetInstance().timestamp = pose->timestamp;
-  //LOGI("%d", (int) pose->status_code);
-  //  glm::vec3 euler = glm::eulerAngles(
-  //      glm::quat(pose->orientation[3], pose->orientation[0],
-  //                pose->orientation[1], pose->orientation[2]));
-  //  LOGI("%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%4.2f", pose->translation[0],
-  //       pose->translation[1], pose->translation[2], euler.x * 57.32f,
-  //       euler.y * 57.32f, euler.z * 57.32f);
+  TangoData::GetInstance().cur_pose_status = pose->status_code;
+  if(TangoData::GetInstance().prev_pose_status != pose->status_code) {
+    TangoData::GetInstance().pose_status_count = 0;
+  }
+  TangoData::GetInstance().prev_pose_status = pose->status_code;
+  TangoData::GetInstance().pose_status_count++;
+  
+  TangoData::GetInstance().frame_delta_time =
+    TangoData::GetInstance().prev_pose_timestamp - pose->timestamp;
+  TangoData::GetInstance().prev_pose_timestamp = pose->timestamp;
 }
 
 // Tango event callback.
 static void onTangoEvent(void* context, const TangoEvent* event) {
-    strncpy( TangoData::GetInstance().eventString,event->description, 30);
-
-  if (strstr(event->description, "FisheyeO") != 0) {
-    TangoData::GetInstance().UpdateEvent(0);
-    return;
-  }
-  if (strstr(event->description, "FisheyeU") != 0) {
-    TangoData::GetInstance().UpdateEvent(1);
-    return;
-  }
-  if (strstr(event->description, "ColorO") != 0) {
-    TangoData::GetInstance().UpdateEvent(2);
-    return;
-  }
-  if (strstr(event->description, "ColorU") != 0) {
-    TangoData::GetInstance().UpdateEvent(3);
-    return;
-  }
-  if (strstr(event->description, "Too") != 0) {
-    TangoData::GetInstance().UpdateEvent(4);
-    return;
-  }
+  strncpy(TangoData::GetInstance().event_string,
+          event->description, 30);
 }
 
 bool TangoData::Initialize() {
@@ -77,8 +57,7 @@ bool TangoData::Initialize() {
   return true;
 }
 
-bool TangoData::SetConfig(bool isAutoReset) {
-  isMTAutoReset = isAutoReset;
+bool TangoData::SetConfig(bool is_auto_reset) {
   // Allocate a TangoConfig object.
   if ((config_ = TangoConfig_alloc()) == NULL) {
     LOGE("TangoService_allocConfig(): Failed");
@@ -91,12 +70,9 @@ bool TangoData::SetConfig(bool isAutoReset) {
     return false;
   }
 
-  if (TangoConfig_setBool(config_, "config_enable_auto_reset", isMTAutoReset)
+  if (TangoConfig_setBool(config_, "config_enable_auto_reset", is_auto_reset)
       != TANGO_SUCCESS) {
-    if (isMTAutoReset)
-      LOGE("Set to Auto Reset Failed");
-    else
-      LOGE("Set Manual Reset Failed");
+    LOGE("config_enable_auto_reset(): Failed");
     return false;
   }
 
@@ -197,42 +173,38 @@ void TangoData::Disconnect() {
   TangoService_disconnect();
 }
 
-glm::vec3 TangoData::GetTangoPosition() {
-  return tango_position_;
+char* TangoData::GetVersionString() {
+  return lib_version;
 }
 
-glm::quat TangoData::GetTangoRotation() {
-  return tango_rotation_;
+char* TangoData::GetEventString() {
+  return event_string;
 }
 
-char TangoData::GetTangoPoseStatus() {
-  return tango_pose_status_;
-}
-
-void TangoData::SetTangoPosition(glm::vec3 position) {
-  tango_position_ = position;
-}
-
-void TangoData::SetTangoRotation(glm::quat rotation) {
-  tango_rotation_ = rotation;
-}
-
-void TangoData::SetTangoPoseStatus(TangoPoseStatusType status) {
-  tango_pose_status_ = status;
-  if ((int) status < 3)
-    statusCount[(int) status]++;
-}
-
-void TangoData::UpdateEvent(int index) {
-  eventCount[index]++;
-}
-
-char* TangoData::PoseToString() {
-  sprintf(
-      poseString_,
-      "Status Count (frames):  Initializing:%d   Valid:%d   Invalid:%d\nPosition (m):  x:%4.2f   y:%4.2f   z:%4.2f\nRotation (quat):  x:%4.3f   y:%4.3f   z:%4.3f   w:%4.3f\nFrame Delta Time (ms):  %f\n\nFOver:%d\nFUnder:%d\nCOver:%d\nCUnder:%d\nTooFewFeature:%d",
-      statusCount[0], statusCount[1], statusCount[2], tango_position_.x,
-      tango_position_.y, tango_position_.z, tango_rotation_.x,
-      tango_rotation_.y, tango_rotation_.z, tango_rotation_.w, timestamp-prevTimestamp,eventCount[0], eventCount[1], eventCount[2],eventCount[3], eventCount[4]);
-  return poseString_;
+char* TangoData::GetPoseDataString() {
+  const char* status;
+  switch (cur_pose_status) {
+    case 0:
+      status = "Initializing";
+      break;
+    case 1:
+      status = "Valid";
+      break;
+    case 2:
+      status = "Invalid";
+      break;
+    case 3:
+      status = "Unknown";
+      break;
+    default:
+      break;
+  }
+  
+  sprintf(pose_string_,
+          "Status:%s, Count:%d, Delta Time(ms): %4.3f, Pose(m): %4.3f, %4.3f, %4.3f, Quat: %4.3f, %4.3f, %4.3f, %4.3f",
+          status, pose_status_count, frame_delta_time,
+          tango_position[0], tango_position[1], tango_position[2],
+          tango_rotation[0], tango_rotation[1], tango_rotation[2], tango_rotation[3]);
+  
+  return pose_string_;
 }
