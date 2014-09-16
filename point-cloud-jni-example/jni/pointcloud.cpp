@@ -46,12 +46,11 @@ Pointcloud::Pointcloud() {
   glGenBuffers(1, &vertex_buffers_);
 }
 
-void Pointcloud::Render(glm::mat4 projection_mat, glm::mat4 view_mat, int depth_buffer_size,
-                        float *depth_data_buffer) {
-
+void Pointcloud::Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat,
+                        int depth_buffer_size, float *depth_data_buffer) {
   glUseProgram(shader_program_);
+  
   // Calculate model view projection matrix.
-  glm::mat4 model_mat = glm::mat4(1.0f);
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat * inverse_z_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 

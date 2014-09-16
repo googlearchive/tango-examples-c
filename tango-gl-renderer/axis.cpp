@@ -59,9 +59,37 @@ Axis::Axis() {
 
 void Axis::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram(shader_program_);
-
+  
   // Calculate model view projection matrix of this object.
   glm::mat4 model_mat = GetCurrentModelMatrix();
+  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
+  glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+  
+  // Binding vertex buffer.
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 18, vertices, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(attrib_vertices_);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
+                        (const void*) 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  
+  // Binding color buffer.
+  glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 24, colors, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(attrib_colors_);
+  glVertexAttribPointer(attrib_colors_, 4, GL_FLOAT, GL_FALSE, 0,
+                        (const void*) 0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  
+  glDrawArrays(GL_LINES, 0, 6 * 3);
+  glUseProgram(0);
+}
+
+void Axis::RenderBasedOnModelMat(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat) {
+  glUseProgram(shader_program_);
+
+  // Calculate model view projection matrix of this object.
+//  glm::mat4 model_mat = GetCurrentModelMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 

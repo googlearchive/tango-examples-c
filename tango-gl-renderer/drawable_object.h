@@ -29,7 +29,8 @@ class DrawableObject {
   void Rotate(glm::quat rot);
   void SetOffset(glm::vec3 offset);
   glm::mat4 GetCurrentModelMatrix();
- private:
+  glm::mat4 model_mat;
+private:
   glm::quat rotation_;
   glm::vec3 position_;
   glm::vec3 scale_;

@@ -44,12 +44,22 @@ class TangoData {
   int GetDepthBufferSize();
   void SetDepthBufferSize(int size);
   char* GetVersonString();
+  glm::mat4 GetOC2OWMat();
+  void GetPoseAtTime(double timestamp);
   
   float average_depth;
   float depth_fps;
   float depth_frame_delta_time;
   float previous_frame_time_;
+  
+  glm::mat4 ss_2_ow_mat;
+  glm::mat4 d_2_ss_mat;
+  glm::mat4 d_2_imu_mat;
+  glm::mat4 c_2_imu_mat;
+  glm::mat4 oc_2_c_mat;
 private:
+  void SetExtrinsicsMatrics();
+  
   TangoConfig* config_;
   double pointcloud_timestamp_;
   float* depth_data_buffer_;

@@ -20,6 +20,7 @@
 #include <jni.h>
 
 #include "axis.h"
+#include "grid.h"
 #include "camera.h"
 #include "gl_util.h"
 #include "pointcloud.h"
@@ -34,7 +35,7 @@ const glm::quat kFirstPersonCameraRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 /// Third person camera position and rotation.
 /// Position: 1 unit on Y axis, 1 unit on z axis.
 /// Rotation: -45 degree around x axis.
-const glm::vec3 kThirdPersonCameraPos = glm::vec3(0.0f, 1.0f, 1.0f);
+const glm::vec3 kThirdPersonCameraPos = glm::vec3(0.0f, 5.0f, 5.0f);
 const glm::quat kThirdPersonCameraRot = glm::quat(0.92388f, -0.38268f, 0.0f,
                                                   0.0f);
 /// Top down camera position and rotation.
@@ -49,6 +50,7 @@ GLuint screen_height;
 Camera* cam;
 Pointcloud* pointcloud;
 Axis* axis;
+Grid* grid;
 
 bool SetupGraphics(int w, int h) {
   screen_width = w;
@@ -57,6 +59,7 @@ bool SetupGraphics(int w, int h) {
   cam = new Camera();
   pointcloud = new Pointcloud();
   axis = new Axis();
+  grid = new Grid();
 
   cam->SetAspectRatio((float)w / (float)h);
 
@@ -70,15 +73,15 @@ bool RenderFrame() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+  grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   /// Viewport set to full screen, and camera at origin
   /// facing on negative z direction, y axis is the up
   /// vector of the camera.
   glViewport(0, 0, screen_width, screen_height);
   
-  axis->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-  axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-
-  pointcloud->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix(),
+  glm::mat4 oc_2_ow_mat = TangoData::GetInstance().GetOC2OWMat();
+  axis->RenderBasedOnModelMat(cam->GetProjectionMatrix(), cam->GetViewMatrix(), oc_2_ow_mat);
+  pointcloud->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix(), oc_2_ow_mat,
                      TangoData::GetInstance().GetDepthBufferSize(),
                      TangoData::GetInstance().GetDepthBuffer());
 

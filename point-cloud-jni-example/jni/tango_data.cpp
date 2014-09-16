@@ -23,6 +23,27 @@ TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
   depth_data_buffer_ = new float[kMaxVertCount * 3];
   depth_buffer_size_ = kMaxVertCount * 3;
   lib_version_ = new char[26];
+
+  d_2_ss_mat = glm::mat4(1.0f);
+  d_2_imu_mat = glm::mat4(1.0f);
+  c_2_imu_mat = glm::mat4(1.0f);
+  
+  float ss_2_ow_arr[16] = {
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, -1.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+  };
+  
+  float oc_2_c_arr[16] = {
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, -1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, -1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+  };
+  
+  memcpy(glm::value_ptr(ss_2_ow_mat), ss_2_ow_arr, sizeof(ss_2_ow_arr));
+  memcpy(glm::value_ptr(oc_2_c_mat), oc_2_c_arr, sizeof(oc_2_c_arr));
 }
 
 /// Callback function when new XYZij data available, caller is responsible
@@ -44,6 +65,22 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
   TangoData::GetInstance().depth_frame_delta_time =
     (XYZ_ij->timestamp - TangoData::GetInstance().previous_frame_time_)*1000.0f;
   TangoData::GetInstance().previous_frame_time_ = XYZ_ij->timestamp;
+  TangoData::GetInstance().GetPoseAtTime(XYZ_ij->timestamp);
+  LOGI("on xyz available");
+}
+
+// This callback function is called when new POSE updates become available.
+static void onPoseAvailable(void* context, const TangoPoseData* pose) {
+  glm::vec3 translation =
+  glm::vec3(pose->translation[0], pose->translation[1],
+            pose->translation[2]);
+  glm::quat rotation =
+  glm::quat(pose->orientation[3], pose->orientation[0],
+            pose->orientation[1], pose->orientation[2]);
+  
+//  TangoData::GetInstance().d_2_ss_mat =
+//    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
+  
 }
 
 bool TangoData::Initialize() {
@@ -75,7 +112,7 @@ bool TangoData::SetConfig() {
   }
   
   // Disable motion tracking.
-  if (TangoConfig_setBool(config_, "config_enable_motion_tracking", false) != TANGO_SUCCESS) {
+  if (TangoConfig_setBool(config_, "config_enable_motion_tracking", true) != TANGO_SUCCESS) {
     LOGI("config_disable_motion_tracking Failed");
     return false;
   }
@@ -86,6 +123,21 @@ bool TangoData::SetConfig() {
     return false;
   }
 
+  //Set the reference frame pair after connect to service.
+  //Currently the API will set this set below as default.
+//  TangoCoordinateFramePair pairs;
+//  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+//  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+//  
+//  //Attach onPoseAvailable callback.
+//  if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
+//      != TANGO_SUCCESS) {
+//    LOGI("TangoService_connectOnPoseAvailable(): Failed");
+//    return false;
+//  }
+  
+  SetExtrinsicsMatrics();
+  
   return true;
 }
 
@@ -118,6 +170,25 @@ bool TangoData::Connect() {
   return true;
 }
 
+void TangoData::GetPoseAtTime(double timestamp) {
+  TangoCoordinateFramePair pairs;
+  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+  TangoPoseData pose;
+  if (TangoService_getPoseAtTime(timestamp, pairs, &pose) != TANGO_SUCCESS) {
+    LOGE("TangoService_getPoseAtTime(): Failed");
+  }
+  glm::vec3 translation =
+  glm::vec3(pose.translation[0], pose.translation[1],
+            pose.translation[2]);
+  glm::quat rotation =
+  glm::quat(pose.orientation[3], pose.orientation[0],
+            pose.orientation[1], pose.orientation[2]);
+  
+  TangoData::GetInstance().d_2_ss_mat =
+  glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
+}
+
 void TangoData::Disconnect() {
   // Disconnect application from Tango Service.
   TangoService_disconnect();
@@ -135,6 +206,10 @@ int TangoData::GetDepthBufferSize() {
   return depth_buffer_size_;
 }
 
+glm::mat4 TangoData::GetOC2OWMat() {
+  return ss_2_ow_mat * d_2_ss_mat * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+}
+
 void TangoData::SetDepthBufferSize(int size) {
   depth_buffer_size_ = size;
 }
@@ -142,6 +217,45 @@ void TangoData::SetDepthBufferSize(int size) {
 char* TangoData::GetVersonString() {
   TangoConfig_getString(config_, "tango_service_library_version", lib_version_, 26);
   return lib_version_;
+}
+
+void TangoData::SetExtrinsicsMatrics() {
+  TangoPoseData pose_data;
+  TangoCoordinateFramePair frame_pair;
+  glm::vec3 translation;
+  glm::quat rotation;
+  
+  // Get device to imu matrix.
+  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
+  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
+    LOGE("TangoService_getPoseAtTime(): Failed");
+  }
+  translation = glm::vec3(pose_data.translation[0],
+                          pose_data.translation[1],
+                          pose_data.translation[2]);
+  rotation = glm::quat(pose_data.orientation[3],
+                       pose_data.orientation[0],
+                       pose_data.orientation[1],
+                       pose_data.orientation[2]);
+  d_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
+    glm::inverse(glm::mat4_cast(rotation));
+  
+  // Get color camera to imu matrix.
+  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
+  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
+  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
+    LOGE("TangoService_getPoseAtTime(: Failed");
+  }
+  translation = glm::vec3(pose_data.translation[0],
+                          pose_data.translation[1],
+                          pose_data.translation[2]);
+  rotation = glm::quat(pose_data.orientation[3],
+                       pose_data.orientation[0],
+                       pose_data.orientation[1],
+                       pose_data.orientation[2]);
+  c_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
+    glm::inverse(glm::mat4_cast(rotation));
 }
 
 TangoData::~TangoData() {
