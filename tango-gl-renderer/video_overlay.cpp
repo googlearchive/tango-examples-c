@@ -111,7 +111,20 @@ VideoOverlay::VideoOverlay() {
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
+
+void VideoOverlay::SetupIntrinsics(float k1, float k2, float k3, float cx,
+                                   float cy, float w, float h) {
+}
+
+void VideoOverlay::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+  glUseProgram (shader_program_);
+
+  glm::mat4 model_mat = GetCurrentModelMatrix();
+  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
+  glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   // Bind vertices buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);

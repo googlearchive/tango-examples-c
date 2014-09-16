@@ -17,24 +17,25 @@
 #ifndef VIDEO_OVERLAY_H
 #define VIDEO_OVERLAY_H
 
+#include "drawable_object.h"
 #include "gl_util.h"
 
-class VideoOverlay {
+class VideoOverlay : public DrawableObject {
  public:
   VideoOverlay();
-  void Render();
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
   GLuint texture_id;
-  
+  void SetupIntrinsics(float k1, float k2, float k3, float cx, float cy, float w, float h);
+
  private:
   GLuint vertex_buffers_;
 
-  GLuint shader_program_;
-  
   GLuint attrib_vertices_;
   GLuint attrib_textureCoords;
   GLuint uniform_texture;
-  
   GLuint vertex_buffers[3];
-};
+  GLuint shader_program_;
 
+  GLuint uniform_mvp_mat_;
+};
 #endif  // VIDEO_OVERLAY_H
