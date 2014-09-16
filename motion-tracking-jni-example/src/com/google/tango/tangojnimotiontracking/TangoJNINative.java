@@ -21,9 +21,15 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void Initialize(boolean isAutoReset);
+	public static native void Initialize();
+	
+	public static native void SetupConfig(boolean isAutoReset);
+	
+	public static native void LockConfig();
 	
 	public static native void ConnectService();
+	
+	public static native void UnlockConfig();
 	
 	public static native void DisconnectService();
 
@@ -37,11 +43,9 @@ public class TangoJNINative {
 	
 	public static native void ResetMotionTracking();
 	
-	public static native byte UpdateStatus();
+	public static native String GetPoseString();
 	
-	public static native String PoseToString();
-	
-	public static native String EventToString();
+	public static native String GetEventString();
 	
 	public static native String GetVersionNumber();
 }

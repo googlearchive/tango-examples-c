@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.google.tango.tangojnimotiontracking.MotionTrackingActivity"
+            android:name="com.google.tango.tangojnimotiontracking.StartActivity"
             android:screenOrientation="landscape"
             android:label="@string/app_name" >
             <intent-filter>
@@ -27,6 +27,11 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.google.tango.tangojnimotiontracking.MotionTrackingActivity"
+        	android:label="@string/app_name" 
+            android:screenOrientation="landscape"> 
         </activity>
     </application>
 
