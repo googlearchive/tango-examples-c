@@ -30,7 +30,7 @@ class VideoOverlay {
 
   GLuint shader_program_;
   
-  GLuint attrib_vertices;
+  GLuint attrib_vertices_;
   GLuint attrib_textureCoords;
   GLuint uniform_texture;
   

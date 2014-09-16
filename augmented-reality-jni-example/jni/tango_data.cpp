@@ -164,8 +164,8 @@ bool TangoData::SetConfig(bool isAutoReset) {
     LOGE("TangoService_getCameraIntrinsics(): Failed");
     return false;
   }
-  TangoData::GetInstance().cc_Width = ccIntrinsics.width;
-  TangoData::GetInstance().cc_Height = ccIntrinsics.height;
+  TangoData::GetInstance().cc_width = ccIntrinsics.width;
+  TangoData::GetInstance().cc_height = ccIntrinsics.height;
   TangoData::GetInstance().cc_fx = ccIntrinsics.fx;
   TangoData::GetInstance().cc_fy = ccIntrinsics.fy;
   TangoData::GetInstance().cc_cx = ccIntrinsics.cx;

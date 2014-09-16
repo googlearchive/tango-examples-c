@@ -63,8 +63,8 @@ class TangoData {
   glm::quat cToIMU_rotation;
 
   //Intrinsic
-  int cc_Width;
-  int cc_Height;
+  int cc_width;
+  int cc_height;
   double cc_fx;
   double cc_fy;
   double cc_cx;
