@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango - MotionTrackingJava</string>
+    <string name="app_name">Project Tango - MotionTrackingNative</string>
     <string name="vertex_count">Number of Points:</string>
     <string name="service_version">Service Version:</string>
     <string name="app_version">App Version:</string>

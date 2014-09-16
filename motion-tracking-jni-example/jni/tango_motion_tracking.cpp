@@ -135,7 +135,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Initialize(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_Initialize(
     JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Initialize())
   {
@@ -143,7 +143,7 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetupConfig(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupConfig(
     JNIEnv* env, jobject obj, bool isAutoReset) {
   if (!TangoData::GetInstance().SetConfig(isAutoReset))
   {
@@ -151,33 +151,33 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   }
 }
   
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_LockConfig(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_LockConfig(
     JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().LockConfig()) {
     LOGE("Tango lock config failed");
   }
 }
   
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ConnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
   }
 }
   
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_UnlockConfig(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_UnlockConfig(
     JNIEnv* env, jobject obj) {
   if (TangoData::GetInstance().UnlockConfig()) {
     LOGE("Tango unlock file failed");
   }
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_DisconnectService(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_DisconnectService(
     JNIEnv* env, jobject obj) {
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_OnDestroy(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_OnDestroy(
     JNIEnv* env, jobject obj) {
   delete cam;
   delete axis;
@@ -186,38 +186,38 @@ JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINati
   delete trace;
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetupGraphic(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupGraphic(
     JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_Render(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_Render(
     JNIEnv* env, jobject obj) {
   RenderFrame();
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_ResetMotionTracking(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_ResetMotionTracking(
     JNIEnv* env, jobject obj) {
   TangoData::GetInstance().ResetMotionTracking();
   LOGI("Reset Tango Motion Tracking");
 }
 
-JNIEXPORT void JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_SetCamera(
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCamera(
     JNIEnv* env, jobject obj, int camera_index) {
   SetCamera(camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetPoseString(
+JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetPoseDataString());
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetEventString(
+JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetEventString(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
 }
 
-JNIEXPORT jstring JNICALL Java_com_google_tango_tangojnimotiontracking_TangoJNINative_GetVersionNumber(
+JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersionString());
 }

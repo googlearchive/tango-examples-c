@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.tango.tangojnimotiontracking;
+package com.projecttango.motiontrackingnative;
 
 public class TangoJNINative {
 	static {
