@@ -36,8 +36,7 @@
 /// <glm/gtx/rotate_vector.hpp> need to be included to use these functionalities.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_GTX_rotate_vector
-#define GLM_GTX_rotate_vector
+#pragma once
 
 // Dependency:
 #include "../glm.hpp"
@@ -51,6 +50,19 @@ namespace glm
 {
 	/// @addtogroup gtx_rotate_vector
 	/// @{
+
+	/// Returns Spherical interpolation between two vectors
+	/// 
+	/// @param x A first vector
+	/// @param y A second vector
+	/// @param a Interpolation factor. The interpolation is defined beyond the range [0, 1].
+	/// 
+	/// @see gtc_quaternion
+	template <typename T, precision P>
+	GLM_FUNC_DECL detail::tvec3<T, P> slerp(
+		detail::tvec3<T, P> const & x,
+		detail::tvec3<T, P> const & y,
+		T const & a);
 
 	//! Rotate a two dimensional vector.
 	//! From GLM_GTX_rotate_vector extension.
@@ -128,5 +140,3 @@ namespace glm
 }//namespace glm
 
 #include "rotate_vector.inl"
-
-#endif//GLM_GTX_rotate_vector

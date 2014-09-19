@@ -33,8 +33,7 @@
 /// These all operate component-wise. The description is per component.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_FUNC_COMMON_INCLUDED
-#define GLM_FUNC_COMMON_INCLUDED
+#pragma once
 
 #include "setup.hpp"
 #include "precision.hpp"
@@ -170,7 +169,7 @@ namespace glm
 	/// @tparam genType Floating-point or integer; scalar or vector types.
 	/// 
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/min.xml">GLSL min man page</a>
-	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a><<<<<<< HEAD
+	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.3 Common Functions</a>
 	template <typename genType>
 	GLM_FUNC_DECL genType min(
 		genType const & x,
@@ -469,4 +468,3 @@ namespace glm
 
 #include "func_common.inl"
 
-#endif//GLM_FUNC_COMMON_INCLUDED

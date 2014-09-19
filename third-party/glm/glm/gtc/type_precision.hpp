@@ -40,8 +40,7 @@
 /// <glm/gtc/type_precision.hpp> need to be included to use these functionalities.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_GTC_type_precision
-#define GLM_GTC_type_precision
+#pragma once
 
 // Dependency:
 #include "../gtc/quaternion.hpp"
@@ -231,6 +230,12 @@ namespace glm
 	/// @see gtc_type_precision
 	typedef detail::int64 int64;
 
+#if GLM_HAS_EXTENDED_INTEGER_TYPE
+	using std::int8_t;
+	using std::int16_t;
+	using std::int32_t;
+	using std::int64_t;
+#else
 	/// 8 bit signed integer type.
 	/// @see gtc_type_precision
 	typedef detail::int8 int8_t;
@@ -246,6 +251,7 @@ namespace glm
 	/// 64 bit signed integer type.
 	/// @see gtc_type_precision
 	typedef detail::int64 int64_t;
+#endif
 
 	/// 8 bit signed integer type.
 	/// @see gtc_type_precision
@@ -495,6 +501,12 @@ namespace glm
 	/// @see gtc_type_precision
 	typedef detail::uint64 uint64;
 
+#if GLM_HAS_EXTENDED_INTEGER_TYPE
+	using std::uint8_t;
+	using std::uint16_t;
+	using std::uint32_t;
+	using std::uint64_t;
+#else
 	/// Default precision 8 bit unsigned integer type.
 	/// @see gtc_type_precision
 	typedef detail::uint8 uint8_t;
@@ -510,6 +522,7 @@ namespace glm
 	/// Default precision 64 bit unsigned integer type.
 	/// @see gtc_type_precision
 	typedef detail::uint64 uint64_t;
+#endif
 
 	/// Default precision 8 bit unsigned integer type.
 	/// @see gtc_type_precision
@@ -870,5 +883,3 @@ namespace glm
 }//namespace glm
 
 #include "type_precision.inl"
-
-#endif//GLM_GTC_type_precision

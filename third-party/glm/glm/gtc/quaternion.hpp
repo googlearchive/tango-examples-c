@@ -37,8 +37,7 @@
 /// <glm/gtc/quaternion.hpp> need to be included to use these functionalities.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_GTC_quaternion
-#define GLM_GTC_quaternion
+#pragma once
 
 // Dependency:
 #include "../mat3x3.hpp"
@@ -59,7 +58,7 @@ namespace detail
 	{
 		enum ctor{null};
 
-                typedef T value_type;
+		typedef T value_type;
 		typedef tvec4<bool, P> bool_type;
 
 	public:
@@ -248,7 +247,7 @@ namespace detail
 	/// Rotates a quaternion from a vector of 3 components axis and an angle.
 	/// 
 	/// @param q Source orientation
-	/// @param angle Angle expressed in radians if GLM_FORCE_RADIANS is define or degrees otherwise.
+	/// @param angle Angle expressed in radians.
 	/// @param axis Axis of the rotation
 	/// 
 	/// @see gtc_quaternion
@@ -266,19 +265,19 @@ namespace detail
 	GLM_FUNC_DECL detail::tvec3<T, P> eulerAngles(
 		detail::tquat<T, P> const & x);
 
-	/// Returns roll value of euler angles expressed in radians if GLM_FORCE_RADIANS is defined or degrees otherwise.
+	/// Returns roll value of euler angles expressed in radians.
 	///
 	/// @see gtx_quaternion
 	template <typename T, precision P>
 	GLM_FUNC_DECL T roll(detail::tquat<T, P> const & x);
 
-	/// Returns pitch value of euler angles expressed in radians if GLM_FORCE_RADIANS is defined or degrees otherwise.
+	/// Returns pitch value of euler angles expressed in radians.
 	///
 	/// @see gtx_quaternion
 	template <typename T, precision P>
 	GLM_FUNC_DECL T pitch(detail::tquat<T, P> const & x);
 
-	/// Returns yaw value of euler angles expressed in radians if GLM_FORCE_RADIANS is defined or degrees otherwise.
+	/// Returns yaw value of euler angles expressed in radians.
 	///
 	/// @see gtx_quaternion
 	template <typename T, precision P>
@@ -327,7 +326,7 @@ namespace detail
 
 	/// Build a quaternion from an angle and a normalized axis.
 	///
-	/// @param angle Angle expressed in radians if GLM_FORCE_RADIANS is define or degrees otherwise.
+	/// @param angle Angle expressed in radians.
 	/// @param axis Axis of the quaternion, must be normalized.
 	///
 	/// @see gtc_quaternion
@@ -400,5 +399,3 @@ namespace detail
 } //namespace glm
 
 #include "quaternion.inl"
-
-#endif//GLM_GTC_quaternion

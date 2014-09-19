@@ -254,6 +254,8 @@ namespace detail
 	VECTORIZE_VEC(roundEven)
 
 	// ceil
+	using std::ceil;
+/*
 	template <typename genType>
 	GLM_FUNC_QUALIFIER genType ceil(genType const & x)
 	{
@@ -263,7 +265,7 @@ namespace detail
 
 		return ::std::ceil(x);
 	}
-
+*/
 	VECTORIZE_VEC(ceil)
 
 	// fract
@@ -273,9 +275,7 @@ namespace detail
 		genType const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'fract' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'fract' only accept floating-point inputs");
 
 		return x - floor(x);
 	}
@@ -286,13 +286,11 @@ namespace detail
 	template <typename genType>
 	GLM_FUNC_QUALIFIER genType mod
 	(
-		genType const & x, 
+		genType const & x,
 		genType const & y
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'mod' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'mod' only accept floating-point inputs");
 
 		return x - y * floor(x / y);
 	}
@@ -304,15 +302,24 @@ namespace detail
 	template <typename genType>
 	GLM_FUNC_QUALIFIER genType modf
 	(
-		genType const & x, 
+		genType const & x,
 		genType & i
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'modf' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'modf' only accept floating-point inputs");
 
 		return std::modf(x, &i);
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER detail::tvec1<T, P> modf
+	(
+		detail::tvec1<T, P> const & x,
+		detail::tvec1<T, P> & i
+	)
+	{
+		return detail::tvec1<T, P>(
+			modf(x.x, i.x));
 	}
 
 	template <typename T, precision P>
@@ -573,9 +580,7 @@ namespace detail
 		vecType<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'step' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'step' only accept floating-point inputs");
 
 		return mix(vecType<T, P>(1), vecType<T, P>(0), glm::lessThan(x, vecType<T, P>(edge)));
 	}
@@ -589,9 +594,7 @@ namespace detail
 		genType const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		genType tmp = clamp((x - edge0) / (edge1 - edge0), genType(0), genType(1));
 		return tmp * tmp * (genType(3) - genType(2) * tmp);
@@ -605,9 +608,7 @@ namespace detail
 		detail::tvec2<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec2<T, P>(
 			smoothstep(edge0, edge1, x.x),
@@ -622,9 +623,7 @@ namespace detail
 		detail::tvec3<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec3<T, P>(
 			smoothstep(edge0, edge1, x.x),
@@ -640,9 +639,7 @@ namespace detail
 		detail::tvec4<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec4<T, P>(
 			smoothstep(edge0, edge1, x.x),
@@ -659,9 +656,7 @@ namespace detail
 		detail::tvec2<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec2<T, P>(
 			smoothstep(edge0.x, edge1.x, x.x),
@@ -676,9 +671,7 @@ namespace detail
 		detail::tvec3<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec3<T, P>(
 			smoothstep(edge0.x, edge1.x, x.x),
@@ -694,9 +687,7 @@ namespace detail
 		detail::tvec4<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'smoothstep' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'smoothstep' only accept floating-point inputs");
 
 		return detail::tvec4<T, P>(
 			smoothstep(edge0.x, edge1.x, x.x),
@@ -709,11 +700,11 @@ namespace detail
 	template <typename genType> 
 	GLM_FUNC_QUALIFIER bool isnan(genType const & x)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'isnan' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'isnan' only accept floating-point inputs");
 
-#		if(GLM_COMPILER & (GLM_COMPILER_VC | GLM_COMPILER_INTEL))
+#		if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+			return std::isnan(x);
+#		elif(GLM_COMPILER & (GLM_COMPILER_VC | GLM_COMPILER_INTEL))
 			return _isnan(x) != 0;
 #		elif(GLM_COMPILER & (GLM_COMPILER_GCC | GLM_COMPILER_CLANG))
 #			if(GLM_PLATFORM & GLM_PLATFORM_ANDROID && __cplusplus < 201103L)
@@ -729,14 +720,24 @@ namespace detail
 	}
 
 	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER typename detail::tvec1<T, P>::bool_type isnan
+	(
+		detail::tvec1<T, P> const & x
+	)
+	{
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isnan' only accept floating-point inputs");
+
+		return typename detail::tvec1<T, P>::bool_type(
+			isnan(x.x));
+	}
+
+	template <typename T, precision P>
 	GLM_FUNC_QUALIFIER typename detail::tvec2<T, P>::bool_type isnan
 	(
 		detail::tvec2<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isnan' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isnan' only accept floating-point inputs");
 
 		return typename detail::tvec2<T, P>::bool_type(
 			isnan(x.x),
@@ -749,9 +750,7 @@ namespace detail
 		detail::tvec3<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isnan' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isnan' only accept floating-point inputs");
 
 		return typename detail::tvec3<T, P>::bool_type(
 			isnan(x.x),
@@ -765,9 +764,7 @@ namespace detail
 		detail::tvec4<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isnan' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isnan' only accept floating-point inputs");
 
 		return typename detail::tvec4<T, P>::bool_type(
 			isnan(x.x),
@@ -780,11 +777,11 @@ namespace detail
 	GLM_FUNC_QUALIFIER bool isinf(
 		genType const & x)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'isinf' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'isinf' only accept floating-point inputs");
 
-#		if(GLM_COMPILER & (GLM_COMPILER_INTEL | GLM_COMPILER_VC))
+#		if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+			return std::isinf(x);
+#		elif(GLM_COMPILER & (GLM_COMPILER_INTEL | GLM_COMPILER_VC))
 			return _fpclass(x) == _FPCLASS_NINF || _fpclass(x) == _FPCLASS_PINF;
 #		elif(GLM_COMPILER & (GLM_COMPILER_GCC | GLM_COMPILER_CLANG))
 #			if(GLM_PLATFORM & GLM_PLATFORM_ANDROID && __cplusplus < 201103L)
@@ -801,14 +798,24 @@ namespace detail
 	}
 
 	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER typename detail::tvec1<T, P>::bool_type isinf
+	(
+		detail::tvec1<T, P> const & x
+	)
+	{
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isinf' only accept floating-point inputs");
+
+		return typename detail::tvec1<T, P>::bool_type(
+			isinf(x.x));
+	}
+
+	template <typename T, precision P>
 	GLM_FUNC_QUALIFIER typename detail::tvec2<T, P>::bool_type isinf
 	(
 		detail::tvec2<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isinf' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isinf' only accept floating-point inputs");
 
 		return typename detail::tvec2<T, P>::bool_type(
 			isinf(x.x),
@@ -821,9 +828,7 @@ namespace detail
 		detail::tvec3<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isinf' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isinf' only accept floating-point inputs");
 
 		return typename detail::tvec3<T, P>::bool_type(
 			isinf(x.x),
@@ -837,9 +842,7 @@ namespace detail
 		detail::tvec4<T, P> const & x
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'isinf' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'isinf' only accept floating-point inputs");
 
 		return typename detail::tvec4<T, P>::bool_type(
 			isinf(x.x),
@@ -910,11 +913,21 @@ namespace detail
 		int & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'frexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'frexp' only accept floating-point inputs");
 
 		return std::frexp(x, exp);
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER detail::tvec1<T, P> frexp
+	(
+		detail::tvec1<T, P> const & x,
+		detail::tvec1<int, P> & exp
+	)
+	{
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'frexp' only accept floating-point inputs");
+
+		return detail::tvec1<T, P>(std::frexp(x.x, exp.x));
 	}
 
 	template <typename T, precision P>
@@ -924,9 +937,7 @@ namespace detail
 		detail::tvec2<int, P> & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'frexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'frexp' only accept floating-point inputs");
 
 		return detail::tvec2<T, P>(
 			frexp(x.x, exp.x),
@@ -940,9 +951,7 @@ namespace detail
 		detail::tvec3<int, P> & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'frexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'frexp' only accept floating-point inputs");
 
 		return detail::tvec3<T, P>(
 			frexp(x.x, exp.x),
@@ -957,9 +966,7 @@ namespace detail
 		detail::tvec4<int, P> & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'frexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'frexp' only accept floating-point inputs");
 
 		return detail::tvec4<T, P>(
 			frexp(x.x, exp.x),
@@ -975,11 +982,22 @@ namespace detail
 		int const & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<genType>::is_iec559,
-			"'frexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<genType>::is_iec559, "'ldexp' only accept floating-point inputs");
 
 		return std::ldexp(x, exp);
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER detail::tvec1<T, P> ldexp
+	(
+		detail::tvec1<T, P> const & x,
+		detail::tvec1<int, P> const & exp
+	)
+	{
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'ldexp' only accept floating-point inputs");
+
+		return detail::tvec1<T, P>(
+			ldexp(x.x, exp.x));
 	}
 
 	template <typename T, precision P>
@@ -989,9 +1007,7 @@ namespace detail
 		detail::tvec2<int, P> const & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'ldexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'ldexp' only accept floating-point inputs");
 
 		return detail::tvec2<T, P>(
 			ldexp(x.x, exp.x),
@@ -1005,9 +1021,7 @@ namespace detail
 		detail::tvec3<int, P> const & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'ldexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'ldexp' only accept floating-point inputs");
 
 		return detail::tvec3<T, P>(
 			ldexp(x.x, exp.x),
@@ -1022,9 +1036,7 @@ namespace detail
 		detail::tvec4<int, P> const & exp
 	)
 	{
-		GLM_STATIC_ASSERT(
-			std::numeric_limits<T>::is_iec559,
-			"'ldexp' only accept floating-point inputs");
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'ldexp' only accept floating-point inputs");
 
 		return detail::tvec4<T, P>(
 			ldexp(x.x, exp.x),

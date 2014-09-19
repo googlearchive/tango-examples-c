@@ -26,8 +26,7 @@
 /// @author Christophe Riccio
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef glm_core_type_gentype1
-#define glm_core_type_gentype1
+#pragma once
 
 #include "../fwd.hpp"
 #include "type_vec.hpp"
@@ -78,14 +77,13 @@ namespace detail
 		GLM_FUNC_DECL tvec1(tvec1<T, P> const & v);
 		template <precision Q>
 		GLM_FUNC_DECL tvec1(tvec1<T, Q> const & v);
+		template <typename U>
+		GLM_FUNC_DECL tvec1(U const & s);
 
 		//////////////////////////////////////
 		// Explicit basic constructors
 
-		GLM_FUNC_DECL explicit tvec1(
-			ctor);
-		GLM_FUNC_DECL tvec1(
-			T const & s);
+		GLM_FUNC_DECL explicit tvec1(ctor);
 
 		//////////////////////////////////////
 		// Conversion vector constructors
@@ -107,9 +105,9 @@ namespace detail
 		// Unary arithmetic operators
 
 		GLM_FUNC_DECL tvec1<T, P> & operator= (tvec1<T, P> const & v);
+
 		template <typename U> 
 		GLM_FUNC_DECL tvec1<T, P> & operator= (tvec1<U, P> const & v);
-
 		template <typename U> 
 		GLM_FUNC_DECL tvec1<T, P> & operator+=(U const & s);
 		template <typename U> 
@@ -273,5 +271,3 @@ namespace detail
 #ifndef GLM_EXTERNAL_TEMPLATE
 #include "type_vec1.inl"
 #endif//GLM_EXTERNAL_TEMPLATE
-
-#endif//glm_core_type_gentype1

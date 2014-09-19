@@ -26,8 +26,7 @@
 /// @author Christophe Riccio
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef glm_core_type_mat4x4
-#define glm_core_type_mat4x4
+#pragma once
 
 #include "../fwd.hpp"
 #include "type_vec4.hpp"
@@ -121,7 +120,6 @@ namespace detail
 		GLM_FUNC_DECL col_type & operator[](length_t i);
 		GLM_FUNC_DECL col_type const & operator[](length_t i) const;
 
-		// Unary updatable operators
 		GLM_FUNC_DECL tmat4x4<T, P> & operator=  (tmat4x4<T, P> const & m);
 		template <typename U>
 		GLM_FUNC_DECL tmat4x4<T, P> & operator=  (tmat4x4<U, P> const & m);
@@ -150,9 +148,6 @@ namespace detail
 		GLM_FUNC_DECL tmat4x4<T, P> operator++(int);
 		GLM_FUNC_DECL tmat4x4<T, P> operator--(int);
 	};
-
-	template <typename T, precision P>
-	GLM_FUNC_DECL tmat4x4<T, P> compute_inverse_mat4(tmat4x4<T, P> const & m);
 
 	// Binary operators
 	template <typename T, precision P>
@@ -256,5 +251,3 @@ namespace detail
 #ifndef GLM_EXTERNAL_TEMPLATE
 #include "type_mat4x4.inl"
 #endif//GLM_EXTERNAL_TEMPLATE
-
-#endif//glm_core_type_mat4x4

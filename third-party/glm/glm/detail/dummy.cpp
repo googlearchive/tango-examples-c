@@ -29,7 +29,6 @@
 /// dummy.cpp exist only a wordaround for CMake file.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#define GLM_FORCE_RADIANS
 #define GLM_MESSAGES
 #include "../glm.hpp"
 #include <limits>
@@ -41,7 +40,8 @@ struct material
 	glm::vec4 diffuse; // Dcm
 	glm::vec4 specular; // Scm
 	float shininess; // Srm
-};
+};
+
 struct light
 {
 	glm::vec4 ambient; // Acli
@@ -58,7 +58,8 @@ struct light
 	float constantAttenuation; // K0
 	float linearAttenuation; // K1
 	float quadraticAttenuation;// K2
-};
+};
+
 
 // Sample 1
 #include <glm/vec3.hpp>// glm::vec3

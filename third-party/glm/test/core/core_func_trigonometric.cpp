@@ -7,8 +7,7 @@
 // File    : test/core/func_trigonometric.cpp
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
+#include <glm/trigonometric.hpp>
 
 int main()
 {

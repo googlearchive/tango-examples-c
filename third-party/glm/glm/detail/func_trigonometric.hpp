@@ -37,8 +37,9 @@
 /// These all operate component-wise. The description is per component.
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_CORE_func_trigonometric
-#define GLM_CORE_func_trigonometric
+#pragma once
+
+#include "setup.hpp"
 
 namespace glm
 {
@@ -51,7 +52,7 @@ namespace glm
 	///
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/radians.xml">GLSL radians man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.1 Angle and Trigonometry Functions</a>
-	template <typename genType> 
+	template <typename genType>
 	GLM_FUNC_DECL genType radians(genType const & degrees);
 
 	/// Converts radians to degrees and returns the result.
@@ -60,7 +61,7 @@ namespace glm
 	/// 
 	/// @see <a href="http://www.opengl.org/sdk/docs/manglsl/xhtml/degrees.xml">GLSL degrees man page</a>
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 8.1 Angle and Trigonometry Functions</a>
-	template <typename genType> 
+	template <typename genType>
 	GLM_FUNC_DECL genType degrees(genType const & radians);
 
 	/// The standard trigonometric sine function. 
@@ -197,7 +198,3 @@ namespace glm
 }//namespace glm
 
 #include "func_trigonometric.inl"
-
-#endif//GLM_CORE_func_trigonometric
-
-

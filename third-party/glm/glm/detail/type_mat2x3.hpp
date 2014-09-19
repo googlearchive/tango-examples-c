@@ -26,14 +26,20 @@
 /// @author Christophe Riccio
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef glm_core_type_mat2x3
-#define glm_core_type_mat2x3
+#pragma once
 
 #include "../fwd.hpp"
 #include "type_vec2.hpp"
 #include "type_vec3.hpp"
 #include "type_mat.hpp"
+#if GLM_HAS_INITIALIZER_LISTS
+#	include <initializer_list>
+#endif
+#if GLM_HAS_RVALUE_REFERENCES
+#	include <algorithm>
+#endif
 #include <limits>
+#include <cstddef>
 
 namespace glm{
 namespace detail
@@ -103,7 +109,6 @@ namespace detail
 		GLM_FUNC_DECL col_type & operator[](length_t i);
 		GLM_FUNC_DECL col_type const & operator[](length_t i) const;
 
-		// Unary updatable operators
 		GLM_FUNC_DECL tmat2x3<T, P> & operator=  (tmat2x3<T, P> const & m);
 		template <typename U> 
 		GLM_FUNC_DECL tmat2x3<T, P> & operator=  (tmat2x3<U, P> const & m);
@@ -207,5 +212,3 @@ namespace detail
 #ifndef GLM_EXTERNAL_TEMPLATE
 #include "type_mat2x3.inl"
 #endif
-
-#endif //glm_core_type_mat2x3

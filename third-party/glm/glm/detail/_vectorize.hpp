@@ -26,8 +26,7 @@
 /// @author Christophe Riccio
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GLM_CORE_DETAIL_INCLUDED
-#define GLM_CORE_DETAIL_INCLUDED
+#pragma once
 
 #include "type_vec1.hpp"
 #include "type_vec2.hpp"
@@ -87,7 +86,7 @@
 	GLM_FUNC_QUALIFIER detail::tvec1<T, P> func				\
 	(														\
 		detail::tvec1<T, P> const & x,						\
-		T const & y											\
+		typename detail::tvec1<T, P>::value_type const & y	\
 	)														\
 	{														\
 		return detail::tvec1<T, P>(							\
@@ -99,7 +98,7 @@
 	GLM_FUNC_QUALIFIER detail::tvec2<T, P> func				\
 	(														\
 		detail::tvec2<T, P> const & x,						\
-		T const & y	\
+		typename detail::tvec2<T, P>::value_type const & y	\
 	)														\
 	{														\
 		return detail::tvec2<T, P>(							\
@@ -112,7 +111,7 @@
 	GLM_FUNC_QUALIFIER detail::tvec3<T, P> func				\
 	(														\
 		detail::tvec3<T, P> const & x,						\
-		T const & y	\
+		typename detail::tvec3<T, P>::value_type const & y	\
 	)														\
 	{														\
 		return detail::tvec3<T, P>(							\
@@ -126,7 +125,7 @@
 	GLM_FUNC_QUALIFIER detail::tvec4<T, P> func				\
 	(														\
 		detail::tvec4<T, P> const & x,						\
-		T const & y	\
+		typename detail::tvec4<T, P>::value_type const & y	\
 	)														\
 	{														\
 		return detail::tvec4<T, P>(							\
@@ -141,6 +140,18 @@
 	VECTORIZE2_VEC_SCA(func)		\
 	VECTORIZE3_VEC_SCA(func)		\
 	VECTORIZE4_VEC_SCA(func)
+
+#define VECTORIZE1_VEC_VEC(func)					\
+	template <typename T, precision P>				\
+	GLM_FUNC_QUALIFIER detail::tvec1<T, P> func		\
+	(												\
+		detail::tvec1<T, P> const & x,				\
+		detail::tvec1<T, P> const & y				\
+	)												\
+	{												\
+		return detail::tvec1<T, P>(					\
+			func(x.x, y.x));						\
+	}
 
 #define VECTORIZE2_VEC_VEC(func)					\
 	template <typename T, precision P>				\
@@ -185,6 +196,7 @@
 	}
 
 #define VECTORIZE_VEC_VEC(func)		\
+	VECTORIZE1_VEC_VEC(func)		\
 	VECTORIZE2_VEC_VEC(func)		\
 	VECTORIZE3_VEC_VEC(func)		\
 	VECTORIZE4_VEC_VEC(func)
@@ -213,5 +225,3 @@ namespace detail
 	};
 }//namespace detail
 }//namespace glm
-
-#endif//GLM_CORE_DETAIL_INCLUDED
