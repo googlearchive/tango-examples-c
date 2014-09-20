@@ -42,4 +42,8 @@ public class TangoJNINative {
 	public static native float GetAverageZ();
 	
 	public static native float GetDepthFPS();
+	
+	public static native float StartSetCameraOffset();
+	
+	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }

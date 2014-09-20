@@ -30,6 +30,7 @@
 #include "gtc/matrix_transform.hpp"
 #include "gtc/quaternion.hpp"
 #include "gtc/type_ptr.hpp"
+#include "gtx/matrix_decompose.hpp"
 
 #define LOG_TAG "tango_jni_example"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -42,6 +43,9 @@ class GlUtil {
                               const char* fragment_source);
   static glm::quat ConvertRotationToOpenGL(glm::quat rotation);
   static glm::vec3 ConvertPositionToOpenGL(glm::vec3 position);
+  static void DecomposeMatrix(glm::mat4& transform_mat, glm::vec3& translation,
+                              glm::quat& rotation, glm::vec3& scale);
+  static glm::vec3 GetTranslationFromMatrix(glm::mat4& transform_mat);
  private:
   static GLuint LoadShader(GLenum shader_type, const char* shader_source);
 };

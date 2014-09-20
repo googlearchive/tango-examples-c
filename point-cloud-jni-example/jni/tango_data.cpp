@@ -24,7 +24,7 @@ TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
   depth_buffer_size_ = kMaxVertCount * 3;
   lib_version_ = new char[26];
 
-  d_2_ss_mat = glm::mat4(1.0f);
+  d_2_ss_mat_depth = glm::mat4(1.0f);
   d_2_imu_mat = glm::mat4(1.0f);
   c_2_imu_mat = glm::mat4(1.0f);
   
@@ -72,15 +72,14 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
 // This callback function is called when new POSE updates become available.
 static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   glm::vec3 translation =
-  glm::vec3(pose->translation[0], pose->translation[1],
+    glm::vec3(pose->translation[0], pose->translation[1],
             pose->translation[2]);
   glm::quat rotation =
   glm::quat(pose->orientation[3], pose->orientation[0],
             pose->orientation[1], pose->orientation[2]);
   
-//  TangoData::GetInstance().d_2_ss_mat =
-//    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
-  
+  TangoData::GetInstance().d_2_ss_mat_motion =
+    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
 }
 
 bool TangoData::Initialize() {
@@ -125,16 +124,16 @@ bool TangoData::SetConfig() {
 
   //Set the reference frame pair after connect to service.
   //Currently the API will set this set below as default.
-//  TangoCoordinateFramePair pairs;
-//  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-//  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
-//  
-//  //Attach onPoseAvailable callback.
-//  if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
-//      != TANGO_SUCCESS) {
-//    LOGI("TangoService_connectOnPoseAvailable(): Failed");
-//    return false;
-//  }
+  TangoCoordinateFramePair pairs;
+  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+  
+  //Attach onPoseAvailable callback.
+  if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
+      != TANGO_SUCCESS) {
+    LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
   
   SetExtrinsicsMatrics();
   
@@ -185,8 +184,8 @@ void TangoData::GetPoseAtTime(double timestamp) {
   glm::quat(pose.orientation[3], pose.orientation[0],
             pose.orientation[1], pose.orientation[2]);
   
-  TangoData::GetInstance().d_2_ss_mat =
-  glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
+  d_2_ss_mat_depth =
+    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
 }
 
 void TangoData::Disconnect() {
@@ -206,8 +205,13 @@ int TangoData::GetDepthBufferSize() {
   return depth_buffer_size_;
 }
 
-glm::mat4 TangoData::GetOC2OWMat() {
-  return ss_2_ow_mat * d_2_ss_mat * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+glm::mat4 TangoData::GetOC2OWMat(bool is_depth_pose) {
+  if (is_depth_pose) {
+    return ss_2_ow_mat * d_2_ss_mat_depth * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+  }
+  else {
+    return ss_2_ow_mat * d_2_ss_mat_motion * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+  }
 }
 
 void TangoData::SetDepthBufferSize(int size) {

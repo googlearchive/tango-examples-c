@@ -115,3 +115,49 @@ glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
 glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
   return glm::vec3(position.x, position.z, position.y * -1.0f);
 }
+
+void GlUtil::DecomposeMatrix (glm::mat4& transform_mat, glm::vec3& translation,
+                              glm::quat& rotation, glm::vec3& scale) {
+  float scale_x = glm::length( glm::vec3( transform_mat[0][0], transform_mat[1][0], transform_mat[2][0] ) );
+  float scale_y = glm::length( glm::vec3( transform_mat[0][1], transform_mat[1][1], transform_mat[2][1] ) );
+  float scale_z = glm::length( glm::vec3( transform_mat[0][2], transform_mat[1][2], transform_mat[2][2] ) );
+  
+  
+  float determinant = glm::determinant( transform_mat );
+  if( determinant < 0.0 )
+    scale_x = -scale_x;
+  
+  translation.x = transform_mat[3][0];
+  translation.y = transform_mat[3][1];
+  translation.z = transform_mat[3][2];
+  
+  float inverse_scale_x = 1.0 / scale_x;
+  float inverse_scale_y = 1.0 / scale_y;
+  float inverse_scale_z = 1.0 / scale_z;
+  
+  transform_mat[0][0] *= inverse_scale_x;
+  transform_mat[1][0] *= inverse_scale_x;
+  transform_mat[2][0] *= inverse_scale_x;
+  
+  transform_mat[0][1] *= inverse_scale_y;
+  transform_mat[1][1] *= inverse_scale_y;
+  transform_mat[2][1] *= inverse_scale_y;
+  
+  transform_mat[0][2] *= inverse_scale_z;
+  transform_mat[1][2] *= inverse_scale_z;
+  transform_mat[2][2] *= inverse_scale_z;
+  
+  rotation = glm::quat_cast( transform_mat );
+  
+  scale.x = scale_x;
+  scale.y = scale_y;
+  scale.z = scale_z;
+}
+
+glm::vec3 GlUtil::GetTranslationFromMatrix(glm::mat4& transform_mat) {
+  glm::vec3 translation;
+  translation.x = transform_mat[3][0];
+  translation.y = transform_mat[3][1];
+  translation.z = transform_mat[3][2];
+  return translation;
+}

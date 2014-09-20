@@ -22,7 +22,7 @@
 
 class Grid : public DrawableObject {
  public:
-  Grid(float density = 1.0f, int quantity = 100);
+  Grid(float density = 1.0f, int quantity = 50);
   ~Grid();
   void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:

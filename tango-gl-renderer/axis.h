@@ -18,12 +18,12 @@
 #define AXIS_H
 
 #include "drawable_object.h"
+#include "transform.h"
 #include "gl_util.h"
 
-class Axis : public DrawableObject {
+class Axis : public Transform {
  public:
   Axis();
-  void RenderBasedOnModelMat(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat);
   void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   GLuint vertex_buffer_;

@@ -24,10 +24,7 @@ Camera::Camera() {
 }
 
 glm::mat4 Camera::GetViewMatrix() {
-  glm::mat4 translate_mat = glm::translate(glm::mat4(1.0f), position_);
-  glm::mat4 rotation_mat = glm::mat4_cast(rotation_);
-  glm::mat4 view_mat = glm::inverse(translate_mat*rotation_mat);
-  return view_mat;
+  return glm::inverse(GetTransformationMatrix());
 }
 
 glm::mat4 Camera::GetProjectionMatrix() {
@@ -37,22 +34,6 @@ glm::mat4 Camera::GetProjectionMatrix() {
 
 void Camera::SetAspectRatio(float aspect_ratio) {
   aspect_ratio_ = aspect_ratio;
-}
-
-void Camera::SetPosition(glm::vec3 pos) {
-  position_ = pos;
-}
-
-glm::vec3 Camera::GetPosition() {
-  return position_;
-}
-
-void Camera::SetRotation(glm::quat rot) {
-  rotation_ = rot;
-}
-
-glm::quat Camera::GetRotation() {
-  return rotation_;
 }
 
 Camera::~Camera() {

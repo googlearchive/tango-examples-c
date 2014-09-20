@@ -14,25 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
 #include "gl_util.h"
-#include "transform.h"
 
-class Camera : public Transform{
+class Transform {
  public:
-  Camera();
-  ~Camera();
+  Transform();
+  
+  void SetPosition(glm::vec3 position);
+  glm::vec3 GetPosition();
+  
+  void SetRotation(glm::quat rotation);
+  glm::quat GetRotation();
 
-  void SetAspectRatio(float aspect_ratio);
+  void SetScale(glm::vec3 scale);
+  glm::vec3 GetScale();
 
-  glm::mat4 GetViewMatrix();
-  glm::mat4 GetProjectionMatrix();
+  // To be implemented.
+  void SetTransformationMatrix(glm::mat4 transform_mat);
+  glm::mat4 GetTransformationMatrix();
+  
+  void SetParent(Transform* transform);
+  Transform* GetParent();
  private:
-  float field_of_view_;
-  float aspect_ratio_;
-  float near_clip_plane_, far_clip_plane_;
+  Transform *parent_;
+  
+  glm::vec3 position_;
+  glm::quat rotation_;
+  glm::vec3 scale_;
 };
 
-#endif  // CAMERA_H
+#endif  // TRANSFORM_H

@@ -18,11 +18,15 @@ package com.projecttango.pointcloudnative;
 
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Display;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.app.Activity;
+import android.graphics.Point;
 
 public class PointcloudActivity extends Activity {
 	GLSurfaceView glView;
@@ -36,10 +40,23 @@ public class PointcloudActivity extends Activity {
 	Button thirdPersonCamButton;
 	Button topDownCamButton;
 
+	float[] touchStartPos = new float[2];
+	float[] touchPrePos = new float[2];
+	float[] touchCurPos = new float[2];
+	float touchStartDist = 0.0f;
+	float touchCurDist = 0.0f;
+	Point screenSize = new Point();
+	float screenDiagnal = 0.0f;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		TangoJNINative.OnCreate();
+
+		Display display = getWindowManager().getDefaultDisplay();
+		display.getSize(screenSize);
+		screenDiagnal = (float) Math.sqrt(screenSize.x * screenSize.x
+				+ screenSize.y * screenSize.y);
 
 		setContentView(R.layout.activity_pointcloud);
 		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
@@ -116,9 +133,64 @@ public class PointcloudActivity extends Activity {
 		TangoJNINative.OnPause();
 	}
 
+	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		TangoJNINative.OnDestroy();
 	}
 
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		int pointCount = event.getPointerCount();
+		touchCurDist = 0.0f;
+		if (pointCount == 1) {
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN: {
+				TangoJNINative.StartSetCameraOffset();
+				touchStartPos[0] = event.getX(0);
+				touchStartPos[1] = event.getY(0);
+				Log.i("java_side", "action down1");
+				break;
+			}
+			case MotionEvent.ACTION_MOVE: {
+				touchCurPos[0] = event.getX(0);
+				touchCurPos[1] = event.getY(0);
+
+				// Normalize to screen width.
+				float normalizedRotX = (touchCurPos[0] - touchStartPos[0])
+						/ screenSize.x;
+				float normalizedRotY = (touchCurPos[1] - touchStartPos[1])
+						/ screenSize.y;
+
+				TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
+						touchCurDist / screenDiagnal);
+				break;
+			}
+			}
+		}
+		if (pointCount == 2) {
+			switch (event.getActionMasked()) {
+			case MotionEvent.ACTION_POINTER_DOWN: {
+				TangoJNINative.StartSetCameraOffset();
+				float absX = event.getX(0) - event.getX(1);
+				float absY = event.getY(0) - event.getY(1);
+				touchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
+				Log.i("java_side", "action down2");
+				break;
+			}
+			case MotionEvent.ACTION_MOVE: {
+				float absX = event.getX(0) - event.getX(1);
+				float absY = event.getY(0) - event.getY(1);
+
+				touchCurDist = touchStartDist
+						- (float) Math.sqrt(absX * absX + absY * absY);
+
+				TangoJNINative.SetCameraOffset(0.0f, 0.0f, touchCurDist
+						/ screenDiagnal);
+				break;
+			}
+			}
+		}
+		return true;
+	}
 }

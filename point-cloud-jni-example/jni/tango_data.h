@@ -44,7 +44,7 @@ class TangoData {
   int GetDepthBufferSize();
   void SetDepthBufferSize(int size);
   char* GetVersonString();
-  glm::mat4 GetOC2OWMat();
+  glm::mat4 GetOC2OWMat(bool is_depth);
   void GetPoseAtTime(double timestamp);
   
   float average_depth;
@@ -52,14 +52,20 @@ class TangoData {
   float depth_frame_delta_time;
   float previous_frame_time_;
   
+//  glm::mat4 oc_2_ow_mat_motion;
+//  glm::mat4 oc_2_ow_mat_depth;
+  
   // Start service to opengl world matrix.
   glm::mat4 ss_2_ow_mat;
   // Device to start service matrix.
-  glm::mat4 d_2_ss_mat;
+  glm::mat4 d_2_ss_mat_depth;
+  // Device to start service matrix.
+  glm::mat4 d_2_ss_mat_motion;
   // Device to IMU matrix.
   glm::mat4 d_2_imu_mat;
   // Color camera to IMU matrix.
   glm::mat4 c_2_imu_mat;
+  
   // Opengl camera to color camera matrix.
   glm::mat4 oc_2_c_mat;
 private:
