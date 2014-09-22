@@ -46,6 +46,7 @@ class GlUtil {
   static void DecomposeMatrix(glm::mat4& transform_mat, glm::vec3& translation,
                               glm::quat& rotation, glm::vec3& scale);
   static glm::vec3 GetTranslationFromMatrix(glm::mat4& transform_mat);
+  static float Clamp(float value, float min, float max);
  private:
   static GLuint LoadShader(GLenum shader_type, const char* shader_source);
 };

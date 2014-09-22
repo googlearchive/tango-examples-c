@@ -161,3 +161,7 @@ glm::vec3 GlUtil::GetTranslationFromMatrix(glm::mat4& transform_mat) {
   translation.z = transform_mat[3][2];
   return translation;
 }
+
+float GlUtil::Clamp(float value, float min, float max) {
+  return value < min ? min : (value > max ? max : value);
+}
