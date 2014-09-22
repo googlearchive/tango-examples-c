@@ -83,6 +83,19 @@ typedef enum {
   TANGO_EVENT_ADF_UPDATE,     /**< TODO */
 } TangoEventType;
 
+/// Tango Camera Calibration types.
+typedef enum {
+  TANGO_CALIBRATION_UNKNOWN,
+   /**< f-theta fisheye lens model. See
+        http://scholar.google.com/scholar?cluster=13508836606423559694&hl=en&as_sdt=2005&sciodt=0,5 */
+  TANGO_CALIBRATION_FOV,
+  TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
+  /**< Tsai's k1,k2,k3 Model. See
+       http://scholar.google.com/scholar?cluster=3512800631607394002&hl=en&as_sdt=0,5&sciodt=0,5 */
+  TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS,
+  TANGO_CALIBRATION_POLYNOMIAL_5_PARAMETERS,
+} TangoCalibrationType;
+
 // doxygen does not seem to accept endgroups without the ** comment style
 /**@} devsitenav Enumerations */
 
@@ -165,6 +178,7 @@ typedef struct TangoXYZij {
   /// perpendicular to the plane of the camera.
   /// +X points toward the user's right, and +Y points toward the bottom of
   /// the screen.
+  /// The origin is the focal centre of the color camera.
   /// The output is in units of metres.
   float (*xyz)[3];
 
@@ -200,7 +214,6 @@ typedef struct TangoImageBuffer {
   uint8_t *data;
 } TangoImageBuffer;
 
-
 /// The TangoIntrinsics struct contains intrinsic parameters for a camera.
 /// For image coordinates, the obervations, [u, v]^T in pixels.
 /// Normalized image plane coordinates refer to:
@@ -209,7 +222,9 @@ typedef struct TangoImageBuffer {
 ///
 /// y = (v - cy) / fy
 ///
-/// Distortion parameters are distortion[] = {k1, k2 ,k3} and
+/// Distortion model type is as given by calibration_type.  For example, for the
+/// color camera, TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS means that the
+/// distortion parameters are in distortion[] as {k1, k2 ,k3} where
 ///
 /// x_corr_px = x_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
 /// y_corr_px = y_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
@@ -221,6 +236,9 @@ typedef struct TangoImageBuffer {
 typedef struct TangoIntrinsics {
   /// ID of the camera which the intrinsics reference.
   TangoCameraId camera_id;
+  // Calibration model type that the distortion parameters reference.
+  TangoCalibrationType calibration_type;
+
   /// The width of the image in pixels.
   uint32_t width;
   /// The height of the image in pixels.
@@ -382,9 +400,10 @@ TangoErrorType TangoService_getConfig(TangoConfigType config_type,
 /// TangoService_disconnect() after which all configuration of the service
 /// is invalidated.
 /// @return Returns TANGO_SUCCESS if the configuration was set successfully.
-/// Returns TANGO_ERROR if config is NULL, or if a connection was not
-/// initialized with TangoService_initialize(), or if a configuration was not
-/// locked.
+/// Returns TANGO_INVALID if config is NULL, or if the config object was not
+/// initialized with TangoService_getConfig().  Returns TANGO_ERROR if the
+/// client could not initialize or use a initialized service connection, or if a
+/// configuration was not locked.
 TangoErrorType TangoService_lockConfig(TangoConfig* config);
 
 /// Unlock the Tango Service.   This function will unlock the Tango Services'
@@ -470,9 +489,10 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 /// Must be allocated by the caller, and is overwritten upon return.
 /// @return Returns TANGO_SUCCESS if a pose was returned successfully.  The
 /// pose status field should be checked for vailidity.  Returns TANGO_ERROR
-/// if no connection was initialized with TangoService_initailize(), or if the
-/// base and target frame are the same, or if the base or target frame are not
-/// valid, or if timestamp is less than 0.
+/// if no connection was initialized with TangoService_initialize(). Returns
+/// TANGO_INVALID if the base and target frame are the same, or if the base or
+/// target frame is not valid, or if timestamp is less than 0, or if the service
+/// has not yet begun running (TangoService_connext() has not completed).
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
     TangoCoordinateFramePair frame, TangoPoseData* pose);
 
@@ -520,7 +540,7 @@ TangoErrorType TangoService_connectOnTangoEvent(
 /// @param context The context returned during the onFrameAvailable callback.
 /// @param tex The texture ID of the texture to connect the camera to.  Must be
 /// a valid texture in the applicaton.
-TangoErrorType TangoService_connectTextureId(TangoCameraId id, int tex,
+TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
                                              void *context,
                                              void (*callback)(void *,
                                                               TangoCameraId));
@@ -560,8 +580,8 @@ TangoErrorType TangoService_connectOnFrameAvailable(
 /// calling, and is filled with calibration intrinsics for the camera camera_id
 /// upon successful return.
 /// @return Returns TANGO_SUCCESS on successfully retrieving calibration
-/// intrinsics.  Returns TANGO_ERROR on failure, and TANGO_INVALID if inputs
-/// are invalid.
+/// intrinsics.  Returns TANGO_ERROR if service could not be connected to or
+/// intrinsics could not be found and TANGO_INVALID if inputs are invalid.
 TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
     TangoIntrinsics* intrinsics);
 
@@ -581,9 +601,19 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 /// called repeatedly if desired.
 /// @param uuid Upon saving, the generated UUID to refer to this map is
 /// returned in uuid.
-/// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR on failure, or if
-/// uuid is NULL.
+/// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR if a failure
+/// occurred when saving, or if the service needs to be initialized, or
+/// TANGO_INVALID if uuid is NULL, or of incorrect length.
 TangoErrorType TangoService_saveAreaDescription(UUID* uuid);
+
+/// Deletes an area description with the specified unique ID.  This
+/// method can be called after TangoService_initialize(), but should
+/// not be called to delete the ADF that is currently loaded.
+/// @param uuid The area description to delete.
+/// @return Returns TANGO_SUCCESS if area description file with
+/// specified unique ID is found and can be removed.  Returns
+/// TANGO_ERROR on failure to delete, or if the service needs to be initialized.
+TangoErrorType TangoService_deleteAreaDescription(UUID uuid);
 
 /// Gets the full list of unique area description IDs available on a
 /// device. Allocates memory which should be destroyed by calling
@@ -591,13 +621,16 @@ TangoErrorType TangoService_saveAreaDescription(UUID* uuid);
 /// before or after connect.
 /// @param uuid_list Upon successful return, uuid_list is filled with a
 /// UUID_list structure of available UUIDs.
-/// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR on failure.
+/// @return Returns TANGO_SUCCESS on success, or TANGO_ERROR on failure to
+/// retrieve the list, or if the service needs to be initialized, or
+/// TANGO_INVALID if the uuid_list argument was NULL.
 TangoErrorType TangoService_getAreaDescriptionUUIDList(UUID_list *uuid_list);
 
 /// Destroys the memory allocated by a call to
 /// TangoService_getAreaDescriptionUuidList.
 /// @param uuid_list The UUID_list to be deallocated.
-/// @return Returns TANGO_SUCCESS.
+/// @return Returns TANGO_SUCCESS if the list was deleted, TANGO_ERROR if the
+/// service needs to be initialized, or TANGO_INVALID if the uuid_list was NULL.
 TangoErrorType TangoService_destroyAreaDescriptionUUIDList(
     UUID_list *uuid_list);
 
@@ -606,21 +639,25 @@ TangoErrorType TangoService_destroyAreaDescriptionUUIDList(
 /// TangoService_destroyAreaDescriptionMetadata.
 /// @param uuid The UUID for which to load the metadata.
 /// @param metadata_list The metadata for the uuid.
-/// @return Returns TANGO_SUCCESS on successful load of metadata.
+/// @return Returns TANGO_SUCCESS on successful load of metadata, or TANGO_ERROR
+/// if the service needs to be initialized or if the metadata could not be
+/// loaded, or TANGO_INVALID if metadata_list was NULL.
 TangoErrorType TangoService_loadAreaDescriptionMetadata(UUID uuid,
     Metadata_list* metadata_list);
 
 /// Saves the metadata associated with a single area description unique ID.
 /// @param uuid The UUID for which to save the meta data of.
 /// @param metadata_list The metadata to be saved for the uuid.
-/// @return Returns TANGO_SUCCESS on successful save, or TANGO_ERROR on failure.
+/// @return Returns TANGO_SUCCESS on successful save, or TANGO_ERROR on failure,
+/// or if the service needs to be initialized, or TANGO_INVALID if metadata_list
+/// was NULL.
 TangoErrorType TangoService_saveAreaDescriptionMetadata(UUID uuid,
     Metadata_list* metadata_list);
 
 /// Destroys the memory allocated by a call to
 /// TangoService_getAreaDescriptionMetadata.
 /// @param metadata_list The handle to the metadata to be deallocated.
-/// @return Returns TANGO_SUCCESS.
+/// @return Returns TANGO_SUCCESS if the metadata was deleted.
 TangoErrorType TangoService_destroyAreaDescriptionMetadata(
     Metadata_list* metadata_list);
 
@@ -628,7 +665,9 @@ TangoErrorType TangoService_destroyAreaDescriptionMetadata(
 /// area storage location and rename the area with its uuid.
 /// @param uuid To store the uuid of the area.
 /// @param src_file_path The source file path of the area to be imported.
-/// @return Returns TANGO_SUCCESS.
+/// @return Returns TANGO_SUCCESS on successful import, or TANGO_ERROR if the
+/// file could not be imported, or TANGO_INVALID if uuid or src_file_path was
+/// NULL
 TangoErrorType TangoService_importAreaDescription(UUID* uuid,
                                                   char* src_file_path);
 
@@ -636,7 +675,8 @@ TangoErrorType TangoService_importAreaDescription(UUID* uuid,
 /// the destination file directory with the uuid as its name.
 /// @param uuid the uuid of the area.
 /// @param dst_file_dir The destination file directory.
-/// @return Returns TANGO_SUCCESS.
+/// @return Returns TANGO_SUCCESS if the file was exported, or TANGO_ERROR if
+/// the export failed, or TANGO_INVALID if dst_file_dir was NULL.
 TangoErrorType TangoService_exportAreaDescription(UUID uuid,
                                                   char* dst_file_dir);
 
@@ -650,7 +690,8 @@ TangoErrorType TangoService_exportAreaDescription(UUID uuid,
 /// @param value value The value to set the key to.  This array must
 /// be allocated by the caller.
 /// @return Returns TANGO_SUCCESS if the key is found, otherwise returns
-/// TANGO_ERROR.
+/// TANGO_INVALID if the key does not exists, or if any of the arguments is
+/// NULL.
 TangoErrorType TangoAreaDescriptionMetadata_get(
     Metadata_list* metadata_list, char* key, uint32_t* size, char** value);
 
@@ -662,7 +703,7 @@ TangoErrorType TangoAreaDescriptionMetadata_get(
 /// caller.  value will be written only up to this size in bytes.
 /// @param value The value to set the key to.
 /// @return Returns TANGO_SUCCESS if the key is set, otherwise returns
-/// TANGO_ERROR.
+/// TANGO_INVALID if any of the arguments is NULL.
 TangoErrorType TangoAreaDescriptionMetadata_set(
     Metadata_list* metadata_list, char* key, uint32_t value_size, char* value);
 
@@ -734,8 +775,8 @@ TangoErrorType TangoAreaDescriptionMetadata_set(
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if config or key
+/// is NULL, or key is not found or could not be set.
 TangoErrorType TangoConfig_setBool(TangoConfig *config, const char *key,
     bool value);
 
@@ -745,8 +786,8 @@ TangoErrorType TangoConfig_setBool(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if config or key
+/// is NULL, or key is not found or could not be set.
 TangoErrorType TangoConfig_setInt32(TangoConfig *config, const char *key,
     int32_t value);
 
@@ -756,8 +797,8 @@ TangoErrorType TangoConfig_setInt32(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if config or key
+/// is NULL, or key is not found or could not be set.
 TangoErrorType TangoConfig_setInt64(TangoConfig *config, const char *key,
     int64_t value);
 
@@ -767,8 +808,8 @@ TangoErrorType TangoConfig_setInt64(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if config or key
+/// is NULL, or key is not found or could not be set.
 TangoErrorType TangoConfig_setDouble(TangoConfig *config, const char *key,
     double value);
 
@@ -778,8 +819,8 @@ TangoErrorType TangoConfig_setDouble(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if config or key
+/// is NULL, or key is not found or could not be set.
 TangoErrorType TangoConfig_setString(TangoConfig *config, const char *key,
     const char *value);
 
@@ -789,8 +830,8 @@ TangoErrorType TangoConfig_setString(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if the any of the
+/// arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getBool(TangoConfig *config, const char *key,
     bool *value);
 
@@ -800,8 +841,8 @@ TangoErrorType TangoConfig_getBool(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if the any of the
+/// arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getInt32(TangoConfig *config, const char *key,
     int32_t *value);
 
@@ -811,8 +852,8 @@ TangoErrorType TangoConfig_getInt32(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if the any of the
+/// arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getInt64(TangoConfig *config, const char *key,
     int64_t *value);
 
@@ -822,8 +863,8 @@ TangoErrorType TangoConfig_getInt64(TangoConfig *config, const char *key,
 /// initialized with TangoConfig_getConfig().
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if the any of the
+/// arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getDouble(TangoConfig *config, const char *key,
     double *value);
 
@@ -836,8 +877,8 @@ TangoErrorType TangoConfig_getDouble(TangoConfig *config, const char *key,
 /// allocated by the caller.
 /// @param size The size in bytes of value, as allocated by the caller.  value
 /// will be written only up to this size in bytes.
-/// @return Returns TANGO_ERROR if the key is not found, and TANGO_SUCCESS
-/// on success.
+/// @return Returns TANGO_SUCCESS on success or TANGO_INVALID if the any of the
+/// arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getString(TangoConfig *config, const char *key,
     char *value, size_t size);
 /**@} devsitenav Config Params */
