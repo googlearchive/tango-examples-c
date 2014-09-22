@@ -194,6 +194,7 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
+// Tango lifecycle interfaces.
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnCreate(
     JNIEnv* env, jobject obj) {
   LOGI("In onCreate: Initialing and setting config");
@@ -235,6 +236,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnD
   delete cam_parent_transform;
 }
 
+// Graphic interfaces.
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetupGraphic(
     JNIEnv* env, jobject obj, jint width, jint height) {
   SetupGraphics(width, height);
@@ -251,11 +253,22 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_Set
   SetCamera(camera_index);
 }
 
+// Tango data interfaces.
+JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetPoseString(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetPoseDataString());
+}
+
+JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetEventString(
+    JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
+}
+  
 JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
 }
-  
+
 JNIEXPORT jint JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVerticesCount(
     JNIEnv* env, jobject obj) {
   return TangoData::GetInstance().GetDepthBufferSize()/3;
@@ -266,11 +279,12 @@ JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_Ge
   return TangoData::GetInstance().average_depth;
 }
   
-JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetDepthFPS(
+JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetFrameDeltaTime(
      JNIEnv* env, jobject obj) {
   return TangoData::GetInstance().depth_frame_delta_time;
 }
 
+// Touching GL interface.
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_StartSetCameraOffset(
     JNIEnv* env, jobject obj) {
   cam_start_angle[0] = cam_cur_angle[0];

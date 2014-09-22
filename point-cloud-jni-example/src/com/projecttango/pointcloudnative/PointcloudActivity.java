@@ -22,31 +22,32 @@ import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.app.Activity;
 import android.graphics.Point;
 
-public class PointcloudActivity extends Activity {
+public class PointcloudActivity extends Activity implements OnClickListener {
 	GLSurfaceView glView;
-	RelativeLayout layout;
-	TextView versionText;
-	TextView verticesCountText;
-	TextView averageZText;
-	TextView deltaTimeText;
 
-	Button firstPersonCamButton;
-	Button thirdPersonCamButton;
-	Button topDownCamButton;
+	private TextView mPoseDataTextView;
+	private TextView mTangoEventTextView;
+	private TextView mPointCountTextView;
+	private TextView mVersionTextView;
+	private TextView mAverageZTextView;
+	private TextView mFrameDeltaTimeTextView;
 
-	float[] touchStartPos = new float[2];
-	float[] touchPrePos = new float[2];
-	float[] touchCurPos = new float[2];
-	float touchStartDist = 0.0f;
-	float touchCurDist = 0.0f;
-	Point screenSize = new Point();
-	float screenDiagnal = 0.0f;
+	private Button mFirstPersonButton;
+	private Button mThirdPersonButton;
+	private Button mTopDownButton;
+
+	private float[] touchStartPos = new float[2];
+	private float[] touchCurPos = new float[2];
+	private float touchStartDist = 0.0f;
+	private float touchCurDist = 0.0f;
+	private Point screenSize = new Point();
+	private float screenDiagnal = 0.0f;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,55 +60,36 @@ public class PointcloudActivity extends Activity {
 				+ screenSize.y * screenSize.y);
 
 		setContentView(R.layout.activity_pointcloud);
-		glView = (GLSurfaceView) findViewById(R.id.surfaceview);
+		glView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
 		glView.setRenderer(new Renderer());
 
-		versionText = (TextView) findViewById(R.id.version);
-		verticesCountText = (TextView) findViewById(R.id.vertexCount);
-		averageZText = (TextView) findViewById(R.id.averageZ);
-		deltaTimeText = (TextView) findViewById(R.id.deltaTime);
+		mVersionTextView = (TextView) findViewById(R.id.version);
+		mPointCountTextView = (TextView) findViewById(R.id.pointCount);
+		mAverageZTextView = (TextView) findViewById(R.id.averageZ);
+		mFrameDeltaTimeTextView = (TextView) findViewById(R.id.frameDelta);
+		mTangoEventTextView = (TextView) findViewById(R.id.tangoevent);
+		mPoseDataTextView = (TextView) findViewById(R.id.pose_data_textview);
 
-		versionText.setText(TangoJNINative.GetVersionNumber());
+		mVersionTextView.setText(TangoJNINative.GetVersionNumber());
 
-		firstPersonCamButton = (Button) findViewById(R.id.first_person_cam_btn);
-		firstPersonCamButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(0);
-			}
-		});
-		thirdPersonCamButton = (Button) findViewById(R.id.third_poerson_cam_btn);
-		thirdPersonCamButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(1);
-			}
-		});
-		topDownCamButton = (Button) findViewById(R.id.top_down_cam_btn);
-		topDownCamButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				TangoJNINative.SetCamera(2);
-			}
-		});
+		mFirstPersonButton = (Button) findViewById(R.id.first_person_button);
+		mFirstPersonButton.setOnClickListener(this);
+		mThirdPersonButton = (Button) findViewById(R.id.third_person_button);
+		mThirdPersonButton.setOnClickListener(this);
+		mTopDownButton = (Button) findViewById(R.id.top_down_button);
+		mTopDownButton.setOnClickListener(this);
 
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (true) {
 					try {
-						Thread.sleep(10);
-						final int verticesCount = TangoJNINative
-								.GetVerticesCount();
+						Thread.sleep(100);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									verticesCountText.setText(String
-											.valueOf(verticesCount));
-									averageZText.setText(String
-											.valueOf(TangoJNINative
-													.GetAverageZ()));
-									deltaTimeText.setText(String
-											.valueOf(TangoJNINative
-													.GetDepthFPS()));
+									updateUI();
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
@@ -137,6 +119,23 @@ public class PointcloudActivity extends Activity {
 	protected void onDestroy() {
 		super.onDestroy();
 		TangoJNINative.OnDestroy();
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.first_person_button:
+			TangoJNINative.SetCamera(0);
+			break;
+		case R.id.third_person_button:
+			TangoJNINative.SetCamera(1);
+			break;
+		case R.id.top_down_button:
+			TangoJNINative.SetCamera(2);
+			break;
+		default:
+			return;
+		}
 	}
 
 	@Override
@@ -189,7 +188,7 @@ public class PointcloudActivity extends Activity {
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_UP: {
-				int index = event.getActionIndex() == 0?1:0;
+				int index = event.getActionIndex() == 0 ? 1 : 0;
 				touchStartPos[0] = event.getX(index);
 				touchStartPos[1] = event.getY(index);
 				break;
@@ -197,5 +196,15 @@ public class PointcloudActivity extends Activity {
 			}
 		}
 		return true;
+	}
+
+	private void updateUI() {
+		mTangoEventTextView.setText(TangoJNINative.GetEventString());
+		mPoseDataTextView.setText(TangoJNINative.GetPoseString());
+		mPointCountTextView.setText(String.valueOf(TangoJNINative
+				.GetVerticesCount()));
+		mAverageZTextView.setText(String.valueOf(TangoJNINative.GetAverageZ()));
+		mFrameDeltaTimeTextView.setText(String.valueOf(TangoJNINative
+				.GetFrameDeltaTime()));
 	}
 }

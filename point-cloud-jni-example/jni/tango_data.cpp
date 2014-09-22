@@ -20,9 +20,10 @@
 static const int kMaxVertCount = 61440;
 
 TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
+  motion_pose = new TangoPoseData();
+  
   depth_data_buffer_ = new float[kMaxVertCount * 3];
   depth_buffer_size_ = kMaxVertCount * 3;
-  lib_version_ = new char[26];
 
   d_2_ss_mat_depth = glm::mat4(1.0f);
   d_2_imu_mat = glm::mat4(1.0f);
@@ -69,17 +70,35 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
   LOGI("on xyz available");
 }
 
+// Tango event callback.
+static void onTangoEvent(void* context, const TangoEvent* event) {
+  strncpy(TangoData::GetInstance().event_string,
+          event->description, 30);
+}
+
 // This callback function is called when new POSE updates become available.
 static void onPoseAvailable(void* context, const TangoPoseData* pose) {
-  glm::vec3 translation =
+  TangoData::GetInstance().tango_position =
     glm::vec3(pose->translation[0], pose->translation[1],
-            pose->translation[2]);
-  glm::quat rotation =
-  glm::quat(pose->orientation[3], pose->orientation[0],
-            pose->orientation[1], pose->orientation[2]);
+              pose->translation[2]);
+  TangoData::GetInstance().tango_rotation =
+    glm::quat(pose->orientation[3], pose->orientation[0],
+              pose->orientation[1], pose->orientation[2]);
+  
+  TangoData::GetInstance().cur_pose_status = pose->status_code;
+  if(TangoData::GetInstance().prev_pose_status != pose->status_code) {
+    TangoData::GetInstance().pose_status_count = 0;
+  }
+  TangoData::GetInstance().prev_pose_status = pose->status_code;
+  TangoData::GetInstance().pose_status_count++;
+  
+  TangoData::GetInstance().frame_delta_time =
+  TangoData::GetInstance().prev_pose_timestamp - pose->timestamp;
+  TangoData::GetInstance().prev_pose_timestamp = pose->timestamp;
   
   TangoData::GetInstance().d_2_ss_mat_motion =
-    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
+    glm::translate(glm::mat4(1.0f), TangoData::GetInstance().tango_position) *
+    glm::mat4_cast(TangoData::GetInstance().tango_rotation);
 }
 
 bool TangoData::Initialize() {
@@ -132,6 +151,12 @@ bool TangoData::SetConfig() {
   if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
       != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
+  
+  // Set the event callback listener.
+  if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
+    LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
   
@@ -219,8 +244,8 @@ void TangoData::SetDepthBufferSize(int size) {
 }
 
 char* TangoData::GetVersonString() {
-  TangoConfig_getString(config_, "tango_service_library_version", lib_version_, 26);
-  return lib_version_;
+  TangoConfig_getString(config_, "tango_service_library_version", lib_version, 26);
+  return lib_version;
 }
 
 void TangoData::SetExtrinsicsMatrics() {
@@ -262,7 +287,39 @@ void TangoData::SetExtrinsicsMatrics() {
     glm::inverse(glm::mat4_cast(rotation));
 }
 
+char* TangoData::GetEventString() {
+  return event_string;
+}
+
+char* TangoData::GetPoseDataString() {
+  const char* status;
+  switch (cur_pose_status) {
+    case 0:
+      status = "Initializing";
+      break;
+    case 1:
+      status = "Valid";
+      break;
+    case 2:
+      status = "Invalid";
+      break;
+    case 3:
+      status = "Unknown";
+      break;
+    default:
+      break;
+  }
+  
+  sprintf(pose_string_,
+          "Status:%s, Count:%d, Delta Time(ms): %4.3f, Pose(m): %4.3f, %4.3f, %4.3f, Quat: %4.3f, %4.3f, %4.3f, %4.3f",
+          status, pose_status_count, frame_delta_time,
+          tango_position[0], tango_position[1], tango_position[2],
+          tango_rotation[0], tango_rotation[1], tango_rotation[2], tango_rotation[3]);
+  
+//  sprintf(pose_string_, "a");
+  return pose_string_;
+}
+
 TangoData::~TangoData() {
   delete[] depth_data_buffer_;
-  delete[] lib_version_;
 }
