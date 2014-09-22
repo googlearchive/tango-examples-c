@@ -140,8 +140,12 @@ bool RenderFrame() {
   else {
     // Get motion transformation.
     oc_2_ow_mat_motion = TangoData::GetInstance().GetOC2OWMat(false);
+
     // Set camera's pose to motion tracking's pose.
     cam->SetTransformationMatrix(oc_2_ow_mat_motion);
+
+    // Get depth frame transfromation.
+    oc_2_ow_mat_depth = TangoData::GetInstance().GetOC2OWMat(true);
   }
   
   // Set axis transformation, axis representing device's pose.
@@ -169,12 +173,16 @@ void SetCamera(int camera_index) {
       break;
     case 1:
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = 4.0f;
       cam_cur_angle[0] = -0.785f;
       cam_cur_angle[1] = 0.785f;
       break;
     case 2:
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = 8.0f;
       cam_cur_angle[1] = 1.57f;
       break;
@@ -272,10 +280,10 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_Sta
 
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetCameraOffset(
      JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
-  LOGI("dist = %f", dist);
   cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
   cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
-  cam_cur_dist = cam_start_dist + dist*5.0f;
+  dist = GlUtil::Clamp(cam_start_dist + dist*10.0f, 1.0f, 100.0f);
+  cam_cur_dist = dist;
 }
 #ifdef __cplusplus
 }

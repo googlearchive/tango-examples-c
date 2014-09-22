@@ -142,14 +142,13 @@ public class PointcloudActivity extends Activity {
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		int pointCount = event.getPointerCount();
-		touchCurDist = 0.0f;
 		if (pointCount == 1) {
-			switch (event.getAction()) {
+			switch (event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN: {
 				TangoJNINative.StartSetCameraOffset();
+				touchCurDist = 0.0f;
 				touchStartPos[0] = event.getX(0);
 				touchStartPos[1] = event.getY(0);
-				Log.i("java_side", "action down1");
 				break;
 			}
 			case MotionEvent.ACTION_MOVE: {
@@ -164,6 +163,7 @@ public class PointcloudActivity extends Activity {
 
 				TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
 						touchCurDist / screenDiagnal);
+				Log.i("tango_jni", String.valueOf(touchCurDist / screenDiagnal));
 				break;
 			}
 			}
@@ -175,7 +175,6 @@ public class PointcloudActivity extends Activity {
 				float absX = event.getX(0) - event.getX(1);
 				float absY = event.getY(0) - event.getY(1);
 				touchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
-				Log.i("java_side", "action down2");
 				break;
 			}
 			case MotionEvent.ACTION_MOVE: {
@@ -187,6 +186,12 @@ public class PointcloudActivity extends Activity {
 
 				TangoJNINative.SetCameraOffset(0.0f, 0.0f, touchCurDist
 						/ screenDiagnal);
+				break;
+			}
+			case MotionEvent.ACTION_POINTER_UP: {
+				int index = event.getActionIndex() == 0?1:0;
+				touchStartPos[0] = event.getX(index);
+				touchStartPos[1] = event.getY(index);
 				break;
 			}
 			}
