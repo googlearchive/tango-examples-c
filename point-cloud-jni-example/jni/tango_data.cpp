@@ -67,7 +67,6 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
     (XYZ_ij->timestamp - TangoData::GetInstance().previous_frame_time_)*1000.0f;
   TangoData::GetInstance().previous_frame_time_ = XYZ_ij->timestamp;
   TangoData::GetInstance().GetPoseAtTime(XYZ_ij->timestamp);
-  LOGI("on xyz available");
 }
 
 // Tango event callback.
@@ -129,13 +128,18 @@ bool TangoData::SetConfig() {
     LOGI("config_disable_motion_tracking Failed");
     return false;
   }
+  
+  return true;
+}
 
+/// Connect to the Tango Service.
+bool TangoData::Connect() {
   // Attach the onXYZijAvailable callback.
   if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnXYZijAvailable(): Failed");
     return false;
   }
-
+  
   //Set the reference frame pair after connect to service.
   //Currently the API will set this set below as default.
   TangoCoordinateFramePair pairs;
@@ -155,13 +159,6 @@ bool TangoData::SetConfig() {
     return false;
   }
   
-  return true;
-}
-
-/// Connect to the Tango Service.
-/// Note: connecting Tango service will start the motion
-/// tracking automatically.
-bool TangoData::Connect() {
   if (TangoService_connect(nullptr, config_) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;

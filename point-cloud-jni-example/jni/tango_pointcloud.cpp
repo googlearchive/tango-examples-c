@@ -211,7 +211,7 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnC
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnResume(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
-  if (TangoData::GetInstance().Connect()){
+  if (!TangoData::GetInstance().Connect()){
     LOGE("Tango connect failed");
   }
 }
