@@ -44,4 +44,8 @@ public class TangoJNINative {
 	public static native String GetEventString();
 	
 	public static native String GetVersionNumber();
+	
+	public static native float StartSetCameraOffset();
+	
+	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }

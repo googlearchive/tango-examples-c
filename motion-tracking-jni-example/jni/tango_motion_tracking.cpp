@@ -29,11 +29,22 @@
 GLuint screen_width;
 GLuint screen_height;
 
+// Render camera's parent transformation.
+// This object is a pivot transformtion for render camera to rotate around.
+Transform* cam_parent_transform;
+
 Camera *cam;
 Axis *axis;
 Frustum *frustum;
 Grid *grid;
 Trace *trace;
+
+int cur_cam_index = 0;
+
+float cam_start_angle[2];
+float cam_cur_angle[2];
+float cam_start_dist;
+float cam_cur_dist;
 
 enum CameraType {
   FIRST_PERSON = 0,
@@ -58,13 +69,16 @@ bool SetupGraphics(int w, int h) {
   screen_width = w;
   screen_height = h;
 
+  cam_parent_transform = new Transform();
   cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
   trace = new Trace();
   grid = new Grid();
 
-  camera_type = FIRST_PERSON;
+  // Set the parent-child camera transfromation.
+  cam->SetParent(cam_parent_transform);
+  
   cam->SetAspectRatio((float) (w / h));
   return true;
 }
@@ -89,15 +103,26 @@ bool RenderFrame() {
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().tango_rotation);
 
-  if (camera_type == FIRST_PERSON) {
+  if (cur_cam_index == 0) {
     cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
-    if(camera_type == TOP_DOWN){
-      cam->SetPosition(position+kTopDownCameraPosition);
-    }else{
-      cam->SetPosition(position+kThirdPersonCameraPosition);
-    }
+    // Get parent camera's rotation from touch.
+    // Note that the render camera is a child transformation
+    // of the this transformation.
+    // cam_cur_angle[0] is the x-axis touch, cooresponding to y-axis rotation.
+    // cam_cur_angle[0] is the y-axis touch, cooresponding to x-axis rotation.
+    glm::quat parent_cam_rot =
+      glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
+    parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
+    
+    // Set render camera parent position and rotation.
+    cam_parent_transform->SetRotation(parent_cam_rot);
+    cam_parent_transform->SetPosition(position);
+    
+    // Set camera view distance, based on touch interaction.
+    cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
+    
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
@@ -114,18 +139,27 @@ bool RenderFrame() {
 }
 
 void SetCamera(int camera_index) {
-  camera_type = camera_index;
+  cur_cam_index = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
   switch (camera_index) {
-    case FIRST_PERSON:
-      LOGI("setting to First Person Camera");
+    case 0:
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
       break;
-    case THIRD_PERSON:
-      cam->SetRotation(kThirdPersonCameraRotation);
-      LOGI("setting to Third Person Camera");
+    case 1:
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = 4.0f;
+      cam_cur_angle[0] = -0.785f;
+      cam_cur_angle[1] = 0.785f;
       break;
-    case TOP_DOWN:
-      cam->SetRotation(kTopDownCameraRotation);
-      LOGI("setting to Top Down Camera");
+    case 2:
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = 8.0f;
+      cam_cur_angle[1] = 1.57f;
       break;
     default:
       break;
@@ -206,6 +240,22 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINat
 JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetVersionNumber(
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersionString());
+}
+  
+// Touching GL interface.
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_StartSetCameraOffset(
+    JNIEnv* env, jobject obj) {
+  cam_start_angle[0] = cam_cur_angle[0];
+  cam_start_angle[1] = cam_cur_angle[1];
+  cam_start_dist = cam->GetPosition().z;
+}
+  
+JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCameraOffset(
+    JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
+  cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
+  cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
+  dist = GlUtil::Clamp(cam_start_dist + dist*10.0f, 1.0f, 100.0f);
+  cam_cur_dist = dist;
 }
 #ifdef __cplusplus
 }
