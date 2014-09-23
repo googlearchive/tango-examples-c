@@ -78,9 +78,12 @@ typedef enum {
 
 /// Tango Event types.
 typedef enum {
-  TANGO_EVENT_UNKNOWN,        /**< TODO */
-  TANGO_EVENT_STATUS_UPDATE,  /**< TODO */
-  TANGO_EVENT_ADF_UPDATE,     /**< TODO */
+  TANGO_EVENT_UNKNOWN = 0, /**< Unclassified Event Type */
+  TANGO_EVENT_GENERAL,     /**< General callbacks not otherwise categorized */
+  TANGO_EVENT_FISHEYE_CAMERA,   /**< Fisheye Camera Event */
+  TANGO_EVENT_COLOR_CAMERA,     /**< Color Camera Event */
+  TANGO_EVENT_IMU,              /**< IMU Event */
+  TANGO_EVENT_FEATURE_TRACKING, /**< Feature Tracking Event */
 } TangoEventType;
 
 /// Tango Camera Calibration types.
@@ -158,6 +161,26 @@ typedef struct TangoPoseData {
   int confidence;   // Unused.  Integer levels are determined by service.
 } TangoPoseData;
 
+/// The TangoImageBuffer contains information about a byte buffer holding
+/// image data.
+typedef struct TangoImageBuffer {
+  /// The width of the image data.
+  uint32_t width;
+  /// The height of the image data.
+  uint32_t height;
+  /// The number of pixels per scanline of image data.
+  uint32_t stride;
+  /// The timestamp of this image.
+  double timestamp;
+  /// The frame number of this image.
+  int64_t frame_number;
+  /// Pixels in HAL_PIXEL_FORMAT_YV12 format. Y samples of width x height are
+  /// first, followed by V samples, with half the stride and half the lines of
+  /// the Y data, followed by a U samples with the same dimensions as the V
+  /// sample.
+  uint8_t *data;
+} TangoImageBuffer;
+
 /// The TangoXYZij struct contains information returned from the depth sensor.
 typedef struct TangoXYZij {
   /// An integer denoting the version of the structure.
@@ -197,22 +220,10 @@ typedef struct TangoXYZij {
   /// "../../overview/depth-perception#xyzij">
   /// developer overview on depth perception</a>.
   int *ij;
-} TangoXYZij;
 
-typedef struct TangoImageBuffer {
-  /// The width of the image data.
-  uint32_t width;
-  /// The height of the image data.
-  uint32_t height;
-  /// The number of pixels per scanline of image data.
-  uint32_t stride;
-  /// The timestamp of this image.
-  double timestamp;
-  /// The frame number of this image.
-  int64_t frame_number;
-  /// Pixels in HAL_PIXEL_FORMAT_YV12 format.
-  uint8_t *data;
-} TangoImageBuffer;
+  /// TangoImageBuffer is reserved for future use.
+  TangoImageBuffer color_image;
+} TangoXYZij;
 
 /// The TangoIntrinsics struct contains intrinsic parameters for a camera.
 /// For image coordinates, the obervations, [u, v]^T in pixels.
@@ -328,8 +339,10 @@ typedef struct TangoEvent {
   double timestamp;
   /// Type of event.
   TangoEventType type;
-  /// Description of the event, as listed above.
-  const char *description;
+  /// Description of the event key.
+  const char *event_key;
+  /// Description of the event value.
+  const char *event_value;
 } TangoEvent;
 
 #ifdef __cplusplus
@@ -343,15 +356,6 @@ extern "C" {
 /// must be set before connecting to the service, and cannot be changed after
 /// the service has been connected to.
 /// @{
-
-/// @brief Allocate a TangoConfig object.
-/// Returns a handle (TangoConfig *) for a newly allocated, empty and
-/// uninitialized TangoConfig object. This TangoConfig object must be
-/// configured with at least TangoService_getConfig() to initialize it with
-/// default values, and then the various TangoConfig_set functions can be used
-/// to set specific configuration values.
-/// See @link configparams Configuration Parameters @endlink
-TangoConfig* TangoConfig_alloc();
 
 /// Deallocate a TangoConfig object.
 /// Destroys the TangoConfig object for the handle specified by the config
@@ -379,53 +383,47 @@ char *TangoConfig_toString(TangoConfig* config);
 /// TANGO_ERROR if a connection could not be made.
 TangoErrorType TangoService_initialize();
 
-/// Given a TangoConfig object that was allocated with TangoConfig_alloc(),
-/// TangoService_getConfig() fills in Config with configuration
+/// TangoService_getConfig() creates a TangoConfig object with configuration
 /// settings from the service.  This should be used to initialize a Config
-/// object before setting custom settings and locking that configuration.  This
-/// function can also be used to find the current configuration of the service.
-///    TANGO_CONFIG_DEFAULT = Default configuration of the service.
-/// @return On successful setting of config, returns TANGO_SUCCESS.  Returns
-/// TANGO_ERROR if config_type is not valid, config is NULL, failure to
-/// get the requested configuration.
-TangoErrorType TangoService_getConfig(TangoConfigType config_type,
-    TangoConfig* config);
+/// object for setting the configuration that TangoService should be run in.
+/// The Config handle is passed to TangoService_connect() which starts the
+/// service running with the parameters set at that time in that TangoConfig
+/// handle. This function can be used to find the current configuration of
+/// the service (i.e. what would be run if no config is specified on
+/// TangoService_connect()), or to create one of a few "template" TangoConfigs.
+/// The returned TangoConfig can be further modified by TangoConfig_set function
+/// calls.  The handle should be destroyed with
+/// TangoService_destroy().  The handle is needed only at the time of
+/// TangoService_connect() where it is used to configure the service, and can
+/// safely be destroyed after it has been used in TangoService_connect().
+/// @param config_type The requested configuration type.  For convenience a
+/// enumerated set of TangoConfigType is specified as "templates".
+/// See @link configparams Configuration Parameters @endlink
+/// @return Returns a handle (TangoConfig*) for a newly allocated TangoConfig
+/// object with settings as requested by config_type. Returns NULL if the
+/// config_type is not valid, the config could not be allocated, the service
+/// could not be initialized, or an internal failure occurred.
+TangoConfig* TangoService_getConfig(TangoConfigType config_type);
 
-/// Lock a new configuration.  This will place the service into the
-/// configuration given by config.  This will interrupt other client
-/// configurations.  The config object must be initialized with
-/// TangoService_getConfig().  Upon locking, the service will run the locked
-/// configuration on the next call to TangoService_connect() and that
-/// configuration will remain valid and immutable until the next call to
-/// TangoService_disconnect() after which all configuration of the service
-/// is invalidated.
-/// @return Returns TANGO_SUCCESS if the configuration was set successfully.
-/// Returns TANGO_INVALID if config is NULL, or if the config object was not
-/// initialized with TangoService_getConfig().  Returns TANGO_ERROR if the
-/// client could not initialize or use a initialized service connection, or if a
-/// configuration was not locked.
-TangoErrorType TangoService_lockConfig(TangoConfig* config);
-
-/// Unlock the Tango Service.   This function will unlock the Tango Services'
-/// configuration.  It should be called when the service's specific
-/// configuration is no longer needed, such as when shutting down.  This will
-/// allow other clients to change the configuration of the service.
-/// @return Returns TANGO_SUCCESS on unlocking a configuration.  Returns
-/// TANGO_ERROR if a connection was not initialized with
-/// TangoService_initialize(), or if the configuration was not unlocked.
-TangoErrorType TangoService_unlockConfig();
-
-/// Connect to the Tango Service.   This connects to and starts the service
-/// running.  The service will run with the current configuration, in either
-/// its default configuration, or most recently locked configuration if new
-/// configuration values were set.  TangoService_connect() starts the motion
-/// estimation and other components of the service.  After calling
-/// TangoService_connect(), callbacks will begin to be generated, and pose can
-/// be queried, and other data (camera, depth) will become available.
+/// Connect sets the configuration of the Tango Service and starts it running.
+/// The service will run with the current configuration, in either its default
+/// configuration with the configuration specified in config.
+/// TangoService_connect() starts the motion estimation and data (camera, depth,
+/// callbacks etc.) will become available, and pose can be queried etc..   The
+/// parameter config is used to set the configuration at this time, and can be
+/// safely destroyed after.
+/// @param callback_context User definable pointer that is returned in callback
+/// functions.  Can be safely set to NULL if not used.
+/// @param config The service will be started with the setting specified by this
+/// TangoConfig handle.  If NULL is passed here, then the service will be
+/// started in the default configuration.
 /// @return Returns TANGO_SUCCESS on successfully starting the configuration.
 /// Returns TANGO_ERROR on failure, or if a connection was not initialized with
-/// TangoService_initialize().
-TangoErrorType TangoService_connect(void *callback_context);
+/// TangoService_initialize(), or if the camera could not be opened, which could
+/// be due to cameras being opened by other applications or a system error which
+/// may require a reboot.
+TangoErrorType TangoService_connect(void *callback_context,
+    TangoConfig* config);
 
 /// Disconnect from the Tango Service. Callbacks will no longer be generated.
 /// Applications should always call disconnect when the service is no longer
@@ -488,11 +486,11 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 /// @param pose The pose of target with respect to base frame of reference.
 /// Must be allocated by the caller, and is overwritten upon return.
 /// @return Returns TANGO_SUCCESS if a pose was returned successfully.  The
-/// pose status field should be checked for vailidity.  Returns TANGO_ERROR
-/// if no connection was initialized with TangoService_initialize(). Returns
-/// TANGO_INVALID if the base and target frame are the same, or if the base or
-/// target frame is not valid, or if timestamp is less than 0, or if the service
-/// has not yet begun running (TangoService_connext() has not completed).
+/// pose status field should be checked for vailidity.  Returns TANGO_INVALID
+/// if no connection was initialized with TangoService_initialize(), or if the
+/// base and target frame are the same, or if the base or if the target frame
+/// is not valid, or if timestamp is less than 0, or if the service has not yet
+/// begun running (TangoService_connect() has not completed).
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
     TangoCoordinateFramePair frame, TangoPoseData* pose);
 
@@ -540,6 +538,8 @@ TangoErrorType TangoService_connectOnTangoEvent(
 /// @param context The context returned during the onFrameAvailable callback.
 /// @param tex The texture ID of the texture to connect the camera to.  Must be
 /// a valid texture in the applicaton.
+/// @return Returns TANGO_INVALID if the camera ID is not valid.  Otherwise
+/// returns TANGO_ERROR if an internal error occurred.
 TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
                                              void *context,
                                              void (*callback)(void *,
@@ -553,6 +553,9 @@ TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
 /// TANGO_CAMERA_COLOR is supported.
 /// @param timestamp Upon return, if not NULL upon calling, timestamp contains
 /// the timestamp of the image that has been pushed to the connected texture.
+/// @return Returns TANGO_INVALID if id is out of range, if
+/// TangoService_initialize() must be called first, or if a texture ID was never
+/// associated with the camera.  Otherwise   returns TANGO_SUCCESS.
 TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 
 /// Connect a callback to a camera for access to the pixels. This is not
@@ -591,7 +594,8 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 /// @brief Functions for handling Area Descriptions for localization.
 /// Note that loading an Area Description is handled by specifying the
 /// configuration item config_load_area_description_UUID when the configuration
-/// is locked.  This is done using the TangoConfig_setString() function;
+/// is locked.  This is done using the TangoConfig_setString() function.  For
+/// saving, the application should have WRITE_EXTERNAL_STORAGE permissions.
 /// see @link configparams Configuration Parameters @endlink for more info.
 /// @{
 
@@ -714,8 +718,8 @@ TangoErrorType TangoAreaDescriptionMetadata_set(
 ///
 /// For an allocated TangoConfig handle, these functions get and set parameters
 /// of that TangoConfig handle.  You can use the handle to query the current
-/// state, or you can create a new handle and alter its contents to change the
-/// settings later with lockConfig().  For each type of configuration parameter
+/// state, or you can create a new handle and alter its contents to set the
+/// service settings on connect().  For each type of configuration parameter
 /// (bool, double, string, etc) you call the corresponding get/set function,
 /// such as getBool for a boolean.
 ///
