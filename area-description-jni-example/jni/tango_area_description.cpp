@@ -29,40 +29,38 @@
 GLuint screen_width;
 GLuint screen_height;
 
+// Render camera's parent transformation.
+// This object is a pivot transformtion for render camera to rotate around.
+Transform* cam_parent_transform;
+
 Camera *cam;
 Axis *axis;
 Frustum *frustum;
 Grid *grid;
 Trace *trace;
 
-enum CameraType {
-  FIRST_PERSON = 0,
-  THIRD_PERSON = 1,
-  TOP_DOWN = 2
-};
+int cur_cam_index = 0;
 
-int camera_type;
+float cam_start_angle[2];
+float cam_cur_angle[2];
+float cam_start_dist;
+float cam_cur_dist;
 
-// Quaternion format of rotation.
-const glm::vec3 kThirdPersonCameraPosition = glm::vec3(0.0f, 3.0f, 3.0f);
-const glm::quat kThirdPersonCameraRotation = glm::quat(0.92388f, -0.38268f,
-                                                       0.0f, 0.0f);
-const glm::vec3 kTopDownCameraPosition = glm::vec3(0.0f, 10.0f, 0.0f);
-const glm::quat kTopDownCameraRotation = glm::quat(0.70711f, -0.70711f, 0.0f,
-                                                   0.0f);
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
 
   screen_width = w;
   screen_height = h;
 
+  cam_parent_transform = new Transform();
   cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
   trace = new Trace();
   grid = new Grid();
 
-  camera_type = FIRST_PERSON;
+  // Set the parent-child camera transfromation.
+  cam->SetParent(cam_parent_transform);
   cam->SetAspectRatio((float) (w / h));
   return true;
 }
@@ -89,42 +87,62 @@ bool RenderFrame() {
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().tango_rotation[pose_index]);
 
-  cam->SetPosition(position);
-  if (camera_type == FIRST_PERSON) {
+  if (cur_cam_index == 0) {
+    cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
-    if(camera_type == TOP_DOWN){
-      cam->SetPosition(position+kTopDownCameraPosition);
-    }else{
-      cam->SetPosition(position+kThirdPersonCameraPosition);
-    }
+    // Get parent camera's rotation from touch.
+    // Note that the render camera is a child transformation
+    // of the this transformation.
+    // cam_cur_angle[0] is the x-axis touch, cooresponding to y-axis rotation.
+    // cam_cur_angle[0] is the y-axis touch, cooresponding to x-axis rotation.
+    glm::quat parent_cam_rot =
+    glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
+    parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
+    
+    // Set render camera parent position and rotation.
+    cam_parent_transform->SetRotation(parent_cam_rot);
+    cam_parent_transform->SetPosition(position);
+    
+    // Set camera view distance, based on touch interaction.
+    cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
+    
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-
-    trace->UpdateVertexArray(position);
-    trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-
+    
     axis->SetPosition(position);
     axis->SetRotation(rotation);
     axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   }
+  
+  trace->UpdateVertexArray(position);
+  trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   return true;
 }
 
 void SetCamera(int camera_index) {
-  camera_type = camera_index;
+  cur_cam_index = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
   switch (camera_index) {
-    case FIRST_PERSON:
-      LOGI("setting to First Person Camera");
+    case 0:
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
       break;
-    case THIRD_PERSON:
-      cam->SetRotation(kThirdPersonCameraRotation);
-      LOGI("setting to Third Person Camera");
+    case 1:
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = 4.0f;
+      cam_cur_angle[0] = -0.785f;
+      cam_cur_angle[1] = 0.785f;
       break;
-    case TOP_DOWN:
-      cam->SetRotation(kTopDownCameraRotation);
-      LOGI("setting to Top Down Camera");
+    case 2:
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = 8.0f;
+      cam_cur_angle[1] = 1.57f;
       break;
     default:
       break;
@@ -135,36 +153,31 @@ void SetCamera(int camera_index) {
 extern "C" {
 #endif
 JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
-  LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
-  LOGI("In onCreate: Initialing and setting config");
+    JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Initialize())
   {
     LOGE("Tango initialization failed");
   }
+}
+
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Connect(
+    JNIEnv* env, jobject obj) {
+  if (!TangoData::GetInstance().Connect()) {
+    LOGE("Tango connect failed");
+  }
+}
+  
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupConfig(
+    JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
+  LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
   if (!TangoData::GetInstance().SetConfig(is_learning, is_load_adf))
   {
     LOGE("Tango set config failed");
   }
 }
-
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_ConnectService(
+  
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Disconnect(
     JNIEnv* env, jobject obj) {
-  LOGI("In OnResume: Locking config and connecting service");
-  if (!TangoData::GetInstance().LockConfig()) {
-    LOGE("Tango lock config failed");
-  }
-  if (!TangoData::GetInstance().Connect()) {
-    LOGE("Tango connect failed");
-  }
-}
-
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_DisconnectService(
-    JNIEnv* env, jobject obj) {
-  LOGI("In OnPause: Unlocking config and disconnecting service");
-  if (TangoData::GetInstance().UnlockConfig()) {
-    LOGE("Tango unlock file failed");
-  }
   TangoData::GetInstance().Disconnect();
 }
 
@@ -252,6 +265,26 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINa
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
 }
   
+JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
+     JNIEnv* env, jobject obj) {
+  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
+}
+  
+// Touching GL interface.
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
+    JNIEnv* env, jobject obj) {
+  cam_start_angle[0] = cam_cur_angle[0];
+  cam_start_angle[1] = cam_cur_angle[1];
+  cam_start_dist = cam->GetPosition().z;
+}
+
+JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCameraOffset(
+     JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
+  cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
+  cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
+  dist = GlUtil::Clamp(cam_start_dist + dist*10.0f, 1.0f, 100.0f);
+  cam_cur_dist = dist;
+}
 #ifdef __cplusplus
 }
 #endif

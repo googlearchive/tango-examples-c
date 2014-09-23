@@ -1,9 +1,24 @@
+<!--
+   Copyright (C) 2014 Google Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
 
     <android.opengl.GLSurfaceView
-        android:id="@+id/surfaceview"
+        android:id="@+id/gl_surface_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_gravity="top" />
@@ -12,7 +27,10 @@
         android:id="@+id/linearLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
+        android:paddingLeft="5dp" >
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -22,16 +40,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tango_service_version" />
+                android:text="@string/serviceversion" />
 
             <TextView
-                android:id="@+id/tango_service_version"
+                android:id="@+id/version"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/na" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
         
-        <LinearLayout
+         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
@@ -39,64 +56,56 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/app_version" />
+                android:text="@string/appversion" />
+
+            <TextView
+                android:id="@+id/appversion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1.0" />
         </LinearLayout>
         
-        <LinearLayout
+           <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="horizontal" >
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/device_wrt_start" />
+                android:text="@string/tangoevent" />
 
+            <TextView
+                android:id="@+id/tangoevent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        
+       <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/start2device" />
+
+        </LinearLayout>
+        
+          <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+			
             <TextView
                 android:id="@+id/device_start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dip"
-                android:text="@string/na" />
+                android:paddingLeft="20dp"
+                android:text="@string/status" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/device_wrt_adf" />
-
-            <TextView
-                android:id="@+id/device_adf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dip"
-                android:text="@string/na" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/start_wrt_adf" />
-
-            <TextView
-                android:id="@+id/start_adf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dip"
-                android:text="@string/na" />
-        </LinearLayout>
-
-        <LinearLayout
+      <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
@@ -104,16 +113,25 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/learning_mode" />
+                android:text="@string/adf2device" />
 
+        </LinearLayout>
+        
+          <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+			
             <TextView
-                android:id="@+id/learning_mode"
+                android:id="@+id/adf_device"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/na" />
+                android:paddingLeft="20dp"
+                android:text="@string/status" />
+            
         </LinearLayout>
-
-        <LinearLayout
+        
+          <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
@@ -121,72 +139,75 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/uuid" />
+                android:text="@string/adf2start" />
 
+        </LinearLayout>
+        
+          <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+			
             <TextView
+                android:id="@+id/adf_start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:text="@string/status" />
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+             <TextView
                 android:id="@+id/uuid"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/na" />
+                android:layout_height="wrap_content" />
+              <TextView
+                android:id="@+id/uuidCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
+           
     </LinearLayout>
 
     <Button
-        android:id="@+id/save_adf_button"
+        android:id="@+id/top_down_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/third_person_button"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:paddingRight="5dp"
+        android:text="@string/top_down" />
+
+    <Button
+        android:id="@+id/first_person_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/third_person_button"
+        android:layout_alignLeft="@+id/third_person_button"
+        android:layout_alignParentRight="true"
+        android:paddingRight="5dp"
+        android:text="@string/first_person" />
+
+    <Button
+        android:id="@+id/third_person_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/top_down_button"
+        android:layout_alignParentRight="true"
+        android:paddingRight="5dp"
+        android:text="@string/third_person" />
+
+    <Button
+        android:id="@+id/saveAdf"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:text="@string/save_adf" />
-
-    <ToggleButton
-        android:id="@+id/learning_mode_toggle_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/linearLayout1"
-        android:textOff="@string/learning_mode_btn_off"
-        android:textOn="@string/learning_mode_btn_on" />
-    
-    <ToggleButton
-        android:id="@+id/load_adf_toggle_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_below="@+id/learning_mode_toggle_button"
-        android:textOff="@string/load_adf_btn_off"
-        android:textOn="@string/load_adf_btn_on" />
-
-    <Button
-        android:id="@+id/start_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/load_adf_toggle_button"
-        android:text="@string/start_btn" />
-
-    <Button
-        android:id="@+id/third_poerson_cam_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:text="@string/third_person_cam" />
-    
-    <Button
-        android:id="@+id/first_person_cam_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/third_poerson_cam_btn"
-        android:text="@string/first_person_cam" />
-
-    <Button
-        android:id="@+id/top_down_cam_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/first_person_cam_btn"
-        android:text="@string/top_down_cam" />
+        android:text="Save ADF" />
 
 </RelativeLayout>

@@ -32,8 +32,6 @@ class TangoData {
 
   bool Initialize();
   bool SetConfig(bool is_learning, bool is_load_adf);
-  bool LockConfig();
-  bool UnlockConfig();
   bool Connect();
   void Disconnect();
 
@@ -42,7 +40,8 @@ class TangoData {
 
   void LogAllUUIDs();
   char* GetVersonString();
-
+  char* GetEventString();
+  
   // 0: device_wrt_start
   // 1: device_wrt_adf
   // 2: start_wrt_adf
@@ -58,7 +57,7 @@ class TangoData {
 
   char uuid_[UUID_LEN];
   char lib_version[26];
-
+  char event_string[30];
  private:
   TangoConfig* config_;
 };

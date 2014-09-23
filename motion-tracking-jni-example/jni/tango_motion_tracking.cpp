@@ -241,7 +241,7 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINat
     JNIEnv* env, jobject obj) {
   return (env)->NewStringUTF(TangoData::GetInstance().GetVersionString());
 }
-  
+
 // Touching GL interface.
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_StartSetCameraOffset(
     JNIEnv* env, jobject obj) {

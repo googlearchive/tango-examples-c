@@ -21,11 +21,13 @@ public class TangoJNINative {
 		System.loadLibrary("tango-native-jni");
 	}
 
-	public static native void Initialize(boolean isLearning, boolean isLoadedADF);
+	public static native void Initialize();
 
-	public static native void ConnectService();
+	public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
+	
+	public static native void Connect();
 
-	public static native void DisconnectService();
+	public static native void Disconnect();
 
 	public static native void OnDestroy();
 
@@ -48,4 +50,10 @@ public class TangoJNINative {
 	public static native String GetPoseString(int index);
 	
 	public static native String GetVersionString();
+	
+	public static native String GetEventString();
+	
+	public static native float StartSetCameraOffset();
+	
+	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }
