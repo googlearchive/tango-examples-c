@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango - Area Description Java</string>
+    <string name="app_name">Project Tango - Area Description Native</string>
     <string name="vertex_count">Number of Points:</string>
     <string name="serviceversion">Service Version:</string>
     <string name="appversion">App Version:</string>
