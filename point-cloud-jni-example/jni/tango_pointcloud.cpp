@@ -211,9 +211,6 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnC
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnResume(
     JNIEnv* env, jobject obj) {
   LOGI("In OnResume: Locking config and connecting service");
-  if (TangoData::GetInstance().LockConfig()){
-    LOGE("Tango lock config failed");
-  }
   if (TangoData::GetInstance().Connect()){
     LOGE("Tango connect failed");
   }
@@ -222,9 +219,6 @@ JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnR
 JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnPause(
     JNIEnv* env, jobject obj) {
   LOGI("In OnPause: Unlocking config and disconnecting service");
-  if (TangoData::GetInstance().UnlockConfig()){
-    LOGE("Tango unlock file failed");
-  }
   TangoData::GetInstance().Disconnect();
 }
 

@@ -72,8 +72,8 @@ static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
 
 // Tango event callback.
 static void onTangoEvent(void* context, const TangoEvent* event) {
-  strncpy(TangoData::GetInstance().event_string,
-          event->description, 30);
+  sprintf(TangoData::GetInstance().event_string,
+          "%s: %s", event->event_key, event->event_value);
 }
 
 // This callback function is called when new POSE updates become available.
@@ -111,14 +111,9 @@ bool TangoData::Initialize() {
 }
 
 bool TangoData::SetConfig() {
-  // Allocate a TangoConfig object.
-  if ((config_ = TangoConfig_alloc()) == NULL) {
-    LOGE("TangoService_allocConfig(): Failed");
-    return false;
-  }
-
   // Get the default TangoConfig.
-  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != TANGO_SUCCESS) {
+  config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
+  if (config_ == NULL) {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
@@ -160,26 +155,6 @@ bool TangoData::SetConfig() {
     return false;
   }
   
-  SetExtrinsicsMatrics();
-  
-  return true;
-}
-
-bool TangoData::LockConfig() {
-  // Lock in this configuration.
-  if (TangoService_lockConfig(config_) != TANGO_SUCCESS) {
-    LOGE("TangoService_lockConfig(): Failed");
-    return false;
-  }
-  return true;
-}
-
-bool TangoData::UnlockConfig() {
-  // Unlock current configuration.
-  if (TangoService_unlockConfig() != TANGO_SUCCESS) {
-    LOGE("TangoService_unlockConfig(): Failed");
-    return false;
-  }
   return true;
 }
 
@@ -187,10 +162,11 @@ bool TangoData::UnlockConfig() {
 /// Note: connecting Tango service will start the motion
 /// tracking automatically.
 bool TangoData::Connect() {
-  if (TangoService_connect(nullptr) != TANGO_SUCCESS) {
+  if (TangoService_connect(nullptr, config_) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
+  SetExtrinsicsMatrics();
   return true;
 }
 
@@ -268,7 +244,7 @@ void TangoData::SetExtrinsicsMatrics() {
                        pose_data.orientation[1],
                        pose_data.orientation[2]);
   d_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
-    glm::inverse(glm::mat4_cast(rotation));
+    glm::mat4_cast(rotation);
   
   // Get color camera to imu matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
@@ -284,7 +260,7 @@ void TangoData::SetExtrinsicsMatrics() {
                        pose_data.orientation[1],
                        pose_data.orientation[2]);
   c_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
-    glm::inverse(glm::mat4_cast(rotation));
+    glm::mat4_cast(rotation);
 }
 
 char* TangoData::GetEventString() {
@@ -316,7 +292,6 @@ char* TangoData::GetPoseDataString() {
           tango_position[0], tango_position[1], tango_position[2],
           tango_rotation[0], tango_rotation[1], tango_rotation[2], tango_rotation[3]);
   
-//  sprintf(pose_string_, "a");
   return pose_string_;
 }
 
