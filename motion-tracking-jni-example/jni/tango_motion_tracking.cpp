@@ -151,24 +151,10 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
   }
 }
   
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_LockConfig(
-    JNIEnv* env, jobject obj) {
-  if (!TangoData::GetInstance().LockConfig()) {
-    LOGE("Tango lock config failed");
-  }
-}
-  
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_ConnectService(
     JNIEnv* env, jobject obj) {
   if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
-  }
-}
-  
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_UnlockConfig(
-    JNIEnv* env, jobject obj) {
-  if (TangoData::GetInstance().UnlockConfig()) {
-    LOGE("Tango unlock file failed");
   }
 }
 

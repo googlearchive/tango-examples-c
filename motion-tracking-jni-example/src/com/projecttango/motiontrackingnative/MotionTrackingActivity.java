@@ -74,7 +74,9 @@ public class MotionTrackingActivity extends Activity implements
 		// Configure OpenGL renderer
 		mRenderer = new MotionTrackingRenderer();
 		mGLView.setRenderer(mRenderer);
-		mMotionReset.setVisibility(View.GONE);
+		if (mIsAutoReset) {
+			mMotionReset.setVisibility(View.GONE);
+		}
 
 		// Initialize the Tango service
 		TangoJNINative.Initialize();
@@ -90,16 +92,12 @@ public class MotionTrackingActivity extends Activity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
-		TangoJNINative.UnlockConfig();
 		TangoJNINative.DisconnectService();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onPause();
-		// Lock Tango configuration file
-		TangoJNINative.LockConfig();
-
 		// Connect Tango Service
 		TangoJNINative.ConnectService();
 	}
@@ -107,7 +105,6 @@ public class MotionTrackingActivity extends Activity implements
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		TangoJNINative.UnlockConfig();
 		TangoJNINative.OnDestroy();
 	}
 

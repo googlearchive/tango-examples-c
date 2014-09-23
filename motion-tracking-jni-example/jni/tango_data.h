@@ -32,8 +32,6 @@ public:
 
   bool Initialize();
   bool SetConfig(bool isAutoReset);
-  bool LockConfig();
-  bool UnlockConfig();
   bool Connect();
   void Disconnect();
   

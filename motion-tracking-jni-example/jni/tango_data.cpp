@@ -44,8 +44,8 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 
 // Tango event callback.
 static void onTangoEvent(void* context, const TangoEvent* event) {
-  strncpy(TangoData::GetInstance().event_string,
-          event->description, 30);
+  sprintf(TangoData::GetInstance().event_string,
+          "%s: %s", event->event_key, event->event_value);
 }
 
 bool TangoData::Initialize() {
@@ -58,14 +58,9 @@ bool TangoData::Initialize() {
 }
 
 bool TangoData::SetConfig(bool is_auto_reset) {
-  // Allocate a TangoConfig object.
-  if ((config_ = TangoConfig_alloc()) == NULL) {
-    LOGE("TangoService_allocConfig(): Failed");
-    return false;
-  }
-
   // Get the default TangoConfig.
-  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config_) != TANGO_SUCCESS) {
+  config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
+  if (config_ == NULL) {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
@@ -97,24 +92,6 @@ bool TangoData::SetConfig(bool is_auto_reset) {
   return true;
 }
 
-bool TangoData::LockConfig() {
-  // Lock in this configuration.
-  if (TangoService_lockConfig(config_) != TANGO_SUCCESS) {
-    LOGE("TangoService_lockConfig(): Failed");
-    return false;
-  }
-  return true;
-}
-
-bool TangoData::UnlockConfig() {
-  // Unlock current configuration.
-  if (TangoService_unlockConfig() != TANGO_SUCCESS) {
-    LOGE("TangoService_unlockConfig(): Failed");
-    return false;
-  }
-  return true;
-}
-
 void TangoData::ResetMotionTracking() {
   // Manually reset the Motion Tracking
   TangoService_resetMotionTracking();
@@ -123,7 +100,7 @@ void TangoData::ResetMotionTracking() {
 // Connect to Tango Service, service will start running, and
 // POSE can be queried.
 bool TangoData::Connect() {
-  if (TangoService_connect(nullptr) != TANGO_SUCCESS) {
+  if (TangoService_connect(nullptr, config_) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }

@@ -25,11 +25,7 @@ public class TangoJNINative {
 	
 	public static native void SetupConfig(boolean isAutoReset);
 	
-	public static native void LockConfig();
-	
 	public static native void ConnectService();
-	
-	public static native void UnlockConfig();
 	
 	public static native void DisconnectService();
 
