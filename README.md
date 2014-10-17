@@ -9,7 +9,7 @@ These are the Tango C API Examples:
 
 * [**Motion Tracking Example**](https://github.com/googlesamples/tango-examples-c/wiki/Motion-Tracking:-Enliven-the-Object-with-Tango-Pose) - This example shows how to use our motion tracking APIs in OpenGL ES 2.0.
 
-* [**Point Cloud Example**](https://github.com/ProjectTango/C-APIExample/wiki/Depth:-Point-Cloud-Viewer) - This example shows how to use the depth APIs, and use the pose data transform the point cloud into world coordinates.
+* [**Point Cloud Example**](https://github.com/ProjectTango/C-APIExample/wiki/Depth:-Point-Cloud-Viewer) - This example shows how to use the depth APIs, and use the pose data to transform the point cloud into world coordinates.
 
 * **Area Description Example** - This example shows how to use the Area Description File (ADF) APIs. 
 
