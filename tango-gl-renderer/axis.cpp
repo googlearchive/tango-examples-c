@@ -59,7 +59,7 @@ Axis::Axis() {
 
 void Axis::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram(shader_program_);
-  
+  glLineWidth(3.0f);
   // Calculate model view projection matrix of this object.
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
@@ -82,5 +82,7 @@ void Axis::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   
   glDrawArrays(GL_LINES, 0, 6 * 3);
+
+  glLineWidth(1.0f);
   glUseProgram(0);
 }

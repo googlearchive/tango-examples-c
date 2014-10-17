@@ -17,7 +17,7 @@
 #include "camera.h"
 
 Camera::Camera() {
-  field_of_view_ = 45.0f;
+  field_of_view_ = 45.0f * DEGREE_2_RADIANS;
   aspect_ratio_ = 4.0f / 3.0f;
   near_clip_plane_ = 0.1f;
   far_clip_plane_ = 100.0f;
@@ -34,6 +34,10 @@ glm::mat4 Camera::GetProjectionMatrix() {
 
 void Camera::SetAspectRatio(float aspect_ratio) {
   aspect_ratio_ = aspect_ratio;
+}
+
+void Camera::SetFieldOfView(float fov) {
+  field_of_view_ = fov * DEGREE_2_RADIANS;
 }
 
 Camera::~Camera() {

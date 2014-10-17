@@ -31,8 +31,8 @@
     <string name="top_down">Top</string>
     <string name="start">Start</string>
     <string name="autoreseton">Auto Reset On</string>
-     <string name="autoresetoff">Auto Reset Off</string>
-     <string name = "averageZ">Average Depth: </string>
-     <string name="pointCount">Point Count: </string>
-      <string name="frameDelta">Frame Delta: </string>
+    <string name="autoresetoff">Auto Reset Off</string>
+    <string name = "averageZ">Average Depth (m): </string>
+    <string name="pointCount">Point Count: </string>
+    <string name="frameDelta">Frame Delta (ms): </string>
 </resources>

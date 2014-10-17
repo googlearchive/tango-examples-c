@@ -17,10 +17,19 @@
 #ifndef Tango_Data_H
 #define Tango_Data_H
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string>
-#include <tango_client_api.h>
+#include <sstream>
+#include <iostream>
+
+#include "tango_client_api.h"
 #include "gl_util.h"
+
+const int kMeterToMillimeter = 1000;
+const int kVersionStringLength = 27;
+
+using namespace std;
 
 class TangoData {
 public:
@@ -30,17 +39,15 @@ public:
   }
   TangoData();
 
-  bool Initialize();
+  TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig(bool isAutoReset);
-  bool Connect();
+  TangoErrorType Connect();
   void Disconnect();
-  
   void ResetMotionTracking();
-  
-  char* GetPoseDataString();
-  char* GetEventString();
-  char* GetVersionString();
-  
+
+  pthread_mutex_t pose_mutex;
+  pthread_mutex_t event_mutex;
+
   glm::vec3 tango_position;
   glm::quat tango_rotation;
   
@@ -49,13 +56,14 @@ public:
   TangoPoseStatusType prev_pose_status;
   
   float frame_delta_time;
-  double prev_pose_timestamp;
+  float prev_pose_timestamp;
 
-  char event_string[30];
-  char lib_version[26];
+  string event_string;
+  string lib_version_string;
+  string pose_string;
+
 private:
-  TangoConfig* config_;
-  char pose_string_[100];
+ TangoConfig config_;
 };
 
 #endif  // Tango_Data_H

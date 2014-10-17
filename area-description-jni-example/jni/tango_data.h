@@ -17,11 +17,17 @@
 #ifndef TangoData_H
 #define TangoData_H
 
+#include <stdlib.h>
 #include <string>
+#include <sstream>
+#include <iostream>
 
-#include <tango_client_api.h>
+#include "tango_client_api.h"
 #include "gl_util.h"
 
+const int kVersionStringLength = 27;
+
+using namespace std;
 class TangoData {
  public:
   static TangoData& GetInstance() {
@@ -30,36 +36,34 @@ class TangoData {
   }
   TangoData();
 
-  bool Initialize();
+  TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig(bool is_learning, bool is_load_adf);
   bool Connect();
   void Disconnect();
 
-  char* SaveADF();
-  void RemoveAllAdfs();
-
+  bool SaveADF();
   void LogAllUUIDs();
-  char* GetVersonString();
-  char* GetEventString();
-  
-  // 0: device_wrt_start
-  // 1: device_wrt_adf
-  // 2: start_wrt_adf
-  // 3: adf_wrt_start
+
+  pthread_mutex_t pose_mutex;
+  pthread_mutex_t event_mutex;
+
+  // Index 0: device with respect to start frame.
+  // Index 1: device with respect to adf frame.
+  // Index 2: start with respect to adf frame.
+  // Index 3: adf with respect to start frame.
   glm::vec3 tango_position[4];
   glm::quat tango_rotation[4];
   int current_pose_status[4];
   float frame_delta_time[4];
   float prev_frame_time[4];
   int frame_count[4];
-  
-  bool is_learning_mode_enabled;
 
-  char uuid_[UUID_LEN];
-  char lib_version[26];
-  char event_string[30];
+  string cur_uuid;
+  string event_string;
+  string lib_version_string;
+
  private:
-  TangoConfig* config_;
+  TangoConfig config_;
 };
 
 #endif  // TangoData_H

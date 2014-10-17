@@ -158,7 +158,7 @@ bool TangoData::SetConfig(bool isAutoReset) {
 //       poseData.orientation[1], poseData.orientation[2]);
 
   //Retrieve the Intrinsic
-  TangoIntrinsics ccIntrinsics;
+  TangoCameraIntrinsics ccIntrinsics;
   if (TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR, &ccIntrinsics)
       != TANGO_SUCCESS) {
     LOGE("TangoService_getCameraIntrinsics(): Failed");

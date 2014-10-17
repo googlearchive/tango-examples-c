@@ -29,30 +29,11 @@ static const char kFragmentShader[] =
     "}\n";
 
 static const float vertices[] = {
-    0.0f, 0.0f, 0.0f,
-    -1.0f, 1.0f, -1.0f,
-
-    0.0f, 0.0f, 0.0f,
-    1.0f, 1.0f, -1.0f,
-
-    0.0f, 0.0f, 0.0f,
-    -1.0f, -1.0f, -1.0f,
-
-    0.0f, 0.0f, 0.0f,
-    1.0f, -1.0f, -1.0f,
-
-    -1.0f, 1.0f, -1.0f,
-    1.0f, 1.0f, -1.0f,
-
-    1.0f, 1.0f, -1.0f,
-    1.0f, -1.0f, -1.0f,
-
-    1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, 1.0f, -1.0f
-};
+    0.0f,  0.0f,  0.0f,  -0.4f, 0.3f,  -0.5f, 0.0f,  0.0f,  0.0f,  0.4f,
+    0.3f,  -0.5f, 0.0f,  0.0f,  0.0f,  -0.4f, -0.3f, -0.5f, 0.0f,  0.0f,
+    0.0f,  0.4f,  -0.3f, -0.5f, -0.4f, 0.3f,  -0.5f, 0.4f,  0.3f,  -0.5f,
+    0.4f,  0.3f,  -0.5f, 0.4f,  -0.3f, -0.5f, 0.4f,  -0.3f, -0.5f, -0.4f,
+    -0.3f, -0.5f, -0.4f, -0.3f, -0.5f, -0.4f, 0.3f,  -0.5f};
 
 Frustum::Frustum() {
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
@@ -67,9 +48,9 @@ Frustum::Frustum() {
 
 void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram (shader_program_);
-
+  glLineWidth(3.0f);
   // Calculate MVP matrix and pass it to shader.
-  glm::mat4 model_mat = GetCurrentModelMatrix();
+  glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
@@ -83,5 +64,6 @@ void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_LINES, 0, 6 * 8);
+  glLineWidth(1.0f);
   glUseProgram(0);
 }

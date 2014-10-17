@@ -15,24 +15,22 @@
  */
 
 #include "tango_data.h"
+using namespace std;
 
 TangoData::TangoData()
     : config_(nullptr) {
-  is_learning_mode_enabled = false;
-  for (int i = 0; i < 4; i++) {
-    current_pose_status[i] = 0;
-  }
 }
 
-// This callback function is called when new POSE updates become available.
-static void onPoseAvailable(void* context, const TangoPoseData* pose) {
+// This callback function is called when new pose updates become available.
+static void onPoseAvailable(void*, const TangoPoseData* pose) {
   int current_index = -1;
   // Set pose for device wrt start.
+  // Parsing through the pose targe/base frame to set the index number
+  // to the correct pose data.
   if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE
       && pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
     current_index = 0;
   }
-
   // Set pose for device wrt ADF.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
       && pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
@@ -42,8 +40,6 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
       && pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE) {
     current_index = 2;
-    LOGI("%d", (int)pose
-         ->status_code);
   }
   // Set pose for device wrt previous pose.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE
@@ -52,6 +48,9 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   } else {
     return;
   }
+
+  pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
+  // Set Tango pose to cooresponding index.
   TangoData::GetInstance().tango_position[current_index] = glm::vec3(
       pose->translation[0], pose->translation[1], pose->translation[2]);
 
@@ -62,33 +61,37 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   // Calculate delta frame time.
   TangoData::GetInstance().frame_delta_time[current_index] = pose->timestamp - TangoData::GetInstance().prev_frame_time[current_index];
   TangoData::GetInstance().prev_frame_time[current_index] = pose->timestamp;
-  
+
   // Set/reset frame counter.
   if (pose->status_code == TANGO_POSE_VALID) {
-    TangoData::GetInstance().frame_count[current_index]++;
+    ++TangoData::GetInstance().frame_count[current_index];
   }
   else {
     TangoData::GetInstance().frame_count[current_index] = 0;
   }
-  
+
   // Set pose status.
   TangoData::GetInstance().current_pose_status[current_index] = (int) pose
       ->status_code;
+  pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 }
 
 // Tango event callback.
-static void onTangoEvent(void* context, const TangoEvent* event) {
-  sprintf(TangoData::GetInstance().event_string,
-          "%s: %s", event->event_key, event->event_value);
+static void onTangoEvent(void*, const TangoEvent* event) {
+  // Update the status string for debug display.
+  pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
+  stringstream string_stream;
+  string_stream << event->event_key << ": " << event->event_value;
+  TangoData::GetInstance().event_string = string_stream.str();
+  pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
 }
 
-bool TangoData::Initialize() {
-  // Initialize Tango Service.
-  if (TangoService_initialize() != TANGO_SUCCESS) {
-    LOGE("TangoService_initialize(): Failed");
-    return false;
-  }
-  return true;
+// Initialize Tango Service.
+TangoErrorType TangoData::Initialize(JNIEnv* env, jobject activity) {
+  // The initialize function perform API and Tango Service version check,
+  // the there is a mis-match between API and Tango Service version, the
+  // function will return TANGO_INVALID.
+  return TangoService_initialize(env, activity);
 }
 
 bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
@@ -110,40 +113,72 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
 
   // If load ADF, load the most recent one.
   if (is_load_adf) {
-    UUID_list uuid_list;
-    TangoService_getAreaDescriptionUUIDList(&uuid_list);
-    if (TangoConfig_setString(config_, "config_load_area_description_UUID",
-                              uuid_list.uuid[uuid_list.count - 1].data)
-        != TANGO_SUCCESS) {
-      LOGI("config_load_area_description_uuid Failed");
-      return false;
+    char* uuid_list;
+
+    // uuid_list will contain a comma separated list of UUIDs.
+    if (TangoService_getAreaDescriptionUUIDList(&uuid_list) != TANGO_SUCCESS) {
+      LOGI("TangoService_getAreaDescriptionUUIDList");
     }
-    LOGI("Loaded map: %s", uuid_list.uuid[uuid_list.count - 1].data);
-    memcpy(uuid_, uuid_list.uuid[uuid_list.count - 1].data, UUID_LEN * sizeof(char));
+
+    // Parse the uuid_list to get the individual uuids.
+    if (uuid_list != NULL && uuid_list[0] != '\0') {
+      vector<string> adf_list;
+
+      char* parsing_char;
+      parsing_char = strtok(uuid_list, ",");
+      while (parsing_char != NULL) {
+        string s = string(parsing_char);
+        adf_list.push_back(s);
+        parsing_char = strtok(NULL, ",");
+      }
+
+      int list_size = adf_list.size();
+      if (list_size == 0) {
+        LOGE("List size is 0");
+        return false;
+      }
+      cur_uuid = adf_list[list_size - 1];
+      if (TangoConfig_setString(config_, "config_load_area_description_UUID",
+                                adf_list[list_size - 1].c_str()) !=
+          TANGO_SUCCESS) {
+        LOGE("config_load_area_description_uuid Failed");
+        return false;
+      }
+    } else {
+      LOGE("No area description file available, no file loaded.");
+    }
+  } else {
+    cur_uuid = "No ADF loaded.";
   }
 
   // Set listening pairs. Connenct pose callback.
   TangoCoordinateFramePair pairs[4] =
       {
           { TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-              TANGO_COORDINATE_FRAME_DEVICE }, {
-              TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-              TANGO_COORDINATE_FRAME_DEVICE }, {
-              TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-              TANGO_COORDINATE_FRAME_START_OF_SERVICE }, {
-              TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
-              TANGO_COORDINATE_FRAME_DEVICE } };
+            TANGO_COORDINATE_FRAME_DEVICE }, {
+            TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+            TANGO_COORDINATE_FRAME_DEVICE }, {
+            TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+            TANGO_COORDINATE_FRAME_START_OF_SERVICE }, {
+            TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
+            TANGO_COORDINATE_FRAME_DEVICE } };
   if (TangoService_connectOnPoseAvailable(4, pairs, onPoseAvailable)
       != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
-  
+
   // Set the event callback listener.
   if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
+
+  // Get library version string from service.
+  char version[kVersionStringLength];
+  TangoConfig_getString(config_, "tango_service_library_version", version,
+                        kVersionStringLength);
+  lib_version_string = string(version);
 
   return true;
 }
@@ -155,53 +190,28 @@ bool TangoData::Connect() {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
-  LogAllUUIDs();
   return true;
 }
 
-char* TangoData::SaveADF() {
-  UUID uuid;
+bool TangoData::SaveADF() {
+  TangoUUID uuid;
   if (TangoService_saveAreaDescription(&uuid) != TANGO_SUCCESS) {
     LOGE("TangoService_saveAreaDescription(): Failed");
-    return nullptr;
+    return false;
   }
-  memcpy(uuid_, uuid.data, UUID_LEN * sizeof(char));
-  LOGI("ADF Saved, uuid: %s", uuid_);
-  return uuid_;
+  cur_uuid = string(uuid);
+  return true;
 }
 
-void TangoData::RemoveAllAdfs() {
-  LOGI("Removing all ADFs");
-  UUID_list uuid_list;
-  TangoService_getAreaDescriptionUUIDList(&uuid_list);
-  if (&uuid_list != nullptr) {
-    TangoService_destroyAreaDescriptionUUIDList(&uuid_list);
-  }
-}
-
+// Disconnect Tango Service.
 void TangoData::Disconnect() {
-  // Disconnect Tango Service.
   TangoService_disconnect();
 }
 
 void TangoData::LogAllUUIDs() {
-  UUID_list uuid_list;
-  TangoService_getAreaDescriptionUUIDList(&uuid_list);
-  LOGI("List of maps: ");
-  for (int i = 0; i < uuid_list.count; i++) {
-    LOGI("%d: %s", i, uuid_list.uuid[i].data);
+  char* uuid_list;
+  if (TangoService_getAreaDescriptionUUIDList(&uuid_list) != TANGO_SUCCESS) {
+    LOGI("TangoService_getAreaDescriptionUUIDList");
   }
-}
-
-char* TangoData::GetVersonString() {
-  if (config_ == nullptr) {
-    sprintf(lib_version, "N/A");
-    return lib_version;
-  }
-  TangoConfig_getString(config_, "tango_service_library_version", lib_version, 26);
-  return lib_version;
-}
-
-char* TangoData::GetEventString() {
-  return event_string;
+  LOGI("uuid list: %s", uuid_list);
 }

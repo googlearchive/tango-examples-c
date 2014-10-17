@@ -26,6 +26,7 @@ class Camera : public Transform{
   ~Camera();
 
   void SetAspectRatio(float aspect_ratio);
+  void SetFieldOfView(float fov);
 
   glm::mat4 GetViewMatrix();
   glm::mat4 GetProjectionMatrix();

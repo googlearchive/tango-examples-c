@@ -16,11 +16,12 @@
 
 #include "pointcloud.h"
 
-static const char kVertexShader[] = "attribute vec4 vertex;\n"
+static const char kVertexShader[] =
+    "attribute vec4 vertex;\n"
     "uniform mat4 mvp;\n"
     "varying vec4 v_color;\n"
     "void main() {\n"
-    "  gl_PointSize = 4.0;\n"
+    "  gl_PointSize = 3.0;\n"
     "  gl_Position = mvp*vertex;\n"
     "  v_color = vertex;\n"
     "}\n";
@@ -49,7 +50,10 @@ Pointcloud::Pointcloud() {
 void Pointcloud::Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat,
                         int depth_buffer_size, float *depth_data_buffer) {
   glUseProgram(shader_program_);
-  
+
+  // Lock xyz_ij mutex.
+  pthread_mutex_lock(&TangoData::GetInstance().xyzij_mutex);
+
   // Calculate model view projection matrix.
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat * inverse_z_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
@@ -64,6 +68,10 @@ void Pointcloud::Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_POINTS, 0, 3 * depth_buffer_size);
+
+  // Unlock xyz_ij mutex.
+  pthread_mutex_unlock(&TangoData::GetInstance().xyzij_mutex);
+
   GlUtil::CheckGlError("glDrawArray()");
   glUseProgram(0);
   GlUtil::CheckGlError("glUseProgram()");

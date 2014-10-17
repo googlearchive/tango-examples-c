@@ -160,12 +160,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
-             <TextView
-                android:id="@+id/uuid"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
               <TextView
-                android:id="@+id/uuidCount"
+                android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>

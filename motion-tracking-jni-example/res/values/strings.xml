@@ -26,7 +26,7 @@
     <string name="third_person">Third</string>
     <string name="top_down">Top</string>
     <string name="start">Start</string>
-    <string name="autoreset_on">Auto Reset On</string>
-    <string name="autoreset_off">Auto Reset Off</string>
+    <string name="auto_recovery_on">Auto Recovery On</string>
+    <string name="auto_recovery_off">Auto Recovery Off</string>
     <string name="reset">Reset</string>
 </resources>

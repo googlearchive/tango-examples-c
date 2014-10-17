@@ -18,10 +18,10 @@ package com.projecttango.areadescriptionnative;
 
 public class TangoJNINative {
 	static {
-		System.loadLibrary("tango-native-jni");
+		System.loadLibrary("area_description_jni_example");
 	}
 
-	public static native void Initialize();
+	public static native int Initialize(AreaDescriptionActivity activity);
 
 	public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
 	
@@ -39,13 +39,9 @@ public class TangoJNINative {
 
 	public static native double GetCurrentTimestamp(int index);
 
-	public static native String SaveADF();
-
-	public static native void RemoveAllAdfs();
+	public static native boolean SaveADF();
 
 	public static native String GetUUID();
-
-	public static native String GetIsEnabledLearn();
 
 	public static native String GetPoseString(int index);
 	

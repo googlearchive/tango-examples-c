@@ -19,11 +19,11 @@
     android:orientation="vertical" >
 
     <ToggleButton
-        android:id="@+id/autoresetbutton"
+        android:id="@+id/autorecoverybutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOn="@string/autoreset_on" 
-        android:textOff="@string/autoreset_off"/>
+        android:textOn="@string/auto_recovery_on" 
+        android:textOff="@string/auto_recovery_off"/>
 
     <Button
         android:id="@+id/startbutton"

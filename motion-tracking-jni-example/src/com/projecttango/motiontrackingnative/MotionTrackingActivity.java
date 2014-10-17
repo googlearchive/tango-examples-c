@@ -18,6 +18,9 @@ package com.projecttango.motiontrackingnative;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -27,19 +30,22 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MotionTrackingActivity extends Activity implements
 		View.OnClickListener {
+	final int kUpdatIntervalMs = 100;
 
 	private static String TAG = MotionTrackingActivity.class.getSimpleName();
 
 	private TextView mPoseData;
 	private TextView mVersion;
+	private TextView mAppVersion;
 	private TextView mEvent;
 
 	private Button mMotionReset;
 
-	private boolean mIsAutoReset;
+	private boolean mIsAutoRecovery;
 	private MotionTrackingRenderer mRenderer;
 	private GLSurfaceView mGLView;
 	
@@ -61,8 +67,8 @@ public class MotionTrackingActivity extends Activity implements
 		
 		setContentView(R.layout.activity_motion_tracking);
 		Intent intent = getIntent();
-		mIsAutoReset = intent.getBooleanExtra(
-				StartActivity.KEY_MOTIONTRACKING_AUTORESET, false);
+		mIsAutoRecovery = intent.getBooleanExtra(
+				StartActivity.KEY_MOTIONTRACKING_AUTO_RECOVERY, false);
 		
 		// Text views for displaying translation and rotation data
 		mPoseData = (TextView) findViewById(R.id.pose_data_textview);
@@ -70,8 +76,18 @@ public class MotionTrackingActivity extends Activity implements
 		// Text views for displaying most recent Tango Event
 		mEvent = (TextView) findViewById(R.id.tango_event_textview);
 
-		// Text views for the status of the pose data and Tango library versions
+		// Text views for Tango library versions
 		mVersion = (TextView) findViewById(R.id.version_textview);
+
+		// Text views for application versions.
+		mAppVersion = (TextView) findViewById(R.id.appversion);
+		PackageInfo pInfo;
+		try {
+			pInfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+			mAppVersion.setText(pInfo.versionName);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
 
 		// Buttons for selecting camera view and Set up button click listeners
 		findViewById(R.id.first_person_button).setOnClickListener(this);
@@ -90,17 +106,19 @@ public class MotionTrackingActivity extends Activity implements
 		// Configure OpenGL renderer
 		mRenderer = new MotionTrackingRenderer();
 		mGLView.setRenderer(mRenderer);
-		if (mIsAutoReset) {
-			mMotionReset.setVisibility(View.GONE);
-		}
 
 		// Initialize the Tango service
-		TangoJNINative.Initialize();
-
-		// Set up Tango configuration file with auto-reset on
-		TangoJNINative.SetupConfig(mIsAutoReset);
-
-		mVersion.setText(TangoJNINative.GetVersionNumber());
+		int err = TangoJNINative.Initialize(this);
+		if (err != 0) {
+			if (err == -2) {
+				Toast.makeText(this, 
+					"Tango Service version mis-match", Toast.LENGTH_SHORT).show();
+			}
+			else {
+				Toast.makeText(this, 
+					"Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
+			}
+		}
 
 		startUIThread();
 	}
@@ -108,14 +126,24 @@ public class MotionTrackingActivity extends Activity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
-		TangoJNINative.DisconnectService();
+		TangoJNINative.Disconnect();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onPause();
+
+		// Set up Tango configuration file with auto-reset on
+		TangoJNINative.SetupConfig(mIsAutoRecovery);
+
 		// Connect Tango Service
-		TangoJNINative.ConnectService();
+		int err =  TangoJNINative.Connect();
+		if (err != 0) {
+			Toast.makeText(this, 
+					"Tango Service connect error", Toast.LENGTH_SHORT).show();
+		}
+
+		mVersion.setText(TangoJNINative.GetVersionNumber());
 	}
 	
 	@Override
@@ -211,17 +239,13 @@ public class MotionTrackingActivity extends Activity implements
 			public void run() {
 				while (true) {
 					try {
-						Thread.sleep(10);
-						final String tangoEventString = TangoJNINative
-								.GetEventString();
-						final String tangoPoseString = TangoJNINative
-								.GetPoseString();
+						Thread.sleep(kUpdatIntervalMs);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									mEvent.setText(tangoEventString);
-									mPoseData.setText(tangoPoseString);
+									mEvent.setText(TangoJNINative.GetEventString());
+									mPoseData.setText(TangoJNINative.GetPoseString());
 								} catch (Exception e) {
 									e.printStackTrace();
 								}

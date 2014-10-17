@@ -50,8 +50,8 @@ void Trace::UpdateVertexArray(glm::vec3 v) {
 
 void Trace::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUseProgram(shader_program_);
-
-  glm::mat4 model_mat = GetCurrentModelMatrix();
+  glLineWidth(3.0f);
+  glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
@@ -60,5 +60,6 @@ void Trace::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
                         sizeof(glm::vec3), &vertices_[0]);
 
   glDrawArrays(GL_LINE_STRIP, 0, vertices_.size());
+  glLineWidth(1.0f);
   glUseProgram(0);
 }

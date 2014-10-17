@@ -17,6 +17,7 @@
 #ifndef POINTCLOUD_H
 #define POINTCLOUD_H
 
+#include "tango_data.h"
 #include "gl_util.h"
 
 class Pointcloud {
@@ -25,8 +26,6 @@ class Pointcloud {
   
   /// Render function take in the depth buffer and the buffer size, and render
   /// the points base on current transformation.
-  
-  /// model_view_mat: Current view projection matrix.
   ///
   /// depth_buffer_size: Number of vertices in of the data. Example: 60 floats in
   /// the buffer, the size should be 60/3 = 20;

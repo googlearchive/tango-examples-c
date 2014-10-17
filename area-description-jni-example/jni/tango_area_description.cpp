@@ -16,7 +16,10 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <stdlib.h>
 #include <string>
+#include <sstream>
+#include <iostream>
 
 #include "axis.h"
 #include "camera.h"
@@ -33,18 +36,63 @@ GLuint screen_height;
 // This object is a pivot transformtion for render camera to rotate around.
 Transform* cam_parent_transform;
 
-Camera *cam;
-Axis *axis;
-Frustum *frustum;
-Grid *grid;
-Trace *trace;
+// Render camera.
+Camera* cam;
 
-int cur_cam_index = 0;
+// Device axis (in device frame of reference).
+Axis* axis;
 
+// Device frustum.
+Frustum* frustum;
+
+// Ground grid.
+Grid* grid;
+
+// Trace of pose data.
+Trace* trace;
+
+// Single finger touch positional values.
+// First element in the array is x-axis touching position.
+// Second element in the array is y-axis touching position.
 float cam_start_angle[2];
 float cam_cur_angle[2];
+
+// Double finger touch distance value.
 float cam_start_dist;
 float cam_cur_dist;
+
+enum CameraType {
+  FIRST_PERSON = 0,
+  THIRD_PERSON = 1,
+  TOP_DOWN = 2
+};
+CameraType camera_type;
+
+// Render and camera controlling constant values.
+// Height offset is used for offset height of motion tracking
+// pose data. Motion tracking start position is (0,0,0). Adding
+// a height offset will give a more reasonable pose while a common
+// human is holding the device. The units is in meters.
+const glm::vec3 kHeightOffset = glm::vec3(0.0f, 1.3f, 0.0f);
+
+// Render camera observation distance in third person camera mode.
+const float kThirdPersonCameraDist = 7.0f;
+
+// Render camera observation distance in top down camera mode.
+const float kTopDownCameraDist = 5.0f;
+
+// Zoom in speed.
+const float kZoomSpeed = 10.0f;
+
+// Min/max clamp value of camera observation distance.
+const float kCamViewMinDist = 1.0f;
+const float kCamViewMaxDist = 100.f;
+
+// FOV set up values.
+// Third and top down camera's FOV is 65 degrees.
+// First person camera's FOV is 45 degrees.
+const float kHighFov = 65.0f;
+const float kLowFov = 45.0f;
 
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
@@ -77,17 +125,20 @@ bool RenderFrame() {
 
   glViewport(0, 0, screen_width, screen_height);
 
-  grid->SetPosition(glm::vec3(0.0f, -0.8f, 0.0f));
+  grid->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f) - kHeightOffset);
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   int pose_index =
     TangoData::GetInstance().current_pose_status[1]==TANGO_POSE_VALID ? 1 : 0;
+
+  pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
       TangoData::GetInstance().tango_position[pose_index]);
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().tango_rotation[pose_index]);
+  pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 
-  if (cur_cam_index == 0) {
+  if (camera_type == CameraType::FIRST_PERSON) {
     cam->SetPosition(position);
     cam->SetRotation(rotation);
   } else {
@@ -121,28 +172,32 @@ bool RenderFrame() {
   return true;
 }
 
-void SetCamera(int camera_index) {
-  cur_cam_index = camera_index;
+// Set camera type, set render camera's parent position and rotation.
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
   cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
   switch (camera_index) {
-    case 0:
+    case CameraType::FIRST_PERSON:
+      cam->SetFieldOfView(kLowFov);
       cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
       break;
-    case 1:
+    case CameraType::THIRD_PERSON:
+      cam->SetFieldOfView(kHighFov);
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = 4.0f;
-      cam_cur_angle[0] = -0.785f;
-      cam_cur_angle[1] = 0.785f;
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -PI / 4.0f;
+      cam_cur_angle[1] = PI / 4.0f;
       break;
-    case 2:
+    case CameraType::TOP_DOWN:
+      cam->SetFieldOfView(kHighFov);
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = 8.0f;
-      cam_cur_angle[1] = 1.57f;
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = PI / 2.0f;
       break;
     default:
       break;
@@ -152,37 +207,47 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj) {
-  if (!TangoData::GetInstance().Initialize())
-  {
-    LOGE("Tango initialization failed");
+JNIEXPORT jint JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
+    JNIEnv* env, jobject, jobject activity) {
+  TangoErrorType err = TangoData::GetInstance().Initialize(env, activity);
+  if (err != TANGO_SUCCESS) {
+    if (err == TANGO_INVALID) {
+      LOGE("Tango Service version mis-match");
+    } else {
+      LOGE("Tango Service initialize internal error");
+    }
   }
+  return (int)err;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Connect(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_Connect(JNIEnv*,
+                                                                   jobject) {
   if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
   }
 }
-  
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupConfig(
-    JNIEnv* env, jobject obj, bool is_learning, bool is_load_adf) {
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupConfig(
+    JNIEnv*, jobject, bool is_learning, bool is_load_adf) {
   LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
   if (!TangoData::GetInstance().SetConfig(is_learning, is_load_adf))
   {
     LOGE("Tango set config failed");
   }
 }
-  
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Disconnect(
-    JNIEnv* env, jobject obj) {
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_Disconnect(JNIEnv*,
+                                                                      jobject) {
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(JNIEnv*,
+                                                                     jobject) {
   delete cam;
   delete axis;
   delete grid;
@@ -190,99 +255,120 @@ JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINativ
   delete trace;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupGraphic(
-    JNIEnv* env, jobject obj, jint width, jint height) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupGraphic(
+    JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_Render(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_Render(JNIEnv*,
+                                                                  jobject) {
   RenderFrame();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCamera(
-    JNIEnv* env, jobject obj, int camera_index) {
-  SetCamera(camera_index);
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCamera(
+    JNIEnv*, jobject, int camera_index) {
+  SetCamera(static_cast<CameraType>(camera_index));
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT bool JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(JNIEnv*,
+                                                                   jobject) {
   // Save ADF.
-  return (env)->NewStringUTF(TangoData::GetInstance().SaveADF());
+  return TangoData::GetInstance().SaveADF();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_RemoveAllAdfs(
-    JNIEnv* env, jobject obj) {
-  TangoData::GetInstance().RemoveAllAdfs();
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(JNIEnv* env,
+                                                                   jobject) {
+  return (env)->NewStringUTF(TangoData::GetInstance().cur_uuid.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().uuid_);
-}
-
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetIsEnabledLearn(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(
-      TangoData::GetInstance().is_learning_mode_enabled ? "Enabled" : "Disable");
-}
-
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
-    JNIEnv* env, jobject obj, int index) {
-  char pose_string[100];
-  char status[30];
-  
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
+    JNIEnv* env, jobject, int index) {
+  const char* status;
   switch (TangoData::GetInstance().current_pose_status[index]) {
     case TANGO_POSE_INITIALIZING:
-      sprintf(status,"Initializing");
+      status = "Initializing";
       break;
     case TANGO_POSE_VALID:
-      sprintf(status, "Valid");
+      status = "Valid";
       break;
     case TANGO_POSE_INVALID:
-      sprintf(status, "Invalid");
+      status = "Invalid";
       break;
     case TANGO_POSE_UNKNOWN:
-      sprintf(status, "Unknown");
+      status = "Unknown";
       break;
     default:
+      status = "Status_Code_Invalid";
       break;
   }
-  
-  sprintf(pose_string, "status:%s, count:%d, pose:%4.2f %4.2f %4.2f, delta_time: %4.2fms",
-          status,
-          TangoData::GetInstance().frame_count[index],
-          TangoData::GetInstance().tango_position[index].x,
-          TangoData::GetInstance().tango_position[index].y,
-          TangoData::GetInstance().tango_position[index].z,
-          TangoData::GetInstance().frame_delta_time[index]*1000.0f);
 
-  return (env)->NewStringUTF(pose_string);
+  stringstream string_stream;
+  string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  string_stream.precision(2);
+  pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
+  string_stream << "Status: " << status
+                << " Count: " << TangoData::GetInstance().frame_count[index]
+                << " Delta Time(ms): "
+                << TangoData::GetInstance().frame_delta_time[index]
+                << " Position(m): ["
+                << TangoData::GetInstance().tango_position[index].x << ", "
+                << TangoData::GetInstance().tango_position[index].y << ", "
+                << TangoData::GetInstance().tango_position[index].z << "]"
+                << " Quat: ["
+                << TangoData::GetInstance().tango_rotation[index].x << ", "
+                << TangoData::GetInstance().tango_rotation[index].y << ", "
+                << TangoData::GetInstance().tango_rotation[index].z << ", "
+                << TangoData::GetInstance().tango_rotation[index].w << "]";
+  pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
+  return (env)->NewStringUTF(string_stream.str().c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
+    JNIEnv* env, jobject) {
+  if (TangoData::GetInstance().lib_version_string.empty()) {
+    return (env)->NewStringUTF("No version string available.");
+  } else {
+    return (env)
+        ->NewStringUTF(TangoData::GetInstance().lib_version_string.c_str());
+  }
 }
-  
-JNIEXPORT jstring JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
-     JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
+
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
+    JNIEnv* env, jobject) {
+  if (TangoData::GetInstance().event_string.empty()) {
+    return (env)->NewStringUTF("No event string available.");
+  } else {
+    pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
+    string event_string_cpy = TangoData::GetInstance().event_string;
+    pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
+    return (env)->NewStringUTF(event_string_cpy.c_str());
+  }
 }
   
 // Touching GL interface.
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
+    JNIEnv*, jobject) {
   cam_start_angle[0] = cam_cur_angle[0];
   cam_start_angle[1] = cam_cur_angle[1];
   cam_start_dist = cam->GetPosition().z;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCameraOffset(
-     JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCameraOffset(
+    JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
   cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
   cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
-  dist = GlUtil::Clamp(cam_start_dist + dist*10.0f, 1.0f, 100.0f);
+  dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
+                       kCamViewMaxDist);
   cam_cur_dist = dist;
 }
 #ifdef __cplusplus

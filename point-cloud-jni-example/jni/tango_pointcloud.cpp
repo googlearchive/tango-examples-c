@@ -20,30 +20,13 @@
 #include <jni.h>
 
 #include "axis.h"
-#include "grid.h"
 #include "camera.h"
+#include "frustum.h"
 #include "gl_util.h"
+#include "grid.h"
 #include "pointcloud.h"
 #include "tango_data.h"
 #include "transform.h"
-
-/// First person camera position and rotation.
-/// Position: (0,0,0).
-/// Rotation: identity.
-const glm::vec3 kFirstPersonCameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
-const glm::quat kFirstPersonCameraRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-
-/// Third person camera position and rotation.
-/// Position: 1 unit on Y axis, 1 unit on z axis.
-/// Rotation: -45 degree around x axis.
-const glm::vec3 kThirdPersonCameraPos = glm::vec3(0.0f, 0.0f, 5.0f);
-const glm::quat kThirdPersonCameraRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-
-/// Top down camera position and rotation.
-/// Position: 3 units about origin.
-/// Rotation: -90 degree around x axis.
-const glm::vec3 kTopDownCameraPos = glm::vec3(0.0f, 5.0f, 0.0f);
-const glm::quat kTopDownCameraRot = glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
 
 // Screen size.
 GLuint screen_width;
@@ -56,29 +39,54 @@ Transform* cam_parent_transform;
 // Render camera.
 Camera* cam;
 
+// Device frustum.
+Frustum* frustum;
+
 // Point cloud drawable object.
 Pointcloud* pointcloud;
 
-// Axis is representing the pose from the Tango device.
+// Device axis (in OpenGL coordinates).
 Axis* axis;
 
-// Grid on the ground.
+// Ground grid.
 // Each block is 1 meter by 1 meter in real world.
 Grid* grid;
 
-int cur_cam_index = 0;
-
+// Single finger touch positional values.
+// First element in the array is x-axis touching position.
+// Second element in the array is y-axis touching position.
 float cam_start_angle[2];
 float cam_cur_angle[2];
+
+// Double finger touch distance value.
 float cam_start_dist;
 float cam_cur_dist;
+
+enum CameraType {
+  FIRST_PERSON = 0,
+  THIRD_PERSON = 1,
+  TOP_DOWN = 2
+};
+CameraType camera_type;
+
+const glm::vec3 kHeightOffset = glm::vec3(0.0f, -1.3f, 0.0f);
+const float kThirdPersonCameraDist = 7.0f;
+const float kTopDownCameraDist = 5.0f;
+const float kZoomSpeed = 10.0f;
+const float kCamViewMinDist = 1.0f;
+const float kCamViewMaxDist = 100.f;
+const float kHighFov = 65.0f;
+const float kLowFov = 45.0f;
 
 bool SetupGraphics(int w, int h) {
   screen_width = w;
   screen_height = h;
 
+  camera_type = CameraType::FIRST_PERSON;
+
   cam = new Camera();
   pointcloud = new Pointcloud();
+  frustum = new Frustum();
   axis = new Axis();
   grid = new Grid();
   cam_parent_transform = new Transform();
@@ -91,30 +99,54 @@ bool SetupGraphics(int w, int h) {
 
   // Put the grid at the resonable height since the motion
   // tracking pose always starts at (0, 0, 0).
-  grid->SetPosition(glm::vec3(0.0f, -1.5f, 0.0f));
-  
+  grid->SetPosition(kHeightOffset);
+
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
 
   return true;
 }
 
+// GL render loop.
 bool RenderFrame() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  
+
+  // XYZij dirty indicates that the XYZij data has been changed.
+  if (TangoData::GetInstance().is_xyzij_dirty) {
+    TangoData::GetInstance().UpdateXYZijData();
+  }
+
+  // Pose dirty indicates that the pose data has been changed.
+  if (TangoData::GetInstance().is_pose_dirty) {
+    TangoData::GetInstance().UpdatePoseData();
+  }
+
   /// Viewport set to full screen, and camera at origin
   /// facing on negative z direction, y axis is the up
   /// vector of the camera.
   glViewport(0, 0, screen_width, screen_height);
-  
-  // Get motion transformation.
-  glm::mat4 oc_2_ow_mat_motion;
-  
-  // Get depth frame transfromation.
-  glm::mat4 oc_2_ow_mat_depth;
-  
-  if (cur_cam_index != 0) {
+
+  // Get OpenGL camera to OpenGL world transformation for motion tracking.
+  // Computed based on pose callback.
+  glm::mat4 oc_2_ow_mat_motion = glm::mat4(1.0f);
+
+  // Get OpenGL camera to OpenGL world transformation for depth.
+  // Note that this transformation is different from the oc_2_ow_mat_motion
+  // due to the timestamp differences. This transformation is computed
+  // based on the closest pose data of depth frame timestamp.
+  glm::mat4 oc_2_ow_mat_depth = glm::mat4(1.0f);
+
+  if (camera_type == CameraType::FIRST_PERSON) {
+    // Get motion transformation.
+    oc_2_ow_mat_motion = TangoData::GetInstance().GetOC2OWMat(false);
+
+    // Set camera's pose to motion tracking's pose.
+    cam->SetTransformationMatrix(oc_2_ow_mat_motion);
+
+    // Get depth frame transformation.
+    oc_2_ow_mat_depth = TangoData::GetInstance().GetOC2OWMat(true);
+  } else {
     // Get parent camera's rotation from touch.
     // Note that the render camera is a child transformation
     // of the this transformation.
@@ -126,26 +158,19 @@ bool RenderFrame() {
     
     // Get motion transformation.
     oc_2_ow_mat_motion = TangoData::GetInstance().GetOC2OWMat(false);
-    
-    // Get depth frame transfromation.
+
+    // Get depth frame transformation.
     oc_2_ow_mat_depth = TangoData::GetInstance().GetOC2OWMat(true);
     
     // Set render camera parent position and rotation.
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(GlUtil::GetTranslationFromMatrix(oc_2_ow_mat_motion));
-    
+
+    frustum->SetTransformationMatrix(oc_2_ow_mat_motion);
+    frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+
     // Set camera view distance, based on touch interaction.
     cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
-  }
-  else {
-    // Get motion transformation.
-    oc_2_ow_mat_motion = TangoData::GetInstance().GetOC2OWMat(false);
-
-    // Set camera's pose to motion tracking's pose.
-    cam->SetTransformationMatrix(oc_2_ow_mat_motion);
-
-    // Get depth frame transfromation.
-    oc_2_ow_mat_depth = TangoData::GetInstance().GetOC2OWMat(true);
   }
   
   // Set axis transformation, axis representing device's pose.
@@ -155,36 +180,37 @@ bool RenderFrame() {
   // Render point cloud based on depth buffer and depth frame transformation.
   pointcloud->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix(),
                      oc_2_ow_mat_depth,
-                     TangoData::GetInstance().GetDepthBufferSize(),
-                     TangoData::GetInstance().GetDepthBuffer());
-  
+                     TangoData::GetInstance().depth_buffer_size * 3,
+                     (float*)TangoData::GetInstance().depth_buffer);
+
   // Render grid.
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   return true;
 }
 
-void SetCamera(int camera_index) {
-  cur_cam_index = camera_index;
+// Set camera type, set render camera's parent position and rotation.
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
   cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
   switch (camera_index) {
-    case 0:
-      cam_parent_transform->SetPosition(kFirstPersonCameraPos);
-      cam_parent_transform->SetRotation(kFirstPersonCameraRot);
+    case CameraType::FIRST_PERSON:
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
       break;
-    case 1:
+    case CameraType::THIRD_PERSON:
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = 4.0f;
-      cam_cur_angle[0] = -0.785f;
-      cam_cur_angle[1] = 0.785f;
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -3.14f / 4.0f;
+      cam_cur_angle[1] = 3.14f / 4.0f;
       break;
-    case 2:
+    case CameraType::TOP_DOWN:
       cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = 8.0f;
-      cam_cur_angle[1] = 1.57f;
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = 3.14f / 2.0f;
       break;
     default:
       break;
@@ -194,103 +220,169 @@ void SetCamera(int camera_index) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-// Tango lifecycle interfaces.
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnCreate(
-    JNIEnv* env, jobject obj) {
-  LOGI("In onCreate: Initialing and setting config");
-  if (!TangoData::GetInstance().Initialize())
-  {
-    LOGE("Tango initialization failed");
+// Tango Service interfaces.
+JNIEXPORT jint JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_Initialize(
+    JNIEnv* env, jobject, jobject activity) {
+  TangoErrorType err = TangoData::GetInstance().Initialize(env, activity);
+  if (err != TANGO_SUCCESS) {
+    if (err == TANGO_INVALID) {
+      LOGE("Tango Service version mis-match");
+    } else {
+      LOGE("Tango Service initialize internal error");
+    }
   }
+  return (int)err;
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_SetupConfig(JNIEnv*,
+                                                                  jobject) {
   if (!TangoData::GetInstance().SetConfig())
   {
     LOGE("Tango set config failed");
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnResume(
-    JNIEnv* env, jobject obj) {
-  LOGI("In OnResume: Locking config and connecting service");
-  if (!TangoData::GetInstance().Connect()){
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_Connect(JNIEnv*,
+                                                              jobject) {
+  if (!TangoData::GetInstance().Connect()) {
     LOGE("Tango connect failed");
+  }
+  // The extrinsics can only be queried after connected to service.
+  if (!TangoData::GetInstance().SetupExtrinsicsMatrices()) {
+    LOGE("Tango set extrinsics failed");
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnPause(
-    JNIEnv* env, jobject obj) {
-  LOGI("In OnPause: Unlocking config and disconnecting service");
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_Disconnect(JNIEnv*,
+                                                                 jobject) {
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_OnDestroy(
-    JNIEnv* env, jobject obj) {
-  delete cam;
-  delete pointcloud;
-  delete axis;
-  delete cam_parent_transform;
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_OnDestroy(JNIEnv*,
+                                                                jobject) {
+  if (cam != NULL) {
+    delete cam;
+  }
+  cam = NULL;
+
+  if (pointcloud != NULL) {
+    delete pointcloud;
+  }
+  pointcloud = NULL;
+
+  if (axis != NULL) {
+    delete axis;
+  }
+  axis = NULL;
+
+  if (grid != NULL) {
+    delete grid;
+  }
+  grid = NULL;
+
+  if (frustum != NULL) {
+    delete frustum;
+  }
+  frustum = NULL;
+
+  if (cam_parent_transform != NULL) {
+    delete cam_parent_transform;
+  }
+  cam_parent_transform = NULL;
 }
 
 // Graphic interfaces.
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetupGraphic(
-    JNIEnv* env, jobject obj, jint width, jint height) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_SetupGraphic(
+    JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_Render(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_Render(JNIEnv*, jobject) {
   RenderFrame();
-  TangoData::GetInstance().GetVersonString();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetCamera(
-    JNIEnv* env, jobject obj, int camera_index) {
-  SetCamera(camera_index);
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_SetCamera(
+    JNIEnv*, jobject, int camera_index) {
+  SetCamera(static_cast<CameraType>(camera_index));
 }
 
 // Tango data interfaces.
-JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetPoseString(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetPoseDataString());
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetPoseString(JNIEnv* env,
+                                                                    jobject) {
+  pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
+  string ret_string = TangoData::GetInstance().pose_string;
+  pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
+  return (env)->NewStringUTF(ret_string.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetEventString(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetEventString());
-}
-  
-JNIEXPORT jstring JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVersionNumber(
-    JNIEnv* env, jobject obj) {
-  return (env)->NewStringUTF(TangoData::GetInstance().GetVersonString());
-}
-
-JNIEXPORT jint JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetVerticesCount(
-    JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().GetDepthBufferSize()/3;
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetEventString(
+    JNIEnv* env, jobject) {
+  pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
+  string ret_string = TangoData::GetInstance().event_string;
+  pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
+  return (env)->NewStringUTF(ret_string.c_str());
 }
 
-JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetAverageZ(
-     JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().average_depth;
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetVersionNumber(
+    JNIEnv* env, jobject) {
+  return (env)
+      ->NewStringUTF(TangoData::GetInstance().lib_version_string.c_str());
 }
-  
-JNIEXPORT float JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_GetFrameDeltaTime(
-     JNIEnv* env, jobject obj) {
-  return TangoData::GetInstance().depth_frame_delta_time;
+
+JNIEXPORT jint JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetVerticesCount(
+    JNIEnv*, jobject) {
+  pthread_mutex_lock(&TangoData::GetInstance().xyzij_mutex);
+  int ret_val = TangoData::GetInstance().depth_buffer_size;
+  pthread_mutex_unlock(&TangoData::GetInstance().xyzij_mutex);
+  return ret_val;
+}
+
+JNIEXPORT float JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetAverageZ(JNIEnv*,
+                                                                  jobject) {
+  pthread_mutex_lock(&TangoData::GetInstance().xyzij_mutex);
+  float ret_val = TangoData::GetInstance().depth_average_length;
+  pthread_mutex_unlock(&TangoData::GetInstance().xyzij_mutex);
+  return ret_val;
+}
+
+JNIEXPORT float JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_GetFrameDeltaTime(
+    JNIEnv*, jobject) {
+  pthread_mutex_lock(&TangoData::GetInstance().xyzij_mutex);
+  float ret_val = TangoData::GetInstance().depth_frame_delta_time;
+  pthread_mutex_unlock(&TangoData::GetInstance().xyzij_mutex);
+  return ret_val;
 }
 
 // Touching GL interface.
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_StartSetCameraOffset(
-    JNIEnv* env, jobject obj) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_StartSetCameraOffset(
+    JNIEnv*, jobject) {
   cam_start_angle[0] = cam_cur_angle[0];
   cam_start_angle[1] = cam_cur_angle[1];
   cam_start_dist = cam->GetPosition().z;
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_pointcloudnative_TangoJNINative_SetCameraOffset(
-     JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_SetCameraOffset(
+    JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
   cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
   cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
-  dist = GlUtil::Clamp(cam_start_dist + dist*10.0f, 1.0f, 100.0f);
+  dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
+                       kCamViewMaxDist);
   cam_cur_dist = dist;
 }
 #ifdef __cplusplus

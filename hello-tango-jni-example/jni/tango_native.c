@@ -26,7 +26,7 @@
 // Tango configuration file.
 // Configuration file describs current states of
 // Tango Service.
-TangoConfig* config;
+TangoConfig config;
 
 static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   LOGI("Position: %f, %f, %f. Orientation: %f, %f, %f, %f",
@@ -35,9 +35,10 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
        pose->orientation[3]);
 }
 
-bool TangoInitialize() {
+bool TangoInitialize(JNIEnv* env, jobject activity) {
   // Initialize Tango Service.
-  if (TangoService_initialize() != TANGO_SUCCESS) {
+  // TODO(jguo): pass in env and jobject from activity.
+  if (TangoService_initialize(env, activity) != TANGO_SUCCESS) {
     LOGE("TangoService_initialize(): Failed");
     return false;
   }
@@ -45,57 +46,33 @@ bool TangoInitialize() {
 }
 
 bool TangoSetConfig() {
-  // Allocate a TangoConfig object.
-  if ((config = TangoConfig_alloc()) == NULL) {
-    LOGE("TangoService_allocConfig(): Failed");
-    return false;
-  }
-  
   // Get the default TangoConfig.
-  if (TangoService_getConfig(TANGO_CONFIG_DEFAULT, config) != 0) {
+  config = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
+  if (config == NULL) {
     LOGE("TangoService_getConfig(): Failed");
-    return false;
-  }
-  
-  // Set listening pairs. Connenct pose callback.
-    TangoCoordinateFramePair pairs = {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE };
-    if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
-        != TANGO_SUCCESS) {
-      LOGI("TangoService_connectOnPoseAvailable(): Failed");
-      return false;
-    }
-  return true;
-}
-
-bool TangoLockConfig()
-{
-  // Lock in this configuration.
-  if (TangoService_lockConfig(config) != TANGO_SUCCESS) {
-    LOGE("TangoService_lockConfig(): Failed");
-    return false;
-  }
-  return true;
-}
-
-bool TangoUnlockConfig()
-{
-  // Unlock current configuration.
-  if (TangoService_unlockConfig() != TANGO_SUCCESS) {
-    LOGE("TangoService_unlockConfig(): Failed");
     return false;
   }
   return true;
 }
 
 bool TangoConnect() {
+  // Set listening pairs. Connenct pose callback.
+  // Note: the callback function should be re-connected 
+  // after the application resumed from background.
+  TangoCoordinateFramePair pair = {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE };
+  if (TangoService_connectOnPoseAvailable(1, &pair, onPoseAvailable)
+      != TANGO_SUCCESS) {
+    LOGI("TangoService_connectOnPoseAvailable(): Failed");
+    return false;
+  }
+
   // Connect to the Tango Service.
   // Note: connecting Tango service will start the motion
   // tracking automatically.
-  if (TangoService_connect(NULL) != TANGO_SUCCESS) {
+  if (TangoService_connect(NULL, config) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
-  LOGI("HELLO TANGO, SERVICE CONNECTED!");
   return true;
 }
 
@@ -105,20 +82,18 @@ void DisconnectTango()
   TangoService_disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onCreate(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onCreate(JNIEnv* env, jobject obj, jobject activity)
 {
-  TangoInitialize();
+  TangoInitialize(env, activity);
   TangoSetConfig();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onResume(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onResume(JNIEnv* env, jobject obj)
 {
-  TangoLockConfig();
   TangoConnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onPause(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_onPause(JNIEnv* env, jobject obj)
 {
-  TangoUnlockConfig();
   DisconnectTango();
 }

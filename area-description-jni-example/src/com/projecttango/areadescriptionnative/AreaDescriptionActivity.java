@@ -20,6 +20,8 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.util.Log;
 import android.view.Display;
@@ -45,6 +47,8 @@ public class AreaDescriptionActivity extends Activity implements
 	TextView learningModeText;
 	TextView uuidText;
 
+	TextView appVersionText;
+
 	Button saveADFButton;
 	Button startButton;
 	Button firstPersonCamButton;
@@ -67,7 +71,19 @@ public class AreaDescriptionActivity extends Activity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		TangoJNINative.Initialize();
+
+		// Initialize the Tango service
+		int err = TangoJNINative.Initialize(this);
+		if (err != 0) {
+			if (err == -2) {
+				Toast.makeText(this,
+					"Tango Service version mis-match", Toast.LENGTH_SHORT).show();
+			}
+			else {
+				Toast.makeText(this,
+					"Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
+			}
+		}
 
 		Display display = getWindowManager().getDefaultDisplay();
 		display.getSize(screenSize);
@@ -85,6 +101,16 @@ public class AreaDescriptionActivity extends Activity implements
 		start2ADFText = (TextView) findViewById(R.id.adf_start);
 		learningModeText = (TextView) findViewById(R.id.learningmode);
 		uuidText = (TextView) findViewById(R.id.uuid);
+
+		// Text views for application versions.
+		appVersionText = (TextView) findViewById(R.id.appversion);
+		PackageInfo pInfo;
+		try {
+			pInfo = this.getPackageManager().getPackageInfo(this.getPackageName(), 0);
+			appVersionText.setText(pInfo.versionName);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
 
 		Intent intent = getIntent();
 		isLearning = intent.getBooleanExtra(StartActivity.USE_AREA_LEARNING,
@@ -160,11 +186,18 @@ public class AreaDescriptionActivity extends Activity implements
 			TangoJNINative.SetCamera(1);
 			break;
 		case R.id.saveAdf:
-			String uuid = TangoJNINative.SaveADF();
-			CharSequence text = "Saved Map: " + uuid;
-			Toast toast = Toast.makeText(getApplicationContext(), text,
-					Toast.LENGTH_SHORT);
-			toast.show();
+			if(TangoJNINative.SaveADF())
+			{
+				CharSequence text = "Saved Map: " + TangoJNINative.GetUUID();
+				Toast toast = Toast.makeText(getApplicationContext(), text,
+						Toast.LENGTH_SHORT);
+				toast.show();
+			}
+			else {
+				Toast toast = Toast.makeText(getApplicationContext(), "UUID Save Error.",
+						Toast.LENGTH_SHORT);
+				toast.show();
+			}
 			break;
 		default:
 			return;
@@ -239,7 +272,7 @@ public class AreaDescriptionActivity extends Activity implements
 		device2ADFText.setText(TangoJNINative.GetPoseString(1));
 		start2ADFText.setText(TangoJNINative.GetPoseString(2));
 
-		uuidText.setText(TangoJNINative.GetUUID());
+		uuidText.setText("Number of UUID: " + TangoJNINative.GetUUID());
 		learningModeText.setText(isLearning ? "Enabled" : "Disabled");
 	}
 }

@@ -1,114 +1,114 @@
 /*
- * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2014 Google Inc. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #include "tango_data.h"
 
-// Temp hack.
-static const int kMaxVertCount = 61440;
+static float prev_depth_timestamp = 0.0f;
 
-TangoData::TangoData() : config_(nullptr) , pointcloud_timestamp_(0.0f) {
-  motion_pose = new TangoPoseData();
-  
-  depth_data_buffer_ = new float[kMaxVertCount * 3];
-  depth_buffer_size_ = kMaxVertCount * 3;
-
-  d_2_ss_mat_depth = glm::mat4(1.0f);
-  d_2_imu_mat = glm::mat4(1.0f);
-  c_2_imu_mat = glm::mat4(1.0f);
-  
-  float ss_2_ow_arr[16] = {
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, -1.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-  };
-  
-  float oc_2_c_arr[16] = {
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, -1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, -1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-  };
-  
-  memcpy(glm::value_ptr(ss_2_ow_mat), ss_2_ow_arr, sizeof(ss_2_ow_arr));
-  memcpy(glm::value_ptr(oc_2_c_mat), oc_2_c_arr, sizeof(oc_2_c_arr));
+// Get status string based on the pose status code.
+static const char* getStatusStringFromStatusCode(TangoPoseStatusType status) {
+  const char* status_string = nullptr;
+  switch (status) {
+    case TANGO_POSE_INITIALIZING:
+      status_string = "Initializing";
+      break;
+    case TANGO_POSE_VALID:
+      status_string = "Valid";
+      break;
+    case TANGO_POSE_INVALID:
+      status_string = "Invalid";
+      break;
+    case TANGO_POSE_UNKNOWN:
+      status_string = "Unknown";
+      break;
+    default:
+      break;
+  }
+  return status_string;
 }
 
 /// Callback function when new XYZij data available, caller is responsible
 /// for allocating the memory, and the memory will be released after the
 /// callback function is over.
 /// XYZij data updates in 5Hz.
-static void onXYZijAvailable(void* context, const TangoXYZij* XYZ_ij) {
-  float total_z = 0.0f;
-  int vertices_count = XYZ_ij->xyz_count;
-  for (int i = 0; i < vertices_count; i++) {
-    total_z += XYZ_ij->xyz[i][2];
+static void onXYZijAvailable(void*, const TangoXYZij* XYZ_ij) {
+  pthread_mutex_lock(&TangoData::GetInstance().xyzij_mutex);
+
+  // Copying out the depth buffer.
+  // Note: the XYZ_ij object will be out of scope after this callback is
+  // excuted.
+  if (XYZ_ij->xyz_count <= TangoData::GetInstance().max_vertex_count) {
+    if (TangoData::GetInstance().depth_buffer != nullptr &&
+        XYZ_ij->xyz != nullptr) {
+      memcpy(TangoData::GetInstance().depth_buffer, XYZ_ij->xyz,
+             XYZ_ij->xyz_count * 3 * sizeof(float));
+    }
   }
-  memcpy(TangoData::GetInstance().GetDepthBuffer(), XYZ_ij->xyz,
-         vertices_count * 3 * sizeof(float));
-  TangoData::GetInstance().SetDepthBufferSize(vertices_count * 3);
-  TangoData::GetInstance().average_depth = total_z/(float)vertices_count;
-  
-  // Computing the callback delta time.
+  TangoData::GetInstance().depth_buffer_size = XYZ_ij->xyz_count;
+
+  // Calculate the depth delta frame time, and store current and
+  // previous frame timestamp. prev_depth_timestamp used for querying
+  // closest pose data. (See in UpdateXYZijData())
   TangoData::GetInstance().depth_frame_delta_time =
-    (XYZ_ij->timestamp - TangoData::GetInstance().previous_frame_time_)*1000.0f;
-  TangoData::GetInstance().previous_frame_time_ = XYZ_ij->timestamp;
-  TangoData::GetInstance().GetPoseAtTime(XYZ_ij->timestamp);
+      XYZ_ij->timestamp - prev_depth_timestamp;
+  prev_depth_timestamp = XYZ_ij->timestamp;
+
+  // Set xyz_ij dirty flag.
+  TangoData::GetInstance().is_xyzij_dirty = true;
+
+  pthread_mutex_unlock(&TangoData::GetInstance().xyzij_mutex);
 }
 
 // Tango event callback.
-static void onTangoEvent(void* context, const TangoEvent* event) {
-  sprintf(TangoData::GetInstance().event_string,
-          "%s: %s", event->event_key, event->event_value);
+static void onTangoEvent(void*, const TangoEvent* event) {
+  // Update the status string for debug display.
+  stringstream string_stream;
+  string_stream << event->event_key << ": " << event->event_value;
+  TangoData::GetInstance().event_string = string_stream.str();
 }
 
-// This callback function is called when new POSE updates become available.
-static void onPoseAvailable(void* context, const TangoPoseData* pose) {
-  TangoData::GetInstance().tango_position =
-    glm::vec3(pose->translation[0], pose->translation[1],
-              pose->translation[2]);
-  TangoData::GetInstance().tango_rotation =
-    glm::quat(pose->orientation[3], pose->orientation[0],
-              pose->orientation[1], pose->orientation[2]);
-  
-  TangoData::GetInstance().cur_pose_status = pose->status_code;
-  if(TangoData::GetInstance().prev_pose_status != pose->status_code) {
-    TangoData::GetInstance().pose_status_count = 0;
+// This callback function is called when new pose update is available.
+static void onPoseAvailable(void*, const TangoPoseData* pose) {
+  pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
+  if (pose != nullptr) {
+    TangoData::GetInstance().cur_pose_data = *pose;
+    TangoData::GetInstance().is_pose_dirty = true;
   }
-  TangoData::GetInstance().prev_pose_status = pose->status_code;
-  TangoData::GetInstance().pose_status_count++;
-  
-  TangoData::GetInstance().frame_delta_time =
-  TangoData::GetInstance().prev_pose_timestamp - pose->timestamp;
-  TangoData::GetInstance().prev_pose_timestamp = pose->timestamp;
-  
-  TangoData::GetInstance().d_2_ss_mat_motion =
-    glm::translate(glm::mat4(1.0f), TangoData::GetInstance().tango_position) *
-    glm::mat4_cast(TangoData::GetInstance().tango_rotation);
+  pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 }
 
-bool TangoData::Initialize() {
-  // Initialize Tango Service.
-  if (TangoService_initialize() != TANGO_SUCCESS) {
-    LOGE("TangoService_initialize(): Failed");
-    return false;
-  }
-  return true;
+// Initialize Tango Service.
+TangoErrorType TangoData::Initialize(JNIEnv* env, jobject activity) {
+  // The initialize function perform API and Tango Service version check,
+  // if there is a mis-match between API and Tango Service version, the
+  // function will return TANGO_INVALID.
+  return TangoService_initialize(env, activity);
 }
 
+TangoData::TangoData() : config_(nullptr) {
+  is_xyzij_dirty = false;
+  is_pose_dirty = false;
+
+  d_2_ss_mat_motion = glm::mat4(1.0f);
+  d_2_ss_mat_depth = glm::mat4(1.0f);
+  d_2_imu_mat = glm::mat4(1.0f);
+  c_2_imu_mat = glm::mat4(1.0f);
+}
+
+// Set up Tango Configuration handle, and connecting all callbacks.
 bool TangoData::SetConfig() {
   // Get the default TangoConfig.
   config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
@@ -119,27 +119,46 @@ bool TangoData::SetConfig() {
 
   // Enable depth.
   if (TangoConfig_setBool(config_, "config_enable_depth", true) != TANGO_SUCCESS) {
-    LOGI("config_enable_depth Failed");
+    LOGE("config_enable_depth Failed");
     return false;
   }
-  
-  // Disable motion tracking.
-  if (TangoConfig_setBool(config_, "config_enable_motion_tracking", true) != TANGO_SUCCESS) {
-    LOGI("config_disable_motion_tracking Failed");
+
+  // Get library version string from service.
+  if (TangoConfig_getString(
+          config_, "tango_service_library_version",
+          const_cast<char*>(
+              TangoData::GetInstance().lib_version_string.c_str()),
+          kVersionStringLength) != TANGO_SUCCESS) {
+    LOGE("Get tango_service_library_version Failed");
     return false;
   }
-  
+
+  // Get max point cloud elements. The value is used for allocating
+  // the depth buffer.
+  int temp = 0;
+  if (TangoConfig_getInt32(config_, "max_point_cloud_elements", &temp) !=
+      TANGO_SUCCESS) {
+    LOGE("Get max_point_cloud_elements Failed");
+    return false;
+  }
+  max_vertex_count = static_cast<uint32_t>(temp);
+
+  // Forward allocate the maximum size of depth buffer.
+  // max_vertex_count is the vertices count, max_vertex_count*3 is
+  // the actual float buffer size.
+  depth_buffer = new float[3 * max_vertex_count];
+
   return true;
 }
 
-/// Connect to the Tango Service.
+// Connect to Tango Service
 bool TangoData::Connect() {
   // Attach the onXYZijAvailable callback.
   if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnXYZijAvailable(): Failed");
     return false;
   }
-  
+
   //Set the reference frame pair after connect to service.
   //Currently the API will set this set below as default.
   TangoCoordinateFramePair pairs;
@@ -158,80 +177,165 @@ bool TangoData::Connect() {
     LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
-  
+
   if (TangoService_connect(nullptr, config_) != TANGO_SUCCESS) {
     LOGE("TangoService_connect(): Failed");
     return false;
   }
-  SetExtrinsicsMatrics();
   return true;
 }
 
-void TangoData::GetPoseAtTime(double timestamp) {
-  TangoCoordinateFramePair pairs;
-  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
-  TangoPoseData pose;
-  if (TangoService_getPoseAtTime(timestamp, pairs, &pose) != TANGO_SUCCESS) {
-    LOGE("TangoService_getPoseAtTime(): Failed");
-  }
-  glm::vec3 translation =
-  glm::vec3(pose.translation[0], pose.translation[1],
-            pose.translation[2]);
-  glm::quat rotation =
-  glm::quat(pose.orientation[3], pose.orientation[0],
-            pose.orientation[1], pose.orientation[2]);
-  
-  d_2_ss_mat_depth =
-    glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
-}
-
+// Disconnect from Tango Service.
 void TangoData::Disconnect() {
   // Disconnect application from Tango Service.
   TangoService_disconnect();
 }
 
-float* TangoData::GetDepthBuffer() {
-  return depth_data_buffer_;
+// Update pose data. This function will be called only when the pose
+// data is changed (dirty). This function is being called through the
+// GL rendering thread (See tango_pointcloud.cpp, RenderFrame()).
+//
+// This will off load some computation inside the onPoseAvailable()
+// callback function. Heavy computation inside callback will block the whole
+// Tango Service callback thread, so migrating heavy computation to other
+// thread is suggested.
+void TangoData::UpdatePoseData() {
+  pthread_mutex_lock(&pose_mutex);
+
+  glm::vec3 tango_position =
+      glm::vec3(cur_pose_data.translation[0], cur_pose_data.translation[1],
+                cur_pose_data.translation[2]);
+  glm::quat tango_rotation =
+      glm::quat(cur_pose_data.orientation[3], cur_pose_data.orientation[0],
+                cur_pose_data.orientation[1], cur_pose_data.orientation[2]);
+
+  // Calculate status code count for debug display.
+  if (prev_pose_data.status_code != cur_pose_data.status_code) {
+    pose_status_count = 0;
+  }
+  ++pose_status_count;
+
+  // Calculate frame delta time for debug display.
+  // Note: this is the pose callback frame delta time.
+  pose_frame_delta_time = prev_pose_data.timestamp - cur_pose_data.timestamp;
+
+  // Build pose logging string for debug display.
+  stringstream string_stream;
+  string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  string_stream.precision(2);
+  string_stream << "Status: "
+                << getStatusStringFromStatusCode(cur_pose_data.status_code)
+                << " Count: " << pose_status_count
+                << " Delta Time(ms): " << pose_frame_delta_time
+                << " Position(m): [" << cur_pose_data.translation[0] << ", "
+                << cur_pose_data.translation[1] << ", "
+                << cur_pose_data.translation[2] << "]"
+                << " Quat: [" << cur_pose_data.orientation[0] << ", "
+                << cur_pose_data.orientation[1] << ", "
+                << cur_pose_data.orientation[2] << ", "
+                << cur_pose_data.orientation[3] << "]";
+  pose_string = string_stream.str();
+
+  // Update device with respect to  start of service frame transformation.
+  // Note: this is the pose transformation for pose frame.
+  d_2_ss_mat_motion = glm::translate(glm::mat4(1.0f), tango_position) *
+                      glm::mat4_cast(tango_rotation);
+
+  // Store current pose data to previous.
+  prev_pose_data = cur_pose_data;
+  is_pose_dirty = false;
+  pthread_mutex_unlock(&pose_mutex);
 }
 
-void TangoData::SetDepthBuffer(float* buffer) {
-  depth_data_buffer_ = buffer;
+// Update XYZij data. This function will be called only when the XYZ_ij
+// data is changed (dirty). This function is being called through the
+// GL rendering thread (See tango_pointcloud.cpp, RenderFrame()).
+//
+// This will off load some computation inside the onXYZ_ijAvailable()
+// callback function. Heavy computation inside callback will block the whole
+// Tango Service callback thread, so migrating heavy computation to other
+// thread is suggested.
+void TangoData::UpdateXYZijData() {
+  pthread_mutex_lock(&xyzij_mutex);
+
+  // Calculating average depth for debug display.
+  float total_z = 0.0f;
+  for (uint32_t i = 0; i < depth_buffer_size; ++i) {
+    // The memory layout is x,y,z,x,y,z. We are accumulating
+    // all of the z value.
+    total_z += depth_buffer[i * 3 + 2];
+  }
+  if (depth_buffer_size != 0) {
+    depth_average_length = total_z / static_cast<float>(depth_buffer_size);
+  }
+
+  // Query pose at the depth frame's timestamp.
+  // Note: This function is querying pose from pose buffer inside
+  // Tango Service. It will pass out the closest pose according to
+  // the timestamp passed in.
+  TangoCoordinateFramePair pairs;
+  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+  TangoPoseData pose;
+  if (TangoService_getPoseAtTime(prev_depth_timestamp, pairs, &pose) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoService_getPoseAtTime(): Failed");
+  }
+  glm::vec3 translation =
+      glm::vec3(pose.translation[0], pose.translation[1], pose.translation[2]);
+  glm::quat rotation = glm::quat(pose.orientation[3], pose.orientation[0],
+                                 pose.orientation[1], pose.orientation[2]);
+
+  // Update device with respect to  start of service frame transformation.
+  // Note: this is the pose transformation for depth frame.
+  d_2_ss_mat_depth =
+      glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
+
+  // Reset xyz_ij dirty flag.
+  is_xyzij_dirty = false;
+
+  pthread_mutex_unlock(&xyzij_mutex);
 }
 
-int TangoData::GetDepthBufferSize() {
-  return depth_buffer_size_;
-}
-
+// Get OpenGL camera with repect to OpenGL world frame transformation.
+// Note: motion tracking pose and depth pose are different. Depth updates slower
+// than pose update, we always want to use the closest pose to transform
+// point cloud to local space to world space.
 glm::mat4 TangoData::GetOC2OWMat(bool is_depth_pose) {
   if (is_depth_pose) {
-    return ss_2_ow_mat * d_2_ss_mat_depth * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+    pthread_mutex_lock(&xyzij_mutex);
+    glm::mat4 temp = d_2_ss_mat_depth;
+    pthread_mutex_unlock(&xyzij_mutex);
+    return ss_2_ow_mat * temp * glm::inverse(d_2_imu_mat) * c_2_imu_mat *
+           oc_2_c_mat;
   }
   else {
-    return ss_2_ow_mat * d_2_ss_mat_motion * glm::inverse(d_2_imu_mat) * c_2_imu_mat * oc_2_c_mat;
+    pthread_mutex_lock(&pose_mutex);
+    glm::mat4 temp = d_2_ss_mat_motion;
+    pthread_mutex_unlock(&pose_mutex);
+    return ss_2_ow_mat * temp * glm::inverse(d_2_imu_mat) * c_2_imu_mat *
+           oc_2_c_mat;
   }
 }
 
-void TangoData::SetDepthBufferSize(int size) {
-  depth_buffer_size_ = size;
-}
-
-char* TangoData::GetVersonString() {
-  TangoConfig_getString(config_, "tango_service_library_version", lib_version, 26);
-  return lib_version;
-}
-
-void TangoData::SetExtrinsicsMatrics() {
+// Set up extrinsics transformations:
+// 1. Device with respect to IMU transformation.
+// 2. Color camera with respect to IMU transformation.
+// Note: on Yellowstone devices, the color camera is the depth camera.
+// so the 'c_2_imu_mat' could also be used for depth point cloud
+// transformation.
+bool TangoData::SetupExtrinsicsMatrices() {
   TangoPoseData pose_data;
   TangoCoordinateFramePair frame_pair;
   glm::vec3 translation;
   glm::quat rotation;
-  
-  // Get device to imu matrix.
+
+  // Get device with respect to imu transformation matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
   frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
   if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
     LOGE("TangoService_getPoseAtTime(): Failed");
+    return false;
   }
   translation = glm::vec3(pose_data.translation[0],
                           pose_data.translation[1],
@@ -242,12 +346,13 @@ void TangoData::SetExtrinsicsMatrics() {
                        pose_data.orientation[2]);
   d_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
     glm::mat4_cast(rotation);
-  
-  // Get color camera to imu matrix.
+
+  // Get color camera with respect to imu transformation matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
   frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
   if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
-    LOGE("TangoService_getPoseAtTime(: Failed");
+    LOGE("TangoService_getPoseAtTime(): Failed");
+    return false;
   }
   translation = glm::vec3(pose_data.translation[0],
                           pose_data.translation[1],
@@ -258,40 +363,14 @@ void TangoData::SetExtrinsicsMatrics() {
                        pose_data.orientation[2]);
   c_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
     glm::mat4_cast(rotation);
+  return true;
 }
 
-char* TangoData::GetEventString() {
-  return event_string;
-}
-
-char* TangoData::GetPoseDataString() {
-  const char* status;
-  switch (cur_pose_status) {
-    case 0:
-      status = "Initializing";
-      break;
-    case 1:
-      status = "Valid";
-      break;
-    case 2:
-      status = "Invalid";
-      break;
-    case 3:
-      status = "Unknown";
-      break;
-    default:
-      break;
-  }
-  
-  sprintf(pose_string_,
-          "Status:%s, Count:%d, Delta Time(ms): %4.3f, Pose(m): %4.3f, %4.3f, %4.3f, Quat: %4.3f, %4.3f, %4.3f, %4.3f",
-          status, pose_status_count, frame_delta_time,
-          tango_position[0], tango_position[1], tango_position[2],
-          tango_rotation[0], tango_rotation[1], tango_rotation[2], tango_rotation[3]);
-  
-  return pose_string_;
-}
-
+// Clean up.
 TangoData::~TangoData() {
-  delete[] depth_data_buffer_;
+  // Free Tango configuration handle.
+  if (config_ != nullptr) TangoConfig_free(config_);
+  config_ = nullptr;
+
+  delete[] depth_buffer;
 }

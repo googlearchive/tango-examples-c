@@ -18,14 +18,16 @@ package com.projecttango.pointcloudnative;
 
 public class TangoJNINative {
 	static {
-		System.loadLibrary("tango-native-jni");
+		System.loadLibrary("point_cloud_jni_example");
 	}
 
-	public static native void OnCreate();
+	public static native int Initialize(PointcloudActivity activity);
 
-	public static native void OnResume();
+	public static native void SetupConfig();
 
-	public static native void OnPause();
+	public static native void Connect();
+
+	public static native void Disconnect();
 
 	public static native void OnDestroy();
 

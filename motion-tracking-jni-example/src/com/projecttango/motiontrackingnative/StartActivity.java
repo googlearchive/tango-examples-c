@@ -24,20 +24,20 @@ import android.widget.Button;
 import android.widget.ToggleButton;
 
 public class StartActivity extends Activity implements View.OnClickListener {
-	public static final String KEY_MOTIONTRACKING_AUTORESET = "com.google.tango.tangojnimotiontracking.useautoreset";
-	private ToggleButton mAutoResetButton;
+	public static final String KEY_MOTIONTRACKING_AUTO_RECOVERY = "com.google.tango.tangojnimotiontracking.useautorecovery";
+	private ToggleButton mAutoRecoveryButton;
 	private Button mStartButton;
-	private boolean mUseAutoReset;
+	private boolean mUseAutoRecovery;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_start);
-		mAutoResetButton = (ToggleButton) findViewById(R.id.autoresetbutton);
+		mAutoRecoveryButton = (ToggleButton) findViewById(R.id.autorecoverybutton);
 		mStartButton = (Button) findViewById(R.id.startbutton);
-		mAutoResetButton.setOnClickListener(this);
+		mAutoRecoveryButton.setOnClickListener(this);
 		mStartButton.setOnClickListener(this);
-		mUseAutoReset = mAutoResetButton.isChecked();
+		mUseAutoRecovery = mAutoRecoveryButton.isChecked();
 	}
 
 	@Override
@@ -46,8 +46,8 @@ public class StartActivity extends Activity implements View.OnClickListener {
 		case R.id.startbutton:
 			startMotionTracking();
 			break;
-		case R.id.autoresetbutton:
-			mUseAutoReset = mAutoResetButton.isChecked();
+		case R.id.autorecoverybutton:
+			mUseAutoRecovery = mAutoRecoveryButton.isChecked();
 			break;
 		}
 	}
@@ -55,8 +55,8 @@ public class StartActivity extends Activity implements View.OnClickListener {
 	private void startMotionTracking() {
 		Intent startmotiontracking = new Intent(this,
 				MotionTrackingActivity.class);
-		startmotiontracking.putExtra(KEY_MOTIONTRACKING_AUTORESET,
-				mUseAutoReset);
+		startmotiontracking.putExtra(KEY_MOTIONTRACKING_AUTO_RECOVERY,
+				mUseAutoRecovery);
 		startActivity(startmotiontracking);
 	}
 }

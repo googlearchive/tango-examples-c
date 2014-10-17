@@ -18,16 +18,16 @@ package com.projecttango.motiontrackingnative;
 
 public class TangoJNINative {
 	static {
-		System.loadLibrary("tango-native-jni");
+		System.loadLibrary("motion_tracking_jni_example");
 	}
 
-	public static native void Initialize();
+	public static native int Initialize(MotionTrackingActivity activity);
 	
 	public static native void SetupConfig(boolean isAutoReset);
 	
-	public static native void ConnectService();
+	public static native int Connect();
 	
-	public static native void DisconnectService();
+	public static native void Disconnect();
 
 	public static native void OnDestroy();
 

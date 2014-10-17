@@ -18,22 +18,10 @@
 #define DRAWABLE_OBJECT_H
 
 #include "gl_util.h"
+#include "transform.h"
 
-class DrawableObject {
+class DrawableObject : public Transform {
  public:
-  DrawableObject();
   virtual void Render(glm::mat4 projection_mat, glm::mat4 view_mat) = 0;
-  void SetPosition(glm::vec3 pos);
-  void SetRotation(glm::quat rot);
-  void SetScale(glm::vec3 s);
-  void Rotate(glm::quat rot);
-  void SetOffset(glm::vec3 offset);
-  glm::mat4 GetCurrentModelMatrix();
-  glm::mat4 model_mat;
-private:
-  glm::quat rotation_;
-  glm::vec3 position_;
-  glm::vec3 scale_;
-  glm::vec3 offset_;
 };
 #endif  // DRAWABLE_OBJECT_H

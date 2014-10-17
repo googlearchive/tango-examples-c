@@ -18,10 +18,27 @@
 #define TANGO_DATA_H
 #define GLM_FORCE_RADIANS
 
+#include <pthread.h>
+#include <sstream>
+#include <stdlib.h>
+#include <string>
+#include <iostream>
 #include <tango_client_api.h>
-#include <sys/time.h>
-
 #include "gl_util.h"
+
+const int kMeterToMillimeter = 1000;
+const int kVersionStringLength = 27;
+
+// Opengl camera to color camera matrix.
+const glm::mat4 oc_2_c_mat =
+    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+              -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+// Start service to opengl world matrix.
+const glm::mat4 ss_2_ow_mat =
+    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+              0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+using namespace std;
 
 class TangoData {
  public:
@@ -32,49 +49,39 @@ class TangoData {
   TangoData();
   ~TangoData();
 
-  bool Initialize();
+  TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig();
   bool LockConfig();
   bool UnlockConfig();
   bool Connect();
   void Disconnect();
 
-  float* GetDepthBuffer();
-  void SetDepthBuffer(float *buffer);
-  
-  int GetDepthBufferSize();
-  void SetDepthBufferSize(int size);
-  
+  bool SetupExtrinsicsMatrices();
   glm::mat4 GetOC2OWMat(bool is_depth);
-  void GetPoseAtTime(double timestamp);
-  
-  char* GetVersonString();
-  char* GetPoseDataString();
-  char* GetEventString();
-  
-  // Pose data.
-  glm::vec3 tango_position;
-  glm::quat tango_rotation;
-  
+
+  void UpdatePoseData();
+  void UpdateXYZijData();
+
+  pthread_mutex_t pose_mutex;
+  pthread_mutex_t xyzij_mutex;
+  pthread_mutex_t event_mutex;
+
+  float* depth_buffer;
+  uint32_t depth_buffer_size;
+  bool is_xyzij_dirty;
+
+  TangoPoseData cur_pose_data;
+  TangoPoseData prev_pose_data;
+  bool is_pose_dirty;
+
   int pose_status_count;
-  TangoPoseStatusType cur_pose_status;
-  TangoPoseStatusType prev_pose_status;
-  
-  float frame_delta_time;
-  double prev_pose_timestamp;
-  
-  // Event data.
-  char event_string[30];
-  char lib_version[26];
-  
-  // Depth data.
-  float average_depth;
-  float depth_fps;
+  float pose_frame_delta_time;
+
+  float depth_average_length;
   float depth_frame_delta_time;
-  float previous_frame_time_;
-  
-  // Start service to opengl world matrix.
-  glm::mat4 ss_2_ow_mat;
+
+  uint32_t max_vertex_count;
+
   // Device to start service matrix.
   glm::mat4 d_2_ss_mat_depth;
   // Device to start service matrix.
@@ -83,18 +90,12 @@ class TangoData {
   glm::mat4 d_2_imu_mat;
   // Color camera to IMU matrix.
   glm::mat4 c_2_imu_mat;
-  
-  // Opengl camera to color camera matrix.
-  glm::mat4 oc_2_c_mat;
+
+  string event_string;
+  string lib_version_string;
+  string pose_string;
 private:
-  void SetExtrinsicsMatrics();
-  
-  TangoPoseData* motion_pose;
-  TangoConfig* config_;
-  double pointcloud_timestamp_;
-  float* depth_data_buffer_;
-  int depth_buffer_size_;
-  char pose_string_[200];
+  TangoConfig config_;
 };
 
 #endif  // TANGO_DATA_H
