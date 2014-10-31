@@ -23,16 +23,16 @@ static const char* getStatusStringFromStatusCode(TangoPoseStatusType status) {
   const char* status_string = nullptr;
   switch (status) {
     case TANGO_POSE_INITIALIZING:
-      status_string = "Initializing";
+      status_string = "initializing";
       break;
     case TANGO_POSE_VALID:
-      status_string = "Valid";
+      status_string = "valid";
       break;
     case TANGO_POSE_INVALID:
-      status_string = "Invalid";
+      status_string = "invalid";
       break;
     case TANGO_POSE_UNKNOWN:
-      status_string = "Unknown";
+      status_string = "unknown";
       break;
     default:
       break;
@@ -63,7 +63,7 @@ static void onXYZijAvailable(void*, const TangoXYZij* XYZ_ij) {
   // previous frame timestamp. prev_depth_timestamp used for querying
   // closest pose data. (See in UpdateXYZijData())
   TangoData::GetInstance().depth_frame_delta_time =
-      XYZ_ij->timestamp - prev_depth_timestamp;
+      (XYZ_ij->timestamp - prev_depth_timestamp) * kSecondToMillisecond;
   prev_depth_timestamp = XYZ_ij->timestamp;
 
   // Set xyz_ij dirty flag.
@@ -217,20 +217,21 @@ void TangoData::UpdatePoseData() {
 
   // Calculate frame delta time for debug display.
   // Note: this is the pose callback frame delta time.
-  pose_frame_delta_time = prev_pose_data.timestamp - cur_pose_data.timestamp;
+  pose_frame_delta_time = (cur_pose_data.timestamp - prev_pose_data.timestamp)
+                          * kSecondToMillisecond;
 
   // Build pose logging string for debug display.
   stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  string_stream.precision(2);
-  string_stream << "Status: "
+  string_stream.precision(3);
+  string_stream << "status: "
                 << getStatusStringFromStatusCode(cur_pose_data.status_code)
-                << " Count: " << pose_status_count
-                << " Delta Time(ms): " << pose_frame_delta_time
-                << " Position(m): [" << cur_pose_data.translation[0] << ", "
+                << ", count: " << pose_status_count
+                << ", delta time(ms): " << pose_frame_delta_time
+                << ", position(m): [" << cur_pose_data.translation[0] << ", "
                 << cur_pose_data.translation[1] << ", "
                 << cur_pose_data.translation[2] << "]"
-                << " Quat: [" << cur_pose_data.orientation[0] << ", "
+                << ", quat: [" << cur_pose_data.orientation[0] << ", "
                 << cur_pose_data.orientation[1] << ", "
                 << cur_pose_data.orientation[2] << ", "
                 << cur_pose_data.orientation[3] << "]";

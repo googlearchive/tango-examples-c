@@ -51,6 +51,12 @@ class GlUtil {
                               glm::quat& rotation, glm::vec3& scale);
   static glm::vec3 GetTranslationFromMatrix(glm::mat4& transform_mat);
   static float Clamp(float value, float min, float max);
+  static void PrintMatrix(glm::mat4 matrix);
+  static void PrintVector(glm::vec3 vector);
+  static const glm::mat4 ss_to_ow_mat;
+  static const glm::mat4 oc_to_c_mat;
+  static const glm::mat4 oc_to_d_mat;
+
  private:
   static GLuint LoadShader(GLenum shader_type, const char* shader_source);
 };

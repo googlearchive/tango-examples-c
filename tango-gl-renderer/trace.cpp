@@ -16,14 +16,20 @@
 
 #include "trace.h"
 
-static const char kVertexShader[] = "attribute vec4 vertex;\n"
-    "uniform mat4 mvp;\n"
+static const char kVertexShader[] =
+    "attribute vec4 vertex;\n"
+    "uniform mat4 mvp_matrix;\n"
+    "uniform vec4 color;\n"
+    "varying vec4 v_color;\n"
     "void main() {\n"
-    "  gl_Position = mvp*vertex;\n"
+    "  gl_Position = mvp_matrix*vertex;\n"
+    "  v_color = color;\n"
     "}\n";
 
-static const char kFragmentShader[] = "void main() {\n"
-    "  gl_FragColor = vec4(1,0,0,1);\n"
+static const char kFragmentShader[] =
+    "varying vec4 v_color;\n"
+    "void main() {\n"
+    "  gl_FragColor = v_color;\n"
     "}\n";
 
 static const int kMaxTraceLength = 5000;
@@ -34,13 +40,19 @@ Trace::Trace() {
   if (!shader_program_) {
     LOGE("Could not create program.");
   }
-  uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
+
+  uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp_matrix");
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
+  uniform_color_ = glGetUniformLocation(shader_program_, "color");
   vertices_.reserve(kMaxTraceLength);
   vertices_count_ = 0;
 }
 
-void Trace::UpdateVertexArray(glm::vec3 v) {
+void Trace::SetTraceColor(const float color[4]) {
+  memcpy(trace_color_, color, 4 * sizeof(float));
+}
+
+void Trace::UpdateVertexArray(const glm::vec3 v) {
   float dist = glm::distance(vertices_[vertices_count_-1], v);
   if (dist < kDistanceCheck)
     return;
@@ -48,12 +60,17 @@ void Trace::UpdateVertexArray(glm::vec3 v) {
   ++vertices_count_;
 }
 
-void Trace::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+void Trace::ClearVertexArray() { vertices_.clear(); }
+
+void Trace::Render(const glm::mat4 projection_mat, const glm::mat4 view_mat) {
   glUseProgram(shader_program_);
   glLineWidth(3.0f);
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+
+  glUniform4f(uniform_color_, trace_color_[0], trace_color_[1], trace_color_[2],
+              trace_color_[3]);
 
   glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE,
@@ -63,3 +80,5 @@ void Trace::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glLineWidth(1.0f);
   glUseProgram(0);
 }
+
+Trace::~Trace() { glDeleteShader(shader_program_); }

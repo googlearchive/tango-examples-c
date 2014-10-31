@@ -48,8 +48,11 @@ Frustum* frustum;
 // Ground grid.
 Grid* grid;
 
-// Trace of pose data.
-Trace* trace;
+// Trace of motion tracking.
+Trace* trace_motion;
+
+// Trace of ADF.
+Trace* trace_adf;
 
 // Single finger touch positional values.
 // First element in the array is x-axis touching position.
@@ -94,6 +97,44 @@ const float kCamViewMaxDist = 100.f;
 const float kHighFov = 65.0f;
 const float kLowFov = 45.0f;
 
+// Color of the motion tracking trajectory.
+const float kTraceMotionColor[] = {0.22f, 0.28f, 0.67f, 1.0f};
+// Color of the motion tracking trajectory.
+const float kTraceADFColor[] = {0.39f, 0.56f, 0.03f, 1.0f};
+
+// Frustum scale.
+const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
+
+// Set camera type, set render camera's parent position and rotation.
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
+  switch (camera_index) {
+    case CameraType::FIRST_PERSON:
+      cam->SetFieldOfView(kLowFov);
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
+      break;
+    case CameraType::THIRD_PERSON:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -PI / 4.0f;
+      cam_cur_angle[1] = PI / 4.0f;
+      break;
+    case CameraType::TOP_DOWN:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = PI / 2.0f;
+      break;
+    default:
+      break;
+  }
+}
+
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
 
@@ -104,12 +145,23 @@ bool SetupGraphics(int w, int h) {
   cam = new Camera();
   axis = new Axis();
   frustum = new Frustum();
-  trace = new Trace();
+  trace_motion = new Trace();
+  trace_adf = new Trace();
   grid = new Grid();
+
+  frustum->SetScale(kFrustumScale);
 
   // Set the parent-child camera transfromation.
   cam->SetParent(cam_parent_transform);
   cam->SetAspectRatio((float) (w / h));
+
+  SetCamera(CameraType::THIRD_PERSON);
+
+  // Set trace's color to show motion tracking trajectory.
+  trace_motion->SetTraceColor(kTraceMotionColor);
+
+  // Set trace's color to show motion tracking trajectory.
+  trace_adf->SetTraceColor(kTraceADFColor);
   return true;
 }
 
@@ -136,6 +188,10 @@ bool RenderFrame() {
       TangoData::GetInstance().tango_position[pose_index]);
   glm::quat rotation = GlUtil::ConvertRotationToOpenGL(
       TangoData::GetInstance().tango_rotation[pose_index]);
+  glm::vec3 position_motion = GlUtil::ConvertPositionToOpenGL(
+      TangoData::GetInstance().tango_position[0]);
+  glm::vec3 position_adf = GlUtil::ConvertPositionToOpenGL(
+      TangoData::GetInstance().tango_position[1]);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 
   if (camera_type == CameraType::FIRST_PERSON) {
@@ -166,42 +222,16 @@ bool RenderFrame() {
     axis->SetRotation(rotation);
     axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   }
-  
-  trace->UpdateVertexArray(position);
-  trace->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
-  return true;
-}
 
-// Set camera type, set render camera's parent position and rotation.
-void SetCamera(CameraType camera_index) {
-  camera_type = camera_index;
-  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
-  switch (camera_index) {
-    case CameraType::FIRST_PERSON:
-      cam->SetFieldOfView(kLowFov);
-      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
-      break;
-    case CameraType::THIRD_PERSON:
-      cam->SetFieldOfView(kHighFov);
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -PI / 4.0f;
-      cam_cur_angle[1] = PI / 4.0f;
-      break;
-    case CameraType::TOP_DOWN:
-      cam->SetFieldOfView(kHighFov);
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = PI / 2.0f;
-      break;
-    default:
-      break;
+  if (TangoData::GetInstance().is_relocalized) {
+    trace_adf->UpdateVertexArray(position_adf);
+  } else {
+    trace_motion->UpdateVertexArray(position_motion);
   }
+  trace_adf->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+  trace_motion->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+
+  return true;
 }
 
 #ifdef __cplusplus
@@ -252,7 +282,8 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(JNIEnv*,
   delete axis;
   delete grid;
   delete frustum;
-  delete trace;
+  delete trace_adf;
+  delete trace_motion;
 }
 
 JNIEXPORT void JNICALL
@@ -283,60 +314,100 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(JNIEnv*,
 JNIEXPORT jstring JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(JNIEnv* env,
                                                                    jobject) {
-  return (env)->NewStringUTF(TangoData::GetInstance().cur_uuid.c_str());
+  return env->NewStringUTF(TangoData::GetInstance().cur_uuid.c_str());
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetAllUUIDs(
+    JNIEnv* env, jobject) {
+  return env->NewStringUTF(TangoData::GetInstance().GetAllUUIDs());
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUIDMetadataValue(
+    JNIEnv* env, jobject, jstring uuid, jstring metadata_key) {
+  const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
+  const char* metadata_key_ = env->GetStringUTFChars(metadata_key, NULL);
+  return env->NewStringUTF(
+      TangoData::GetInstance().GetUUIDMetadataValue(uuid_, metadata_key_));
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_SetUUIDMetadataValue(
+    JNIEnv* env, jobject, jstring uuid, jstring metadata_key, jint value_size,
+    jstring metadata_value) {
+  const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
+  const char* metadata_key_ = env->GetStringUTFChars(metadata_key, NULL);
+  const char* metadata_value_ = env->GetStringUTFChars(metadata_value, NULL);
+  TangoData::GetInstance().SetUUIDMetadataValue(uuid_, metadata_key_,
+                                                value_size, metadata_value_);
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_DeleteADF(
+    JNIEnv* env, jobject, jstring uuid) {
+  const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
+  TangoData::GetInstance().DeleteADF(uuid_);
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
     JNIEnv* env, jobject, int index) {
+  stringstream string_stream;
+  if (TangoData::GetInstance().current_pose_status[index] == -4) {
+    string_stream
+        << "Status: N/A, count: N/A, delta time (ms): N/A, position (m): "
+           "N/A, quat: N/A";
+    return env->NewStringUTF(string_stream.str().c_str());
+  }
+
   const char* status;
   switch (TangoData::GetInstance().current_pose_status[index]) {
     case TANGO_POSE_INITIALIZING:
-      status = "Initializing";
+      status = "initializing";
       break;
     case TANGO_POSE_VALID:
-      status = "Valid";
+      status = "valid";
       break;
     case TANGO_POSE_INVALID:
-      status = "Invalid";
+      status = "invalid";
       break;
     case TANGO_POSE_UNKNOWN:
-      status = "Unknown";
+      status = "unknown";
       break;
     default:
-      status = "Status_Code_Invalid";
+      status = "status_code_invalid";
       break;
   }
 
-  stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  string_stream.precision(2);
+  string_stream.precision(3);
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
-  string_stream << "Status: " << status
-                << " Count: " << TangoData::GetInstance().frame_count[index]
-                << " Delta Time(ms): "
+  string_stream << "status: " << status
+                << ", count: " << TangoData::GetInstance().frame_count[index]
+                << ", delta time (ms): "
                 << TangoData::GetInstance().frame_delta_time[index]
-                << " Position(m): ["
+                << ", position (m): ["
                 << TangoData::GetInstance().tango_position[index].x << ", "
                 << TangoData::GetInstance().tango_position[index].y << ", "
                 << TangoData::GetInstance().tango_position[index].z << "]"
-                << " Quat: ["
+                << ", quat: ["
                 << TangoData::GetInstance().tango_rotation[index].x << ", "
                 << TangoData::GetInstance().tango_rotation[index].y << ", "
                 << TangoData::GetInstance().tango_rotation[index].z << ", "
                 << TangoData::GetInstance().tango_rotation[index].w << "]";
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
-  return (env)->NewStringUTF(string_stream.str().c_str());
+  return env->NewStringUTF(string_stream.str().c_str());
 }
 
 JNIEXPORT jstring JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
     JNIEnv* env, jobject) {
   if (TangoData::GetInstance().lib_version_string.empty()) {
-    return (env)->NewStringUTF("No version string available.");
+    return env->NewStringUTF("No version string available.");
   } else {
-    return (env)
-        ->NewStringUTF(TangoData::GetInstance().lib_version_string.c_str());
+    return env->NewStringUTF(
+        TangoData::GetInstance().lib_version_string.c_str());
   }
 }
 
@@ -344,15 +415,15 @@ JNIEXPORT jstring JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
     JNIEnv* env, jobject) {
   if (TangoData::GetInstance().event_string.empty()) {
-    return (env)->NewStringUTF("No event string available.");
+    return env->NewStringUTF("No event string available.");
   } else {
     pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
     string event_string_cpy = TangoData::GetInstance().event_string;
     pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
-    return (env)->NewStringUTF(event_string_cpy.c_str());
+    return env->NewStringUTF(event_string_cpy.c_str());
   }
 }
-  
+
 // Touching GL interface.
 JNIEXPORT void JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(

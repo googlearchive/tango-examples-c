@@ -22,7 +22,7 @@ LOCAL_EXPORT_C_INCLUDES := ../tango-service-sdk/include
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE    := libtango-native-jni
+LOCAL_MODULE    := libhello_tango_jni_example
 LOCAL_SHARED_LIBRARIES := libtango-prebuilt libtangogl
 LOCAL_CFLAGS    := -Werror
 LOCAL_SRC_FILES := jni/tango_native.c

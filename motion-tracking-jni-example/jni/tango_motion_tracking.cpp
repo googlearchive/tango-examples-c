@@ -91,6 +91,42 @@ const float kCamViewMaxDist = 100.f;
 const float kHighFov = 65.0f;
 const float kLowFov = 45.0f;
 
+// Color of the motion tracking trajectory.
+const float kTraceColor[] = {0.22f, 0.28f, 0.67f, 1.0f};
+
+// Frustum scale.
+const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
+
+// Set camera type, set render camera's parent position and rotation.
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
+  switch (camera_index) {
+    case CameraType::FIRST_PERSON:
+      cam->SetFieldOfView(kLowFov);
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
+      break;
+    case CameraType::THIRD_PERSON:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -PI / 4.0f;
+      cam_cur_angle[1] = PI / 4.0f;
+      break;
+    case CameraType::TOP_DOWN:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = PI / 2.0f;
+      break;
+    default:
+      break;
+  }
+}
+
 bool SetupGraphics(int w, int h) {
   LOGI("setupGraphics(%d, %d)", w, h);
 
@@ -106,9 +142,17 @@ bool SetupGraphics(int w, int h) {
   trace = new Trace();
   grid = new Grid();
 
+  frustum->SetScale(kFrustumScale);
+
+  // Set trace's color to show motion tracking trajectory.
+  trace->SetTraceColor(kTraceColor);
+
   // Set the parent-child camera transfromation.
   cam->SetParent(cam_parent_transform);
   cam->SetAspectRatio((float) (w / h));
+
+  SetCamera(CameraType::THIRD_PERSON);
+
   return true;
 }
 
@@ -169,42 +213,12 @@ bool RenderFrame() {
   return true;
 }
 
-// Set camera type, set render camera's parent position and rotation.
-void SetCamera(CameraType camera_index) {
-  camera_type = camera_index;
-  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
-  switch (camera_index) {
-    case CameraType::FIRST_PERSON:
-      cam->SetFieldOfView(kLowFov);
-      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
-      break;
-    case CameraType::THIRD_PERSON:
-      cam->SetFieldOfView(kHighFov);
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -PI / 4.0f;
-      cam_cur_angle[1] = PI / 4.0f;
-      break;
-    case CameraType::TOP_DOWN:
-      cam->SetFieldOfView(kHighFov);
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = PI / 2.0f;
-      break;
-    default:
-      break;
-  }
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 JNIEXPORT jint JNICALL
 Java_com_projecttango_motiontrackingnative_TangoJNINative_Initialize(
-    JNIEnv* env, jobject obj, jobject activity) {
+    JNIEnv* env, jobject, jobject activity) {
   TangoErrorType err = TangoData::GetInstance().Initialize(env, activity);
   if (err != TANGO_SUCCESS) {
     if (err == TANGO_INVALID) {
@@ -217,7 +231,7 @@ Java_com_projecttango_motiontrackingnative_TangoJNINative_Initialize(
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupConfig(
-    JNIEnv* env, jobject obj, bool isAutoReset) {
+    JNIEnv*, jobject, bool isAutoReset) {
   if (!TangoData::GetInstance().SetConfig(isAutoReset))
   {
     LOGE("Tango set config failed");
@@ -225,8 +239,8 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_Connect(JNIEnv* env,
-                                                                  jobject obj) {
+Java_com_projecttango_motiontrackingnative_TangoJNINative_Connect(JNIEnv*,
+                                                                  jobject) {
 
   TangoErrorType err = TangoData::GetInstance().Connect();
   if (err != TANGO_SUCCESS) {
@@ -237,12 +251,12 @@ Java_com_projecttango_motiontrackingnative_TangoJNINative_Connect(JNIEnv* env,
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_motiontrackingnative_TangoJNINative_Disconnect(
-    JNIEnv* env, jobject obj) {
+    JNIEnv*, jobject) {
   TangoData::GetInstance().Disconnect();
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_OnDestroy(
-    JNIEnv* env, jobject obj) {
+    JNIEnv*, jobject) {
   delete cam;
   delete axis;
   delete grid;
@@ -251,28 +265,28 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupGraphic(
-    JNIEnv* env, jobject obj, jint width, jint height) {
+    JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_Render(
-    JNIEnv* env, jobject obj) {
+    JNIEnv*, jobject) {
   RenderFrame();
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_ResetMotionTracking(
-    JNIEnv* env, jobject obj) {
+    JNIEnv*, jobject) {
   TangoData::GetInstance().ResetMotionTracking();
   LOGI("Reset Tango Motion Tracking");
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCamera(
-    JNIEnv* env, jobject obj, int camera_index) {
+    JNIEnv*, jobject, int camera_index) {
   SetCamera((CameraType)camera_index);
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetPoseString(
-    JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject) {
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
   string pose_string_cpy = string(TangoData::GetInstance().pose_string);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
@@ -280,7 +294,7 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINat
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetEventString(
-    JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject) {
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
   string event_string_cpy = string(TangoData::GetInstance().event_string);
   pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
@@ -288,21 +302,21 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINat
 }
 
 JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetVersionNumber(
-    JNIEnv* env, jobject obj) {
+    JNIEnv* env, jobject) {
   return (env)
       ->NewStringUTF(TangoData::GetInstance().lib_version_string.c_str());
 }
 
 // Touching GL interface.
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_StartSetCameraOffset(
-    JNIEnv* env, jobject obj) {
+    JNIEnv*, jobject) {
   cam_start_angle[0] = cam_cur_angle[0];
   cam_start_angle[1] = cam_cur_angle[1];
   cam_start_dist = cam->GetPosition().z;
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCameraOffset(
-    JNIEnv* env, jobject obj, float rotation_x, float rotation_y, float dist) {
+    JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
   cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
   cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
   dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,

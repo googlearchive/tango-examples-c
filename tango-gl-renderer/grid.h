@@ -22,13 +22,14 @@
 
 class Grid : public DrawableObject {
  public:
-  Grid(float density = 1.0f, int quantity = 50);
+  Grid(float density = 1.0f, int qx = 50, int qy = 50);
   ~Grid();
   void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
  private:
   float* vertices_;
   float density_;
-  int quantity_;
+  int quantity_x_;
+  int quantity_y_;
   int traverse_len_;
 
   GLuint vertex_buffer_;

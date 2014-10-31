@@ -18,32 +18,62 @@ package com.projecttango.hellotangonative;
 
 import com.google.tango.hellotangojni.R;
 
-import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
+import android.widget.Toast;
+import android.os.Bundle;
 
 public class HelloTangoActivity extends Activity {
+  public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
+  public static final String EXTRA_VALUE_MOTION_TRACKING = "MOTION_TRACKING_PERMISSION";
 
-	TangoJNINative tangoJNINative;
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		TangoJNINative.onCreate();
-	}
-	
-	@Override
-	protected void onResume()
-	{
-		super.onResume();
-		TangoJNINative.onResume();
-	}
 
-	@Override
-	protected void onPause()
-	{
-		super.onPause();
-		TangoJNINative.onPause();
-	}
+  private boolean mIsPermissionIntentCalled = false;
+
+  TangoJNINative tangoJNINative;
+  
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+  }
+  
+  @Override
+  protected void onResume()
+  {
+    super.onResume();
+    if (!mIsPermissionIntentCalled) {
+      Intent intent = new Intent();
+      intent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
+      intent.putExtra(EXTRA_KEY_PERMISSIONTYPE, EXTRA_VALUE_MOTION_TRACKING);
+      startActivityForResult(intent, 0);
+    }
+  }
+
+  @Override
+  protected void onPause()
+  {
+    super.onPause();
+    TangoJNINative.Disconnect();
+    mIsPermissionIntentCalled = false;
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    // Check which request we're responding to.
+    if (requestCode == 0) {
+        // Make sure the request was successful.
+        if (resultCode == RESULT_CANCELED ) {
+          Toast.makeText(this, 
+            "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
+          finish();
+        } else {
+          TangoJNINative.Initialize(this);
+          TangoJNINative.SetupConfig();
+          TangoJNINative.Connect();
+          mIsPermissionIntentCalled = true;
+        }
+    }
+  }
 
 }

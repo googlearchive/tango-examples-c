@@ -69,14 +69,64 @@ enum CameraType {
 };
 CameraType camera_type;
 
-const glm::vec3 kHeightOffset = glm::vec3(0.0f, -1.3f, 0.0f);
+// Render and camera controlling constant values.
+// Height offset is used for offset height of motion tracking
+// pose data. Motion tracking start position is (0,0,0). Adding
+// a height offset will give a more reasonable pose while a common
+// human is holding the device. The units is in meters.
+const glm::vec3 kHeightOffset = glm::vec3(0.0f, 1.3f, 0.0f);
+
+// Render camera observation distance in third person camera mode.
 const float kThirdPersonCameraDist = 7.0f;
+
+// Render camera observation distance in top down camera mode.
 const float kTopDownCameraDist = 5.0f;
+
+// Zoom in speed.
 const float kZoomSpeed = 10.0f;
+
+// Min/max clamp value of camera observation distance.
 const float kCamViewMinDist = 1.0f;
 const float kCamViewMaxDist = 100.f;
+
+// FOV set up values.
+// Third and top down camera's FOV is 65 degrees.
+// First person camera's FOV is 45 degrees.
 const float kHighFov = 65.0f;
 const float kLowFov = 45.0f;
+
+// Frustum scale.
+const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
+
+// Set camera type, set render camera's parent position and rotation.
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
+  switch (camera_index) {
+    case CameraType::FIRST_PERSON:
+      cam->SetFieldOfView(kLowFov);
+      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
+      break;
+    case CameraType::THIRD_PERSON:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -PI / 4.0f;
+      cam_cur_angle[1] = PI / 4.0f;
+      break;
+    case CameraType::TOP_DOWN:
+      cam->SetFieldOfView(kHighFov);
+      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = PI / 2.0f;
+      break;
+    default:
+      break;
+  }
+}
 
 bool SetupGraphics(int w, int h) {
   screen_width = w;
@@ -90,7 +140,9 @@ bool SetupGraphics(int w, int h) {
   axis = new Axis();
   grid = new Grid();
   cam_parent_transform = new Transform();
-  
+
+  frustum->SetScale(kFrustumScale);
+
   // Set the parent-child camera transfromation.
   cam->SetParent(cam_parent_transform);
   
@@ -100,6 +152,8 @@ bool SetupGraphics(int w, int h) {
   // Put the grid at the resonable height since the motion
   // tracking pose always starts at (0, 0, 0).
   grid->SetPosition(kHeightOffset);
+
+  SetCamera(CameraType::THIRD_PERSON);
 
   glEnable (GL_DEPTH_TEST);
   glEnable (GL_CULL_FACE);
@@ -167,6 +221,7 @@ bool RenderFrame() {
     cam_parent_transform->SetPosition(GlUtil::GetTranslationFromMatrix(oc_2_ow_mat_motion));
 
     frustum->SetTransformationMatrix(oc_2_ow_mat_motion);
+    frustum->SetScale(kFrustumScale);
     frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
     // Set camera view distance, based on touch interaction.
@@ -183,38 +238,10 @@ bool RenderFrame() {
                      TangoData::GetInstance().depth_buffer_size * 3,
                      (float*)TangoData::GetInstance().depth_buffer);
 
+  grid->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f) - kHeightOffset);
   // Render grid.
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
   return true;
-}
-
-// Set camera type, set render camera's parent position and rotation.
-void SetCamera(CameraType camera_index) {
-  camera_type = camera_index;
-  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
-  switch (camera_index) {
-    case CameraType::FIRST_PERSON:
-      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
-      break;
-    case CameraType::THIRD_PERSON:
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -3.14f / 4.0f;
-      cam_cur_angle[1] = 3.14f / 4.0f;
-      break;
-    case CameraType::TOP_DOWN:
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = 3.14f / 2.0f;
-      break;
-    default:
-      break;
-  }
 }
 
 #ifdef __cplusplus

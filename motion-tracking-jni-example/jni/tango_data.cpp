@@ -27,26 +27,26 @@ static const char* getStatusStringFromStatusCode(TangoPoseStatusType status) {
   const char* ret_string;
   switch (status) {
     case TANGO_POSE_INITIALIZING:
-      ret_string = "Initializing";
+      ret_string = "initializing";
       break;
     case TANGO_POSE_VALID:
-      ret_string = "Valid";
+      ret_string = "valid";
       break;
     case TANGO_POSE_INVALID:
-      ret_string = "Invalid";
+      ret_string = "invalid";
       break;
     case TANGO_POSE_UNKNOWN:
-      ret_string = "Unknown";
+      ret_string = "unknown";
       break;
     default:
-      ret_string = "Status_Code_Invalid";
+      ret_string = "status_code_invalid";
       break;
   }
   return ret_string;
 }
 
 // This callback function is called when new POSE updates become available.
-static void onPoseAvailable(void* context, const TangoPoseData* pose) {
+static void onPoseAvailable(void*, const TangoPoseData* pose) {
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
   // Update Tango pose data.
   TangoData::GetInstance().tango_position =
@@ -76,15 +76,15 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 
   stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  string_stream.precision(2);
-  string_stream << "Status: "
+  string_stream.precision(3);
+  string_stream << "status: "
                 << getStatusStringFromStatusCode(pose->status_code)
-                << " Count: " << TangoData::GetInstance().pose_status_count
-                << " Delta Time(ms): "
+                << ", count: " << TangoData::GetInstance().pose_status_count
+                << ", delta time (ms): "
                 << TangoData::GetInstance().frame_delta_time
-                << " Position(m): [" << pose->translation[0] << ", "
+                << ", position (m): [" << pose->translation[0] << ", "
                 << pose->translation[1] << ", " << pose->translation[2] << "]"
-                << " Quat: [" << pose->orientation[0] << ", "
+                << ", quat: [" << pose->orientation[0] << ", "
                 << pose->orientation[1] << ", " << pose->orientation[2] << ", "
                 << pose->orientation[3] << "]";
   TangoData::GetInstance().pose_string = string_stream.str();
@@ -92,7 +92,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 }
 
 // Tango event callback.
-static void onTangoEvent(void* context, const TangoEvent* event) {
+static void onTangoEvent(void*, const TangoEvent* event) {
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
   // Update the status string for debug display.
   stringstream string_stream;
@@ -124,7 +124,7 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
   // Note that the auto-recovery is on by default.
   if (TangoConfig_setBool(config_, "config_enable_auto_recovery",
                           is_auto_recovery) != TANGO_SUCCESS) {
-    LOGE("config_enable_auto_recovery(): Failed");
+    LOGE("config_enable_auto_recovery() failed");
     return false;
   }
 
@@ -135,9 +135,9 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
 
   // Attach onPoseAvailable callback.
   // The callback will be called after the service is connected.
-  if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
-      != TANGO_SUCCESS) {
-    LOGE("TangoService_connectOnPoseAvailable(): Failed");
+  if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoService_connectOnPoseAvailable(): failed");
     return false;
   }
 

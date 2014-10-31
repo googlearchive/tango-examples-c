@@ -26,15 +26,25 @@
 class Trace : public DrawableObject {
  public:
   Trace();
-  void UpdateVertexArray(glm::vec3 v);
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  Trace(const Trace& other) = delete;
+  Trace& operator=(const Trace&) = delete;
+  ~Trace();
+ 
+  void SetTraceColor(const float color[4]);
+  void UpdateVertexArray(const glm::vec3 v);
+  void ClearVertexArray();
+  void Render(const glm::mat4 projection_mat, const glm::mat4 view_mat);
+ 
  private:
   std::vector<glm::vec3> vertices_;
+  float trace_color_[4];
+
   int vertices_count_;
   
   GLuint shader_program_;
   GLuint attrib_vertices_;
   GLuint uniform_mvp_mat_;
+  GLuint uniform_color_;
 };
 
 #endif  // TRACE_H

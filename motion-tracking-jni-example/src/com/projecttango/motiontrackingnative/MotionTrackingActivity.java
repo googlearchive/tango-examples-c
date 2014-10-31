@@ -197,7 +197,6 @@ public class MotionTrackingActivity extends Activity implements
 
 				TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
 						touchCurDist / screenDiagnal);
-				Log.i("tango_jni", String.valueOf(touchCurDist / screenDiagnal));
 				break;
 			}
 			}

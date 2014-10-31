@@ -27,12 +27,13 @@ static const char kFragmentShader[] =
 "  gl_FragColor = vec4(0.85f,0.85f,0.85f,1);\n"
 "}\n";
 
-Grid::Grid(float density, int quantity) {
-  // Distance between two lines is 0.2f.
+// Initialize Grid with x and y grid count,
+// qx, quantity in x
+// qy, quantity in y.
+Grid::Grid(float density, int qx, int qy) {
   density_ = density;
-  
-  // 100 horizontal lines and 100 vertical lines.
-  quantity_ = quantity;
+  quantity_x_ = qx;
+  quantity_y_ = qy;
 
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
   if (!shader_program_) {
@@ -47,33 +48,34 @@ Grid::Grid(float density, int quantity) {
   
   // 3 float in 1 vertex, 2 vertices form a line.
   // Horizontal line and vertical line forms the grid.
-  traverse_len_ = ((quantity_ * 3) * 2) * 2;
+  traverse_len_ = (((quantity_x_ + quantity_y_ + 2) * 3) * 2);
   vertices_ = new float[traverse_len_];
-  float width = density_ * quantity_ / 2;
+  float width = density_ * quantity_x_ / 2;
+  float height = density_ * quantity_y_ / 2;
 
   // Horizontal line.
-  for (int i = 0; i < traverse_len_ / 2; i += 6) {
+  for (int i = 0; i < (quantity_y_ + 1) * 6; i += 6) {
     vertices_[i] = -width;
     vertices_[i + 1] = 0.0f;
-    vertices_[i + 2] = -width + counter * density_;
+    vertices_[i + 2] = -height + counter * density_;
 
     vertices_[i + 3] = width;
     vertices_[i + 4] = 0.0f;
-    vertices_[i + 5] = -width + counter * density_;
+    vertices_[i + 5] = -height + counter * density_;
 
     ++counter;
   }
 
   // Vertical line.
   counter = 0;
-  for (int i = traverse_len_ / 2; i < traverse_len_; i += 6) {
+  for (int i = (quantity_y_ + 1) * 6; i < traverse_len_; i += 6) {
     vertices_[i] = -width + counter * density_;
     vertices_[i + 1] = 0.0f;
-    vertices_[i + 2] = -width;
+    vertices_[i + 2] = -height;
 
     vertices_[i + 3] = -width + counter * density_;
     vertices_[i + 4] = 0.0f;
-    vertices_[i + 5] = width;
+    vertices_[i + 5] = height;
 
     ++counter;
   }
@@ -105,3 +107,4 @@ void Grid::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
 Grid::~Grid() {
   delete[] vertices_;
 }
+

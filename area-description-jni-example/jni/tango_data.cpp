@@ -19,6 +19,11 @@ using namespace std;
 
 TangoData::TangoData()
     : config_(nullptr) {
+  for (int i = 0; i < 4; i++) {
+    current_pose_status[i] = -4;
+    prev_pose_status[i] = -4;
+  }
+  is_relocalized = false;
 }
 
 // This callback function is called when new pose updates become available.
@@ -40,6 +45,11 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
       && pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE) {
     current_index = 2;
+    if (pose->status_code == TANGO_POSE_VALID) {
+      TangoData::GetInstance().is_relocalized = true;
+    } else {
+      TangoData::GetInstance().is_relocalized = false;
+    }
   }
   // Set pose for device wrt previous pose.
   else if (pose->frame.base == TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE
@@ -59,16 +69,19 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
       pose->orientation[2]);
 
   // Calculate delta frame time.
-  TangoData::GetInstance().frame_delta_time[current_index] = pose->timestamp - TangoData::GetInstance().prev_frame_time[current_index];
+  TangoData::GetInstance().frame_delta_time[current_index] =
+      (pose->timestamp -
+       TangoData::GetInstance().prev_frame_time[current_index]) *
+      kSecondToMillisecond;
   TangoData::GetInstance().prev_frame_time[current_index] = pose->timestamp;
 
   // Set/reset frame counter.
-  if (pose->status_code == TANGO_POSE_VALID) {
-    ++TangoData::GetInstance().frame_count[current_index];
-  }
-  else {
+  if (pose->status_code !=
+      TangoData::GetInstance().prev_pose_status[current_index]) {
     TangoData::GetInstance().frame_count[current_index] = 0;
   }
+  TangoData::GetInstance().prev_pose_status[current_index] = pose->status_code;
+  ++TangoData::GetInstance().frame_count[current_index];
 
   // Set pose status.
   TangoData::GetInstance().current_pose_status[current_index] = (int) pose
@@ -206,6 +219,52 @@ bool TangoData::SaveADF() {
 // Disconnect Tango Service.
 void TangoData::Disconnect() {
   TangoService_disconnect();
+}
+
+char* TangoData::GetAllUUIDs() {
+  char* uuid;
+  if (TangoService_getAreaDescriptionUUIDList(&uuid) != TANGO_SUCCESS) {
+    LOGI("TangoService_getAreaDescriptionUUIDList");
+  }
+  return uuid;
+}
+
+char* TangoData::GetUUIDMetadataValue(const char* uuid, const char* key) {
+  size_t size = 0;
+  char* name;
+  TangoAreaDescriptionMetadata metadata;
+  // Set the event callback listener.
+  if (TangoService_getAreaDescriptionMetadata(uuid, &metadata) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoService_getAreaDescriptionMetadata(): Failed");
+  }
+  if (TangoAreaDescriptionMetadata_get(metadata, key, &size, &name) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoAreaDescriptionMetadata_get(): Failed");
+  }
+  return name;
+}
+
+void TangoData::SetUUIDMetadataValue(const char* uuid, const char* key,
+                                     int value_size, const char* value) {
+  char* name;
+  TangoAreaDescriptionMetadata metadata;
+  if (TangoService_getAreaDescriptionMetadata(uuid, &metadata) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoService_getAreaDescriptionMetadata(): Failed");
+  }
+  if (TangoAreaDescriptionMetadata_set(metadata, key, value_size, value) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoAreaDescriptionMetadata_set(): Failed");
+  }
+  if (TangoService_saveAreaDescriptionMetadata(uuid, metadata) !=
+      TANGO_SUCCESS) {
+    LOGE("TangoService_saveAreaDescriptionMetadata(): Failed");
+  }
+}
+
+void TangoData::DeleteADF(const char* uuid) {
+  TangoService_deleteAreaDescription(uuid);
 }
 
 void TangoData::LogAllUUIDs() {

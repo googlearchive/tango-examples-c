@@ -25,9 +25,12 @@
 #include "tango_client_api.h"
 #include "gl_util.h"
 
+const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
+const float kSecondToMillisecond = 1000.0f;
 
 using namespace std;
+
 class TangoData {
  public:
   static TangoData& GetInstance() {
@@ -42,6 +45,12 @@ class TangoData {
   void Disconnect();
 
   bool SaveADF();
+  char* GetAllUUIDs();
+  char* GetUUIDMetadataValue(const char* uuid, const char* key);
+  void SetUUIDMetadataValue(const char* uuid, const char* key, int value_size,
+                            const char* value);
+  void DeleteADF(const char* uuid);
+
   void LogAllUUIDs();
 
   pthread_mutex_t pose_mutex;
@@ -53,10 +62,14 @@ class TangoData {
   // Index 3: adf with respect to start frame.
   glm::vec3 tango_position[4];
   glm::quat tango_rotation[4];
+
+  int prev_pose_status[4];
   int current_pose_status[4];
   float frame_delta_time[4];
   float prev_frame_time[4];
   int frame_count[4];
+
+  bool is_relocalized;
 
   string cur_uuid;
   string event_string;

@@ -21,7 +21,7 @@ public class TangoJNINative {
 		System.loadLibrary("area_description_jni_example");
 	}
 
-	public static native int Initialize(AreaDescriptionActivity activity);
+	public static native int Initialize(Object activity);
 
 	public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
 	
@@ -42,6 +42,14 @@ public class TangoJNINative {
 	public static native boolean SaveADF();
 
 	public static native String GetUUID();
+
+	public static native String GetAllUUIDs();
+
+	public static native String GetUUIDMetadataValue(String uuid, String key);
+
+	public static native void SetUUIDMetadataValue(String uuid, String key, int size, String value);
+
+	public static native void DeleteADF(String uuid);
 
 	public static native String GetPoseString(int index);
 	

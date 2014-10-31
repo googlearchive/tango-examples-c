@@ -16,6 +16,19 @@
 
 #include "gl_util.h"
 
+const glm::mat4 GlUtil::ss_to_ow_mat =
+    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+              0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+const glm::mat4 GlUtil::oc_to_c_mat =
+    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+              -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+const glm::mat4 GlUtil::oc_to_d_mat =
+    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0, cos(13 * 3.14f / 180.0f),
+              sin(13 * 3.14f / 180.0f), 0, 0, -sin(13 * 3.14f / 180.0f),
+              cos(13 * 3.14f / 180.0f), 0, 0.0f, 0.0f, 0.0f, 1.0f);
+
 void GlUtil::CheckGlError(const char* operation) {
   for (GLint error = glGetError(); error; error = glGetError()) {
     LOGI("after %s() glError (0x%x)\n", operation, error);
@@ -164,4 +177,18 @@ glm::vec3 GlUtil::GetTranslationFromMatrix(glm::mat4& transform_mat) {
 
 float GlUtil::Clamp(float value, float min, float max) {
   return value < min ? min : (value > max ? max : value);
+}
+
+// Print out a column major matrix.
+void GlUtil::PrintMatrix(glm::mat4 matrix) {
+  int i;
+  for (i = 0; i < 4; i++) {
+    LOGI("%f,%f,%f,%f", matrix[0][i], matrix[1][i], matrix[2][i], matrix[3][i]);
+  }
+  LOGI(" ");
+}
+
+void GlUtil::PrintVector(glm::vec3 vector) {
+  LOGI("%f,%f,%f", vector[0], vector[1], vector[2]);
+  LOGI(" ");
 }

@@ -32,6 +32,8 @@ class Transform {
   void SetScale(glm::vec3 scale);
   glm::vec3 GetScale();
 
+  void Translate(glm::vec3 translation);
+
   // To be implemented.
   void SetTransformationMatrix(glm::mat4 transform_mat);
   glm::mat4 GetTransformationMatrix();

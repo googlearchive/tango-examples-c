@@ -15,24 +15,19 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango-PointCloud Native</string>
-    <string name="vertex_count">Number of Points:</string>
-    <string name="serviceversion">Service Version:</string>
-    <string name="appversion">App Version:</string>
-    <string name="tangoevent">Tango System Event:</string>
-    <string name="start2device">Target->Device, Base->Start:</string>
-    <string name="posecount">, Count :</string>
-    <string name="status">Status :</string>
-    <string name="deltatime">, Delta Time(ms) :</string>
-    <string name="pose">, Pose(m) :</string>
-    <string name="quat">, Quat :</string>
+    <string name="app_name">Project Tango - Native Point Cloud</string>
+    <string name="menu_name">Native Point Cloud</string>
+    <string name="vertex_count">"Number of points: "</string>
+    <string name="serviceversion">"Tango service version: "</string>
+    <string name="appversion">"App version: "</string>
+    <string name="tangoevent">"Tango System Event: "</string>
+    <string name="start2device">"Target->Device, Base->Start: "</string>
+    <string name="status">"Status: "</string>
     <string name="first_person">First</string>
     <string name="third_person">Third</string>
     <string name="top_down">Top</string>
     <string name="start">Start</string>
-    <string name="autoreseton">Auto Reset On</string>
-    <string name="autoresetoff">Auto Reset Off</string>
-    <string name = "averageZ">Average Depth (m): </string>
-    <string name="pointCount">Point Count: </string>
-    <string name="frameDelta">Frame Delta (ms): </string>
+    <string name = "averageZ">"Average depth (m): "</string>
+    <string name="pointCount">"Point count: "</string>
+    <string name="frameDelta">"Frame delta time (ms): "</string>
 </resources>

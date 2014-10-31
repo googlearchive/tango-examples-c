@@ -17,14 +17,16 @@
 package com.projecttango.hellotangonative;
 
 public class TangoJNINative {
-	static {
-		System.loadLibrary("tango-native-jni");
-	}
+  static {
+    System.loadLibrary("hello_tango_jni_example");
+  }
 
-	public static native void onCreate();
-	
-	public static native void onResume();
-	
-	public static native void onPause();
-	
+  public static native void Initialize(HelloTangoActivity activity);
+  
+  public static native void SetupConfig();
+  
+  public static native void Connect();
+
+  public static native void Disconnect();
+  
 }

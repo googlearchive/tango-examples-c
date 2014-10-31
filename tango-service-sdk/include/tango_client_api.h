@@ -8,11 +8,11 @@
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or impliekd.
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
-#define TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
+#ifndef TANGO_CLIENT_API_H_
+#define TANGO_CLIENT_API_H_
 
 #include <jni.h>
 #include <stdbool.h>
@@ -69,6 +69,10 @@ typedef enum {
 /// Errors less then 0 should be dealt with by the program.
 /// Success is denoted by TANGO_SUCCESS = 0.
 typedef enum {
+  TANGO_NO_IMPORT_EXPORT_PERMISSION = -6,  /**< Import/export not allowed */
+  TANGO_NO_CAMERA_PERMISSION = -5,   /**< Camera access not allowed */
+  TANGO_NO_ADF_PERMISSION = -4,  /**< ADF access not allowed */
+  TANGO_NO_MOTION_TRACKING_PERMISSION = -3,  /**< Motion tracking not allowed*/
   TANGO_INVALID = -2, /**< Input argument invalid */
   TANGO_ERROR = -1,   /**< Hard error */
   TANGO_SUCCESS = 0,  /**< Success */
@@ -653,7 +657,7 @@ TangoErrorType TangoService_getAreaDescriptionUUIDList(char** uuid_list);
 
 /// Gets the metadata handle associated with a single area description unique
 /// ID.  Allocates memory which should be freed by calling
-/// TangoAreaDescriptionMetadata_free.
+/// TangoAreaDescriptionMetadata_free().
 /// @param uuid The TangoUUID for which to load the metadata.
 /// @param metadata The metadata handle associated with the uuid.
 /// @return Returns TANGO_SUCCESS on successful load of metadata, or TANGO_ERROR
@@ -701,13 +705,44 @@ TangoErrorType TangoService_exportAreaDescription(
 /// 'key'.  If such a key is found, returns the value_size and value associated
 /// with that key.  If the key has not been initialized in the map the
 /// value_size will be 0 and the value will be NULL.
+///
+/// The supported keys are:
+///
+/// "id": The UUID of the ADF in a null-terminated char array. Setting this
+/// value on the client side using TangoAreaDescriptionMetadata_set() will have
+/// no effect on the data stored by the server.  Also, when you call
+/// TangoService_saveAreaDescriptionMetadata() it ignores the value and uses
+/// the supplied UUID.
+///
+/// "name": The name of the ADF in a null-terminated char array.
+/// Default value for a new map is "unamed". The value can be set by calling
+/// TangoAreaDescriptionMetadata_set().
+///
+/// "date_ms_since_epoch": The creation date of the ADF measured in milliseconds
+/// since Unix epoch as a 64-Bit unsigned integer.
+/// Setting this value on the client side using
+/// TangoAreaDescriptionMetadata_set() will have no effect on the data stored
+/// by the server. Also, when you call
+/// TangoService_saveAreaDescriptionMetadata() it ignores the value.
+///
+/// "transformation": The transformation of the ADF's global coordinate.
+/// The data consists of 7 double precision elements:
+/// x, y, z :ECEF (earth centered earth fixed) Cartesian frame of reference at
+/// the center of the earth which rotates with the earth).
+/// qx, qy, qz, qw : Hamilton Quaternion.
+/// The default corresponding values are:
+/// (x, y, z, qx, qy, qz, qw) = (0, 0, 0, 0, 0, 0, 1).
+///
 /// @param metadata The metadata list to search through.
 /// @param key The string key value of the parameter to set.
 /// @param size The size in bytes of value, as allocated by the
 /// caller.  value will be written only up to this size in bytes.
-/// @param value value The value to set the key to.  The array memory should not
-/// be allocated by the caller, and will go out of scope after a call to
-/// TangoAreaDescriptionMetadata_destroy.
+/// @param value The value of the data with the corresponding key stored in the
+/// metadata. The value will be returned as a binary data blob (The endianness
+/// of the binary block is platform dependent).
+/// The array memory should not be allocated by the caller, and will go out of
+/// scope after a call to TangoAreaDescriptionMetadata_destroy.
+/// The value will be NULL if the key does not exist or has not been set yet.
 /// @return Returns TANGO_SUCCESS if the key is found.  If the key is valid but
 /// does not have a valid value, size will be set to 0 and value will contain a
 /// NULL.  Returns TANGO_INVALID if any of the arguments are NULL or the key is
@@ -718,6 +753,9 @@ TangoErrorType TangoAreaDescriptionMetadata_get(
 
 /// Sets the value associated with an area description key to a new
 /// value.
+///
+/// For a list of supported keys, see TangoAreaDescriptionMetadata_get().
+///
 /// @param metadata The metadata for which to set the key-value pair.
 /// @param key The string key value of the parameter to set.
 /// @param value_size The size in bytes of value, as allocated by the
@@ -919,4 +957,4 @@ TangoErrorType TangoConfig_getString(TangoConfig config, const char* key,
 }
 #endif
 
-#endif  // TANGO_SERVICE_LIBRARY_TANGO_CLIENT_API_H_
+#endif  // TANGO_CLIENT_API_H_

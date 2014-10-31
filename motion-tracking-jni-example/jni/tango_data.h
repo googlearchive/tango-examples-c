@@ -63,7 +63,7 @@ public:
   string pose_string;
 
 private:
- TangoConfig config_;
+  TangoConfig config_;
 };
 
 #endif  // Tango_Data_H

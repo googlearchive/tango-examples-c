@@ -47,6 +47,10 @@ glm::vec3 Transform::GetScale() {
   return scale_;
 }
 
+void Transform::Translate(glm::vec3 translation) {
+  position_ += translation;
+}
+
 void Transform::SetTransformationMatrix(glm::mat4 transform_mat) {
   glm::vec3 skew;
   glm::vec4 persp;

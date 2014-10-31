@@ -28,6 +28,7 @@
 
 const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
+const float kSecondToMillisecond = 1000.0f;
 
 // Opengl camera to color camera matrix.
 const glm::mat4 oc_2_c_mat =

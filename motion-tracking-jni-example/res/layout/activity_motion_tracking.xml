@@ -103,7 +103,7 @@
 
     <Button
         android:id="@+id/first_person_button"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_above="@+id/third_person_button"
         android:layout_alignLeft="@+id/third_person_button"
@@ -115,7 +115,7 @@
 
     <Button
         android:id="@+id/top_down_button"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
@@ -125,7 +125,7 @@
 
     <Button
         android:id="@+id/third_person_button"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_above="@+id/top_down_button"
         android:layout_alignParentRight="true"
