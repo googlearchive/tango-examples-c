@@ -47,3 +47,7 @@ augmented-reality-jni-example/bin
 augmented-reality-jni-example/gen
 augmented-reality-jni-example/libs
 augmented-reality-jni-example/obj
+augmented-reality-jni-example-experimental/bin
+augmented-reality-jni-example-experimental/gen
+augmented-reality-jni-example-experimental/libs
+augmented-reality-jni-example-experimental/obj
