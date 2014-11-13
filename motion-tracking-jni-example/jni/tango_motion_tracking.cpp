@@ -127,14 +127,7 @@ void SetCamera(CameraType camera_index) {
   }
 }
 
-bool SetupGraphics(int w, int h) {
-  LOGI("setupGraphics(%d, %d)", w, h);
-
-  camera_type = CameraType::FIRST_PERSON;
-
-  screen_width = w;
-  screen_height = h;
-
+bool InitGlContent() {
   cam_parent_transform = new Transform();
   cam = new Camera();
   axis = new Axis();
@@ -149,10 +142,18 @@ bool SetupGraphics(int w, int h) {
 
   // Set the parent-child camera transfromation.
   cam->SetParent(cam_parent_transform);
-  cam->SetAspectRatio((float) (w / h));
 
   SetCamera(CameraType::THIRD_PERSON);
+}
 
+bool SetupGraphics(int w, int h) {
+  screen_width = w;
+  screen_height = h;
+  if (h == 0) {
+    LOGE("Setup graphic height not valid");
+    return false;
+  }
+  cam->SetAspectRatio((float)(w / h));
   return true;
 }
 
@@ -264,6 +265,12 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
   delete trace;
 }
 
+JNIEXPORT void JNICALL
+Java_com_projecttango_motiontrackingnative_TangoJNINative_InitGlContent(
+    JNIEnv*, jobject, jint width, jint height) {
+  InitGlContent();
+}
+
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
@@ -310,18 +317,22 @@ JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINat
 // Touching GL interface.
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_StartSetCameraOffset(
     JNIEnv*, jobject) {
-  cam_start_angle[0] = cam_cur_angle[0];
-  cam_start_angle[1] = cam_cur_angle[1];
-  cam_start_dist = cam->GetPosition().z;
+  if (cam != NULL) {
+    cam_start_angle[0] = cam_cur_angle[0];
+    cam_start_angle[1] = cam_cur_angle[1];
+    cam_start_dist = cam->GetPosition().z;
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCameraOffset(
     JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
-  cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
-  cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
-  dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
-                       kCamViewMaxDist);
-  cam_cur_dist = dist;
+  if (cam != NULL) {
+    cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
+    cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
+    dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
+                         kCamViewMaxDist);
+    cam_cur_dist = dist;
+  }
 }
 #ifdef __cplusplus
 }

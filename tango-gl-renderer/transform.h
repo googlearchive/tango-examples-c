@@ -22,7 +22,8 @@
 class Transform {
  public:
   Transform();
-  
+  ~Transform();
+
   void SetPosition(glm::vec3 position);
   glm::vec3 GetPosition();
   
@@ -34,15 +35,15 @@ class Transform {
 
   void Translate(glm::vec3 translation);
 
-  // To be implemented.
   void SetTransformationMatrix(glm::mat4 transform_mat);
   glm::mat4 GetTransformationMatrix();
   
   void SetParent(Transform* transform);
   Transform* GetParent();
+
  private:
   Transform *parent_;
-  
+
   glm::vec3 position_;
   glm::quat rotation_;
   glm::vec3 scale_;

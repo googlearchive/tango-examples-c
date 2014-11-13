@@ -39,9 +39,11 @@ class TangoData {
   }
   TangoData();
 
+  void ResetData();
+
   TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig(bool is_learning, bool is_load_adf);
-  bool Connect();
+  TangoErrorType Connect();
   void Disconnect();
 
   bool SaveADF();

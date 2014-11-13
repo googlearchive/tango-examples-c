@@ -17,14 +17,7 @@
 #include "tango_data.h"
 using namespace std;
 
-TangoData::TangoData()
-    : config_(nullptr) {
-  for (int i = 0; i < 4; i++) {
-    current_pose_status[i] = -4;
-    prev_pose_status[i] = -4;
-  }
-  is_relocalized = false;
-}
+TangoData::TangoData() : config_(nullptr) { ResetData(); }
 
 // This callback function is called when new pose updates become available.
 static void onPoseAvailable(void*, const TangoPoseData* pose) {
@@ -105,6 +98,22 @@ TangoErrorType TangoData::Initialize(JNIEnv* env, jobject activity) {
   // the there is a mis-match between API and Tango Service version, the
   // function will return TANGO_INVALID.
   return TangoService_initialize(env, activity);
+}
+
+void TangoData::ResetData() {
+  for (int i = 0; i < 4; i++) {
+    tango_position[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+    tango_rotation[i] = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    current_pose_status[i] = -4;
+    prev_pose_status[i] = -4;
+    frame_delta_time[i] = 0.0f;
+    prev_frame_time[i] = 0.0f;
+    frame_count[4] = 0;
+  }
+  cur_uuid = string();
+  event_string = string();
+  lib_version_string = string();
+  is_relocalized = false;
 }
 
 bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
@@ -197,13 +206,9 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
 }
 
 // Connect to Tango Service, service will start running, and
-// POSE can be queried.
-bool TangoData::Connect() {
-  if (TangoService_connect(nullptr, config_) != TANGO_SUCCESS) {
-    LOGE("TangoService_connect(): Failed");
-    return false;
-  }
-  return true;
+// pose can be queried.
+TangoErrorType TangoData::Connect() {
+  return TangoService_connect(nullptr, config_);
 }
 
 bool TangoData::SaveADF() {

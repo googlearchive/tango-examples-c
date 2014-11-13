@@ -117,6 +117,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     glView.onPause();
     // Disconnect Tango Service.
     TangoJNINative.Disconnect();
+    TangoJNINative.OnDestroy();
     mIsPermissionIntentCalled = false;
   }
 
@@ -136,7 +137,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    TangoJNINative.OnDestroy();
   }
 
   @Override
@@ -184,9 +184,13 @@ public class PointcloudActivity extends Activity implements OnClickListener {
           // Set Tango Service's version number.
           mVersionTextView.setText(TangoJNINative.GetVersionNumber());
 
-          // Connect Tango Service.
-          TangoJNINative.Connect();
-
+          // Connect Tango Service
+          err =  TangoJNINative.Connect();
+          if (err != 0) {
+            Toast.makeText(this, 
+                "Tango Service connect error", Toast.LENGTH_SHORT).show();
+          }
+          TangoJNINative.SetupExtrinsics();
           mIsPermissionIntentCalled = true;
         }
     }

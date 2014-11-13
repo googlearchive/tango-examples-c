@@ -142,20 +142,27 @@ public class AreaDescriptionActivity extends Activity implements
   @Override
   protected void onResume() {
     super.onResume();
+    glView.onResume();
     TangoJNINative.SetupConfig(isLearning, isUsingADF);
-    TangoJNINative.Connect();
+    // Connect Tango Service
+    int err =  TangoJNINative.Connect();
+    if (err != 0) {
+      Toast.makeText(this, 
+          "Tango Service connect error", Toast.LENGTH_SHORT).show();
+    }
   }
 
   @Override
   protected void onPause() {
     super.onPause();
+    glView.onPause();
     TangoJNINative.Disconnect();
+    TangoJNINative.OnDestroy();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    TangoJNINative.OnDestroy();
   }
 
   @Override

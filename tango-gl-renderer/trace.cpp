@@ -44,8 +44,6 @@ Trace::Trace() {
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp_matrix");
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
   uniform_color_ = glGetUniformLocation(shader_program_, "color");
-  vertices_.reserve(kMaxTraceLength);
-  vertices_count_ = 0;
 }
 
 void Trace::SetTraceColor(const float color[4]) {
@@ -53,11 +51,14 @@ void Trace::SetTraceColor(const float color[4]) {
 }
 
 void Trace::UpdateVertexArray(const glm::vec3 v) {
-  float dist = glm::distance(vertices_[vertices_count_-1], v);
-  if (dist < kDistanceCheck)
-    return;
-  vertices_.push_back(v);
-  ++vertices_count_;
+  if (vertices_.size() == 0) {
+    vertices_.push_back(v);
+  } else {
+    float dist = glm::distance(vertices_[vertices_.size() - 1], v);
+    if (dist >= kDistanceCheck) {
+      vertices_.push_back(v);
+    }
+  }
 }
 
 void Trace::ClearVertexArray() { vertices_.clear(); }

@@ -54,7 +54,7 @@ class TangoData {
   bool SetConfig();
   bool LockConfig();
   bool UnlockConfig();
-  bool Connect();
+  TangoErrorType Connect();
   void Disconnect();
 
   bool SetupExtrinsicsMatrices();

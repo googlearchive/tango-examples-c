@@ -17,39 +17,43 @@
 package com.projecttango.pointcloudnative;
 
 public class TangoJNINative {
-	static {
-		System.loadLibrary("point_cloud_jni_example");
-	}
+  static {
+    System.loadLibrary("point_cloud_jni_example");
+  }
 
-	public static native int Initialize(PointcloudActivity activity);
+  public static native void InitGlContent();
 
-	public static native void SetupConfig();
+  public static native int Initialize(PointcloudActivity activity);
 
-	public static native void Connect();
+  public static native void SetupConfig();
 
-	public static native void Disconnect();
+  public static native void SetupExtrinsics();
 
-	public static native void OnDestroy();
+  public static native int Connect();
 
-	public static native void SetupGraphic(int width, int height);
+  public static native void Disconnect();
 
-	public static native void Render();
+  public static native void OnDestroy();
 
-	public static native void SetCamera(int camera_index);
+  public static native void SetupGraphic(int width, int height);
 
-	public static native String GetVersionNumber();
-	
-	public static native String GetEventString();
-	
-	public static native String GetPoseString();
+  public static native void Render();
 
-	public static native int GetVerticesCount();
-	
-	public static native float GetAverageZ();
-	
-	public static native float GetFrameDeltaTime();
-	
-	public static native float StartSetCameraOffset();
-	
-	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
+  public static native void SetCamera(int camera_index);
+
+  public static native String GetVersionNumber();
+  
+  public static native String GetEventString();
+  
+  public static native String GetPoseString();
+
+  public static native int GetVerticesCount();
+  
+  public static native float GetAverageZ();
+  
+  public static native float GetFrameDeltaTime();
+  
+  public static native float StartSetCameraOffset();
+  
+  public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }

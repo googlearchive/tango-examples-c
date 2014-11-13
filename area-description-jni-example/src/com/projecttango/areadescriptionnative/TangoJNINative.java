@@ -17,47 +17,49 @@
 package com.projecttango.areadescriptionnative;
 
 public class TangoJNINative {
-	static {
-		System.loadLibrary("area_description_jni_example");
-	}
+  static {
+    System.loadLibrary("area_description_jni_example");
+  }
 
-	public static native int Initialize(Object activity);
+  public static native void InitGlContent();
 
-	public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
-	
-	public static native void Connect();
+  public static native int Initialize(Object activity);
 
-	public static native void Disconnect();
+  public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
+  
+  public static native int Connect();
 
-	public static native void OnDestroy();
+  public static native void Disconnect();
 
-	public static native void SetupGraphic(int width, int height);
+  public static native void OnDestroy();
 
-	public static native void Render();
+  public static native void SetupGraphic(int width, int height);
 
-	public static native void SetCamera(int camera_index);
+  public static native void Render();
 
-	public static native double GetCurrentTimestamp(int index);
+  public static native void SetCamera(int camera_index);
 
-	public static native boolean SaveADF();
+  public static native double GetCurrentTimestamp(int index);
 
-	public static native String GetUUID();
+  public static native boolean SaveADF();
 
-	public static native String GetAllUUIDs();
+  public static native String GetUUID();
 
-	public static native String GetUUIDMetadataValue(String uuid, String key);
+  public static native String GetAllUUIDs();
 
-	public static native void SetUUIDMetadataValue(String uuid, String key, int size, String value);
+  public static native String GetUUIDMetadataValue(String uuid, String key);
 
-	public static native void DeleteADF(String uuid);
+  public static native void SetUUIDMetadataValue(String uuid, String key, int size, String value);
 
-	public static native String GetPoseString(int index);
-	
-	public static native String GetVersionString();
-	
-	public static native String GetEventString();
-	
-	public static native float StartSetCameraOffset();
-	
-	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
+  public static native void DeleteADF(String uuid);
+
+  public static native String GetPoseString(int index);
+  
+  public static native String GetVersionString();
+  
+  public static native String GetEventString();
+  
+  public static native float StartSetCameraOffset();
+  
+  public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }

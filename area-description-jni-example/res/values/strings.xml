@@ -16,6 +16,7 @@
 -->
 <resources>
     <string name="app_name">Project Tango - Native Area Learning</string>
+    <string name="sys_name">Project Tango Native Area Learning</string>
     <string name="menu_name">Native Area Learning</string>
     <string name="serviceversion">"Tango service version: "</string>
     <string name="appversion">"App version: "</string>

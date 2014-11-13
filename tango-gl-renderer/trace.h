@@ -38,8 +38,6 @@ class Trace : public DrawableObject {
  private:
   std::vector<glm::vec3> vertices_;
   float trace_color_[4];
-
-  int vertices_count_;
   
   GLuint shader_program_;
   GLuint attrib_vertices_;

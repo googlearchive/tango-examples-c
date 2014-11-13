@@ -55,7 +55,6 @@ void Transform::SetTransformationMatrix(glm::mat4 transform_mat) {
   glm::vec3 skew;
   glm::vec4 persp;
   GlUtil::DecomposeMatrix(transform_mat, position_, rotation_, scale_);
-//  glm::decompose(transform_mat, scale_, rotation_, position_, skew, persp);
 }
 
 glm::mat4 Transform::GetTransformationMatrix() {
@@ -78,3 +77,5 @@ void Transform::SetParent(Transform* transform) {
 Transform* Transform::GetParent() {
   return parent_;
 }
+
+Transform::~Transform() { parent_ = NULL; }

@@ -135,12 +135,7 @@ void SetCamera(CameraType camera_index) {
   }
 }
 
-bool SetupGraphics(int w, int h) {
-  LOGI("setupGraphics(%d, %d)", w, h);
-
-  screen_width = w;
-  screen_height = h;
-
+bool InitGlContent() {
   cam_parent_transform = new Transform();
   cam = new Camera();
   axis = new Axis();
@@ -153,7 +148,6 @@ bool SetupGraphics(int w, int h) {
 
   // Set the parent-child camera transfromation.
   cam->SetParent(cam_parent_transform);
-  cam->SetAspectRatio((float) (w / h));
 
   SetCamera(CameraType::THIRD_PERSON);
 
@@ -162,6 +156,17 @@ bool SetupGraphics(int w, int h) {
 
   // Set trace's color to show motion tracking trajectory.
   trace_adf->SetTraceColor(kTraceADFColor);
+  return true;
+}
+
+bool SetupGraphics(int w, int h) {
+  screen_width = w;
+  screen_height = h;
+  if (h == 0) {
+    LOGE("Setup graphic height not valid");
+    return false;
+  }
+  cam->SetAspectRatio((float)(w / h));
   return true;
 }
 
@@ -237,6 +242,13 @@ bool RenderFrame() {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_areadescriptionnative_TangoJNINative_InitGlContent(
+    JNIEnv*, jobject, jint width, jint height) {
+  InitGlContent();
+}
+
 JNIEXPORT jint JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
     JNIEnv* env, jobject, jobject activity) {
@@ -251,12 +263,14 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
   return (int)err;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_Connect(JNIEnv*,
                                                                    jobject) {
-  if (!TangoData::GetInstance().Connect()) {
-    LOGE("Tango connect failed");
+  TangoErrorType err = TangoData::GetInstance().Connect();
+  if (err != TANGO_SUCCESS) {
+    LOGE("Tango Service connect failed");
   }
+  return (int)err;
 }
 
 JNIEXPORT void JNICALL
@@ -284,6 +298,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(JNIEnv*,
   delete frustum;
   delete trace_adf;
   delete trace_motion;
+  TangoData::GetInstance().ResetData();
 }
 
 JNIEXPORT void JNICALL
@@ -356,7 +371,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
   stringstream string_stream;
   if (TangoData::GetInstance().current_pose_status[index] == -4) {
     string_stream
-        << "Status: N/A, count: N/A, delta time (ms): N/A, position (m): "
+        << "status: N/A, count: N/A, delta time (ms): N/A, position (m): "
            "N/A, quat: N/A";
     return env->NewStringUTF(string_stream.str().c_str());
   }
@@ -428,19 +443,23 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
 JNIEXPORT void JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
     JNIEnv*, jobject) {
-  cam_start_angle[0] = cam_cur_angle[0];
-  cam_start_angle[1] = cam_cur_angle[1];
-  cam_start_dist = cam->GetPosition().z;
+  if (cam != NULL) {
+    cam_start_angle[0] = cam_cur_angle[0];
+    cam_start_angle[1] = cam_cur_angle[1];
+    cam_start_dist = cam->GetPosition().z;
+  }
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCameraOffset(
     JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
-  cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
-  cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
-  dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
-                       kCamViewMaxDist);
-  cam_cur_dist = dist;
+  if (cam != NULL) {
+    cam_cur_angle[0] = cam_start_angle[0] + rotation_x;
+    cam_cur_angle[1] = cam_start_angle[1] + rotation_y;
+    dist = GlUtil::Clamp(cam_start_dist + dist * kZoomSpeed, kCamViewMinDist,
+                         kCamViewMaxDist);
+    cam_cur_dist = dist;
+  }
 }
 #ifdef __cplusplus
 }

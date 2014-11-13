@@ -17,35 +17,37 @@
 package com.projecttango.motiontrackingnative;
 
 public class TangoJNINative {
-	static {
-		System.loadLibrary("motion_tracking_jni_example");
-	}
+  static {
+    System.loadLibrary("motion_tracking_jni_example");
+  }
 
-	public static native int Initialize(MotionTrackingActivity activity);
-	
-	public static native void SetupConfig(boolean isAutoReset);
-	
-	public static native int Connect();
-	
-	public static native void Disconnect();
+  public static native int Initialize(MotionTrackingActivity activity);
 
-	public static native void OnDestroy();
+  public static native void SetupConfig(boolean isAutoReset);
+  
+  public static native int Connect();
+  
+  public static native void Disconnect();
 
-	public static native void SetupGraphic(int width, int height);
+  public static native void OnDestroy();
 
-	public static native void Render();
+  public static native void InitGlContent();
 
-	public static native void SetCamera(int camera_index);
-	
-	public static native void ResetMotionTracking();
-	
-	public static native String GetPoseString();
-	
-	public static native String GetEventString();
-	
-	public static native String GetVersionNumber();
-	
-	public static native float StartSetCameraOffset();
-	
-	public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
+  public static native void SetupGraphic(int width, int height);
+
+  public static native void Render();
+
+  public static native void SetCamera(int camera_index);
+  
+  public static native void ResetMotionTracking();
+  
+  public static native String GetPoseString();
+  
+  public static native String GetEventString();
+  
+  public static native String GetVersionNumber();
+  
+  public static native float StartSetCameraOffset();
+  
+  public static native float SetCameraOffset(float rotX, float rotY, float zDistance);
 }

@@ -23,9 +23,9 @@ static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "}\n";
 
 static const char kFragmentShader[] =
-"void main() {\n"
-"  gl_FragColor = vec4(0.85f,0.85f,0.85f,1);\n"
-"}\n";
+    "void main() {\n"
+    "  gl_FragColor = vec4(0.85f,0.85f,0.85f,1);\n"
+    "}\n";
 
 // Initialize Grid with x and y grid count,
 // qx, quantity in x
@@ -41,8 +41,6 @@ Grid::Grid(float density, int qx, int qy) {
   }
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
-
-  glGenBuffers(1, &vertex_buffer_);
 
   int counter = 0;
   
@@ -79,9 +77,16 @@ Grid::Grid(float density, int qx, int qy) {
 
     ++counter;
   }
+
+  // Binding vertex buffer object.
+  glGenBuffers(1, &vertex_buffer_);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * traverse_len_, vertices_,
+               GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Grid::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+void Grid::Render(const glm::mat4 projection_mat, const glm::mat4 view_mat) {
   glUseProgram(shader_program_);
 
   // Calculate model view projection matrix.
@@ -89,22 +94,25 @@ void Grid::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
-  // Binding vertex buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * traverse_len_, vertices_,
-               GL_STATIC_DRAW);
+  int buffer_size = 0;
+  glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
+  buffer_size = buffer_size / sizeof(float);
+
   glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
                         (const void*) 0);
+  glDrawArrays(GL_LINES, 0, buffer_size);
+  GlUtil::CheckGlError("grid glDrawArray()");
+  glDisableVertexAttribArray(attrib_vertices_);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_LINES, 0, traverse_len_);
-  GlUtil::CheckGlError("grid glDrawArray()");
   glUseProgram(0);
   GlUtil::CheckGlError("glUseProgram()");
 }
 
 Grid::~Grid() {
+  glDeleteShader(shader_program_);
   delete[] vertices_;
 }
 
