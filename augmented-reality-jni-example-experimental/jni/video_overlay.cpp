@@ -90,8 +90,7 @@ VideoOverlay::VideoOverlay() {
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);
   glEnableVertexAttribArray (attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Assign the texture coordinates attribute data.
@@ -99,13 +98,14 @@ VideoOverlay::VideoOverlay() {
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[2]);
   glEnableVertexAttribArray (attrib_textureCoords);
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+                        nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
 
-void VideoOverlay::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+void VideoOverlay::Render(const glm::mat4& projection_mat,
+                          const glm::mat4& view_mat) const {
   glUseProgram (shader_program_);
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
@@ -114,15 +114,14 @@ void VideoOverlay::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   // Bind vertices buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);
   glEnableVertexAttribArray (attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Bind texture coordinates buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[2]);
   glEnableVertexAttribArray (attrib_textureCoords);
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+                        nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Bind element array buffer.

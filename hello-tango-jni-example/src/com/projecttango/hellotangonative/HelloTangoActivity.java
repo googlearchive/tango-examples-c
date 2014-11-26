@@ -27,7 +27,6 @@ public class HelloTangoActivity extends Activity {
   public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
   public static final String EXTRA_VALUE_MOTION_TRACKING = "MOTION_TRACKING_PERMISSION";
 
-
   private boolean mIsPermissionIntentCalled = false;
 
   TangoJNINative tangoJNINative;
@@ -70,6 +69,7 @@ public class HelloTangoActivity extends Activity {
           finish();
         } else {
           TangoJNINative.Initialize(this);
+          TangoJNINative.ConnectCallbacks();
           TangoJNINative.SetupConfig();
           TangoJNINative.Connect();
           mIsPermissionIntentCalled = true;

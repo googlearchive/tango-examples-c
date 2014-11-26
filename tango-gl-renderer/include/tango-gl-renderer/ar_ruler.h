@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef TANGO_GL_RENDERER_AR_RULER_H
+#define TANGO_GL_RENDERER_AR_RULER_H
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
 
-class Grid : public DrawableObject {
+class ArRuler : public DrawableObject {
  public:
-  Grid(float density = 1.0f, int qx = 50, int qy = 50);
-  ~Grid();
-  void Render(const glm::mat4 projection_mat, const glm::mat4 view_mat);
+  ArRuler();
+  ArRuler(const ArRuler& other) = delete;
+  ArRuler& operator=(const ArRuler&) = delete;
+  ~ArRuler();
+  void SetColor(const float color[4]);
+  void SetAlpha(const float alpha);
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
 
  private:
-  float* vertices_;
-  float density_;
-  int quantity_x_;
-  int quantity_y_;
-  int traverse_len_;
-
+  float color_[4];
+  float alpha_;
   GLuint vertex_buffer_;
+  GLuint color_buffer_;
 
   GLuint shader_program_;
   GLuint attrib_vertices_;
+  GLuint uniform_color_;
   GLuint uniform_mvp_mat_;
 };
 
-#endif  // GRID_H
+#endif  // TANGO_GL_RENDERER_AR_RULER_H

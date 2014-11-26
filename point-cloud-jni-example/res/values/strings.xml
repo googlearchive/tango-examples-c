@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango - Native Point Cloud</string>
+    <string name="app_name">Project Tango Native Point Cloud</string>
     <string name="sys_name">Project Tango Native Point Cloud</string>
     <string name="menu_name">Native Point Cloud</string>
     <string name="vertex_count">"Number of points: "</string>

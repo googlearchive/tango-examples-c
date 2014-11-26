@@ -26,7 +26,9 @@ public class TangoJNINative {
   public static native int Initialize(Object activity);
 
   public static native void SetupConfig(boolean isLearning, boolean isLoadedADF);
-  
+
+  public static native boolean ConnectCallbacks();
+
   public static native int Connect();
 
   public static native void Disconnect();

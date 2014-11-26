@@ -14,25 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef AXIS_H
-#define AXIS_H
+#ifndef TANGO_GL_RENDERER_CONE_H
+#define TANGO_GL_RENDERER_CONE_H
 
-#include "drawable_object.h"
-#include "transform.h"
-#include "gl_util.h"
+#include <stdlib.h>
+#include <vector>
+#include <math.h>
 
-class Axis : public Transform {
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
+
+class Cone : public DrawableObject {
  public:
-  Axis();
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
- private:
-  GLuint vertex_buffer_;
-  GLuint color_buffer_;
+  Cone();
+  Cone(const Cone& other) = delete;
+  Cone& operator=(const Cone&) = delete;
+  ~Cone();
 
+  void SetAlpha(const float alpha);
+  void SetVertexArray();
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+  std::vector<glm::vec3> vertices_;
+  std::vector<glm::vec4> colors_;
+
+ private:
+  float alpha_;
   GLuint shader_program_;
   GLuint attrib_vertices_;
   GLuint attrib_colors_;
   GLuint uniform_mvp_mat_;
 };
 
-#endif  // AXIS_H
+#endif  // TANGO_GL_RENDERER_CONE_H

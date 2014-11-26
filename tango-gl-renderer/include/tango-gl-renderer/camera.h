@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef CUBE_H
-#define CUBE_H
+#ifndef TANGO_GL_RENDERER_CAMERA_H
+#define TANGO_GL_RENDERER_CAMERA_H
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
+#include "tango-gl-renderer/transform.h"
 
-class Cube : public DrawableObject {
+class Camera : public Transform{
  public:
-  Cube();
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  Camera();
+  Camera(const Camera& other) = delete;
+  Camera& operator=(const Camera&) = delete;
+  ~Camera();
+
+  void SetAspectRatio(const float aspect_ratio);
+  void SetFieldOfView(const float fov);
+
+  glm::mat4 GetViewMatrix();
+  glm::mat4 GetProjectionMatrix();
  private:
-  GLuint vertex_buffer_;
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
+  float field_of_view_;
+  float aspect_ratio_;
+  float near_clip_plane_, far_clip_plane_;
 };
 
-#endif  // CUBE_H
+#endif  // TANGO_GL_RENDERER_CAMERA_H

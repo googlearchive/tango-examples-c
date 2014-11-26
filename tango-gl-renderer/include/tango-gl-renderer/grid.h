@@ -14,28 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef VIDEO_OVERLAY_H
-#define VIDEO_OVERLAY_H
+#ifndef TANGO_GL_RENDERER_GRID_H
+#define TANGO_GL_RENDERER_GRID_H
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
 
-class VideoOverlay : public DrawableObject {
+class Grid : public DrawableObject {
  public:
-  VideoOverlay();
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
-  GLuint texture_id;
-  void SetupIntrinsics(float k1, float k2, float k3, float cx, float cy, float w, float h);
+  Grid(float density = 1.0f, int qx = 50, int qy = 50);
+  Grid(const Grid& other) = delete;
+  Grid& operator=(const Grid&) = delete;
+  ~Grid();
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
 
  private:
-  GLuint vertex_buffers_;
+  float* vertices_;
+  float density_;
+  int quantity_x_;
+  int quantity_y_;
+  int traverse_len_;
 
-  GLuint attrib_vertices_;
-  GLuint attrib_textureCoords;
-  GLuint uniform_texture;
-  GLuint vertex_buffers[3];
+  GLuint vertex_buffer_;
+
   GLuint shader_program_;
-
+  GLuint attrib_vertices_;
   GLuint uniform_mvp_mat_;
 };
-#endif  // VIDEO_OVERLAY_H
+
+#endif  // TANGO_GL_RENDERER_GRID_H

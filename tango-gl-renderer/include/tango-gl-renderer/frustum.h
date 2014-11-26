@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef AR_RULER_H
-#define AR_RULER_H
+#ifndef TANGO_GL_RENDERER_FRUSTUM_H
+#define TANGO_GL_RENDERER_FRUSTUM_H
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
 
-class ArRuler : public DrawableObject {
+class Frustum : public DrawableObject {
  public:
-  ArRuler();
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  Frustum();
+  Frustum(const Frustum& other) = delete;
+  Frustum& operator=(const Frustum&) = delete;
+  ~Frustum();
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
  private:
   GLuint vertex_buffer_;
-  GLuint color_buffer_;
-
   GLuint shader_program_;
   GLuint attrib_vertices_;
-  GLuint attrib_colors_;
   GLuint uniform_mvp_mat_;
 };
 
-#endif  // AR_RULER_H
+#endif  // TANGO_GL_RENDERER_FRUSTUM_H

@@ -18,13 +18,13 @@
 
 #include <jni.h>
 
-#include "axis.h"
-#include "camera.h"
-#include "frustum.h"
-#include "gl_util.h"
-#include "grid.h"
 #include "tango_data.h"
-#include "trace.h"
+#include "tango-gl-renderer/axis.h"
+#include "tango-gl-renderer/camera.h"
+#include "tango-gl-renderer/frustum.h"
+#include "tango-gl-renderer/gl_util.h"
+#include "tango-gl-renderer/grid.h"
+#include "tango-gl-renderer/trace.h"
 
 GLuint screen_width;
 GLuint screen_height;
@@ -153,7 +153,7 @@ bool SetupGraphics(int w, int h) {
     LOGE("Setup graphic height not valid");
     return false;
   }
-  cam->SetAspectRatio((float)(w / h));
+  cam->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
   return true;
 }
 
@@ -191,14 +191,14 @@ bool RenderFrame() {
     glm::quat parent_cam_rot =
       glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
     parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
-    
+
     // Set render camera parent position and rotation.
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(position);
-    
+
     // Set camera view distance, based on touch interaction.
     cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
-    
+
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
     frustum->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
@@ -251,8 +251,16 @@ Java_com_projecttango_motiontrackingnative_TangoJNINative_Connect(JNIEnv*,
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_Disconnect(
+Java_com_projecttango_motiontrackingnative_TangoJNINative_ConnectCallbacks(
     JNIEnv*, jobject) {
+  if (!TangoData::GetInstance().ConnectCallbacks()) {
+    LOGE("Tango ConnectCallbacks failed");
+  }
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_motiontrackingnative_TangoJNINative_Disconnect(JNIEnv*,
+                                                                     jobject) {
   TangoData::GetInstance().Disconnect();
 }
 

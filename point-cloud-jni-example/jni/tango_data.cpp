@@ -148,6 +148,10 @@ bool TangoData::SetConfig() {
   // the actual float buffer size.
   depth_buffer = new float[3 * max_vertex_count];
 
+  return true;
+}
+
+bool TangoData::ConnectCallbacks() {
   // Attach the onXYZijAvailable callback.
   if (TangoService_connectOnXYZijAvailable(onXYZijAvailable) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnXYZijAvailable(): Failed");
@@ -172,7 +176,6 @@ bool TangoData::SetConfig() {
     LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
-
   return true;
 }
 

@@ -21,7 +21,7 @@ static const char kVertexShader[] =
     "uniform mat4 mvp;\n"
     "varying vec4 v_color;\n"
     "void main() {\n"
-    "  gl_PointSize = 3.0;\n"
+    "  gl_PointSize = 5.0;\n"
     "  gl_Position = mvp*vertex;\n"
     "  v_color = vertex;\n"
     "}\n";
@@ -63,8 +63,7 @@ void Pointcloud::Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * depth_buffer_size,
                depth_data_buffer, GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_POINTS, 0, 3 * depth_buffer_size);

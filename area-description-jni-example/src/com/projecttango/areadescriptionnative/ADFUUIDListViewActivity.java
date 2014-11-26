@@ -58,6 +58,10 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   private static final String EXTRA_KEY_SOURCEFILE = "SOURCE_FILE";
   public static final String EXTRA_KEY_DESTINATIONUUID = "DESTINATION_UUID";
 
+  public static int TANGO_ERROR_INVALID = -2;
+  public static int TANGO_ERROR_ERROR = -1;
+  public static int TANGO_ERROR_SUCCESS = -0;
+
   private ADFDataSource mADFDataSource;
   private ListView mUUIDListView,mAppSpaceUUIDListView;
   ADFUUIDArrayAdapter mADFAdapter,mAppSpaceADFAdapter;
@@ -70,30 +74,47 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    int err = TangoJNINative.Initialize(this);
+    if (err != TANGO_ERROR_SUCCESS) {
+      if (err == TANGO_ERROR_INVALID) {
+        Toast.makeText(this, 
+          "Tango Service version mismatch", Toast.LENGTH_SHORT).show();
+      } else {
+        Toast.makeText(this, 
+          "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
+      }
+    }
+
     setContentView(R.layout.uuid_listview);
     mAPISpaceMenuStrings = getResources().getStringArray(R.array.SetDialogMenuItemsAPISpace);
     mAppSpaceMenuStrings = getResources().getStringArray(R.array.SetDialogMenuItemsAppSpace);
-    
-    // Get API ADF ListView ready.
-    mUUIDListView = (ListView) findViewById(R.id.uuidlistviewAPI);
-    mADFDataSource = new ADFDataSource(this);
-    mUUIDList =  mADFDataSource.getFullUUIDList();
-    mUUIDNames = mADFDataSource.getUUIDNames();
-    mADFAdapter = new ADFUUIDArrayAdapter(this, mUUIDList, mUUIDNames);
-    mUUIDListView.setAdapter(mADFAdapter);
-    registerForContextMenu(mUUIDListView);
-    
-    // Get apps space ADF list ready.
-    mAppSpaceUUIDListView = (ListView) findViewById(R.id.uuidlistviewApplicationSpace);
-    mAppSpaceADFFolder = getAppSpaceADFFolder();
-    mAppSpaceUUIDList = getAppSpaceADFList();
-    mAppSpaceADFAdapter = new ADFUUIDArrayAdapter(this, mAppSpaceUUIDList, null);
-    mAppSpaceUUIDListView.setAdapter(mAppSpaceADFAdapter);
-    registerForContextMenu(mAppSpaceUUIDListView);
+
+    updateADFList();
 
     thisActivity = this;
   }
   
+  @Override
+  protected void onResume() {
+    super.onResume();
+    // Update App space ADF Listview.
+    mAppSpaceUUIDList = getAppSpaceADFList();
+    mAppSpaceADFAdapter = new ADFUUIDArrayAdapter(this, mAppSpaceUUIDList, null);
+    mAppSpaceUUIDListView.setAdapter(mAppSpaceADFAdapter);
+    
+    // Update API ADF Listview.
+    mUUIDList = mADFDataSource.getFullUUIDList();
+    mUUIDNames = mADFDataSource.getUUIDNames();
+    mADFAdapter = new ADFUUIDArrayAdapter(this, mUUIDList, mUUIDNames);
+    mUUIDListView.setAdapter(mADFAdapter);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+  }
+
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
     if (v.getId() == R.id.uuidlistviewAPI) {
@@ -124,11 +145,7 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
     // Delete the ADF from API storage and update the API ADF Listview.
     else if (itemName.equals(mAPISpaceMenuStrings[1])) {
       mADFDataSource.deleteADFandUpdateList(mUUIDList[info.position]);
-      // Update the API ADF Listview.
-      mUUIDList = mADFDataSource.getFullUUIDList();
-      mUUIDNames = mADFDataSource.getUUIDNames();
-      mADFAdapter = new ADFUUIDArrayAdapter(this, mUUIDList, mUUIDNames);
-      mUUIDListView.setAdapter(mADFAdapter);
+      updateADFList();
     } 
 
     // Export the ADF into application package folder and update the Listview.
@@ -139,17 +156,14 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
       exportIntent.putExtra(EXTRA_KEY_DESTINATIONFILE, mAppSpaceADFFolder);
       thisActivity.startActivityForResult(exportIntent, TANGO_INTENT_ACTIVITYCODE);
     }
-    
+
     // Delete an ADF from App space and update the App space ADF Listview.
     else if (itemName.equals(mAppSpaceMenuStrings[0])) {
       File file = new File(mAppSpaceADFFolder + File.separator + mAppSpaceUUIDList[info.position]);
       file.delete();
-      // Update App space ADF ListView.
-      mAppSpaceUUIDList = getAppSpaceADFList();
-      mAppSpaceADFAdapter = new ADFUUIDArrayAdapter(this, mAppSpaceUUIDList, null);
-      mAppSpaceUUIDListView.setAdapter(mAppSpaceADFAdapter);
+      updateADFList();
     }
-    
+
     // Import an ADF into API private Storage and update the API ADF Listview.
     else if (itemName.equals(mAppSpaceMenuStrings[1])) {
       String filepath = mAppSpaceADFFolder + File.separator + mAppSpaceUUIDList[info.position];
@@ -164,16 +178,15 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    // Update App space ADF Listview.
-    mAppSpaceUUIDList = getAppSpaceADFList();
-    mAppSpaceADFAdapter = new ADFUUIDArrayAdapter(this, mAppSpaceUUIDList, null);
-    mAppSpaceUUIDListView.setAdapter(mAppSpaceADFAdapter);
-    
-    // Update API ADF Listview.
-    mUUIDList = mADFDataSource.getFullUUIDList();
-    mUUIDNames = mADFDataSource.getUUIDNames();
-    mADFAdapter = new ADFUUIDArrayAdapter(this, mUUIDList, mUUIDNames);
-    mUUIDListView.setAdapter(mADFAdapter);
+    // Check which request we're responding to
+    if (requestCode == TANGO_INTENT_ACTIVITYCODE) {
+        // Make sure the request was successful
+        if (resultCode == RESULT_CANCELED) {
+            Toast.makeText(this, R.string.no_permissions, Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+    updateADFList();
   }
 
   /* Returns maps storage location in the App package folder. 
@@ -187,6 +200,25 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
     return mapsFolder;
   }
   
+  private void updateADFList() {
+    // Get API ADF ListView ready.
+    mUUIDListView = (ListView) findViewById(R.id.uuidlistviewAPI);
+    mADFDataSource = new ADFDataSource(this);
+    mUUIDList =  mADFDataSource.getFullUUIDList();
+    mUUIDNames = mADFDataSource.getUUIDNames();
+    mADFAdapter = new ADFUUIDArrayAdapter(this, mUUIDList, mUUIDNames);
+    mUUIDListView.setAdapter(mADFAdapter);
+    registerForContextMenu(mUUIDListView);
+    
+    // Get apps space ADF list ready.
+    mAppSpaceUUIDListView = (ListView) findViewById(R.id.uuidlistviewApplicationSpace);
+    mAppSpaceADFFolder = getAppSpaceADFFolder();
+    mAppSpaceUUIDList = getAppSpaceADFList();
+    mAppSpaceADFAdapter = new ADFUUIDArrayAdapter(this, mAppSpaceUUIDList, null);
+    mAppSpaceUUIDListView.setAdapter(mAppSpaceADFAdapter);
+    registerForContextMenu(mAppSpaceUUIDListView);
+  }
+
   /*
    * Returns the names of all ADFs in String array in the
    * files/maps folder.

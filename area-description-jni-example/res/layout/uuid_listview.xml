@@ -13,7 +13,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/APIADFs"
+            android:text="@string/api_adfs"
             android:textSize="30sp"
             android:textStyle="italic"
             android:background="#E6E6E6" >
@@ -23,7 +23,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/ApplicationADFs"
+            android:text="@string/application_adfs"
             android:textAllCaps="false"
             android:textSize="30sp"
             android:textStyle="italic" >

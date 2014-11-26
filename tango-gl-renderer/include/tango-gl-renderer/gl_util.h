@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef GL_UTIL_H
-#define GL_UTIL_H
+#ifndef TANGO_GL_RENDERER_GL_UTIL_H
+#define TANGO_GL_RENDERER_GL_UTIL_H
 #define GLM_FORCE_RADIANS
 
 #define GL_VERTEX_PROGRAM_POINT_SIZE 0x8642
@@ -26,11 +26,11 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
-#include "gtc/quaternion.hpp"
-#include "gtc/type_ptr.hpp"
-#include "gtx/matrix_decompose.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/matrix_decompose.hpp"
 
 #define LOG_TAG "tango_jni_example"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -45,20 +45,24 @@ class GlUtil {
   static void CheckGlError(const char* operation);
   static GLuint CreateProgram(const char* vertex_source,
                               const char* fragment_source);
-  static glm::quat ConvertRotationToOpenGL(glm::quat rotation);
-  static glm::vec3 ConvertPositionToOpenGL(glm::vec3 position);
-  static void DecomposeMatrix(glm::mat4& transform_mat, glm::vec3& translation,
-                              glm::quat& rotation, glm::vec3& scale);
-  static glm::vec3 GetTranslationFromMatrix(glm::mat4& transform_mat);
+  static glm::quat ConvertRotationToOpenGL(const glm::quat& rotation);
+  static glm::vec3 ConvertPositionToOpenGL(const glm::vec3& position);
+  static void DecomposeMatrix(const glm::mat4& transform_mat,
+                              glm::vec3& translation,
+                              glm::quat& rotation,
+                              glm::vec3& scale);
+  static glm::vec3 GetTranslationFromMatrix(const glm::mat4& transform_mat);
   static float Clamp(float value, float min, float max);
-  static void PrintMatrix(glm::mat4 matrix);
-  static void PrintVector(glm::vec3 vector);
+  static void PrintMatrix(const glm::mat4& matrix);
+  static void PrintVector(const glm::vec3& vector);
+  static glm::vec3 LerpVector(const glm::vec3& x, const glm::vec3& y, float a);
   static const glm::mat4 ss_to_ow_mat;
   static const glm::mat4 oc_to_c_mat;
   static const glm::mat4 oc_to_d_mat;
+  static float DistanceSquared(const glm::vec3& v1, const glm::vec3& v2);
 
  private:
   static GLuint LoadShader(GLenum shader_type, const char* shader_source);
 };
 
-#endif  // GL_UTIL
+#endif  // TANGO_GL_RENDERER_GL_UTIL

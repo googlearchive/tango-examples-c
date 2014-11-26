@@ -218,7 +218,7 @@ namespace glm
 	VECTORIZE_VEC(tanh)
 
 	// asinh
-#	if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+#	if(GLM_LANG & GLM_LANG_CXX11_FLAG & !ANDROID)
 		using std::asinh;
 #	else
 		template <typename genType> 
@@ -233,7 +233,7 @@ namespace glm
 	VECTORIZE_VEC(asinh)
 
 	// acosh
-#	if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+#	if(GLM_LANG & GLM_LANG_CXX11_FLAG & !ANDROID)
 		using std::acosh;
 #	else
 		template <typename genType> 
@@ -250,7 +250,7 @@ namespace glm
 	VECTORIZE_VEC(acosh)
 
 	// atanh
-#	if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+#	if(GLM_LANG & GLM_LANG_CXX11_FLAG & !ANDROID)
 		using std::atanh;
 #	else
 		template <typename genType>

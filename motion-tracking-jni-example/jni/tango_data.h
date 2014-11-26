@@ -24,7 +24,7 @@
 #include <iostream>
 
 #include "tango_client_api.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
 
 const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
@@ -42,6 +42,7 @@ public:
   TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig(bool isAutoReset);
   TangoErrorType Connect();
+  bool ConnectCallbacks();
   void Disconnect();
   void ResetMotionTracking();
 
@@ -50,11 +51,11 @@ public:
 
   glm::vec3 tango_position;
   glm::quat tango_rotation;
-  
+
   int pose_status_count;
   TangoPoseStatusType cur_pose_status;
   TangoPoseStatusType prev_pose_status;
-  
+
   float frame_delta_time;
   float prev_pose_timestamp;
 

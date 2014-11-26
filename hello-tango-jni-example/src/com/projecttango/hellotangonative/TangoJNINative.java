@@ -25,6 +25,8 @@ public class TangoJNINative {
   
   public static native void SetupConfig();
   
+  public static native void ConnectCallbacks();
+
   public static native void Connect();
 
   public static native void Disconnect();

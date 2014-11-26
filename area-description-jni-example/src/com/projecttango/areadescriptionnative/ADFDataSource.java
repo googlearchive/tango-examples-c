@@ -46,7 +46,7 @@ public class ADFDataSource {
       mFullUUIDList.add(tok.nextToken());
     }
     if (mFullUUIDList.size() == 0) {
-      Toast.makeText(mContext, R.string.NoADFsTangoError, Toast.LENGTH_SHORT).show();
+      Toast.makeText(mContext, R.string.no_adfs_tango_error, Toast.LENGTH_SHORT).show();
     }
     return mFullUUIDList.toArray(new String[mFullUUIDList.size()]);
   }

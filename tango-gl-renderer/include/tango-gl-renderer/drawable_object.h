@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef TANGO_GL_RENDERER_DRAWABLE_OBJECT_H
+#define TANGO_GL_RENDERER_DRAWABLE_OBJECT_H
 
-#include "gl_util.h"
-#include "transform.h"
+#include "tango-gl-renderer/gl_util.h"
+#include "tango-gl-renderer/transform.h"
 
-class Camera : public Transform{
+class DrawableObject : public Transform {
  public:
-  Camera();
-  ~Camera();
-
-  void SetAspectRatio(float aspect_ratio);
-  void SetFieldOfView(float fov);
-
-  glm::mat4 GetViewMatrix();
-  glm::mat4 GetProjectionMatrix();
- private:
-  float field_of_view_;
-  float aspect_ratio_;
-  float near_clip_plane_, far_clip_plane_;
+  virtual void Render(const glm::mat4& projection_mat,
+                      const glm::mat4& view_mat) const = 0;
 };
-
-#endif  // CAMERA_H
+#endif  // TANGO_GL_RENDERER_DRAWABLE_OBJECT_H

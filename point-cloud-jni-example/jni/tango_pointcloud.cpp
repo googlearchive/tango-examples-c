@@ -19,14 +19,15 @@
 #include <string.h>
 #include <jni.h>
 
-#include "axis.h"
-#include "camera.h"
-#include "frustum.h"
-#include "gl_util.h"
-#include "grid.h"
+#include "tango-gl-renderer/axis.h"
+#include "tango-gl-renderer/camera.h"
+#include "tango-gl-renderer/frustum.h"
+#include "tango-gl-renderer/gl_util.h"
+#include "tango-gl-renderer/grid.h"
+#include "tango-gl-renderer/transform.h"
+
 #include "pointcloud.h"
 #include "tango_data.h"
-#include "transform.h"
 
 // Screen size.
 GLuint screen_width;
@@ -161,7 +162,7 @@ bool SetupGraphics(int w, int h) {
     LOGE("Setup graphic height not valid");
     return false;
   }
-  cam->SetAspectRatio((float)(w / h));
+  cam->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
   return true;
 }
 
@@ -213,13 +214,13 @@ bool RenderFrame() {
     glm::quat parent_cam_rot =
       glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
     parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
-    
+
     // Get motion transformation.
     oc_2_ow_mat_motion = TangoData::GetInstance().GetOC2OWMat(false);
 
     // Get depth frame transformation.
     oc_2_ow_mat_depth = TangoData::GetInstance().GetOC2OWMat(true);
-    
+
     // Set render camera parent position and rotation.
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(GlUtil::GetTranslationFromMatrix(oc_2_ow_mat_motion));
@@ -231,7 +232,7 @@ bool RenderFrame() {
     // Set camera view distance, based on touch interaction.
     cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
   }
-  
+
   // Set axis transformation, axis representing device's pose.
   axis->SetTransformationMatrix(oc_2_ow_mat_motion);
   axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
@@ -272,6 +273,14 @@ Java_com_projecttango_pointcloudnative_TangoJNINative_SetupConfig(JNIEnv*,
   if (!TangoData::GetInstance().SetConfig())
   {
     LOGE("Tango set config failed");
+  }
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_pointcloudnative_TangoJNINative_ConnectCallbacks(
+    JNIEnv*, jobject) {
+  if (!TangoData::GetInstance().ConnectCallbacks()) {
+    LOGE("Tango ConnectCallbacks failed");
   }
 }
 

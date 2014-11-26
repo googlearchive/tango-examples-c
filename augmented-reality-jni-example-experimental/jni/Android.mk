@@ -37,7 +37,7 @@ LOCAL_SRC_FILES := jni/tango_augmented_reality.cpp \
                    ../tango-gl-renderer/trace.cpp \
                    ../tango-gl-renderer/transform.cpp \
                    jni/video_overlay.cpp
-LOCAL_C_INCLUDES := ../tango-gl-renderer \
-                    ../third-party/glm/glm
+LOCAL_C_INCLUDES := ../tango-gl-renderer/include \
+                    ../third-party/glm/
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

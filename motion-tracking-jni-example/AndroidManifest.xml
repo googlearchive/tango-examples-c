@@ -2,14 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.projecttango.motiontrackingnative"
     android:versionCode="0"
-    android:versionName="1.1" >
+    android:versionName="0" >
 
     <uses-sdk
         android:minSdkVersion="19"
         android:targetSdkVersion="19" />
-        
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"

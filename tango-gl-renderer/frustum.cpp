@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "frustum.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/frustum.h"
+#include "tango-gl-renderer/gl_util.h"
 
 static const char kVertexShader[] =
     "attribute vec4 vertex;\n"
@@ -44,11 +44,19 @@ Frustum::Frustum() {
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
 
   glGenBuffers(1, &vertex_buffer_);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 8, vertices,
+               GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+Frustum::~Frustum() { glDeleteShader(shader_program_); }
+
+void Frustum::Render(const glm::mat4& projection_mat,
+                     const glm::mat4& view_mat) const {
   glUseProgram (shader_program_);
   glLineWidth(3.0f);
+
   // Calculate MVP matrix and pass it to shader.
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
@@ -56,11 +64,8 @@ void Frustum::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
 
   // Vertice binding
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 8, vertices,
-               GL_STATIC_DRAW);
   glEnableVertexAttribArray (attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_LINES, 0, 6 * 8);

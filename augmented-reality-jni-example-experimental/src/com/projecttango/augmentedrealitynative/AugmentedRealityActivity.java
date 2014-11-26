@@ -26,11 +26,9 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.graphics.Point;
 import android.view.View;
-import android.widget.Button;
-import android.widget.RelativeLayout;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 public class AugmentedRealityActivity extends Activity implements View.OnClickListener{
 
@@ -38,15 +36,8 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     public static final String EXTRA_VALUE_VIO = "MOTION_TRACKING_PERMISSION";
     public static final String EXTRA_VALUE_VIOADF = "ADF_LOAD_SAVE_PERMISSION";
 
-    private RelativeLayout layout;
     private GLSurfaceView arView;
     private TextView tangoPoseStatusText;
-    private Button startButton;
-    private Button resetButton;
-    private Button thirdCamera;
-    private Button firstCamera;
-    private Button topCamera;
-    private ToggleButton isAutoRecoveryButton;
 
     private float[] touchStartPos = new float[2];
     private float[] touchCurPos = new float[2];
@@ -56,14 +47,15 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     private float screenDiagnal = 0.0f;
     private String appVersionString;
 
-    private boolean isAutoRecovery = false;
-    private boolean isStarted = false;
     private int arElement = 0;
     private int interactionType = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         Intent intent1 = new Intent();
         intent1.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
@@ -79,19 +71,18 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         display.getSize(screenSize);
         screenDiagnal = (float) Math.sqrt(screenSize.x * screenSize.x
                 + screenSize.y * screenSize.y);
-
+        
+        setTitle(R.string.app_name);
         setContentView(R.layout.activity_augmented_reality);
 
         arView = (GLSurfaceView) findViewById(R.id.surfaceview);
-        arView.setVisibility(View.GONE);
 
         AugmentedRealityView arViewRenderer = new AugmentedRealityView();
         arViewRenderer.activity = AugmentedRealityActivity.this;
-        arViewRenderer.isAutoRecovery = isAutoRecovery;
+        arViewRenderer.isAutoRecovery = true;
         arView.setRenderer(arViewRenderer);
 
         tangoPoseStatusText = (TextView) findViewById(R.id.debug_info);
-        tangoPoseStatusText.setVisibility(View.GONE);
 
         PackageInfo pInfo;
         try {
@@ -102,27 +93,10 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
             appVersionString = " ";
         }
 
-        resetButton = (Button) findViewById(R.id.reset);
-        isAutoRecoveryButton = (ToggleButton) findViewById(R.id.auto_recovery);
-        isAutoRecoveryButton.setOnClickListener(this);
-
-        resetButton.setOnClickListener(this);
-        resetButton.setVisibility(View.GONE);
-
-        thirdCamera=(Button)findViewById(R.id.third);
-        thirdCamera.setVisibility(View.GONE);
-        thirdCamera.setOnClickListener(this);
-
-        firstCamera=(Button)findViewById(R.id.first);
-        firstCamera.setVisibility(View.GONE);
-        firstCamera.setOnClickListener(this);
-
-        topCamera=(Button)findViewById(R.id.top);
-        topCamera.setVisibility(View.GONE);
-        topCamera.setOnClickListener(this);
-
-        startButton = (Button) findViewById(R.id.start);
-        startButton.setOnClickListener(this);
+        findViewById(R.id.reset).setOnClickListener(this);
+        findViewById(R.id.third).setOnClickListener(this);
+        findViewById(R.id.first).setOnClickListener(this);
+        findViewById(R.id.top).setOnClickListener(this);
 
         new Thread(new Runnable() {
             @Override
@@ -153,9 +127,6 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         case R.id.reset:
             TangoJNINative.ResetMotionTracking();
             break;
-        case R.id.auto_recovery:
-            isAutoRecovery = isAutoRecoveryButton.isChecked();
-            break;
         case R.id.first:
             TangoJNINative.SetCamera(0);
             break;
@@ -164,19 +135,6 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
             break;
         case R.id.top:
             TangoJNINative.SetCamera(2);
-            break;
-        case R.id.start:
-            if (!isAutoRecovery) {
-                resetButton.setVisibility(View.VISIBLE);
-            }
-            arView.setVisibility(View.VISIBLE);
-            startButton.setVisibility(View.GONE);
-            isAutoRecoveryButton.setVisibility(View.GONE);
-            thirdCamera.setVisibility(View.VISIBLE);
-            firstCamera.setVisibility(View.VISIBLE);
-            topCamera.setVisibility(View.VISIBLE);
-            tangoPoseStatusText.setVisibility(View.VISIBLE);
-            isStarted = true;
             break;
         }
     }
@@ -187,11 +145,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         arView.onResume();
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                );
     }
 
     @Override

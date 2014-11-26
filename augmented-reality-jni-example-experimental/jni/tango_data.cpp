@@ -36,6 +36,16 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 }
 
+// Tango event callback.
+static void onTangoEvent(void*, const TangoEvent* event) {
+  pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
+  // Update the status string for debug display.
+  stringstream string_stream;
+  string_stream << event->event_key << ": " << event->event_value;
+  TangoData::GetInstance().event_string = string_stream.str();
+  pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
+}
+
 // Get status string based on the pose status code.
 const char* TangoData::getStatusStringFromStatusCode(
     TangoPoseStatusType status) {
@@ -107,6 +117,13 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
     return false;
   }
 
+  // Attach onEventAvailable callback.
+  // The callback will be called after the service is connected.
+  if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
+    LOGE("TangoService_connectOnTangoEvent(): Failed");
+    return false;
+  }
+
   // Load the most recent ADF.
   char* uuid_list;
 
@@ -163,6 +180,7 @@ bool TangoData::GetPoseAtTime() {
   d_to_adf_pair.base = TANGO_COORDINATE_FRAME_AREA_DESCRIPTION;
   d_to_adf_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
 
+  const char* frame_pair = "Target->Device, Base->Start: ";
   // Before localized, use device to start of service frame pair,
   // after localized, use device to ADF frame pair.
   if (!is_localized) {
@@ -172,6 +190,7 @@ bool TangoData::GetPoseAtTime() {
     if (TangoService_getPoseAtTime(0.0, d_to_ss_pair, &pose) != TANGO_SUCCESS)
     return false;
   } else {
+    frame_pair = "Target->Device, Base->ADF: ";
     if (TangoService_getPoseAtTime(0.0, d_to_adf_pair, &pose) != TANGO_SUCCESS)
       return false;
   }
@@ -182,15 +201,20 @@ bool TangoData::GetPoseAtTime() {
   stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
   string_stream.precision(2);
-  string_stream << "Status: " << getStatusStringFromStatusCode(pose.status_code)
-                << " Counts: Initializing" << status_count[0] << " Valid"
-                << status_count[1] << " Invalid" << status_count[2]
-                << " Position(m): [" << pose.translation[0] << ", "
-                << pose.translation[1] << ", " << pose.translation[2] << "]"
-                << " Quat: [" << pose.orientation[0] << ", "
+  string_stream << "Tango system event: " << event_string << "\n" << frame_pair
+                << "\n"
+                << "  status: "
+                << getStatusStringFromStatusCode(pose.status_code)
+                << ", count: " << status_count[pose.status_code]
+                << ", timestamp(ms): " << timestamp << ", position(m): ["
+                << pose.translation[0] << ", " << pose.translation[1] << ", "
+                << pose.translation[2] << "]"
+                << ", orientation: [" << pose.orientation[0] << ", "
                 << pose.orientation[1] << ", " << pose.orientation[2] << ", "
-                << pose.orientation[3] << "]"
-                << "IsLocalized? " << is_localized;
+                << pose.orientation[3] << "]\n"
+                << "Color Camera Intrinsics(px):\n"
+                << "  width: " << cc_width << ", height: " << cc_height
+                << ", fx: " << cc_fx << ", fy: " << cc_fy;
   pose_string = string_stream.str();
   return true;
 }

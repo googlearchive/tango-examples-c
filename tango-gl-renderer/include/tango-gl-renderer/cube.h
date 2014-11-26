@@ -14,39 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef TRANSFORM_H
-#define TRANSFORM_H
+#ifndef TANGO_GL_RENDERER_CUBE_H
+#define TANGO_GL_RENDERER_CUBE_H
 
-#include "gl_util.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
 
-class Transform {
+class Cube : public DrawableObject {
  public:
-  Transform();
-  ~Transform();
-
-  void SetPosition(glm::vec3 position);
-  glm::vec3 GetPosition();
-  
-  void SetRotation(glm::quat rotation);
-  glm::quat GetRotation();
-
-  void SetScale(glm::vec3 scale);
-  glm::vec3 GetScale();
-
-  void Translate(glm::vec3 translation);
-
-  void SetTransformationMatrix(glm::mat4 transform_mat);
-  glm::mat4 GetTransformationMatrix();
-  
-  void SetParent(Transform* transform);
-  Transform* GetParent();
+  Cube();
+  Cube(const Cube& other) = delete;
+  Cube& operator=(const Cube&) = delete;
+  ~Cube();
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
 
  private:
-  Transform *parent_;
-
-  glm::vec3 position_;
-  glm::quat rotation_;
-  glm::vec3 scale_;
+  GLuint vertex_buffer_;
+  GLuint shader_program_;
+  GLuint attrib_vertices_;
+  GLuint uniform_mvp_mat_;
 };
 
-#endif  // TRANSFORM_H
+#endif  // TANGO_GL_RENDERER_CUBE_H

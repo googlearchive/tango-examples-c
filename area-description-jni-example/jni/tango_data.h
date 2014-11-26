@@ -23,7 +23,7 @@
 #include <iostream>
 
 #include "tango_client_api.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
 
 const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
@@ -44,6 +44,7 @@ class TangoData {
   TangoErrorType Initialize(JNIEnv* env, jobject activity);
   bool SetConfig(bool is_learning, bool is_load_adf);
   TangoErrorType Connect();
+  bool ConnectCallbacks();
   void Disconnect();
 
   bool SaveADF();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "axis.h"
+#include "tango-gl-renderer/axis.h"
 
 static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "attribute vec4 color;\n"
@@ -54,35 +54,45 @@ Axis::Axis() {
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
 
   glGenBuffers(1, &vertex_buffer_);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 18, vertices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
   glGenBuffers(1, &color_buffer_);
+  glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 24, colors, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Axis::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+Axis::~Axis() { glDeleteShader(shader_program_); }
+
+void Axis::Render(const glm::mat4& projection_mat,
+                  const glm::mat4& view_mat) const {
   glUseProgram(shader_program_);
   glLineWidth(3.0f);
+
   // Calculate model view projection matrix of this object.
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
-  
+
   // Binding vertex buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 18, vertices, GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  
+
   // Binding color buffer.
   glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 24, colors, GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_colors_);
-  glVertexAttribPointer(attrib_colors_, 4, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_colors_, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  
+
   glDrawArrays(GL_LINES, 0, 6 * 3);
 
   glLineWidth(1.0f);
   glUseProgram(0);
+
+  glDisableVertexAttribArray(attrib_vertices_);
+  glDisableVertexAttribArray(attrib_colors_);
 }

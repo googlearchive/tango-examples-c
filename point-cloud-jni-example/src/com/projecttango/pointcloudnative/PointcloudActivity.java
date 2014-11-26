@@ -178,6 +178,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
             }
           }
 
+          // Connect Tango callbacks.
+          TangoJNINative.ConnectCallbacks();
+
           // Set up Tango configuration with auto-reset on.
           TangoJNINative.SetupConfig();
 

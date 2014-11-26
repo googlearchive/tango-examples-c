@@ -8,66 +8,61 @@
         android:layout_height="fill_parent"
         android:layout_gravity="top" />
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/debug_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:paddingLeft="5dp" 
+        android:paddingTop="55dp"/>
 
-        <TextView
-            android:id="@+id/debug_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <ToggleButton
-            android:id="@+id/auto_recovery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOff="@string/auto_recovery_off"
-            android:textOn="@string/auto_recovery_on" />
-
-        <Button
-            android:id="@+id/start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/start" />
-
-        <Button
-            android:id="@+id/reset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/reset" />
-    </LinearLayout>
-
-    <LinearLayout
+    <Button
+        android:id="@+id/reset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/third"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/third_person_cam" />
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="5dp"
+        android:text="@string/reset" />
 
         <Button
             android:id="@+id/first"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
+            android:layout_above="@+id/third"
+            android:layout_alignLeft="@+id/third"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
             android:text="@string/first_person_cam" />
-
+        <Button
+            android:id="@+id/third"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/top"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/third_person_cam" />
         <Button
             android:id="@+id/top"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
             android:text="@string/top_down_cam" />
-    </LinearLayout>
     
     <RadioGroup
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
 	    android:gravity="right"
+	    android:visibility="gone"
 	    android:orientation="horizontal">
     	<RadioButton android:id="@+id/radio_world"
 	        android:layout_width="wrap_content"
@@ -96,6 +91,7 @@
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentTop="true"
 	    android:gravity="right"
+	    android:visibility="gone"
 	    android:orientation="horizontal">
     	<RadioButton android:id="@+id/radio_left"
 	        android:layout_width="wrap_content"

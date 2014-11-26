@@ -55,7 +55,7 @@ bool TangoSetConfig() {
   return true;
 }
 
-bool TangoConnect() {
+bool TangoConnectCallbacks() {
   // Set listening pairs. Connenct pose callback.
   // Note: the callback function should be re-connected 
   // after the application resumed from background.
@@ -65,7 +65,10 @@ bool TangoConnect() {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
+  return true;
+}
 
+bool TangoConnect() {
   // Connect to the Tango Service.
   // Note: connecting Tango service will start the motion
   // tracking automatically.
@@ -90,6 +93,11 @@ JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_Ini
 JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_SetupConfig(JNIEnv* env, jobject obj, jobject activity)
 {
   TangoSetConfig();
+}
+
+JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_ConnectCallbacks(JNIEnv* env, jobject obj, jobject activity)
+{
+  TangoConnectCallbacks();
 }
 
 JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_Connect(JNIEnv* env, jobject obj)

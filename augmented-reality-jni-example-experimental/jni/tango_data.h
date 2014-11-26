@@ -24,7 +24,7 @@
 #include <iostream>
 
 #include "tango_client_api.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
 
 const int kVersionStringLength = 27;
 
@@ -51,6 +51,7 @@ class TangoData {
   const char* getStatusStringFromStatusCode(TangoPoseStatusType status);
 
   pthread_mutex_t pose_mutex;
+  pthread_mutex_t event_mutex;
 
   glm::vec3 tango_position;
   glm::quat tango_rotation;

@@ -18,12 +18,12 @@
 #define POINTCLOUD_H
 
 #include "tango_data.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
 
 class Pointcloud {
  public:
   Pointcloud();
-  
+
   /// Render function take in the depth buffer and the buffer size, and render
   /// the points base on current transformation.
   ///
@@ -32,7 +32,7 @@ class Pointcloud {
   ///
   /// depth_data_buffer: Pointer to float array contains float triplet of each
   /// vertices in the point cloud.
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat, 
+  void Render(glm::mat4 projection_mat, glm::mat4 view_mat, glm::mat4 model_mat,
               int depth_buffer_size, float* depth_data_buffer);
  private:
   GLuint vertex_buffers_;

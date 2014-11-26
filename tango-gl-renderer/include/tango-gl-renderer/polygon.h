@@ -14,21 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef FRUSTUM_H
-#define FRUSTUM_H
+#ifndef TANGO_GL_RENDERER_POLYGON_H
+#define TANGO_GL_RENDERER_POLYGON_H
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include <stdlib.h>
+#include <vector>
+#include <math.h>
 
-class Frustum : public DrawableObject {
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
+
+class Polygon : public DrawableObject {
  public:
-  Frustum();
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat);
+  Polygon();
+  Polygon(const Polygon& other) = delete;
+  Polygon& operator=(const Polygon&) = delete;
+  ~Polygon();
+
+  void SetAlpha(const float alpha);
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
  private:
-  GLuint vertex_buffer_;
+  float alpha_;
+  unsigned int indices_count;
   GLuint shader_program_;
   GLuint attrib_vertices_;
+  GLuint uniform_color_;
   GLuint uniform_mvp_mat_;
 };
 
-#endif  // FRUSTUM_H
+#endif  // TANGO_GL_RENDERER_POLYGON_H

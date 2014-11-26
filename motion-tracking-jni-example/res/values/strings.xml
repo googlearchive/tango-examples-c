@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango - Native Motion Tracking</string>
+    <string name="app_name">Project Tango Native Motion Tracking</string>
     <string name="sys_name">Project Tango Native Motion Tracking</string>
     <string name="menu_name">Native Motion Tracking</string>
     <string name="service_version">"Tango service version: "</string>

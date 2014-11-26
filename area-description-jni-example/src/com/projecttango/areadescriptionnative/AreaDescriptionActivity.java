@@ -16,9 +16,12 @@
 
 package com.projecttango.areadescriptionnative;
 
+import com.projecttango.areadescriptionnative.SetADFNameDialog.SetNameAndUUIDCommunicator;
+
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -34,7 +37,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 public class AreaDescriptionActivity extends Activity implements
-    View.OnClickListener {
+    View.OnClickListener, SetNameAndUUIDCommunicator {
+  public static int TANGO_ERROR_INVALID = -2;
+  public static int TANGO_ERROR_ERROR = -1;
+  public static int TANGO_ERROR_SUCCESS = -0;
+
   GLSurfaceView glView;
   RelativeLayout layout;
 
@@ -66,7 +73,7 @@ public class AreaDescriptionActivity extends Activity implements
   private float touchCurDist = 0.0f;
   private Point screenSize = new Point();
   private float screenDiagonal = 0.0f;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -114,6 +121,23 @@ public class AreaDescriptionActivity extends Activity implements
     if (!isLearning) {
       saveADFButton.setVisibility(View.GONE);
     }
+
+    int err = TangoJNINative.Initialize(this);
+    if (err != TANGO_ERROR_SUCCESS) {
+      if (err == TANGO_ERROR_INVALID) {
+        Toast.makeText(this, 
+          "Tango Service version mismatch", Toast.LENGTH_SHORT).show();
+      }
+      else {
+        Toast.makeText(this, 
+          "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
+      }
+    }
+
+    if (!TangoJNINative.ConnectCallbacks()) {
+       Toast.makeText(this, 
+          "Tango connect callback failed", Toast.LENGTH_SHORT).show();
+     } 
 
     new Thread(new Runnable() {
       @Override
@@ -179,10 +203,7 @@ public class AreaDescriptionActivity extends Activity implements
       break;
     case R.id.saveAdf:
       if(TangoJNINative.SaveADF()) {
-        CharSequence text = "Saved Map: " + TangoJNINative.GetUUID();
-        Toast toast = Toast.makeText(getApplicationContext(), text,
-            Toast.LENGTH_SHORT);
-        toast.show();
+        showSetNameDialog(TangoJNINative.GetUUID());
       } else {
         Toast toast = Toast.makeText(getApplicationContext(), "UUID Save Error.",
             Toast.LENGTH_SHORT);
@@ -192,6 +213,24 @@ public class AreaDescriptionActivity extends Activity implements
     default:
       return;
     }
+  }
+
+  private void showSetNameDialog(String mCurrentUUID) {
+    Bundle bundle = new Bundle();
+    String name = TangoJNINative.GetUUIDMetadataValue(mCurrentUUID, "name");
+    if (name != null) {
+      bundle.putString("name", name);
+    }
+    bundle.putString("id", mCurrentUUID);
+    FragmentManager manager = getFragmentManager();
+    SetADFNameDialog setADFNameDialog = new SetADFNameDialog();
+    setADFNameDialog.setArguments(bundle);
+    setADFNameDialog.show(manager, "ADFNameDialog");
+  }
+
+  @Override
+  public void SetNameAndUUID(String name, String uuid) {
+    TangoJNINative.SetUUIDMetadataValue(uuid, "name", name.length(), name);
   }
 
   @Override

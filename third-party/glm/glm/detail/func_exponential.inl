@@ -48,7 +48,7 @@ namespace detail
 		template <typename T>
 		GLM_FUNC_QUALIFIER T operator() (T const & Value) const
 		{
-#			if(GLM_LANG & GLM_LANG_CXX11_FLAG)
+#			if(GLM_LANG & GLM_LANG_CXX11_FLAG & !ANDROID)
 				return std::log2(Value);
 #			else
 				return std::log(Value) * static_cast<T>(1.4426950408889634073599246810019);

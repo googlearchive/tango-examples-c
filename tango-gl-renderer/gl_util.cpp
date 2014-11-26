@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "gl_util.h"
+#include "tango-gl-renderer/gl_util.h"
 
 const glm::mat4 GlUtil::ss_to_ow_mat =
     glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
@@ -99,7 +99,7 @@ GLuint GlUtil::CreateProgram(const char* vertex_source,
   return program;
 }
 
-glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
+glm::quat GlUtil::ConvertRotationToOpenGL(const glm::quat& rotation) {
   // The conversion quaternion is equivalent to this conversion matrix below
   // NOTE: the following matrix is a column major matrix, both openGL and glm
   // take column major matrix.
@@ -119,55 +119,59 @@ glm::quat GlUtil::ConvertRotationToOpenGL(glm::quat rotation) {
   const float M_SQRT_2_OVER_2 = sqrt(2) / 2.0f;
   glm::quat conversionQuaternion = glm::quat(M_SQRT_2_OVER_2, -M_SQRT_2_OVER_2,
                                              0.0f, 0.0f);
-  
+
   // Quaternion cumulate in the reverse way (like matrix multiplication).
   // The following line is applying the conversionQuaternion to the rotation.
   return conversionQuaternion * rotation;
 }
 
-glm::vec3 GlUtil::ConvertPositionToOpenGL(glm::vec3 position) {
+glm::vec3 GlUtil::ConvertPositionToOpenGL(const glm::vec3& position) {
   return glm::vec3(position.x, position.z, position.y * -1.0f);
 }
 
-void GlUtil::DecomposeMatrix (glm::mat4& transform_mat, glm::vec3& translation,
-                              glm::quat& rotation, glm::vec3& scale) {
+void GlUtil::DecomposeMatrix (const glm::mat4& transform_mat,
+                              glm::vec3& translation,
+                              glm::quat& rotation,
+                              glm::vec3& scale) {
   float scale_x = glm::length( glm::vec3( transform_mat[0][0], transform_mat[1][0], transform_mat[2][0] ) );
   float scale_y = glm::length( glm::vec3( transform_mat[0][1], transform_mat[1][1], transform_mat[2][1] ) );
   float scale_z = glm::length( glm::vec3( transform_mat[0][2], transform_mat[1][2], transform_mat[2][2] ) );
-  
-  
+
+
   float determinant = glm::determinant( transform_mat );
   if( determinant < 0.0 )
     scale_x = -scale_x;
-  
+
   translation.x = transform_mat[3][0];
   translation.y = transform_mat[3][1];
   translation.z = transform_mat[3][2];
-  
+
   float inverse_scale_x = 1.0 / scale_x;
   float inverse_scale_y = 1.0 / scale_y;
   float inverse_scale_z = 1.0 / scale_z;
-  
-  transform_mat[0][0] *= inverse_scale_x;
-  transform_mat[1][0] *= inverse_scale_x;
-  transform_mat[2][0] *= inverse_scale_x;
-  
-  transform_mat[0][1] *= inverse_scale_y;
-  transform_mat[1][1] *= inverse_scale_y;
-  transform_mat[2][1] *= inverse_scale_y;
-  
-  transform_mat[0][2] *= inverse_scale_z;
-  transform_mat[1][2] *= inverse_scale_z;
-  transform_mat[2][2] *= inverse_scale_z;
-  
+
+  glm::mat4 transform_unscaled = transform_mat;
+
+  transform_unscaled[0][0] *= inverse_scale_x;
+  transform_unscaled[1][0] *= inverse_scale_x;
+  transform_unscaled[2][0] *= inverse_scale_x;
+
+  transform_unscaled[0][1] *= inverse_scale_y;
+  transform_unscaled[1][1] *= inverse_scale_y;
+  transform_unscaled[2][1] *= inverse_scale_y;
+
+  transform_unscaled[0][2] *= inverse_scale_z;
+  transform_unscaled[1][2] *= inverse_scale_z;
+  transform_unscaled[2][2] *= inverse_scale_z;
+
   rotation = glm::quat_cast( transform_mat );
-  
+
   scale.x = scale_x;
   scale.y = scale_y;
   scale.z = scale_z;
 }
 
-glm::vec3 GlUtil::GetTranslationFromMatrix(glm::mat4& transform_mat) {
+glm::vec3 GlUtil::GetTranslationFromMatrix(const glm::mat4& transform_mat) {
   glm::vec3 translation;
   translation.x = transform_mat[3][0];
   translation.y = transform_mat[3][1];
@@ -180,15 +184,25 @@ float GlUtil::Clamp(float value, float min, float max) {
 }
 
 // Print out a column major matrix.
-void GlUtil::PrintMatrix(glm::mat4 matrix) {
+void GlUtil::PrintMatrix(const glm::mat4& matrix) {
   int i;
   for (i = 0; i < 4; i++) {
-    LOGI("%f,%f,%f,%f", matrix[0][i], matrix[1][i], matrix[2][i], matrix[3][i]);
+    LOGI("[ %f, %f, %f, %f ]", matrix[0][i], matrix[1][i], matrix[2][i],
+         matrix[3][i]);
   }
   LOGI(" ");
 }
 
-void GlUtil::PrintVector(glm::vec3 vector) {
-  LOGI("%f,%f,%f", vector[0], vector[1], vector[2]);
+void GlUtil::PrintVector(const glm::vec3& vector) {
+  LOGI("[ %f, %f, %f ]", vector[0], vector[1], vector[2]);
   LOGI(" ");
+}
+
+glm::vec3 GlUtil::LerpVector(const glm::vec3& x, const glm::vec3& y, float a) {
+  return x * (1.0f - a) + y * a;
+}
+
+float GlUtil::DistanceSquared(const glm::vec3& v1, const glm::vec3& v2) {
+  glm::vec3 delta = v2 - v1;
+  return glm::dot(delta, delta);
 }

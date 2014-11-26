@@ -18,14 +18,15 @@
 
 #include <jni.h>
 
-#include "axis.h"
-#include "camera.h"
-#include "cube.h"
-#include "frustum.h"
-#include "gl_util.h"
-#include "grid.h"
+#include "tango-gl-renderer/axis.h"
+#include "tango-gl-renderer/camera.h"
+#include "tango-gl-renderer/cube.h"
+#include "tango-gl-renderer/frustum.h"
+#include "tango-gl-renderer/gl_util.h"
+#include "tango-gl-renderer/grid.h"
+#include "tango-gl-renderer/trace.h"
+
 #include "tango_data.h"
-#include "trace.h"
 #include "video_overlay.h"
 
 // Render camera's parent transformation.
@@ -97,6 +98,10 @@ const float kFovScaler = 0.1f;
 // Increment value each time move AR elements.
 const float kArElementIncrement = 0.05f;
 
+const float kZero = 0.0f;
+const glm::vec3 kZeroVec3 = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::quat kZeroQuat = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
 // AR grid rotation, 90 degrees around x axis.
 const glm::quat kArGridRotation = glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
 
@@ -164,10 +169,10 @@ void SetupExtrinsics() {
 
 // Setup projection matrix in first person view from color camera intrinsics.
 void SetupIntrinsics() {
-  image_width = (float)TangoData::GetInstance().cc_width;
-  image_height = (float)TangoData::GetInstance().cc_height;
+  image_width = static_cast<float>(TangoData::GetInstance().cc_width);
+  image_height = static_cast<float>(TangoData::GetInstance().cc_height);
   // Image plane focal length for x axis.
-  float img_fl = (float)TangoData::GetInstance().cc_fx;
+  float img_fl = static_cast<float>(TangoData::GetInstance().cc_fx);
   image_plane_ratio = image_height / image_width;
   image_plane_dis_original = 2.0f * img_fl / image_width;
   image_plane_dis = image_plane_dis_original;
@@ -207,13 +212,13 @@ bool SetupGraphics() {
 // Update viewport according to surface dimensions, always use image plane's
 // ratio and make full use of the screen.
 void SetupViewport(int w, int h) {
-  float screen_ratio = (float)h / w;
+  float screen_ratio = static_cast<float>(h) / static_cast<float>(w);
   if (image_plane_ratio < screen_ratio) {
-    glViewport(0, (h - w * image_plane_ratio) / 2, w, w * image_plane_ratio);
+    glViewport(0, 0, w, w * image_plane_ratio);
   } else {
     glViewport((w - h / image_plane_ratio) / 2, 0, h / image_plane_ratio, h);
   }
-  cam->SetAspectRatio((float)w / h);
+  cam->SetAspectRatio(1.0f / screen_ratio);
 }
 
 // Render AR elements, frustum and trace with current Color Camera position and
@@ -247,16 +252,15 @@ bool RenderFrame() {
     projection_mat = projection_mat_ar;
     view_mat = glm::inverse(ow_to_oc_mat);
   } else {
-    glm::quat parent_cam_rot =
-        glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0],
-                    glm::vec3(0, 1, 0));
-    parent_cam_rot =
-        glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
+    glm::quat parent_cam_rot = glm::rotate(kZeroQuat, -cam_cur_angle[0],
+                                           glm::vec3(kZero, 1.0f, kZero));
+    parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1],
+                                 glm::vec3(1.0f, kZero, kZero));
 
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(position);
 
-    cam->SetPosition(glm::vec3(0.0f, 0.0f, cam_cur_dist));
+    cam->SetPosition(glm::vec3(kZero, kZero, cam_cur_dist));
 
     projection_mat = cam->GetProjectionMatrix();
     view_mat = cam->GetViewMatrix();
@@ -283,38 +287,38 @@ bool RenderFrame() {
 
 void SetCamera(CameraType camera_index) {
   camera_type = camera_index;
-  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = 0.0f;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = kZero;
   switch (camera_index) {
     case CameraType::FIRST_PERSON:
-      cam_parent_transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0, 0.0f));
+      cam_parent_transform->SetPosition(kZeroVec3);
+      cam_parent_transform->SetRotation(kZeroQuat);
       video_overlay->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-      video_overlay->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      video_overlay->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      video_overlay->SetPosition(kZeroVec3);
+      video_overlay->SetRotation(kZeroQuat);
       video_overlay->SetParent(NULL);
       break;
     case CameraType::THIRD_PERSON:
       video_overlay->SetParent(axis);
       video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
-      video_overlay->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      video_overlay->SetPosition(glm::vec3(0.0f, 0.0f, -image_plane_dis));
+      video_overlay->SetRotation(kZeroQuat);
+      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
 
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(kZeroQuat);
+      cam->SetPosition(kZeroVec3);
+      cam->SetRotation(kZeroQuat);
       cam_cur_dist = kThirdPersonCameraDist;
       cam_cur_angle[0] = -PI / 4.0f;
       cam_cur_angle[1] = PI / 4.0f;
       break;
     case CameraType::TOP_DOWN:
       video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
-      video_overlay->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      video_overlay->SetPosition(glm::vec3(0.0f, 0.0f, -image_plane_dis));
+      video_overlay->SetRotation(kZeroQuat);
+      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
       video_overlay->SetParent(axis);
 
-      cam_parent_transform->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-      cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-      cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+      cam_parent_transform->SetRotation(kZeroQuat);
+      cam->SetPosition(kZeroVec3);
+      cam->SetRotation(kZeroQuat);
       cam_cur_dist = kTopDownCameraDist;
       cam_cur_angle[1] = PI / 2.0f;
       break;
@@ -345,16 +349,21 @@ void UpdateARElement(int ar_element, int interaction_type) {
   glm::vec3 translation;
   switch ((interaction_type - 1) / 2) {
     case 0:
-      translation = glm::vec3(
-          glm::pow(-1.0f, (float)interaction_type) * kArElementIncrement, 0, 0);
+      translation =
+          glm::vec3(glm::pow(-1.0f, static_cast<float>(interaction_type)) *
+                        kArElementIncrement,
+                    kZero, kZero);
       break;
     case 1:
       translation = glm::vec3(
-          0, glm::pow(-1.0f, (float)interaction_type) * kArElementIncrement, 0);
+          kZero, glm::pow(-1.0f, static_cast<float>(interaction_type)) *
+                     kArElementIncrement,
+          kZero);
       break;
     case 2:
       translation = glm::vec3(
-          0, 0, glm::pow(-1.0f, (float)interaction_type) * kArElementIncrement);
+          kZero, kZero, glm::pow(-1.0f, static_cast<float>(interaction_type)) *
+                            kArElementIncrement);
       break;
   }
   switch (ar_element) {

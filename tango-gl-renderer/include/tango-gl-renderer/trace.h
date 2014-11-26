@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef TRACE_H
-#define TRACE_H
+#ifndef TANGO_GL_RENDERER_TRACE_H
+#define TANGO_GL_RENDERER_TRACE_H
 
 #include <stdlib.h>
 #include <vector>
 
-#include "drawable_object.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/gl_util.h"
 
 class Trace : public DrawableObject {
  public:
@@ -29,20 +29,20 @@ class Trace : public DrawableObject {
   Trace(const Trace& other) = delete;
   Trace& operator=(const Trace&) = delete;
   ~Trace();
- 
+
   void SetTraceColor(const float color[4]);
-  void UpdateVertexArray(const glm::vec3 v);
+  void UpdateVertexArray(const glm::vec3& v);
   void ClearVertexArray();
-  void Render(const glm::mat4 projection_mat, const glm::mat4 view_mat);
- 
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
  private:
   std::vector<glm::vec3> vertices_;
   float trace_color_[4];
-  
+
   GLuint shader_program_;
   GLuint attrib_vertices_;
   GLuint uniform_mvp_mat_;
   GLuint uniform_color_;
 };
 
-#endif  // TRACE_H
+#endif  // TANGO_GL_RENDERER_TRACE_H

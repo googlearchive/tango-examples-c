@@ -45,7 +45,7 @@ public class SetADFNameDialog extends DialogFragment implements OnClickListener 
   @Override
   public View onCreateView(LayoutInflater inflator, ViewGroup container, Bundle savedInstanceState) {
     View dialogView = inflator.inflate(R.layout.set_name_dialog, null);
-    getDialog().setTitle(R.string.SetNameDialogTitle);
+    getDialog().setTitle(R.string.set_name_dialog_title);
     mNameEditText = (EditText) dialogView.findViewById(R.id.name);
     mUUIDTextView = (TextView) dialogView.findViewById(R.id.uuidDisplay);
     dialogView.findViewById(R.id.Ok).setOnClickListener(this);

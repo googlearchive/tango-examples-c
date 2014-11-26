@@ -22,14 +22,14 @@
         android:id="@+id/start"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:text="Start" 
+        android:text="start" 
         android:textSize="15sp"/>
 
     <Button
         android:id="@+id/ADFListView"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:text="@string/MangeADFs" 
+        android:text="@string/manage_adfs" 
         android:textSize="15sp"/>
 
 </LinearLayout>

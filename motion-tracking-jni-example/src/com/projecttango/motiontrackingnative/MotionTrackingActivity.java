@@ -121,7 +121,7 @@ public class MotionTrackingActivity extends Activity implements
           "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
       }
     }
-
+    TangoJNINative.ConnectCallbacks();
     startUIThread();
   }
 

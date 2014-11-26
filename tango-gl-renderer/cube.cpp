@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "cube.h"
-#include "gl_util.h"
+#include "tango-gl-renderer/cube.h"
+#include "tango-gl-renderer/gl_util.h"
 
 static const char kVertexShader[] =
     "attribute vec4 vertex;\n"
@@ -31,29 +31,28 @@ static const char kFragmentShader[] =
 
 static const float vertices[] = {
     // front
-        -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
-        0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
+    -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
+    0.5f,  0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,
 
-        // right
-        0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
-        -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f,
+    // right
+    0.5f,  0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  -0.5f,
+    0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f,
 
-        // back
-        0.5f, 0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f,
-        -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+    // back
+    0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f,
+    -0.5f, 0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
 
-        // left
-        -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,
-        0.5f, -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,
+    // left
+    -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,  0.5f,
+    -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,
 
-        // top
-        -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
-        -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
+    // top
+    -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  -0.5f,
+    0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
 
-        // bottom
-        -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f 
-};
+    // bottom
+    -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,
+    0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f};
 
 Cube::Cube() {
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
@@ -66,7 +65,10 @@ Cube::Cube() {
   glGenBuffers(1, &vertex_buffer_);
 }
 
-void Cube::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
+Cube::~Cube() { glDeleteShader(shader_program_); }
+
+void Cube::Render(const glm::mat4& projection_mat,
+                  const glm::mat4& view_mat) const {
   glUseProgram(shader_program_);
 
   // Calculate MVP matrix and pass it to shader.
@@ -75,9 +77,6 @@ void Cube::Render(glm::mat4 projection_mat, glm::mat4 view_mat) {
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   // Vertice binding
-//  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-//  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * 12, vertices,
-//               GL_STATIC_DRAW);
   glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
                         vertices);

@@ -128,6 +128,24 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
     return false;
   }
 
+  // Get library version string from service.
+  TangoConfig_getString(
+      config_, "tango_service_library_version",
+      const_cast<char*>(TangoData::GetInstance().lib_version_string.c_str()),
+      kVersionStringLength);
+  return true;
+}
+
+// Reset the Motion Tracking.
+void TangoData::ResetMotionTracking() { TangoService_resetMotionTracking(); }
+
+// Connect to Tango Service, service will start running, and
+// POSE can be queried.
+TangoErrorType TangoData::Connect() {
+  return TangoService_connect(nullptr, config_);
+}
+
+bool TangoData::ConnectCallbacks() {
   // Setting up the frame pair for the onPoseAvailable callback.
   TangoCoordinateFramePair pairs;
   pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
@@ -147,22 +165,7 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
     LOGE("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
-
-  // Get library version string from service.
-  TangoConfig_getString(
-      config_, "tango_service_library_version",
-      const_cast<char*>(TangoData::GetInstance().lib_version_string.c_str()),
-      kVersionStringLength);
   return true;
-}
-
-// Reset the Motion Tracking.
-void TangoData::ResetMotionTracking() { TangoService_resetMotionTracking(); }
-
-// Connect to Tango Service, service will start running, and
-// POSE can be queried.
-TangoErrorType TangoData::Connect() {
-  return TangoService_connect(nullptr, config_);
 }
 
 // Disconnect Tango Service.

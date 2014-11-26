@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "grid.h"
+#include "tango-gl-renderer/grid.h"
 
 static const char kVertexShader[] = "attribute vec4 vertex;\n"
     "uniform mat4 mvp;\n"
@@ -43,7 +43,7 @@ Grid::Grid(float density, int qx, int qy) {
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
 
   int counter = 0;
-  
+
   // 3 float in 1 vertex, 2 vertices form a line.
   // Horizontal line and vertical line forms the grid.
   traverse_len_ = (((quantity_x_ + quantity_y_ + 2) * 3) * 2);
@@ -86,7 +86,13 @@ Grid::Grid(float density, int qx, int qy) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Grid::Render(const glm::mat4 projection_mat, const glm::mat4 view_mat) {
+Grid::~Grid() {
+  glDeleteShader(shader_program_);
+  delete[] vertices_;
+}
+
+void Grid::Render(const glm::mat4& projection_mat,
+                  const glm::mat4& view_mat) const {
   glUseProgram(shader_program_);
 
   // Calculate model view projection matrix.
@@ -100,8 +106,7 @@ void Grid::Render(const glm::mat4 projection_mat, const glm::mat4 view_mat) {
   buffer_size = buffer_size / sizeof(float);
 
   glEnableVertexAttribArray(attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        (const void*) 0);
+  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glDrawArrays(GL_LINES, 0, buffer_size);
   GlUtil::CheckGlError("grid glDrawArray()");
   glDisableVertexAttribArray(attrib_vertices_);
@@ -110,9 +115,3 @@ void Grid::Render(const glm::mat4 projection_mat, const glm::mat4 view_mat) {
   glUseProgram(0);
   GlUtil::CheckGlError("glUseProgram()");
 }
-
-Grid::~Grid() {
-  glDeleteShader(shader_program_);
-  delete[] vertices_;
-}
-

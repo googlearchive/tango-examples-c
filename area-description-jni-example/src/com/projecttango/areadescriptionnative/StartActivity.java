@@ -32,10 +32,6 @@ public class StartActivity extends Activity implements View.OnClickListener {
 
   public static String USE_AREA_LEARNING = "com.projecttango.areadescriptionjava.usearealearning";
   public static String LOAD_ADF = "com.projecttango.areadescriptionjava.loadadf";
-  
-  public static int TANGO_ERROR_INVALID = -2;
-  public static int TANGO_ERROR_ERROR = -1;
-  public static int TANGO_ERROR_SUCCESS = -0;
 
   private ToggleButton mLearningModeToggleButton;
   private ToggleButton mLoadADFToggleButton;
@@ -46,18 +42,7 @@ public class StartActivity extends Activity implements View.OnClickListener {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
-    int err = TangoJNINative.Initialize(this);
-    if (err != TANGO_ERROR_SUCCESS) {
-      if (err == TANGO_ERROR_INVALID) {
-        Toast.makeText(this, 
-          "Tango Service version mis-match", Toast.LENGTH_SHORT).show();
-      }
-      else {
-        Toast.makeText(this, 
-          "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
-      }
-    }
+
     setTitle(R.string.app_name);
 
     setContentView(R.layout.activity_start);

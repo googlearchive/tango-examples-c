@@ -14,27 +14,41 @@
  * limitations under the License.
  */
 
-#ifndef VIDEO_OVERLAY_H
-#define VIDEO_OVERLAY_H
+#ifndef TANGO_GL_RENDERER_BAND_H
+#define TANGO_GL_RENDERER_BAND_H
+
+#include <stdlib.h>
+#include <vector>
 
 #include "tango-gl-renderer/drawable_object.h"
 #include "tango-gl-renderer/gl_util.h"
 
-class VideoOverlay : public DrawableObject {
+class Band : public DrawableObject {
  public:
-  VideoOverlay();
+  Band(const unsigned int max_legnth);
+  Band(const Band& other) = delete;
+  Band& operator=(const Band&) = delete;
+  ~Band();
+
+  void SetColor(const float color[4]);
+  void SetAlpha(const float alpha);
+  void SetWidth(const float width);
+  void UpdateVertexArray(const glm::mat4 m);
+  void SetVertexArray(const std::vector<glm::vec3>& v, const glm::vec3& up);
+  void ClearVertexArray();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  GLuint texture_id;
+  std::vector<glm::vec3> vertices_;
 
  private:
-  GLuint vertex_buffers_;
+  float band_color_[4];
+  float band_width_;
+  float alpha_;
+  unsigned int max_length_;
 
-  GLuint attrib_vertices_;
-  GLuint attrib_textureCoords;
-  GLuint uniform_texture;
-  GLuint vertex_buffers[3];
   GLuint shader_program_;
-
+  GLuint attrib_vertices_;
   GLuint uniform_mvp_mat_;
+  GLuint uniform_color_;
 };
-#endif  // VIDEO_OVERLAY_H
+
+#endif  // TANGO_GL_RENDERER_BAND_H

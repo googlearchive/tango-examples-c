@@ -14,14 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef DRAWABLE_OBJECT_H
-#define DRAWABLE_OBJECT_H
+#ifndef TANGO_GL_RENDERER_AXIS_H
+#define TANGO_GL_RENDERER_AXIS_H
 
-#include "gl_util.h"
-#include "transform.h"
+#include "tango-gl-renderer/drawable_object.h"
+#include "tango-gl-renderer/transform.h"
+#include "tango-gl-renderer/gl_util.h"
 
-class DrawableObject : public Transform {
+class Axis : public Transform {
  public:
-  virtual void Render(glm::mat4 projection_mat, glm::mat4 view_mat) = 0;
+  Axis();
+  Axis(const Axis& other) = delete;
+  Axis& operator=(const Axis&) = delete;
+  ~Axis();
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
+ private:
+  GLuint vertex_buffer_;
+  GLuint color_buffer_;
+
+  GLuint shader_program_;
+  GLuint attrib_vertices_;
+  GLuint attrib_colors_;
+  GLuint uniform_mvp_mat_;
 };
-#endif  // DRAWABLE_OBJECT_H
+
+#endif  // TANGO_GL_RENDERER_AXIS_H

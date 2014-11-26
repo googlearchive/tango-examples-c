@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "camera.h"
+#include "tango-gl-renderer/camera.h"
 
 Camera::Camera() {
   field_of_view_ = 45.0f * DEGREE_2_RADIANS;

@@ -26,6 +26,7 @@ LOCAL_MODULE    := libhello_tango_jni_example
 LOCAL_SHARED_LIBRARIES := libtango-prebuilt libtangogl
 LOCAL_CFLAGS    := -Werror
 LOCAL_SRC_FILES := jni/tango_native.c
-LOCAL_C_INCLUDES := ../tango-gl-renderer ../third-party/glm/glm
+LOCAL_C_INCLUDES := ../tango-gl-renderer/include \
+                    ../third-party/glm/
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

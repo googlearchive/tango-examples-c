@@ -173,17 +173,24 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
     cur_uuid = "No ADF loaded.";
   }
 
-  // Set listening pairs. Connenct pose callback.
-  TangoCoordinateFramePair pairs[4] =
-      {
-          { TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-            TANGO_COORDINATE_FRAME_DEVICE }, {
-            TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-            TANGO_COORDINATE_FRAME_DEVICE }, {
-            TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-            TANGO_COORDINATE_FRAME_START_OF_SERVICE }, {
-            TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
-            TANGO_COORDINATE_FRAME_DEVICE } };
+  // Get library version string from service.
+  char version[kVersionStringLength];
+  TangoConfig_getString(config_, "tango_service_library_version", version,
+                        kVersionStringLength);
+  lib_version_string = string(version);
+
+  return true;
+}
+
+bool TangoData::ConnectCallbacks() {
+  // Set listening pairs. Connect pose callback.
+  TangoCoordinateFramePair pairs[4] = {
+      {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
+      {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE},
+      {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+       TANGO_COORDINATE_FRAME_START_OF_SERVICE},
+      {TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
+       TANGO_COORDINATE_FRAME_DEVICE}};
   if (TangoService_connectOnPoseAvailable(4, pairs, onPoseAvailable)
       != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
@@ -195,12 +202,6 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
     LOGI("TangoService_connectOnTangoEvent(): Failed");
     return false;
   }
-
-  // Get library version string from service.
-  char version[kVersionStringLength];
-  TangoConfig_getString(config_, "tango_service_library_version", version,
-                        kVersionStringLength);
-  lib_version_string = string(version);
 
   return true;
 }
