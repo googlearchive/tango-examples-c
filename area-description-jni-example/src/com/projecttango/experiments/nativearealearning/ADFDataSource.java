@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.areadescriptionnative;
+package com.projecttango.experiments.nativearealearning;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,6 @@ import java.util.StringTokenizer;
 
 import android.content.Context;
 import android.widget.Toast;
-import android.util.Log;
 
 /**
  * This class interfaces a Tango Object and maintains a 
@@ -39,7 +38,7 @@ public class ADFDataSource {
   }
   
   public String[] getFullUUIDList() {
-    String allUUID = TangoJNINative.GetAllUUIDs();
+    String allUUID = TangoJNINative.getAllUUIDs();
     StringTokenizer tok = new StringTokenizer(allUUID, ",");
     mFullUUIDList.clear();
     while (tok.hasMoreElements()) {
@@ -55,7 +54,7 @@ public class ADFDataSource {
     ArrayList<String> list = new ArrayList<String>();
 
     for (String s : mFullUUIDList) {
-      String name = TangoJNINative.GetUUIDMetadataValue(s, "name");
+      String name = TangoJNINative.getUUIDMetadataValue(s, "name");
       list.add(name);
     }
     
@@ -63,9 +62,9 @@ public class ADFDataSource {
   }
   
   public void deleteADFandUpdateList(String uuid) {
-    TangoJNINative.DeleteADF(uuid);
+    TangoJNINative.deleteADF(uuid);
     mFullUUIDList.clear();
-    String allUUID = TangoJNINative.GetAllUUIDs();
+    String allUUID = TangoJNINative.getAllUUIDs();
     StringTokenizer tok = new StringTokenizer(allUUID, ",");
 
     while (tok.hasMoreElements()) {

@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package com.projecttango.areadescriptionnative;
+package com.projecttango.experiments.nativearealearning;
 
 import java.io.File;
 import java.util.Arrays;
 
-import com.projecttango.areadescriptionnative.SetADFNameDialog.SetNameAndUUIDCommunicator;
-
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -39,6 +37,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.projecttango.experiments.nativearealearning.SetADFNameDialog.SetNameAndUUIDCommunicator;
 
 /**
  * This class lets you manage ADFs between this class's Application Package folder 
@@ -48,8 +47,10 @@ import android.widget.Toast;
  */
 public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDCommunicator{
   private static final String INTENT_CLASSPACKAGE = "com.projecttango.tango";
-  private static final String INTENT_REQUESTPERMISSION_CLASSNAME = "com.google.atap.tango.RequestPermissionActivity";
-  private static final String INTENT_IMPORTEXPORT_CLASSNAME = "com.google.atap.tango.RequestImportExportActivity";
+  private static final String INTENT_REQUESTPERMISSION_CLASSNAME =
+      "com.google.atap.tango.RequestPermissionActivity";
+  private static final String INTENT_IMPORTEXPORT_CLASSNAME =
+      "com.google.atap.tango.RequestImportExportActivity";
 
   // startActivityForResult requires a code number.
   public static final int TANGO_INTENT_ACTIVITYCODE = 1129;
@@ -58,24 +59,24 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   private static final String EXTRA_KEY_SOURCEFILE = "SOURCE_FILE";
   public static final String EXTRA_KEY_DESTINATIONUUID = "DESTINATION_UUID";
 
-  public static int TANGO_ERROR_INVALID = -2;
-  public static int TANGO_ERROR_ERROR = -1;
-  public static int TANGO_ERROR_SUCCESS = -0;
+  public static final int TANGO_ERROR_INVALID = -2;
+  public static final int TANGO_ERROR_ERROR = -1;
+  public static final int TANGO_ERROR_SUCCESS = -0;
 
   private ADFDataSource mADFDataSource;
-  private ListView mUUIDListView,mAppSpaceUUIDListView;
-  ADFUUIDArrayAdapter mADFAdapter,mAppSpaceADFAdapter;
-  String[] mUUIDList,mUUIDNames,mAppSpaceUUIDList,mAppSpaceUUIDNames;
-  String[] mAPISpaceMenuStrings,mAppSpaceMenuStrings;
-  String mAppSpaceADFFolder;
+  private ListView mUUIDListView, mAppSpaceUUIDListView;
+  private ADFUUIDArrayAdapter mADFAdapter, mAppSpaceADFAdapter;
+  private String[] mUUIDList, mUUIDNames, mAppSpaceUUIDList, mAppSpaceUUIDNames;
+  private String[] mAPISpaceMenuStrings, mAppSpaceMenuStrings;
+  private String mAppSpaceADFFolder;
 
-  Activity thisActivity;
+  private Activity thisActivity;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    int err = TangoJNINative.Initialize(this);
+    int err = TangoJNINative.initialize(this);
     if (err != TANGO_ERROR_SUCCESS) {
       if (err == TANGO_ERROR_INVALID) {
         Toast.makeText(this, 
@@ -118,7 +119,7 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
     if (v.getId() == R.id.uuidlistviewAPI) {
-      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
       
       menu.setHeaderTitle(mUUIDList[info.position]);
       menu.add(mAPISpaceMenuStrings[0]);
@@ -136,38 +137,31 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+    AdapterView.AdapterContextMenuInfo info = 
+        (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     String itemName = (String) item.getTitle();
-    // Delete the ADF from API storage and update the API ADF Listview.
     if (itemName.equals(mAPISpaceMenuStrings[0])) {
+      // Delete the ADF from API storage and update the API ADF Listview.
       showSetNameDialog(mUUIDList[info.position]);
-    } 
-    // Delete the ADF from API storage and update the API ADF Listview.
-    else if (itemName.equals(mAPISpaceMenuStrings[1])) {
+    } else if (itemName.equals(mAPISpaceMenuStrings[1])) {
+      // Delete the ADF from API storage and update the API ADF Listview.
       mADFDataSource.deleteADFandUpdateList(mUUIDList[info.position]);
       updateADFList();
-    } 
-
-    // Export the ADF into application package folder and update the Listview.
-    else if (itemName.equals(mAPISpaceMenuStrings[2])) {
+    } else if (itemName.equals(mAPISpaceMenuStrings[2])) {
+      // Export the ADF into application package folder and update the Listview.
       Intent exportIntent = new Intent();
       exportIntent.setClassName(INTENT_CLASSPACKAGE, INTENT_IMPORTEXPORT_CLASSNAME);
       exportIntent.putExtra(EXTRA_KEY_SOURCEUUID, mUUIDList[info.position]);
       exportIntent.putExtra(EXTRA_KEY_DESTINATIONFILE, mAppSpaceADFFolder);
       thisActivity.startActivityForResult(exportIntent, TANGO_INTENT_ACTIVITYCODE);
-    }
-
-    // Delete an ADF from App space and update the App space ADF Listview.
-    else if (itemName.equals(mAppSpaceMenuStrings[0])) {
+    } else if (itemName.equals(mAppSpaceMenuStrings[0])) {
+      // Delete an ADF from App space and update the App space ADF Listview.
       File file = new File(mAppSpaceADFFolder + File.separator + mAppSpaceUUIDList[info.position]);
       file.delete();
       updateADFList();
-    }
-
-    // Import an ADF into API private Storage and update the API ADF Listview.
-    else if (itemName.equals(mAppSpaceMenuStrings[1])) {
+    } else if (itemName.equals(mAppSpaceMenuStrings[1])) {
+      // Import an ADF into API private Storage and update the API ADF Listview.
       String filepath = mAppSpaceADFFolder + File.separator + mAppSpaceUUIDList[info.position];
-
       Intent importIntent = new Intent();
       importIntent.setClassName(INTENT_CLASSPACKAGE, INTENT_IMPORTEXPORT_CLASSNAME);
       importIntent.putExtra(EXTRA_KEY_SOURCEFILE, filepath);
@@ -195,8 +189,9 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   private String getAppSpaceADFFolder() {
     String mapsFolder = getFilesDir().getAbsolutePath() + File.separator + "Maps";
     File file = new File(mapsFolder);
-    if (!file.exists())
+    if (!file.exists()) {
       file.mkdirs();
+    }
     return mapsFolder;
   }
   
@@ -225,10 +220,10 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
    */
   private String[] getAppSpaceADFList() {
     File file = new File(mAppSpaceADFFolder);
-    File[] ADFFileList = file.listFiles();
-    String[] appSpaceADFList = new String[ADFFileList.length];
-    for(int i=0; i<appSpaceADFList.length; ++i) {
-      appSpaceADFList[i] = ADFFileList[i].getName();
+    File[] adfFileList = file.listFiles();
+    String[] appSpaceADFList = new String[adfFileList.length];
+    for (int i = 0; i < appSpaceADFList.length; ++i) {
+      appSpaceADFList[i] = adfFileList[i].getName();
     }
     Arrays.sort(appSpaceADFList);
     return appSpaceADFList;
@@ -236,7 +231,7 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   
   private void showSetNameDialog(String mCurrentUUID) {
     Bundle bundle = new Bundle();
-    String name = TangoJNINative.GetUUIDMetadataValue(mCurrentUUID, "name");
+    String name = TangoJNINative.getUUIDMetadataValue(mCurrentUUID, "name");
     if (name != null) {
       bundle.putString("name", name);
     }
@@ -248,8 +243,8 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
   }
 
   @Override
-  public void SetNameAndUUID(String name, String uuid) {
-    TangoJNINative.SetUUIDMetadataValue(uuid, "name", name.length(), name);
+  public void setNameAndUUID(String name, String uuid) {
+    TangoJNINative.setUUIDMetadataValue(uuid, "name", name.length(), name);
 
     mUUIDList = mADFDataSource.getFullUUIDList();
     mUUIDNames = mADFDataSource.getUUIDNames();
@@ -260,13 +255,13 @@ public class ADFUUIDListViewActivity extends Activity implements SetNameAndUUIDC
 
 /**
  * This is an adapter class which maps the ListView with 
- * a Data Source(Array of strings)
+ * a Data Source(Array of strings).
  *
  */
 class ADFUUIDArrayAdapter extends ArrayAdapter<String> {
   Context mContext;
-  private String[] mUUIDStringArray,mUUIDNamesStringArray;
-  public ADFUUIDArrayAdapter(Context context,String[] uuids,String[] uuidNames) {
+  private String[] mUUIDStringArray, mUUIDNamesStringArray;
+  public ADFUUIDArrayAdapter(Context context, String[] uuids, String[] uuidNames) {
     super(context, R.layout.uuid_view, R.id.uuid, uuids);
     mContext = context;
     mUUIDStringArray = uuids;
@@ -277,7 +272,8 @@ class ADFUUIDArrayAdapter extends ArrayAdapter<String> {
   
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
-    LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(
+        Context.LAYOUT_INFLATER_SERVICE);
     View row = inflator.inflate(R.layout.uuid_view, parent, false);
     TextView uuid = (TextView) row.findViewById(R.id.uuid);
     TextView uuidName = (TextView) row.findViewById(R.id.adfName);
@@ -285,9 +281,9 @@ class ADFUUIDArrayAdapter extends ArrayAdapter<String> {
     
     if (mUUIDNamesStringArray != null) {
       uuidName.setText(mUUIDNamesStringArray[position]);
-    }
-    else
+    } else {
       uuidName.setText("Metadata cannot be read");
+    }
     return row;
   }
 }

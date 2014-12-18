@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-package com.projecttango.motiontrackingnative;
+package com.projecttango.experiments.nativemotiontracking;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import android.widget.Toast;
-import android.util.Log;
-
+/**
+ * This activity set up the configuration for Motion Tracking application.
+ */
 public class StartActivity extends Activity implements View.OnClickListener {
-  public static final String KEY_MOTIONTRACKING_AUTO_RECOVERY = "com.google.tango.tangojnimotiontracking.useautorecovery";
+  public static final String KEY_MOTIONTRACKING_AUTO_RECOVERY = 
+    "com.google.tango.tangojnimotiontracking.useautorecovery";
   public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
-  public static final String EXTRA_VALUE_MOTION_TRACKING = "MOTION_TRACKING_PERMISSION";
+  public static final String EXTRA_VALUE_MOTION_TRACKING = 
+    "MOTION_TRACKING_PERMISSION";
 
   private ToggleButton mAutoRecoveryButton;
   private Button mStartButton;
@@ -77,7 +81,7 @@ public class StartActivity extends Activity implements View.OnClickListener {
     // Check which request we're responding to
     if (requestCode == 0) {
         // Make sure the request was successful
-        if (resultCode == RESULT_CANCELED ) {
+        if (resultCode == RESULT_CANCELED) {
           Toast.makeText(this, 
             "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
           finish();

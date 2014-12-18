@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef TangoData_H
-#define TangoData_H
+#ifndef AREA_DESCRIPTION_JNI_EXAMPLE_TANGO_DATA_H_
+#define AREA_DESCRIPTION_JNI_EXAMPLE_TANGO_DATA_H_
 
+#include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sstream>
-#include <iostream>
+#include <vector>
 
 #include "tango_client_api.h"
 #include "tango-gl-renderer/gl_util.h"
@@ -28,8 +28,6 @@
 const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
 const float kSecondToMillisecond = 1000.0f;
-
-using namespace std;
 
 class TangoData {
  public:
@@ -72,14 +70,16 @@ class TangoData {
   float prev_frame_time[4];
   int frame_count[4];
 
+  std::vector<std::string> adf_list;
+
   bool is_relocalized;
 
-  string cur_uuid;
-  string event_string;
-  string lib_version_string;
+  std::string cur_uuid;
+  std::string event_string;
+  std::string lib_version_string;
 
  private:
   TangoConfig config_;
 };
 
-#endif  // TangoData_H
+#endif  // AREA_DESCRIPTION_JNI_EXAMPLE_TANGO_DATA_H_

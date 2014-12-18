@@ -16,18 +16,19 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <jni.h>
+#include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sstream>
-#include <iostream>
 
-#include "tango_data.h"
 #include "tango-gl-renderer/axis.h"
 #include "tango-gl-renderer/camera.h"
 #include "tango-gl-renderer/frustum.h"
 #include "tango-gl-renderer/gl_util.h"
 #include "tango-gl-renderer/grid.h"
 #include "tango-gl-renderer/trace.h"
+
+#include "tango_data.h"
 
 GLuint screen_width;
 GLuint screen_height;
@@ -171,11 +172,12 @@ bool SetupGraphics(int w, int h) {
 }
 
 // Render frustum and trace with current position and rotation
-// updated from TangoData, TangoPosition and TangoRotation is updated via callback function
-// OnPoseAvailable(), which is updated when new pose data is available.
+// updated from TangoData, TangoPosition and TangoRotation is updated via
+// callback function OnPoseAvailable(), which is updated when new pose data
+// is available.
 bool RenderFrame() {
-  glEnable (GL_DEPTH_TEST);
-  glEnable (GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
 
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -186,7 +188,8 @@ bool RenderFrame() {
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   int pose_index =
-    TangoData::GetInstance().current_pose_status[1]==TANGO_POSE_VALID ? 1 : 0;
+      TangoData::GetInstance().current_pose_status[1] == TANGO_POSE_VALID ? 1
+                                                                          : 0;
 
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
   glm::vec3 position = GlUtil::ConvertPositionToOpenGL(
@@ -209,15 +212,17 @@ bool RenderFrame() {
     // cam_cur_angle[0] is the x-axis touch, cooresponding to y-axis rotation.
     // cam_cur_angle[0] is the y-axis touch, cooresponding to x-axis rotation.
     glm::quat parent_cam_rot =
-    glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
-    parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
+        glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0],
+                    glm::vec3(0, 1, 0));
+    parent_cam_rot =
+        glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
 
     // Set render camera parent position and rotation.
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(position);
 
     // Set camera view distance, based on touch interaction.
-    cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
+    cam->SetPosition(glm::vec3(0.0f, 0.0f, cam_cur_dist));
 
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
@@ -244,13 +249,13 @@ extern "C" {
 #endif
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_InitGlContent(
-    JNIEnv*, jobject, jint width, jint height) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initGlContent(
+    JNIEnv*, jobject) {
   InitGlContent();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initialize(
     JNIEnv* env, jobject, jobject activity) {
   TangoErrorType err = TangoData::GetInstance().Initialize(env, activity);
   if (err != TANGO_SUCCESS) {
@@ -260,21 +265,21 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_Initialize(
       LOGE("Tango Service initialize internal error");
     }
   }
-  return (int)err;
+  return static_cast<int>(err);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_Connect(JNIEnv*,
-                                                                   jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_connect(
+    JNIEnv*, jobject) {
   TangoErrorType err = TangoData::GetInstance().Connect();
   if (err != TANGO_SUCCESS) {
     LOGE("Tango Service connect failed");
   }
-  return (int)err;
+  return static_cast<int>(err);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_ConnectCallbacks(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   if (!TangoData::GetInstance().ConnectCallbacks()) {
     LOGE("Tango ConnectCallbacks() failed");
@@ -284,24 +289,23 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_ConnectCallbacks(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupConfig(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupConfig(
     JNIEnv*, jobject, bool is_learning, bool is_load_adf) {
   LOGI("leanring:%d, adf:%d", is_learning, is_load_adf);
-  if (!TangoData::GetInstance().SetConfig(is_learning, is_load_adf))
-  {
+  if (!TangoData::GetInstance().SetConfig(is_learning, is_load_adf)) {
     LOGE("Tango set config failed");
   }
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_Disconnect(JNIEnv*,
-                                                                      jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_disconnect(
+    JNIEnv*, jobject) {
   TangoData::GetInstance().Disconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(JNIEnv*,
-                                                                     jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_freeGLContent(
+    JNIEnv*, jobject) {
   delete cam;
   delete axis;
   delete grid;
@@ -312,44 +316,50 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_OnDestroy(JNIEnv*,
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SetupGraphic(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_Render(JNIEnv*,
-                                                                  jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_render(
+    JNIEnv*, jobject) {
   RenderFrame();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCamera(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {
   SetCamera(static_cast<CameraType>(camera_index));
 }
 
 JNIEXPORT bool JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SaveADF(JNIEnv*,
-                                                                   jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_saveADF(
+    JNIEnv*, jobject) {
   // Save ADF.
   return TangoData::GetInstance().SaveADF();
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUID(JNIEnv* env,
-                                                                   jobject) {
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getUUID(
+    JNIEnv* env, jobject) {
   return env->NewStringUTF(TangoData::GetInstance().cur_uuid.c_str());
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetAllUUIDs(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getAllUUIDs(
     JNIEnv* env, jobject) {
   return env->NewStringUTF(TangoData::GetInstance().GetAllUUIDs());
 }
 
+JNIEXPORT jint JNICALL
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getADFCount(
+    JNIEnv*, jobject) {
+  return TangoData::GetInstance().adf_list.size();
+}
+
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUIDMetadataValue(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getUUIDMetadataValue(
     JNIEnv* env, jobject, jstring uuid, jstring metadata_key) {
   const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
   const char* metadata_key_ = env->GetStringUTFChars(metadata_key, NULL);
@@ -358,7 +368,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetUUIDMetadataValue(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SetUUIDMetadataValue(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setUUIDMetadataValue(
     JNIEnv* env, jobject, jstring uuid, jstring metadata_key, jint value_size,
     jstring metadata_value) {
   const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
@@ -369,16 +379,16 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_SetUUIDMetadataValue(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_DeleteADF(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_deleteADF(
     JNIEnv* env, jobject, jstring uuid) {
   const char* uuid_ = env->GetStringUTFChars(uuid, NULL);
   TangoData::GetInstance().DeleteADF(uuid_);
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getPoseString(
     JNIEnv* env, jobject, int index) {
-  stringstream string_stream;
+  std::stringstream string_stream;
   if (TangoData::GetInstance().current_pose_status[index] == -4) {
     string_stream
         << "status: N/A, count: N/A, delta time (ms): N/A, position (m): "
@@ -426,7 +436,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetPoseString(
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getVersionString(
     JNIEnv* env, jobject) {
   if (TangoData::GetInstance().lib_version_string.empty()) {
     return env->NewStringUTF("No version string available.");
@@ -437,13 +447,13 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetVersionString(
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getEventString(
     JNIEnv* env, jobject) {
   if (TangoData::GetInstance().event_string.empty()) {
     return env->NewStringUTF("No event string available.");
   } else {
     pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
-    string event_string_cpy = TangoData::GetInstance().event_string;
+    std::string event_string_cpy = TangoData::GetInstance().event_string;
     pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
     return env->NewStringUTF(event_string_cpy.c_str());
   }
@@ -451,7 +461,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_GetEventString(
 
 // Touching GL interface.
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_startSetCameraOffset(
     JNIEnv*, jobject) {
   if (cam != NULL) {
     cam_start_angle[0] = cam_cur_angle[0];
@@ -461,7 +471,7 @@ Java_com_projecttango_areadescriptionnative_TangoJNINative_StartSetCameraOffset(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_areadescriptionnative_TangoJNINative_SetCameraOffset(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setCameraOffset(
     JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
   if (cam != NULL) {
     cam_cur_angle[0] = cam_start_angle[0] + rotation_x;

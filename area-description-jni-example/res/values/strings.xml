@@ -28,6 +28,10 @@
     <string name="first_person">First</string>
     <string name="third_person">Third</string>
     <string name="top_down">Top</string>
+    <string name="load_adf_on">Load ADF on</string>
+    <string name="load_adf_off">Load ADF off</string>
+    <string name="learning_mode_on">Learning mode on</string>
+    <string name="learning_mode_off">Learning mode off</string>
     <string name="start">Start</string>
     <string name="set_name_dialog_title">Set the ADF Name</string>
     <string name="cancel">Cancel</string>  
@@ -49,6 +53,7 @@
     <string name="adf_exists_api_space">"Tango Error! ADF already exists in API Space."</string>
     <string name="no_adfs_tango_error">No ADF UUIDs</string>
     <string name="no_permissions">"Permission not granted!"</string>
+    <string name="tango_invalid">"Tango Invalid Exception! Try again!"</string>
     <string-array
         name ="SetDialogMenuItemsAPISpace" > 
         <item >Rename</item>

@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_DATA_H
-#define TANGO_DATA_H
+#ifndef POINT_CLOUD_JNI_EXAMPLE_TANGO_DATA_H_
+#define POINT_CLOUD_JNI_EXAMPLE_TANGO_DATA_H_
 #define GLM_FORCE_RADIANS
 
 #include <pthread.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <iostream>
 #include <tango_client_api.h>
 #include "tango-gl-renderer/gl_util.h"
 
@@ -38,8 +37,6 @@ const glm::mat4 oc_2_c_mat =
 const glm::mat4 ss_2_ow_mat =
     glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
               0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-
-using namespace std;
 
 class TangoData {
  public:
@@ -91,11 +88,12 @@ class TangoData {
   // Color camera to IMU matrix.
   glm::mat4 c_2_imu_mat;
 
-  string event_string;
-  string lib_version_string;
-  string pose_string;
-private:
+  std::string event_string;
+  std::string lib_version_string;
+  std::string pose_string;
+
+ private:
   TangoConfig config_;
 };
 
-#endif  // TANGO_DATA_H
+#endif  // POINT_CLOUD_JNI_EXAMPLE_TANGO_DATA_H_

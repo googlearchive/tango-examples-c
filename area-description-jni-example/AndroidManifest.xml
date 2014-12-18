@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.projecttango.areadescriptionnative"
+    package="com.projecttango.experiments.nativearealearning"
     android:versionCode="0"
     android:versionName="0" >
 
@@ -18,7 +18,7 @@
             android:required="true" />
         <activity
             android:label="@string/menu_name"
-            android:name="com.projecttango.areadescriptionnative.StartActivity"
+            android:name="com.projecttango.experiments.nativearealearning.StartActivity"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,11 +26,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.projecttango.areadescriptionnative.AreaDescriptionActivity"
+            android:name="com.projecttango.experiments.nativearealearning.AreaDescriptionActivity"
             android:screenOrientation="landscape">
         </activity>
         <activity
-            android:name="com.projecttango.areadescriptionnative.ADFUUIDListViewActivity"
+            android:name="com.projecttango.experiments.nativearealearning.ADFUUIDListViewActivity"
             android:screenOrientation="landscape">
         </activity>
     </application>

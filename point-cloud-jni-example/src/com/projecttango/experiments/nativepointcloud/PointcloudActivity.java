@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.projecttango.pointcloudnative;
+package com.projecttango.experiments.nativepointcloud;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,14 +32,16 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.app.Activity;
-import android.graphics.Point;
 
+/**
+ * Main activity shows point cloud scene.
+ */
 public class PointcloudActivity extends Activity implements OnClickListener {
   public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
   public static final String EXTRA_VALUE_MOTION_TRACKING = "MOTION_TRACKING_PERMISSION";
+  private final int kTextUpdateIntervalms = 100;
 
-  GLSurfaceView glView;
+  private GLSurfaceView mGLView;
 
   private TextView mPoseDataTextView;
   private TextView mTangoEventTextView;
@@ -47,16 +51,14 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   private TextView mFrameDeltaTimeTextView;
   private TextView mAppVersion;
 
-  private float[] touchStartPos = new float[2];
-  private float[] touchCurPos = new float[2];
-  private float touchStartDist = 0.0f;
-  private float touchCurDist = 0.0f;
-  private Point screenSize = new Point();
-  private float screenDiagnal = 0.0f;
-
   private boolean mIsPermissionIntentCalled = false;
 
-  private final int kTextUpdateIntervalms = 100;
+  private float[] mTouchStartPositionition = new float[2];
+  private float[] mTouchCurrentPosition = new float[2];
+  private float mTouchStartDist = 0.0f;
+  private float mTouchCurrentDist = 0.0f;
+  private Point mScreenSize = new Point();
+  private float mScreenDiagonalDist = 0.0f;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +67,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     setTitle(R.string.app_name);
 
     Display display = getWindowManager().getDefaultDisplay();
-    display.getSize(screenSize);
-    screenDiagnal = (float) Math.sqrt(screenSize.x * screenSize.x
-        + screenSize.y * screenSize.y);
+    display.getSize(mScreenSize);
+    mScreenDiagonalDist = (float) Math.sqrt(mScreenSize.x * mScreenSize.x
+        + mScreenSize.y * mScreenSize.y);
 
     setContentView(R.layout.activity_pointcloud);
 
@@ -105,8 +107,8 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     findViewById(R.id.top_down_button).setOnClickListener(this);
 
     // OpenGL view where all of the graphics are drawn.
-    glView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
-    glView.setRenderer(new Renderer());
+    mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+    mGLView.setRenderer(new Renderer());
 
     startUIThread();
   }
@@ -114,10 +116,10 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   @Override
   protected void onPause() {
     super.onPause();
-    glView.onPause();
+    mGLView.onPause();
     // Disconnect Tango Service.
-    TangoJNINative.Disconnect();
-    TangoJNINative.OnDestroy();
+    TangoJNINative.disconnect();
+    TangoJNINative.freeGLContent();
     mIsPermissionIntentCalled = false;
   }
 
@@ -125,7 +127,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   protected void onResume() {
     Log.i("tango_jni", "on Resume");
     super.onResume();
-    glView.onResume();
+    mGLView.onResume();
     if (!mIsPermissionIntentCalled) {
       Intent intent = new Intent();
       intent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
@@ -143,13 +145,13 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   public void onClick(View v) {
     switch (v.getId()) {
     case R.id.first_person_button:
-      TangoJNINative.SetCamera(0);
+      TangoJNINative.setCamera(0);
       break;
     case R.id.third_person_button:
-      TangoJNINative.SetCamera(1);
+      TangoJNINative.setCamera(1);
       break;
     case R.id.top_down_button:
-      TangoJNINative.SetCamera(2);
+      TangoJNINative.setCamera(2);
       break;
     default:
       return;
@@ -161,13 +163,13 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     // Check which request we're responding to.
     if (requestCode == 0) {
         // Make sure the request was successful.
-        if (resultCode == RESULT_CANCELED ) {
+        if (resultCode == RESULT_CANCELED) {
           Toast.makeText(this, 
             "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
           finish();
         } else {
           // Initialize the Tango service.
-          int err = TangoJNINative.Initialize(this);
+          int err = TangoJNINative.initialize(this);
           if (err != 0) {
             if (err == -2) {
               Toast.makeText(this,
@@ -179,21 +181,21 @@ public class PointcloudActivity extends Activity implements OnClickListener {
           }
 
           // Connect Tango callbacks.
-          TangoJNINative.ConnectCallbacks();
+          TangoJNINative.connectCallbacks();
 
           // Set up Tango configuration with auto-reset on.
-          TangoJNINative.SetupConfig();
+          TangoJNINative.setupConfig();
 
           // Set Tango Service's version number.
-          mVersionTextView.setText(TangoJNINative.GetVersionNumber());
+          mVersionTextView.setText(TangoJNINative.getVersionNumber());
 
           // Connect Tango Service
-          err =  TangoJNINative.Connect();
+          err =  TangoJNINative.connect();
           if (err != 0) {
             Toast.makeText(this, 
                 "Tango Service connect error", Toast.LENGTH_SHORT).show();
           }
-          TangoJNINative.SetupExtrinsics();
+          TangoJNINative.setupExtrinsics();
           mIsPermissionIntentCalled = true;
         }
     }
@@ -205,24 +207,24 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     if (pointCount == 1) {
       switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN: {
-        TangoJNINative.StartSetCameraOffset();
-        touchCurDist = 0.0f;
-        touchStartPos[0] = event.getX(0);
-        touchStartPos[1] = event.getY(0);
+        TangoJNINative.startSetCameraOffset();
+        mTouchCurrentDist = 0.0f;
+        mTouchStartPositionition[0] = event.getX(0);
+        mTouchStartPositionition[1] = event.getY(0);
         break;
       }
       case MotionEvent.ACTION_MOVE: {
-        touchCurPos[0] = event.getX(0);
-        touchCurPos[1] = event.getY(0);
+        mTouchCurrentPosition[0] = event.getX(0);
+        mTouchCurrentPosition[1] = event.getY(0);
 
         // Normalize to screen width.
-        float normalizedRotX = (touchCurPos[0] - touchStartPos[0])
-            / screenSize.x;
-        float normalizedRotY = (touchCurPos[1] - touchStartPos[1])
-            / screenSize.y;
+        float normalizedRotX = (mTouchCurrentPosition[0] - mTouchStartPositionition[0])
+            / mScreenSize.x;
+        float normalizedRotY = (mTouchCurrentPosition[1] - mTouchStartPositionition[1])
+            / mScreenSize.y;
 
-        TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
-            touchCurDist / screenDiagnal);
+        TangoJNINative.setCameraOffset(normalizedRotX, normalizedRotY,
+            mTouchCurrentDist / mScreenDiagonalDist);
         break;
       }
       }
@@ -230,27 +232,27 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     if (pointCount == 2) {
       switch (event.getActionMasked()) {
       case MotionEvent.ACTION_POINTER_DOWN: {
-        TangoJNINative.StartSetCameraOffset();
+        TangoJNINative.startSetCameraOffset();
         float absX = event.getX(0) - event.getX(1);
         float absY = event.getY(0) - event.getY(1);
-        touchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
+        mTouchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
         break;
       }
       case MotionEvent.ACTION_MOVE: {
         float absX = event.getX(0) - event.getX(1);
         float absY = event.getY(0) - event.getY(1);
 
-        touchCurDist = touchStartDist
+        mTouchCurrentDist = mTouchStartDist
             - (float) Math.sqrt(absX * absX + absY * absY);
 
-        TangoJNINative.SetCameraOffset(0.0f, 0.0f, touchCurDist
-            / screenDiagnal);
+        TangoJNINative.setCameraOffset(0.0f, 0.0f, mTouchCurrentDist
+            / mScreenDiagonalDist);
         break;
       }
       case MotionEvent.ACTION_POINTER_UP: {
         int index = event.getActionIndex() == 0 ? 1 : 0;
-        touchStartPos[0] = event.getX(index);
-        touchStartPos[1] = event.getY(index);
+        mTouchStartPositionition[0] = event.getX(index);
+        mTouchStartPositionition[1] = event.getY(index);
         break;
       }
       }
@@ -269,11 +271,12 @@ public class PointcloudActivity extends Activity implements OnClickListener {
                 @Override
                 public void run() {
                   try {
-                    mTangoEventTextView.setText(TangoJNINative.GetEventString());
-                    mPoseDataTextView.setText(TangoJNINative.GetPoseString());
-                    mPointCountTextView.setText(String.valueOf(TangoJNINative.GetVerticesCount()));
-                    mAverageZTextView.setText(String.format("%.3f", TangoJNINative.GetAverageZ()));
-                    mFrameDeltaTimeTextView.setText(String.format("%.3f", TangoJNINative.GetFrameDeltaTime()));
+                    mTangoEventTextView.setText(TangoJNINative.getEventString());
+                    mPoseDataTextView.setText(TangoJNINative.getPoseString());
+                    mPointCountTextView.setText(String.valueOf(TangoJNINative.getVerticesCount()));
+                    mAverageZTextView.setText(String.format("%.3f", TangoJNINative.getAverageZ()));
+                    mFrameDeltaTimeTextView.setText(
+                        String.format("%.3f", TangoJNINative.getFrameDeltaTime()));
                   } catch (Exception e) {
                       e.printStackTrace();
                   }

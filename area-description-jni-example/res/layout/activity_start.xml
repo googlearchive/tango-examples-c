@@ -8,21 +8,21 @@
         android:id="@+id/loadadf"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-         android:textOn="Load ADF on"
-        android:textOff="Load ADF off" />
+        android:textOn="@string/load_adf_on"
+        android:textOff="@string/load_adf_off" />
 
     <ToggleButton
         android:id="@+id/learningmode"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:textOn="Learning mode on"
-        android:textOff="Learning mode off" />
+        android:textOn="@string/learning_mode_on"
+        android:textOff="@string/learning_mode_off" />
 
     <Button
         android:id="@+id/start"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
-        android:text="start" 
+        android:text="@string/start" 
         android:textSize="15sp"/>
 
     <Button

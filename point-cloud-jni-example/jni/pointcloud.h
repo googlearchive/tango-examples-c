@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef POINTCLOUD_H
-#define POINTCLOUD_H
+#ifndef POINT_CLOUD_JNI_EXAMPLE_POINTCLOUD_H_
+#define POINT_CLOUD_JNI_EXAMPLE_POINTCLOUD_H_
 
 #include "tango_data.h"
 #include "tango-gl-renderer/gl_util.h"
@@ -27,8 +27,8 @@ class Pointcloud {
   /// Render function take in the depth buffer and the buffer size, and render
   /// the points base on current transformation.
   ///
-  /// depth_buffer_size: Number of vertices in of the data. Example: 60 floats in
-  /// the buffer, the size should be 60/3 = 20;
+  /// depth_buffer_size: Number of vertices in of the data. Example: 60 floats
+  /// in the buffer, the size should be 60/3 = 20;
   ///
   /// depth_data_buffer: Pointer to float array contains float triplet of each
   /// vertices in the point cloud.
@@ -42,4 +42,4 @@ class Pointcloud {
   GLuint uniform_mvp_mat_;
 };
 
-#endif  // POINTCLOUD_H
+#endif  // POINT_CLOUD_JNI_EXAMPLE_POINTCLOUD_H_

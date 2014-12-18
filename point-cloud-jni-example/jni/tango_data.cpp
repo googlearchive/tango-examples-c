@@ -75,7 +75,7 @@ static void onXYZijAvailable(void*, const TangoXYZij* XYZ_ij) {
 // Tango event callback.
 static void onTangoEvent(void*, const TangoEvent* event) {
   // Update the status string for debug display.
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream << event->event_key << ": " << event->event_value;
   TangoData::GetInstance().event_string = string_stream.str();
 }
@@ -118,7 +118,8 @@ bool TangoData::SetConfig() {
   }
 
   // Enable depth.
-  if (TangoConfig_setBool(config_, "config_enable_depth", true) != TANGO_SUCCESS) {
+  if (TangoConfig_setBool(config_, "config_enable_depth", true) !=
+      TANGO_SUCCESS) {
     LOGE("config_enable_depth Failed");
     return false;
   }
@@ -158,19 +159,19 @@ bool TangoData::ConnectCallbacks() {
     return false;
   }
 
-  //Set the reference frame pair after connect to service.
-  //Currently the API will set this set below as default.
+  // Set the reference frame pair after connect to service.
+  // Currently the API will set this set below as default.
   TangoCoordinateFramePair pairs;
   pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
   pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
-  
-  //Attach onPoseAvailable callback.
+
+  // Attach onPoseAvailable callback.
   if (TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailable)
       != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnPoseAvailable(): Failed");
     return false;
   }
-  
+
   // Set the event callback listener.
   if (TangoService_connectOnTangoEvent(onTangoEvent) != TANGO_SUCCESS) {
     LOGI("TangoService_connectOnTangoEvent(): Failed");
@@ -220,7 +221,7 @@ void TangoData::UpdatePoseData() {
                           * kSecondToMillisecond;
 
   // Build pose logging string for debug display.
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
   string_stream.precision(3);
   string_stream << "status: "
@@ -308,8 +309,7 @@ glm::mat4 TangoData::GetOC2OWMat(bool is_depth_pose) {
     pthread_mutex_unlock(&xyzij_mutex);
     return ss_2_ow_mat * temp * glm::inverse(d_2_imu_mat) * c_2_imu_mat *
            oc_2_c_mat;
-  }
-  else {
+  } else {
     pthread_mutex_lock(&pose_mutex);
     glm::mat4 temp = d_2_ss_mat_motion;
     pthread_mutex_unlock(&pose_mutex);
@@ -333,34 +333,30 @@ bool TangoData::SetupExtrinsicsMatrices() {
   // Get device with respect to imu transformation matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
   frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
+  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) !=
+      TANGO_SUCCESS) {
     LOGE("TangoService_getPoseAtTime(): Failed");
     return false;
   }
-  translation = glm::vec3(pose_data.translation[0],
-                          pose_data.translation[1],
+  translation = glm::vec3(pose_data.translation[0], pose_data.translation[1],
                           pose_data.translation[2]);
-  rotation = glm::quat(pose_data.orientation[3],
-                       pose_data.orientation[0],
-                       pose_data.orientation[1],
-                       pose_data.orientation[2]);
-  d_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
-    glm::mat4_cast(rotation);
+  rotation = glm::quat(pose_data.orientation[3], pose_data.orientation[0],
+                       pose_data.orientation[1], pose_data.orientation[2]);
+  d_2_imu_mat =
+      glm::translate(glm::mat4(1.0f), translation) * glm::mat4_cast(rotation);
 
   // Get color camera with respect to imu transformation matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
   frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
-  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) != TANGO_SUCCESS) {
+  if (TangoService_getPoseAtTime(0.0, frame_pair, &pose_data) !=
+      TANGO_SUCCESS) {
     LOGE("TangoService_getPoseAtTime(): Failed");
     return false;
   }
-  translation = glm::vec3(pose_data.translation[0],
-                          pose_data.translation[1],
+  translation = glm::vec3(pose_data.translation[0], pose_data.translation[1],
                           pose_data.translation[2]);
-  rotation = glm::quat(pose_data.orientation[3],
-                       pose_data.orientation[0],
-                       pose_data.orientation[1],
-                       pose_data.orientation[2]);
+  rotation = glm::quat(pose_data.orientation[3], pose_data.orientation[0],
+                       pose_data.orientation[1], pose_data.orientation[2]);
   c_2_imu_mat = glm::translate(glm::mat4(1.0f), translation) *
     glm::mat4_cast(rotation);
   return true;

@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package com.projecttango.hellotangonative;
+package com.projecttango.experiments.nativearealearning;
 
-public class TangoJNINative {
-  static {
-    System.loadLibrary("hello_tango_jni_example");
+import android.opengl.GLSurfaceView;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+
+/**
+ * Renderer renders graphic content.
+ */
+public class Renderer implements GLSurfaceView.Renderer {
+  public void onDrawFrame(GL10 gl) {
+    TangoJNINative.render();
   }
 
-  public static native void Initialize(HelloTangoActivity activity);
-  
-  public static native void SetupConfig();
-  
-  public static native void ConnectCallbacks();
+  public void onSurfaceChanged(GL10 gl, int width, int height) {
+    TangoJNINative.setupGraphic(width, height);
+  }
 
-  public static native void Connect();
-
-  public static native void Disconnect();
-  
+  public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    TangoJNINative.initGlContent();
+  }
 }

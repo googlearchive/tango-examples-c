@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.motiontrackingnative;
+package com.projecttango.experiments.nativemotiontracking;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -32,11 +32,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * Main activity shows motion tracking scene.
+ */
 public class MotionTrackingActivity extends Activity implements
     View.OnClickListener {
   final int kUpdatIntervalMs = 100;
 
-  private static String TAG = MotionTrackingActivity.class.getSimpleName();
+  private static final String TAG = 
+      MotionTrackingActivity.class.getSimpleName();
 
   private TextView mPoseData;
   private TextView mVersion;
@@ -49,12 +53,12 @@ public class MotionTrackingActivity extends Activity implements
   private MotionTrackingRenderer mRenderer;
   private GLSurfaceView mGLView;
   
-  private float[] touchStartPos = new float[2];
-  private float[] touchCurPos = new float[2];
-  private float touchStartDist = 0.0f;
-  private float touchCurDist = 0.0f;
-  private Point screenSize = new Point();
-  private float screenDiagnal = 0.0f;
+  private float[] mTouchStartPositionition = new float[2];
+  private float[] mTouchCurrentPosition = new float[2];
+  private float mTouchStartDist = 0.0f;
+  private float mTouchCurrentDist = 0.0f;
+  private Point mScreenSize = new Point();
+  private float mScreenDiagonalDist = 0.0f;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +67,9 @@ public class MotionTrackingActivity extends Activity implements
     setTitle(R.string.app_name);
     
     Display display = getWindowManager().getDefaultDisplay();
-    display.getSize(screenSize);
-    screenDiagnal = (float) Math.sqrt(screenSize.x * screenSize.x
-        + screenSize.y * screenSize.y);
+    display.getSize(mScreenSize);
+    mScreenDiagonalDist = (float) Math.sqrt(mScreenSize.x * mScreenSize.x +
+        mScreenSize.y * mScreenSize.y);
     
     setContentView(R.layout.activity_motion_tracking);
     Intent intent = getIntent();
@@ -110,18 +114,17 @@ public class MotionTrackingActivity extends Activity implements
     mGLView.setRenderer(mRenderer);
 
     // Initialize the Tango service
-    int err = TangoJNINative.Initialize(this);
+    int err = TangoJNINative.initialize(this);
     if (err != 0) {
       if (err == -2) {
         Toast.makeText(this, 
           "Tango Service version mis-match", Toast.LENGTH_SHORT).show();
-      }
-      else {
+      } else {
         Toast.makeText(this, 
           "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
       }
     }
-    TangoJNINative.ConnectCallbacks();
+    TangoJNINative.connectCallbacks();
     startUIThread();
   }
 
@@ -130,8 +133,8 @@ public class MotionTrackingActivity extends Activity implements
     Log.i("tango_jni", "MotionTrackingActivity onPause");
     super.onPause();
     mGLView.onPause();
-    TangoJNINative.Disconnect();
-    TangoJNINative.OnDestroy();
+    TangoJNINative.disconnect();
+    TangoJNINative.freeGLContent();
   }
 
   @Override
@@ -141,15 +144,15 @@ public class MotionTrackingActivity extends Activity implements
     mGLView.onResume();
 
     // Set up Tango configuration file with auto-reset on
-    TangoJNINative.SetupConfig(mIsAutoRecovery);
+    TangoJNINative.setupConfig(mIsAutoRecovery);
 
     // Connect Tango Service
-    int err =  TangoJNINative.Connect();
+    int err =  TangoJNINative.connect();
     if (err != 0) {
       Toast.makeText(this, 
           "Tango Service connect error", Toast.LENGTH_SHORT).show();
     }
-    mVersion.setText(TangoJNINative.GetVersionNumber());
+    mVersion.setText(TangoJNINative.getVersionNumber());
   }
   
   @Override
@@ -161,16 +164,16 @@ public class MotionTrackingActivity extends Activity implements
   public void onClick(View v) {
     switch (v.getId()) {
     case R.id.first_person_button:
-      TangoJNINative.SetCamera(0);
+      TangoJNINative.setCamera(0);
       break;
     case R.id.top_down_button:
-      TangoJNINative.SetCamera(2);
+      TangoJNINative.setCamera(2);
       break;
     case R.id.third_person_button:
-      TangoJNINative.SetCamera(1);
+      TangoJNINative.setCamera(1);
       break;
     case R.id.resetmotion:
-      TangoJNINative.ResetMotionTracking();
+      TangoJNINative.resetMotionTracking();
       break;
     default:
       Log.w(TAG, "Unknown button click");
@@ -184,24 +187,26 @@ public class MotionTrackingActivity extends Activity implements
     if (pointCount == 1) {
       switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN: {
-        TangoJNINative.StartSetCameraOffset();
-        touchCurDist = 0.0f;
-        touchStartPos[0] = event.getX(0);
-        touchStartPos[1] = event.getY(0);
+        TangoJNINative.startSetCameraOffset();
+        mTouchCurrentDist = 0.0f;
+        mTouchStartPositionition[0] = event.getX(0);
+        mTouchStartPositionition[1] = event.getY(0);
         break;
       }
       case MotionEvent.ACTION_MOVE: {
-        touchCurPos[0] = event.getX(0);
-        touchCurPos[1] = event.getY(0);
+        mTouchCurrentPosition[0] = event.getX(0);
+        mTouchCurrentPosition[1] = event.getY(0);
 
-        // Normalize to screen width.
-        float normalizedRotX = (touchCurPos[0] - touchStartPos[0])
-            / screenSize.x;
-        float normalizedRotY = (touchCurPos[1] - touchStartPos[1])
-            / screenSize.y;
+        if (mScreenSize.x != 0.0f && mScreenSize.y != 0.0f && mScreenDiagonalDist != 0.0f) {
+          // Normalize to screen width.
+          float normalizedRotX = (mTouchCurrentPosition[0] - mTouchStartPositionition[0])
+              / mScreenSize.x;
+          float normalizedRotY = (mTouchCurrentPosition[1] - mTouchStartPositionition[1])
+              / mScreenSize.y;
 
-        TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
-            touchCurDist / screenDiagnal);
+          TangoJNINative.setCameraOffset(normalizedRotX, normalizedRotY,
+              mTouchCurrentDist / mScreenDiagonalDist);
+        }
         break;
       }
       }
@@ -209,34 +214,34 @@ public class MotionTrackingActivity extends Activity implements
     if (pointCount == 2) {
       switch (event.getActionMasked()) {
       case MotionEvent.ACTION_POINTER_DOWN: {
-        TangoJNINative.StartSetCameraOffset();
+        TangoJNINative.startSetCameraOffset();
         float absX = event.getX(0) - event.getX(1);
         float absY = event.getY(0) - event.getY(1);
-        touchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
+        mTouchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
         break;
       }
       case MotionEvent.ACTION_MOVE: {
         float absX = event.getX(0) - event.getX(1);
         float absY = event.getY(0) - event.getY(1);
 
-        touchCurDist = touchStartDist
+        mTouchCurrentDist = mTouchStartDist
             - (float) Math.sqrt(absX * absX + absY * absY);
 
-        TangoJNINative.SetCameraOffset(0.0f, 0.0f, touchCurDist
-            / screenDiagnal);
+        TangoJNINative.setCameraOffset(0.0f, 0.0f, mTouchCurrentDist
+            / mScreenDiagonalDist);
         break;
       }
       case MotionEvent.ACTION_POINTER_UP: {
         int index = event.getActionIndex() == 0 ? 1 : 0;
-        touchStartPos[0] = event.getX(index);
-        touchStartPos[1] = event.getY(index);
+        mTouchStartPositionition[0] = event.getX(index);
+        mTouchStartPositionition[1] = event.getY(index);
         break;
       }
       }
     }
     return true;
   }
-  
+
   private void startUIThread() {
     new Thread(new Runnable() {
       @Override
@@ -248,8 +253,8 @@ public class MotionTrackingActivity extends Activity implements
               @Override
               public void run() {
                 try {
-                  mEvent.setText(TangoJNINative.GetEventString());
-                  mPoseData.setText(TangoJNINative.GetPoseString());
+                  mEvent.setText(TangoJNINative.getEventString());
+                  mPoseData.setText(TangoJNINative.getPoseString());
                 } catch (Exception e) {
                   e.printStackTrace();
                 }

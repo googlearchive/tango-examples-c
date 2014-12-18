@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef Tango_Data_H
-#define Tango_Data_H
+#ifndef MOTION_TRACKING_JNI_EXAMPLE_TANGO_DATA_H_
+#define MOTION_TRACKING_JNI_EXAMPLE_TANGO_DATA_H_
 
 #include <pthread.h>
+#include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sstream>
-#include <iostream>
 
 #include "tango_client_api.h"
 #include "tango-gl-renderer/gl_util.h"
@@ -29,10 +28,8 @@
 const int kMeterToMillimeter = 1000;
 const int kVersionStringLength = 27;
 
-using namespace std;
-
 class TangoData {
-public:
+ public:
   static TangoData& GetInstance() {
     static TangoData instance;
     return instance;
@@ -59,12 +56,12 @@ public:
   float frame_delta_time;
   float prev_pose_timestamp;
 
-  string event_string;
-  string lib_version_string;
-  string pose_string;
+  std::string event_string;
+  std::string lib_version_string;
+  std::string pose_string;
 
-private:
+ private:
   TangoConfig config_;
 };
 
-#endif  // Tango_Data_H
+#endif  // MOTION_TRACKING_JNI_EXAMPLE_TANGO_DATA_H_

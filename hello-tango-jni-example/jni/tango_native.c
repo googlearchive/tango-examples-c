@@ -85,27 +85,27 @@ void DisconnectTango()
   TangoService_disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_Initialize(JNIEnv* env, jobject obj, jobject activity)
+JNIEXPORT void JNICALL Java_com_projecttango_experiments_nativehellotango_TangoJNINative_initialize(JNIEnv* env, jobject obj, jobject activity)
 {
   TangoInitialize(env, activity);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_SetupConfig(JNIEnv* env, jobject obj, jobject activity)
+JNIEXPORT void JNICALL Java_com_projecttango_experiments_nativehellotango_TangoJNINative_setupConfig(JNIEnv* env, jobject obj, jobject activity)
 {
   TangoSetConfig();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_ConnectCallbacks(JNIEnv* env, jobject obj, jobject activity)
+JNIEXPORT void JNICALL Java_com_projecttango_experiments_nativehellotango_TangoJNINative_connectCallbacks(JNIEnv* env, jobject obj, jobject activity)
 {
   TangoConnectCallbacks();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_Connect(JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_com_projecttango_experiments_nativehellotango_TangoJNINative_connect(JNIEnv* env, jobject obj)
 {
   TangoConnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_hellotangonative_TangoJNINative_Disconnect(JNIEnv* env, jobject obj)
+JNIEXPORT void JNICALL Java_com_projecttango_experiments_nativehellotango_TangoJNINative_disconnect(JNIEnv* env, jobject obj)
 {
   DisconnectTango();
 }

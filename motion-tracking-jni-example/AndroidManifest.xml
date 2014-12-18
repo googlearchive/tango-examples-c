@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.projecttango.motiontrackingnative"
+    package="com.projecttango.experiments.nativemotiontracking"
     android:versionCode="0"
     android:versionName="0" >
 
@@ -17,7 +17,7 @@
             android:name="com.projecttango.libtango_device" 
             android:required="true" />
         <activity
-            android:name="com.projecttango.motiontrackingnative.StartActivity"
+            android:name="com.projecttango.experiments.nativemotiontracking.StartActivity"
             android:label="@string/menu_name"
             android:screenOrientation="landscape">
             <intent-filter>
@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.projecttango.motiontrackingnative.MotionTrackingActivity"
+            android:name="com.projecttango.experiments.nativemotiontracking.MotionTrackingActivity"
             android:label="@string/menu_name" 
             android:screenOrientation="landscape"> 
         </activity>

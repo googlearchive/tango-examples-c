@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <vector>
+
 #include "tango_data.h"
-using namespace std;
 
 TangoData::TangoData() : config_(nullptr) { ResetData(); }
 
@@ -28,25 +30,22 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
   if (pose->frame.base == TANGO_COORDINATE_FRAME_START_OF_SERVICE
       && pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
     current_index = 0;
-  }
-  // Set pose for device wrt ADF.
-  else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
-      && pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+  } else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
+             pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+    // Set pose for device wrt ADF.
     current_index = 1;
-  }
-  // Set pose for start wrt ADF.
-  else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
-      && pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE) {
+  } else if (pose->frame.base == TANGO_COORDINATE_FRAME_AREA_DESCRIPTION &&
+             pose->frame.target == TANGO_COORDINATE_FRAME_START_OF_SERVICE) {
+    // Set pose for start wrt ADF.
     current_index = 2;
     if (pose->status_code == TANGO_POSE_VALID) {
       TangoData::GetInstance().is_relocalized = true;
     } else {
       TangoData::GetInstance().is_relocalized = false;
     }
-  }
-  // Set pose for device wrt previous pose.
-  else if (pose->frame.base == TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE
-      && pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+  } else if (pose->frame.base == TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE &&
+             pose->frame.target == TANGO_COORDINATE_FRAME_DEVICE) {
+    // Set pose for device wrt previous pose.
     current_index = 3;
   } else {
     return;
@@ -77,8 +76,8 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
   ++TangoData::GetInstance().frame_count[current_index];
 
   // Set pose status.
-  TangoData::GetInstance().current_pose_status[current_index] = (int) pose
-      ->status_code;
+  TangoData::GetInstance().current_pose_status[current_index] =
+      static_cast<int>(pose->status_code);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 }
 
@@ -86,7 +85,7 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
 static void onTangoEvent(void*, const TangoEvent* event) {
   // Update the status string for debug display.
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream << event->event_key << ": " << event->event_value;
   TangoData::GetInstance().event_string = string_stream.str();
   pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
@@ -108,11 +107,11 @@ void TangoData::ResetData() {
     prev_pose_status[i] = -4;
     frame_delta_time[i] = 0.0f;
     prev_frame_time[i] = 0.0f;
-    frame_count[4] = 0;
+    frame_count[i] = 0;
   }
-  cur_uuid = string();
-  event_string = string();
-  lib_version_string = string();
+  cur_uuid = std::string();
+  event_string = std::string();
+  lib_version_string = std::string();
   is_relocalized = false;
 }
 
@@ -144,14 +143,13 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
 
     // Parse the uuid_list to get the individual uuids.
     if (uuid_list != NULL && uuid_list[0] != '\0') {
-      vector<string> adf_list;
-
       char* parsing_char;
-      parsing_char = strtok(uuid_list, ",");
+      char* saved_ptr;
+      parsing_char = strtok_r(uuid_list, ",", &saved_ptr);
       while (parsing_char != NULL) {
-        string s = string(parsing_char);
+        std::string s = std::string(parsing_char);
         adf_list.push_back(s);
-        parsing_char = strtok(NULL, ",");
+        parsing_char = strtok_r(NULL, ",", &saved_ptr);
       }
 
       int list_size = adf_list.size();
@@ -177,7 +175,7 @@ bool TangoData::SetConfig(bool is_learning, bool is_load_adf) {
   char version[kVersionStringLength];
   TangoConfig_getString(config_, "tango_service_library_version", version,
                         kVersionStringLength);
-  lib_version_string = string(version);
+  lib_version_string = std::string(version);
 
   return true;
 }
@@ -218,7 +216,7 @@ bool TangoData::SaveADF() {
     LOGE("TangoService_saveAreaDescription(): Failed");
     return false;
   }
-  cur_uuid = string(uuid);
+  cur_uuid = std::string(uuid);
   return true;
 }
 
@@ -253,7 +251,6 @@ char* TangoData::GetUUIDMetadataValue(const char* uuid, const char* key) {
 
 void TangoData::SetUUIDMetadataValue(const char* uuid, const char* key,
                                      int value_size, const char* value) {
-  char* name;
   TangoAreaDescriptionMetadata metadata;
   if (TangoService_getAreaDescriptionMetadata(uuid, &metadata) !=
       TANGO_SUCCESS) {

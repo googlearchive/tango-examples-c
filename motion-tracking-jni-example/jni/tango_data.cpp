@@ -17,10 +17,9 @@
 #include "tango_data.h"
 
 TangoData::TangoData()
-    : config_(nullptr),
-      tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
-      tango_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)) {
-}
+    : tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
+      tango_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
+      config_(nullptr) {}
 
 // Get status string based on the pose status code.
 static const char* getStatusStringFromStatusCode(TangoPoseStatusType status) {
@@ -60,7 +59,7 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
   // Status count is for counting how many frames happened in
   // this status.
   TangoData::GetInstance().cur_pose_status = pose->status_code;
-  if(TangoData::GetInstance().prev_pose_status != pose->status_code) {
+  if (TangoData::GetInstance().prev_pose_status != pose->status_code) {
     TangoData::GetInstance().pose_status_count = 0;
   }
   TangoData::GetInstance().prev_pose_status = pose->status_code;
@@ -72,9 +71,10 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
   TangoData::GetInstance().frame_delta_time =
       (pose->timestamp - TangoData::GetInstance().prev_pose_timestamp) *
       kMeterToMillimeter;
-  TangoData::GetInstance().prev_pose_timestamp = (float)pose->timestamp;
+  TangoData::GetInstance().prev_pose_timestamp =
+      static_cast<float>(pose->timestamp);
 
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
   string_stream.precision(3);
   string_stream << "status: "
@@ -95,7 +95,7 @@ static void onPoseAvailable(void*, const TangoPoseData* pose) {
 static void onTangoEvent(void*, const TangoEvent* event) {
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
   // Update the status string for debug display.
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream << event->event_key << ": " << event->event_value;
   TangoData::GetInstance().event_string = string_stream.str();
   pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);

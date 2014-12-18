@@ -17,14 +17,16 @@
 #define GLM_FORCE_RADIANS
 
 #include <jni.h>
+#include <string>
 
-#include "tango_data.h"
 #include "tango-gl-renderer/axis.h"
 #include "tango-gl-renderer/camera.h"
 #include "tango-gl-renderer/frustum.h"
 #include "tango-gl-renderer/gl_util.h"
 #include "tango-gl-renderer/grid.h"
 #include "tango-gl-renderer/trace.h"
+
+#include "tango_data.h"
 
 GLuint screen_width;
 GLuint screen_height;
@@ -144,6 +146,8 @@ bool InitGlContent() {
   cam->SetParent(cam_parent_transform);
 
   SetCamera(CameraType::THIRD_PERSON);
+
+  return true;
 }
 
 bool SetupGraphics(int w, int h) {
@@ -158,11 +162,12 @@ bool SetupGraphics(int w, int h) {
 }
 
 // Render frustum and trace with current position and rotation
-// updated from TangoData, TangoPosition and TangoRotation is updated via callback function
-// OnPoseAvailable(), which is updated when new pose data is available.
+// updated from TangoData, TangoPosition and TangoRotation is updated via
+// callback function OnPoseAvailable(), which is updated when new pose data
+// is available.
 bool RenderFrame() {
-  glEnable (GL_DEPTH_TEST);
-  glEnable (GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
 
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -189,15 +194,17 @@ bool RenderFrame() {
     // cam_cur_angle[0] is the x-axis touch, cooresponding to y-axis rotation.
     // cam_cur_angle[0] is the y-axis touch, cooresponding to x-axis rotation.
     glm::quat parent_cam_rot =
-      glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0], glm::vec3(0, 1, 0));
-    parent_cam_rot = glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
+        glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), -cam_cur_angle[0],
+                    glm::vec3(0, 1, 0));
+    parent_cam_rot =
+        glm::rotate(parent_cam_rot, -cam_cur_angle[1], glm::vec3(1, 0, 0));
 
     // Set render camera parent position and rotation.
     cam_parent_transform->SetRotation(parent_cam_rot);
     cam_parent_transform->SetPosition(position);
 
     // Set camera view distance, based on touch interaction.
-    cam->SetPosition(glm::vec3(0.0f,0.0f, cam_cur_dist));
+    cam->SetPosition(glm::vec3(0.0f, 0.0f, cam_cur_dist));
 
     frustum->SetPosition(position);
     frustum->SetRotation(rotation);
@@ -218,7 +225,7 @@ bool RenderFrame() {
 extern "C" {
 #endif
 JNIEXPORT jint JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_Initialize(
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initialize(
     JNIEnv* env, jobject, jobject activity) {
   TangoErrorType err = TangoData::GetInstance().Initialize(env, activity);
   if (err != TANGO_SUCCESS) {
@@ -228,30 +235,29 @@ Java_com_projecttango_motiontrackingnative_TangoJNINative_Initialize(
       LOGE("Tango Service initialize internal error");
     }
   }
-  return (int)err;
+  return static_cast<int>(err);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupConfig(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setupConfig(
     JNIEnv*, jobject, bool isAutoReset) {
-  if (!TangoData::GetInstance().SetConfig(isAutoReset))
-  {
+  if (!TangoData::GetInstance().SetConfig(isAutoReset)) {
     LOGE("Tango set config failed");
   }
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_Connect(JNIEnv*,
-                                                                  jobject) {
-
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_connect(
+    JNIEnv*, jobject) {
   TangoErrorType err = TangoData::GetInstance().Connect();
   if (err != TANGO_SUCCESS) {
     LOGE("Tango Service connect failed");
   }
-  return (int)err;
+  return static_cast<int>(err);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_ConnectCallbacks(
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   if (!TangoData::GetInstance().ConnectCallbacks()) {
     LOGE("Tango ConnectCallbacks failed");
@@ -259,12 +265,13 @@ Java_com_projecttango_motiontrackingnative_TangoJNINative_ConnectCallbacks(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_Disconnect(JNIEnv*,
-                                                                     jobject) {
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_disconnect(
+    JNIEnv*, jobject) {
   TangoData::GetInstance().Disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_OnDestroy(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_freeGLContent(
     JNIEnv*, jobject) {
   delete cam;
   delete axis;
@@ -274,56 +281,66 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_motiontrackingnative_TangoJNINative_InitGlContent(
-    JNIEnv*, jobject, jint width, jint height) {
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initGlContent(
+    JNIEnv*, jobject) {
   InitGlContent();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetupGraphic(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   SetupGraphics(width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_Render(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_render(
     JNIEnv*, jobject) {
   RenderFrame();
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_ResetMotionTracking(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_resetMotionTracking(
     JNIEnv*, jobject) {
   TangoData::GetInstance().ResetMotionTracking();
   LOGI("Reset Tango Motion Tracking");
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCamera(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {
   SetCamera((CameraType)camera_index);
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetPoseString(
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_getPoseString(
     JNIEnv* env, jobject) {
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
-  string pose_string_cpy = string(TangoData::GetInstance().pose_string);
+  std::string pose_string_cpy =
+      std::string(TangoData::GetInstance().pose_string);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
   return (env)->NewStringUTF(pose_string_cpy.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetEventString(
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_getEventString(
     JNIEnv* env, jobject) {
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
-  string event_string_cpy = string(TangoData::GetInstance().event_string);
+  std::string event_string_cpy =
+      std::string(TangoData::GetInstance().event_string);
   pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
   return (env)->NewStringUTF(event_string_cpy.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_GetVersionNumber(
+JNIEXPORT jstring JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_getVersionNumber(
     JNIEnv* env, jobject) {
   return (env)
       ->NewStringUTF(TangoData::GetInstance().lib_version_string.c_str());
 }
 
 // Touching GL interface.
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_StartSetCameraOffset(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_startSetCameraOffset(
     JNIEnv*, jobject) {
   if (cam != NULL) {
     cam_start_angle[0] = cam_cur_angle[0];
@@ -332,7 +349,8 @@ JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative
   }
 }
 
-JNIEXPORT void JNICALL Java_com_projecttango_motiontrackingnative_TangoJNINative_SetCameraOffset(
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setCameraOffset(
     JNIEnv*, jobject, float rotation_x, float rotation_y, float dist) {
   if (cam != NULL) {
     cam_cur_angle[0] = cam_start_angle[0] + rotation_x;

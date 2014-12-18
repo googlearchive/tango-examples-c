@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.projecttango.areadescriptionnative;
+package com.projecttango.experiments.nativearealearning;
 
 import android.app.Activity;
 import android.app.DialogFragment;
@@ -32,7 +32,7 @@ import android.widget.TextView;
  * SetNameLocation callback is called where setting the name should be handled.
  */
 public class SetADFNameDialog extends DialogFragment implements OnClickListener {
-  private Button mOKButton,mCancelButton;
+  private Button mOKButton, mCancelButton;
   private EditText mNameEditText;
   private TextView mUUIDTextView;
   SetNameAndUUIDCommunicator mCommunicator;
@@ -43,7 +43,8 @@ public class SetADFNameDialog extends DialogFragment implements OnClickListener 
   }
   
   @Override
-  public View onCreateView(LayoutInflater inflator, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(LayoutInflater inflator, ViewGroup container, 
+      Bundle savedInstanceState) {
     View dialogView = inflator.inflate(R.layout.set_name_dialog, null);
     getDialog().setTitle(R.string.set_name_dialog_title);
     mNameEditText = (EditText) dialogView.findViewById(R.id.name);
@@ -53,10 +54,10 @@ public class SetADFNameDialog extends DialogFragment implements OnClickListener 
     setCancelable(false);
     String name = this.getArguments().getString("name");
     String id = this.getArguments().getString("id");
-    if (name!=null) {
+    if (name != null) {
       mNameEditText.setText(name);
     }
-    if (id!=null) {
+    if (id != null) {
       mUUIDTextView.setText(id);
     }
     return dialogView;
@@ -66,7 +67,8 @@ public class SetADFNameDialog extends DialogFragment implements OnClickListener 
   public void onClick(View v) {
     switch (v.getId()) {
     case R.id.Ok:
-      mCommunicator.SetNameAndUUID(mNameEditText.getText().toString(), mUUIDTextView.getText().toString());
+      mCommunicator.setNameAndUUID(mNameEditText.getText().toString(), 
+          mUUIDTextView.getText().toString());
       dismiss();
       break;
     case R.id.cancel:
@@ -76,6 +78,6 @@ public class SetADFNameDialog extends DialogFragment implements OnClickListener 
   }
   
   interface SetNameAndUUIDCommunicator {
-    public void SetNameAndUUID(String name,String uuid);
+    public void setNameAndUUID(String name, String uuid);
   }
 }

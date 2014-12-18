@@ -69,13 +69,20 @@ typedef enum {
 /// Errors less then 0 should be dealt with by the program.
 /// Success is denoted by TANGO_SUCCESS = 0.
 typedef enum {
-  TANGO_NO_IMPORT_EXPORT_PERMISSION = -6,  /**< Import/export not allowed */
-  TANGO_NO_CAMERA_PERMISSION = -5,   /**< Camera access not allowed */
-  TANGO_NO_ADF_PERMISSION = -4,  /**< ADF access not allowed */
-  TANGO_NO_MOTION_TRACKING_PERMISSION = -3,  /**< Motion tracking not allowed*/
-  TANGO_INVALID = -2, /**< Input argument invalid */
-  TANGO_ERROR = -1,   /**< Hard error */
-  TANGO_SUCCESS = 0,  /**< Success */
+  /// The user has not given permission to export or import ADF files.
+  TANGO_NO_IMPORT_EXPORT_PERMISSION = -6,
+  /// The user has not given permission to access the device's camera.
+  TANGO_NO_CAMERA_PERMISSION = -5,
+  /// The user has not given permission to save or change ADF files.
+  TANGO_NO_ADF_PERMISSION = -4,
+  /// The user has not given permission to use Motion Tracking functionality.
+  TANGO_NO_MOTION_TRACKING_PERMISSION = -3,
+  /// The input argument is invalid.
+  TANGO_INVALID = -2,
+  /// This error code denotes some sort of hard error occurred.
+  TANGO_ERROR = -1,
+  /// This code indicates success.
+  TANGO_SUCCESS = 0,
 } TangoErrorType;
 
 /// @brief Tango pose status lifecycle enumerations.  Every pose has a state
@@ -105,12 +112,12 @@ typedef enum {
 /// Tango Camera Calibration types.
 typedef enum {
   TANGO_CALIBRATION_UNKNOWN,
-  /**< f-theta fisheye lens model. See
+  /** f-theta fisheye lens model. See
        http://scholar.google.com/scholar?cluster=13508836606423559694&hl=en&as_sdt=2005&sciodt=0,5
-     */
+    */
   TANGO_CALIBRATION_EQUIDISTANT,
   TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
-  /**< Tsai's k1,k2,k3 Model. See
+  /** Tsai's k1,k2,k3 Model. See
        http://scholar.google.com/scholar?cluster=3512800631607394002&hl=en&as_sdt=0,5&sciodt=0,5
      */
   TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS,
@@ -118,6 +125,7 @@ typedef enum {
 } TangoCalibrationType;
 
 /// Tango Image Formats
+///
 /// Equivalent to those found in Android core/system/include/system/graphics.h.
 typedef enum {
   TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659  // YCrCb 4:2:0 Planar
@@ -140,13 +148,13 @@ typedef void* TangoConfig;
 /// character.
 typedef char TangoUUID[TANGO_UUID_LEN];
 
-/// This defines a handle to AreaDescriptionMetadata; key/value pairs
+/// This defines a handle to TangoAreaDescriptionMetadata; key/value pairs
 /// can only be accessed through API calls.
 typedef void* TangoAreaDescriptionMetadata;
 
 /**@} devsitenav Typedefs */
 
-/// @brief The TangoCoordinateFrameType struct contains a pair of coordinate
+/// @brief The TangoCoordinateFramePair struct contains a pair of coordinate
 /// frames of reference.
 ///
 /// Tango pose data is calculated as a transformation between two frames
@@ -314,13 +322,12 @@ typedef struct TangoCameraIntrinsics {
 
 /// @brief The TangoEvent structure signals important sensor and tracking
 /// events.
-/// Each event comes with a timestamp, a type, and a key and description. The
-/// type is an enumeration which generally classifies the event type. The key is
-/// a text string describing the event.  The description holds parameters
-/// specific to the event.
+/// Each event comes with a timestamp, a type, and a key-value pair describing
+/// the event.  The type is an enumeration which generally classifies the event
+/// type. The key is a text string describing the event.  The description holds
+/// parameters specific to the event.
 ///
-/// Possible descriptions are shown below as key:description:
-/// - "Unknown:"
+/// Possible descriptions (as "key:value") are:
 /// - "TangoServiceException:X" - The service has encountered an exception, and
 /// a text description is given in X.
 /// - "FisheyeOverExposed" - the fisheye image is over exposed with average
@@ -332,7 +339,8 @@ typedef struct TangoCameraIntrinsics {
 /// - "ColorUnderExposed:X" - the color image is under exposed with average
 /// pixel value X px.
 /// - "TooFewFeaturesTracked:X" - too few features were tracked in the fisheye
-/// image, number of features tracked is X.
+/// image.  The number of features tracked is X.
+/// - "Unknown"
 typedef struct TangoEvent {
   /// Timestamp, in seconds, of the event.
   double timestamp;
@@ -440,7 +448,8 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// Returns TANGO_ERROR on failure, or if a connection was not initialized with
 /// TangoService_initialize(), or if the camera could not be opened, which could
 /// be due to cameras being opened by other applications or a system error which
-/// may require a reboot.
+/// may require a reboot.  Returns TANGO_INVALID if an Area Description UUID
+/// was specified but could not be found or accessed by the service.
 TangoErrorType TangoService_connect(void* context, TangoConfig config);
 
 /// Disconnect from the Tango Service. Callbacks will no longer be generated.
@@ -485,10 +494,10 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 /// All poses returned are marked as VALID (in the status_code) even if they
 /// were marked as INITIALIZING in the callback poses.
 /// To determine when initialization is complete, register a callback using
-/// TangoService_connectOnPoseAvailable and wait until you receive valid data.
+/// TangoService_connectOnPoseAvailable() and wait until you receive valid data.
 ///
 /// If no pose can be returned, the status_code of the returned pose will be
-/// INVALID.
+/// TANGO_INVALID.
 ///
 /// @param timestamp Time specified in seconds. If not set to 0.0, getPoseAtTime
 /// retrieves the interpolated pose closest to this timestamp.  If set to 0.0,
@@ -519,7 +528,7 @@ TangoErrorType TangoService_getPoseAtTime(double timestamp,
 
 /// Attach an onXYZijAvailable callback.  The callback is called each time new
 /// depth data is available, at an approximate nominal period given by the
-/// double key "depth_period_in_seconds".
+/// double key depth_period_in_seconds, queryable by TangoConfig_getDouble().
 /// @return Returns TANGO_ERROR if the listener function pointer is NULL.
 /// Returns TANGO_SUCCESS otherwise.
 TangoErrorType TangoService_connectOnXYZijAvailable(
@@ -541,17 +550,19 @@ TangoErrorType TangoService_connectOnTangoEvent(
 
 /// @defgroup camera Tango Service: Camera Interface
 /// @brief Functions for getting input from the device's cameras.  Use either
-/// TangoService_connectTextureId or TangoService_connectOnFrameAvailable but
-/// not both.
+/// TangoService_connectTextureId() or TangoService_connectOnFrameAvailable()
+/// but not both.
 /// @{
 
 /// Connect a Texture ID to a camera. The camera is selected via TangoCameraId.
 /// Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// The texture must be the ID of a texture that has been allocated and
-/// initialized by the calling application.  Note: The first scan-line of the
-/// color image is reserved for metadata instead of image pixels.
+/// initialized by the calling application.
+///
+/// Note: The first scan-line of the color image is reserved for metadata
+/// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to.  Only
-/// TANGO_CAMERA_COLOR is supported.
+/// TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onFrameAvailable callback.
 /// @param tex The texture ID of the texture to connect the camera to.  Must be
 /// a valid texture in the applicaton.
@@ -567,7 +578,7 @@ TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
 /// camera.
 /// If timestamp is not NULL, it will be filled with the image timestamp.
 /// @param id The ID of the camera to connect this texture to.  Only
-/// TANGO_CAMERA_COLOR is supported.
+/// TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// @param timestamp Upon return, if not NULL upon calling, timestamp contains
 /// the timestamp of the image that has been pushed to the connected texture.
 /// @return Returns TANGO_INVALID if id is out of range, if
@@ -578,13 +589,14 @@ TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 /// Connect a callback to a camera for access to the pixels. This is not
 /// recommended for display but for applications requiring access to the
 /// HAL_PIXEL_FORMAT_YV12 pixel data.  The camera is selected via
-/// TangoCameraId.  Currently only TANGO_CAMERA_COLOR is supported.  The
-/// onFrameAvailable callback will be called when a new frame of is available
-/// from the camera.
+/// TangoCameraId.  Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE
+/// are supported.  The onFrameAvailable callback will be called when a new frame
+///  is available from the camera.
+///
 /// Note: The first scan-line of the color image is reserved for metadata
 /// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to.  Only
-/// TANGO_CAMERA_COLOR is supported.
+/// TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onFrameAvailable callback.
 /// @param onFrameAvailable Function called when a new frame is available
 /// from the camera.
@@ -616,17 +628,29 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 
 /// @defgroup adf Tango Service: Area Description Interface
 /// @brief Functions for handling Area Descriptions for localization.
-/// Note that loading an Area Description is handled by specifying the
-/// configuration item config_load_area_description_UUID when the configuration
-/// is locked.  This is done using the TangoConfig_setString() function.  For
-/// saving, the application should have WRITE_EXTERNAL_STORAGE permissions.
-/// see @link configparams Configuration Parameters @endlink for more info.
+/// Note that there is no direct function for loading an area description.
+/// To load an Area Description, use the TangoConfig_setString() function to
+/// set the configuration item config_load_area_description_UUID to the UUID
+/// of the Area Description you want to load, and the Tango Service loads that
+/// area when you call TangoService_connect().
+///
+/// See the following pages for more info:
+/// - Doxygen: @link configparams Configuration Parameters @endlink
+/// - Tutorial: <a href ="c-lifecycle">API Lifecycle</a>
+/// - Tutorial: <a href ="c-area-learning">Area Learning</a>
+///
+/// To save area descriptions, your application must have
+/// <a href
+/// ="http://developer.android.com/reference/android/Manifest.permission.html#WRITE_EXTERNAL_STORAGE">WRITE_EXTERNAL_STORAGE</a>
+/// permissions enabled in its Manifest.
 /// @{
 
 /// Saves the area description, returning the unique ID associated
-/// with the saved map.  Will only have an effect after connect has
-/// occurred, but can be called at any point after that, and can be
-/// called repeatedly if desired.
+/// with the saved map.
+///
+/// You can only save an area description after TangoService_connect()
+/// has been called, but you can save at any time after that, and
+/// save repeatedly if desired.
 /// @param uuid Upon saving, the generated TangoUUID to refer to this map is
 /// returned in uuid.
 /// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR if a failure
@@ -644,12 +668,11 @@ TangoErrorType TangoService_saveAreaDescription(TangoUUID* uuid);
 TangoErrorType TangoService_deleteAreaDescription(const TangoUUID uuid);
 
 /// Gets the full list of unique area description IDs available on a
-/// device as a comma separated list of TangoUUIDs.  Memory should not
+/// device as a comma-separated list of TangoUUIDs.  Memory should not
 /// be deallocated outside the API.   Can be called any time after
-/// initialize is called.
-/// @param uuid_list Upon successful return, uuid_list will contain a
-/// comma separated list of UUIDs.
-/// UUID_list structure of available TangoUUIDs.
+/// calling TangoService_initialize().
+/// @param uuid_list Upon successful return, uuid_list is set to a pointer to a
+/// string (char array) that is a comma separated list of UUIDs.
 /// @return Returns TANGO_SUCCESS on success, or TANGO_ERROR on failure to
 /// retrieve the list, or if the service needs to be initialized, or
 /// TANGO_INVALID if the uuid_list argument was NULL.
@@ -676,25 +699,25 @@ TangoErrorType TangoService_saveAreaDescriptionMetadata(
     const TangoUUID uuid, TangoAreaDescriptionMetadata metadata);
 
 /// Frees the memory allocated by a call to
-/// TangoService_getAreaDescriptionMetadata.
+/// TangoService_getAreaDescriptionMetadata().
 /// @param metadata The handle to the metadata to be deallocated.
 /// @return Returns TANGO_SUCCESS if the metadata was deleted.
 TangoErrorType TangoAreaDescriptionMetadata_free(
     TangoAreaDescriptionMetadata metadata);
 
 /// Import an area description from the source file path to the default
-/// area storage location and rename the area with its uuid.
+/// area storage location and rename the area with its UUID.
 /// @param src_file_path The source file path of the area to be imported.
-/// @param uuid To store the uuid of the area.
+/// @param uuid To store the UUID of the area.
 /// @return Returns TANGO_SUCCESS on successful import, or TANGO_ERROR if the
 /// file could not be imported, or TANGO_INVALID if uuid or src_file_path was
 /// NULL
 TangoErrorType TangoService_importAreaDescription(const char* src_file_path,
                                                   TangoUUID* uuid);
 
-/// Export an area with the uuid from the default area storage location to
-/// the destination file directory with the uuid as its name.
-/// @param uuid the uuid of the area.
+/// Export an area with the UUID from the default area storage location to
+/// the destination file directory with the UUID as its name.
+/// @param uuid the UUID of the area.
 /// @param dst_file_dir The destination file directory.
 /// @return Returns TANGO_SUCCESS if the file was exported, or TANGO_ERROR if
 /// the export failed, or TANGO_INVALID if dst_file_dir was NULL.
@@ -735,20 +758,19 @@ TangoErrorType TangoService_exportAreaDescription(
 ///
 /// @param metadata The metadata list to search through.
 /// @param key The string key value of the parameter to set.
-/// @param size The size in bytes of value, as allocated by the
-/// caller.  value will be written only up to this size in bytes.
+/// @param value_size The size in bytes of value, as allocated by the API.
 /// @param value The value of the data with the corresponding key stored in the
 /// metadata. The value will be returned as a binary data blob (The endianness
 /// of the binary block is platform dependent).
 /// The array memory should not be allocated by the caller, and will go out of
-/// scope after a call to TangoAreaDescriptionMetadata_destroy.
+/// scope after a call to TangoAreaDescriptionMetadata_free.
 /// The value will be NULL if the key does not exist or has not been set yet.
 /// @return Returns TANGO_SUCCESS if the key is found.  If the key is valid but
 /// does not have a valid value, size will be set to 0 and value will contain a
 /// NULL.  Returns TANGO_INVALID if any of the arguments are NULL or the key is
 /// not found.
 TangoErrorType TangoAreaDescriptionMetadata_get(
-    TangoAreaDescriptionMetadata metadata, const char* key, size_t* size,
+    TangoAreaDescriptionMetadata metadata, const char* key, size_t* value_size,
     char** value);
 
 /// Sets the value associated with an area description key to a new
@@ -758,8 +780,8 @@ TangoErrorType TangoAreaDescriptionMetadata_get(
 ///
 /// @param metadata The metadata for which to set the key-value pair.
 /// @param key The string key value of the parameter to set.
-/// @param value_size The size in bytes of value, as allocated by the
-/// caller.  value will be written only up to this size in bytes.
+/// @param value_size The size in bytes of value, as allocated by the caller.
+/// value will be written only up to this size in bytes.
 /// @param value The value to which to set the key.
 /// @return Returns TANGO_SUCCESS if the key is set, otherwise returns
 /// TANGO_INVALID if the key is not found in the metadata or any of the
@@ -790,62 +812,64 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// such as getBool for a boolean.
 ///
 /// The supported configuration parameters that can be set are:
-/// (denoted below as "type" "name"):
 ///
-/// -   int32 config_color_iso: ISO value for the color camera.  For example use
-///         100, 200, or 400.  Default is  100.
+/// <table>
+/// <tr><td class="indexkey">int32 config_color_iso</td><td
+/// class="indexvalue">ISO value for the color camera.
+/// For example, values like 100, 200, or 400.  Default is 100.</td></tr>
 ///
-/// -   int32 config_color_exp: Exposure value for the color camera, in
-///         nanoseconds.  Default is 11100000 (11.1 ms).
+/// <tr><td class="indexkey">int32 config_color_exp</td><td class="indexvalue">Exposure value for the color camera, in
+/// nanoseconds.  Default is 11100000 (11.1 ms).</td></tr>
 ///
-/// -   boolean config_enable_auto_recovery:
+/// <tr><td class="indexkey">boolean config_enable_auto_recovery</td><td class="indexvalue">
 ///         Automatically recovers when motion tracking becomes invalid, by
 ///         returning immediately to the initializing state in the pose
 ///         lifecycle. This will use the last valid pose as the starting pose
 ///         after recovery. If an area description is loaded, or if learning
 ///         mode is enabled, this will also automatically try to localize.
-///         Defaults to true.
+///         Defaults to true.</td></tr>
 ///
-/// -   boolean config_enable_depth:
-///         Enables depth output if true.  Defaults to false.
+/// <tr><td class="indexkey">boolean config_enable_depth</td><td class="indexvalue">
+///         Enables depth output if true.  Defaults to false.</td></tr>
 ///
-/// -   boolean config_enable_low_latency_imu_integration:
+/// <tr><td class="indexkey">boolean config_enable_low_latency_imu_integration</td><td class="indexvalue">
 ///         When the latest pose is requested or returned via callback, this
 ///         enables aggressive integration of the latest inertial measurements
 ///         to provide lower latency pose estimates, leaving the update
 ///         frequency unaffected.  The accuracy may be slightly lower because
 ///         the inertial data is not yet integrated with a new visual feature
-///         update.
+///         update.</td></tr>
 ///
-/// -   boolean config_enable_learning_mode:
-///         Enables learning mode if true.  Defaults to false.
+/// <tr><td class="indexkey">boolean config_enable_learning_mode</td><td class="indexvalue">
+///         Enables learning mode if true.  Defaults to false.</td></tr>
 ///
-/// -   boolean config_enable_motion_tracking:
-///         Enables motion tracking if true.  Defaults to true.
+/// <tr><td class="indexkey">boolean config_enable_motion_tracking</td><td class="indexvalue">
+///         Enables motion tracking if true.  Defaults to true.</td></tr>
 ///
-/// -   boolean config_enable_dataset_recording:
-///         Enables recording of a dataset to disk.
+/// <tr><td class="indexkey">boolean config_enable_dataset_recording</td><td class="indexvalue">
+///         Enables recording of a dataset to disk.</td></tr>
 ///
-/// -   string config_load_area_description_UUID:
+/// <tr><td class="indexkey">string config_load_area_description_UUID</td><td class="indexvalue">
 ///         Loads the given Area Description with given UUID and attempts to
 ///         localize against that Area Description.  Empty string will disable
-///         localization.  Defaults to empty.
+///         localization.  Defaults to empty.</td></tr>
+/// </table>
 ///
 /// The supported configuration parameters that can be queried are:
 ///
-///     char* tango_service_library_version:
-/// the version of the Tango Service Library that implements the Tango
-/// functionality.  The version is returned as YYMMDD-{git hash}-{ARCHITECTURE}.
-/// For example: 140806-e33db4c-YELLOWSTONE was built on August 6, 2014, from
-/// git hash e33db4c for the Yellowstone device.
+/// <table>
+/// <tr><td class = "indexkey">char* tango_service_library_version</td><td class ="indexvalue">
+///         The version of the Tango Service Library that implements the Tango
+///         functionality.  The version is returned as YYMMDD-{git hash}-{ARCHITECTURE}.</td></tr>
 ///
-///     double depth_period_in_seconds:
-/// Nominal time between successive frames of depth data.  Use the depth data
-/// structure fields to get more accurate depth frame times.
+/// <tr><td class = "indexkey">double depth_period_in_seconds</td><td class ="indexvalue">
+///         Nominal time between successive frames of depth data.  Use the depth data
+///         structure fields to get more accurate depth frame times.</td></tr>
 ///
-///     int32 max_point_cloud_elements:
-/// Maximum number of points returned in depth point clouds.  For Yellowstone
-/// this is 60000.  Typically no more than to 15000 are returned.
+/// <tr><td class = "indexkey">int32 max_point_cloud_elements</td><td class ="indexvalue">
+///         Maximum number of points returned in depth point clouds.  For a tablet device,
+///         this is 60000.  Typically no more than to 15000 are returned.</td></tr>
+/// </table>
 ///
 /// @{
 

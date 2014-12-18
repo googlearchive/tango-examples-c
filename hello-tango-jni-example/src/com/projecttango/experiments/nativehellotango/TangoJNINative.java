@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package com.projecttango.motiontrackingnative;
+package com.projecttango.experiments.nativehellotango;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+/**
+ * Interfaces between C and Java.
+ */
+public class TangoJNINative {
+  static {
+    System.loadLibrary("hello_tango_jni_example");
+  }
 
-import android.opengl.GLSurfaceView;
+  public static native void initialize(HelloTangoActivity activity);
+  
+  public static native void setupConfig();
+  
+  public static native void connectCallbacks();
 
-public class MotionTrackingRenderer implements GLSurfaceView.Renderer {
+  public static native void connect();
 
-    public void onDrawFrame(GL10 gl) {
-      TangoJNINative.Render();
-    }
-
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-      TangoJNINative.SetupGraphic(width, height);
-    }
-
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-      TangoJNINative.InitGlContent();
-    }
+  public static native void disconnect();
 }

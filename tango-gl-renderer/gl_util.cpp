@@ -187,8 +187,8 @@ float GlUtil::Clamp(float value, float min, float max) {
 void GlUtil::PrintMatrix(const glm::mat4& matrix) {
   int i;
   for (i = 0; i < 4; i++) {
-    LOGI("[ %f, %f, %f, %f ]", matrix[0][i], matrix[1][i], matrix[2][i],
-         matrix[3][i]);
+    LOGI("[ %f, %f, %f, %f ]",
+         matrix[0][i], matrix[1][i], matrix[2][i], matrix[3][i]);
   }
   LOGI(" ");
 }
