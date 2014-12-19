@@ -51,13 +51,13 @@ static const GLfloat kTextureCoords[] =
 { 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 };
 
 VideoOverlay::VideoOverlay() {
-  glEnable (GL_VERTEX_PROGRAM_POINT_SIZE);
+  glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
   shader_program_ = GlUtil::CreateProgram(kVertexShader, kFragmentShader);
   if (!shader_program_) {
     LOGE("Could not create program.");
   }
 
-  glEnable (GL_TEXTURE_EXTERNAL_OES);
+  glEnable(GL_TEXTURE_EXTERNAL_OES);
   glGenTextures(1, &texture_id);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id);
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -89,14 +89,14 @@ VideoOverlay::VideoOverlay() {
   // Assign the vertices attribute data.
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);
-  glEnableVertexAttribArray (attrib_vertices_);
+  glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Assign the texture coordinates attribute data.
   attrib_textureCoords = glGetAttribLocation(shader_program_, "textureCoords");
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[2]);
-  glEnableVertexAttribArray (attrib_textureCoords);
+  glEnableVertexAttribArray(attrib_textureCoords);
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
                         nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -106,20 +106,20 @@ VideoOverlay::VideoOverlay() {
 
 void VideoOverlay::Render(const glm::mat4& projection_mat,
                           const glm::mat4& view_mat) const {
-  glUseProgram (shader_program_);
+  glUseProgram(shader_program_);
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   // Bind vertices buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[0]);
-  glEnableVertexAttribArray (attrib_vertices_);
+  glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Bind texture coordinates buffer.
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[2]);
-  glEnableVertexAttribArray (attrib_textureCoords);
+  glEnableVertexAttribArray(attrib_textureCoords);
   glVertexAttribPointer(attrib_textureCoords, 2, GL_FLOAT, GL_FALSE, 0,
                         nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package com.projecttango.augmentedrealitynative;
+package com.projecttango.experiments.nativeaugmentedreality;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.MotionEvent;
-import android.graphics.Point;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * Main activity shows augmented reality scene.
+ */
 public class AugmentedRealityActivity extends Activity implements View.OnClickListener{
 
     public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
@@ -107,10 +110,16 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
 
                         runOnUiThread(new Runnable() {
                             public void run() {
-                                tangoPoseStatusText
-                                        .setText("Service Version:" + TangoJNINative.GetVersionNumber() +
-                                                 "\nApp Version:" + appVersionString +
-                                                 "\n" + TangoJNINative.GetPoseString());
+                                boolean isLocalized = TangoJNINative.getIsLocalized();
+                                if(isLocalized) {
+                                    findViewById(R.id.reset).setVisibility(View.GONE);
+                                } else {
+                                    findViewById(R.id.reset).setVisibility(View.VISIBLE);
+                                }
+                                tangoPoseStatusText.setText(
+                                    "Service Version:" + TangoJNINative.getVersionNumber() +
+                                    "\nApp Version:" + appVersionString +
+                                    "\n" + TangoJNINative.getPoseString());
                             }
                         });
 
@@ -125,16 +134,16 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     public void onClick(View v) {
         switch (v.getId()) {
         case R.id.reset:
-            TangoJNINative.ResetMotionTracking();
+            TangoJNINative.resetMotionTracking();
             break;
         case R.id.first:
-            TangoJNINative.SetCamera(0);
+            TangoJNINative.setCamera(0);
             break;
         case R.id.third:
-            TangoJNINative.SetCamera(1);
+            TangoJNINative.setCamera(1);
             break;
         case R.id.top:
-            TangoJNINative.SetCamera(2);
+            TangoJNINative.setCamera(2);
             break;
         }
     }
@@ -152,12 +161,12 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     protected void onPause() {
         super.onPause();
         arView.onPause();
-        TangoJNINative.DisconnectService();
+        TangoJNINative.disconnectService();
     }
 
     protected void onDestroy() {
         super.onDestroy();
-        TangoJNINative.OnDestroy();
+        TangoJNINative.onDestroy();
     }
 
     public void onRadioButtonClicked(View view) {
@@ -199,7 +208,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
             break;
         }
         if (arElement != 0) {
-            TangoJNINative.UpdateARElement(arElement, interactionType);
+            TangoJNINative.updateARElement(arElement, interactionType);
         }
     }
 
@@ -209,7 +218,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         if (pointCount == 1) {
             switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
-                TangoJNINative.StartSetCameraOffset();
+                TangoJNINative.startSetCameraOffset();
                 touchCurDist = 0.0f;
                 touchStartPos[0] = event.getX(0);
                 touchStartPos[1] = event.getY(0);
@@ -225,7 +234,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
                 float normalizedRotY = (touchCurPos[1] - touchStartPos[1])
                         / screenSize.y;
 
-                TangoJNINative.SetCameraOffset(normalizedRotX, normalizedRotY,
+                TangoJNINative.setCameraOffset(normalizedRotX, normalizedRotY,
                         touchCurDist / screenDiagnal);
                 break;
             }
@@ -234,7 +243,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         if (pointCount == 2) {
             switch (event.getActionMasked()) {
             case MotionEvent.ACTION_POINTER_DOWN: {
-                TangoJNINative.StartSetCameraOffset();
+                TangoJNINative.startSetCameraOffset();
                 float absX = event.getX(0) - event.getX(1);
                 float absY = event.getY(0) - event.getY(1);
                 touchStartDist = (float) Math.sqrt(absX * absX + absY * absY);
@@ -247,7 +256,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
                 touchCurDist = touchStartDist
                         - (float) Math.sqrt(absX * absX + absY * absY);
 
-                TangoJNINative.SetCameraOffset(0.0f, 0.0f, touchCurDist
+                TangoJNINative.setCameraOffset(0.0f, 0.0f, touchCurDist
                         / screenDiagnal);
                 break;
             }
@@ -264,14 +273,14 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
-            if (resultCode == RESULT_CANCELED ){
+            if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this,
                 "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
         if (requestCode == 1) {
-            if (resultCode == RESULT_CANCELED ){
+            if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this,
                 "ADF Permission Needed!", Toast.LENGTH_SHORT).show();
                 finish();

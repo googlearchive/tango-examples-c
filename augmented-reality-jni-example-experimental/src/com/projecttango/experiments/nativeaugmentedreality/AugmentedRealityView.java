@@ -13,29 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.projecttango.augmentedrealitynative;
+
+package com.projecttango.experiments.nativeaugmentedreality;
+
+import android.opengl.GLSurfaceView;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import android.opengl.GLSurfaceView;
 
+/**
+ * AugmentedRealityView renders graphic content.
+ */
 public class AugmentedRealityView implements GLSurfaceView.Renderer {
 
     public boolean isAutoRecovery;
     public AugmentedRealityActivity activity;
 
     public void onDrawFrame(GL10 gl) {
-        TangoJNINative.Render();
+        TangoJNINative.render();
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        TangoJNINative.ConnectTexture();
-            TangoJNINative.ConnectService();
-        TangoJNINative.SetupViewport(width, height);
+        TangoJNINative.connectTexture();
+        TangoJNINative.connectService();
+        TangoJNINative.setupViewport(width, height);
     }
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        TangoJNINative.SetupGraphic();
-        TangoJNINative.Initialize(activity);
-        TangoJNINative.SetupConfig(isAutoRecovery);
+        TangoJNINative.setupGraphic();
+        TangoJNINative.initialize(activity);
+        TangoJNINative.setupConfig(isAutoRecovery);
     }
 }

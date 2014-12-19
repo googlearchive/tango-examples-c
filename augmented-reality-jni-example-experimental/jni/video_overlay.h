@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef VIDEO_OVERLAY_H
-#define VIDEO_OVERLAY_H
+#ifndef AUGMENTED_REALITY_JNI_EXAMPLE_VIDEO_OVERLAY_H_
+#define AUGMENTED_REALITY_JNI_EXAMPLE_VIDEO_OVERLAY_H_
 
 #include "tango-gl-renderer/drawable_object.h"
 #include "tango-gl-renderer/gl_util.h"
@@ -37,4 +37,4 @@ class VideoOverlay : public DrawableObject {
 
   GLuint uniform_mvp_mat_;
 };
-#endif  // VIDEO_OVERLAY_H
+#endif  // AUGMENTED_REALITY_JNI_EXAMPLE_VIDEO_OVERLAY_H_

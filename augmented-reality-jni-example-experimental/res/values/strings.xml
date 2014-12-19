@@ -7,7 +7,7 @@
     <string name="first_person_cam">First</string>
     <string name="third_person_cam">Third</string>
     <string name="top_down_cam">Top</string>
-    <string name="reset">Reset</string>
+    <string name="reset">Reset AR Scene</string>
     <string name="world">World</string>
     <string name="cube">Cube</string>
     <string name="grid">Grid</string>

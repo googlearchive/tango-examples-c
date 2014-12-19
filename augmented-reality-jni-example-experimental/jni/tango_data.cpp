@@ -15,17 +15,17 @@
  */
 
 #include "tango_data.h"
-TangoData::TangoData()
-    : config_(nullptr),
-      tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
-      tango_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)) {}
 
-// This callback function is called when new pose updates become available.
-// Pair was set to start of service with respect to ADF frame,
-// it will be available only after localized against to a given ADF,
-// Use this function to check localization status,
-// and use GetPoseAtTime to get current pose.
-static void onPoseAvailable(void* context, const TangoPoseData* pose) {
+TangoData::TangoData()
+    : tango_position(glm::vec3(0.0f, 0.0f, 0.0f)),
+      tango_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)),
+      config_(nullptr) {}
+
+// This is called when new pose updates become available. Pair was set to start-
+// of-service with respect to ADF frame, which will be available only once
+// localized against an ADF. Use this function to check localization status, and
+// use GetPoseAtTime to get the current pose.
+static void onPoseAvailable(void*, const TangoPoseData* pose) {
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
   // Update Tango localization status.
   if (pose->status_code == TANGO_POSE_VALID) {
@@ -40,7 +40,7 @@ static void onPoseAvailable(void* context, const TangoPoseData* pose) {
 static void onTangoEvent(void*, const TangoEvent* event) {
   pthread_mutex_lock(&TangoData::GetInstance().event_mutex);
   // Update the status string for debug display.
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream << event->event_key << ": " << event->event_value;
   TangoData::GetInstance().event_string = string_stream.str();
   pthread_mutex_unlock(&TangoData::GetInstance().event_mutex);
@@ -67,7 +67,9 @@ const char* TangoData::getStatusStringFromStatusCode(
       ret_string = "Status_Code_Invalid";
       break;
   }
-  if ((int)status < 3) status_count[(int)status]++;
+  if (static_cast<int>(status) < 3) {
+    status_count[static_cast<int>(status)] += 1;
+  }
   return ret_string;
 }
 
@@ -134,14 +136,15 @@ bool TangoData::SetConfig(bool is_auto_recovery) {
 
   // Parse the uuid_list to get the individual uuids.
   if (uuid_list != NULL && uuid_list[0] != '\0') {
-    vector<string> adf_list;
+    std::vector<std::string> adf_list;
 
     char* parsing_char;
-    parsing_char = strtok(uuid_list, ",");
+    char* saved_ptr;
+    parsing_char = strtok_r(uuid_list, ",", &saved_ptr);
     while (parsing_char != NULL) {
-      string s = string(parsing_char);
+      std::string s = std::string(parsing_char);
       adf_list.push_back(s);
-      parsing_char = strtok(NULL, ",");
+      parsing_char = strtok_r(NULL, ",", &saved_ptr);
     }
 
     int list_size = adf_list.size();
@@ -198,7 +201,7 @@ bool TangoData::GetPoseAtTime() {
       glm::vec3(pose.translation[0], pose.translation[1], pose.translation[2]);
   tango_rotation = glm::quat(pose.orientation[3], pose.orientation[0],
                              pose.orientation[1], pose.orientation[2]);
-  stringstream string_stream;
+  std::stringstream string_stream;
   string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
   string_stream.precision(2);
   string_stream << "Tango system event: " << event_string << "\n" << frame_pair
@@ -281,8 +284,9 @@ void TangoData::ConnectTexture(GLuint texture_id) {
   if (TangoService_connectTextureId(TANGO_CAMERA_COLOR, texture_id, nullptr,
                                     nullptr) == TANGO_SUCCESS) {
     LOGI("TangoService_connectTextureId(): Success!");
-  } else
+  } else {
     LOGE("TangoService_connectTextureId(): Failed!");
+  }
 }
 
 void TangoData::UpdateColorTexture() {

@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef Tango_Data_H
-#define Tango_Data_H
+#ifndef AUGMENTED_REALITY_JNI_EXAMPLE_TANGO_DATA_H_
+#define AUGMENTED_REALITY_JNI_EXAMPLE_TANGO_DATA_H_
 
 #include <pthread.h>
+#include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sstream>
-#include <iostream>
+#include <vector>
 
 #include "tango_client_api.h"
 #include "tango-gl-renderer/gl_util.h"
 
 const int kVersionStringLength = 27;
-
-using namespace std;
 
 class TangoData {
  public:
@@ -58,9 +56,9 @@ class TangoData {
 
   int status_count[3];
   double timestamp;
-  string event_string;
-  string lib_version_string;
-  string pose_string;
+  std::string event_string;
+  std::string lib_version_string;
+  std::string pose_string;
 
   // Tango Extrinsic for device to IMU frame and
   // color camera to IMU frame.
@@ -80,11 +78,10 @@ class TangoData {
 
   // Localization status.
   bool is_localized;
-  string cur_uuid;
+  std::string cur_uuid;
 
  private:
   TangoConfig config_;
 };
 
-#endif  // Tango_Data_H
-
+#endif  // AUGMENTED_REALITY_JNI_EXAMPLE_TANGO_DATA_H_
