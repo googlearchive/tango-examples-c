@@ -6,35 +6,18 @@ motion-tracking-jni-example/bin
 motion-tracking-jni-example/gen
 motion-tracking-jni-example/libs
 motion-tracking-jni-example/obj
-
-<<<<<<< HEAD
-motion-tracking-jni-example/bin
-motion-tracking-jni-example/obj/local/armeabi-v7a/objs
-motion-tracking-jni-example/libs
-motion-tracking-jni-example/obj
-=======
-TangoJNIPointcloud/bin
-TangoJNIPointcloud/gen
-TangoJNIPointcloud/obj
-TangoJNIPointcloud/libs
 point-cloud-jni-example/bin
 point-cloud-jni-example/gen
 point-cloud-jni-example/libs
 point-cloud-jni-example/obj
 hello-tango-jni-example/bin
-R.java
 hello-tango-jni-example/gen
 hello-tango-jni-example/libs
 hello-tango-jni-example/obj
->>>>>>> b9fef5ccb8f5e2828b7bcddf9784e61b60711752
-TangoJNIAreaDescription/bin
-TangoJNIAreaDescription/obj
-TangoJNIAreaDescription/libs
 area-description-jni-example/bin
 area-description-jni-example/libs
 area-description-jni-example/obj
 area-description-jni-example/gen
-ic_launcher-web.png
 video-overlay-jni-example/bin
 video-overlay-jni-example/gen
 video-overlay-jni-example/libs
