@@ -45,15 +45,16 @@ typedef enum {
 
 /// @brief Tango coordinate frame enumerations.
 typedef enum {
-  /** Coordinate system for the entire Earth.
-   *  See WGS84: http://en.wikipedia.org/wiki/World_Geodetic_System
-   */
+  /// Coordinate system for the entire Earth.
+  /// See WGS84:
+  /// <a href ="http://en.wikipedia.org/wiki/World_Geodetic_System">World
+  /// Geodetic System</a>
   TANGO_COORDINATE_FRAME_GLOBAL_WGS84 = 0,
-  /** Origin within a saved area description */
+  /// Origin within a saved area description
   TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-  /** Origin when the device started tracking */
+  /// Origin when the device started tracking
   TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-  /** Immediately previous device pose */
+  /// Immediately previous device pose
   TANGO_COORDINATE_FRAME_PREVIOUS_DEVICE_POSE,
   TANGO_COORDINATE_FRAME_DEVICE,         /**< Device coordinate frame */
   TANGO_COORDINATE_FRAME_IMU,            /**< Inertial Measurement Unit */
@@ -112,14 +113,15 @@ typedef enum {
 /// Tango Camera Calibration types.
 typedef enum {
   TANGO_CALIBRATION_UNKNOWN,
-  /** f-theta fisheye lens model. See
-       http://scholar.google.com/scholar?cluster=13508836606423559694&hl=en&as_sdt=2005&sciodt=0,5
-    */
+  /// f-theta fisheye lens model. See
+  /// <a href="http://scholar.google.com/scholar?cluster=13508836606423559694">Straight
+  /// lines have to be straight</a>.
   TANGO_CALIBRATION_EQUIDISTANT,
   TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
-  /** Tsai's k1,k2,k3 Model. See
-       http://scholar.google.com/scholar?cluster=3512800631607394002&hl=en&as_sdt=0,5&sciodt=0,5
-     */
+  /// Tsai's K1, K2, K3 model. See
+  /// <a href ="http://scholar.google.com/scholar?cluster=3512800631607394002">A
+  /// versatile camera calibration technique for high-accuracy 3D machine
+  /// vision metrology using off-the-shelf TV cameras and lenses</a>.
   TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS,
   TANGO_CALIBRATION_POLYNOMIAL_5_PARAMETERS,
 } TangoCalibrationType;
@@ -165,6 +167,10 @@ typedef void* TangoAreaDescriptionMetadata;
 /// reference when requesting pose data.  You can also use it when you have
 /// a TangoPoseData structure returned from the API and want to examine which
 /// frames of reference were used to get that pose.
+///
+/// For more information see our page on
+/// <a href ="/project-tango/overview/frames-of-reference">frames of
+/// reference</a>.
 typedef struct {
   /// Base frame of reference to compare against when requesting pose data.
   /// For example, if you have loaded an area and want to find out where the
@@ -181,7 +187,9 @@ typedef struct {
 /// The TangoPoseData struct contains pose information returned from motion
 /// tracking.
 /// The device pose is given using Android conventions.
-/// See http://developer.android.com/guide/topics/sensors/sensors_overview.html#sensors-coords
+/// See the Android
+/// <a href ="http://developer.android.com/guide/topics/sensors/sensors_overview.html#sensors-coords">Sensor
+/// Overview</a> page for more information.
 typedef struct TangoPoseData {
   /// An integer denoting the version of the structure.
   uint32_t version;
@@ -192,10 +200,12 @@ typedef struct TangoPoseData {
   /// Orientation, as a quaternion, of the pose of the target frame
   /// with reference to the base frame.
   /// Specified as (x,y,z,w) where RotationAngle is in radians:
-  /// x = RotationAxis.x * sin(RotationAngle / 2)
-  /// y = RotationAxis.y * sin(RotationAngle / 2)
-  /// z = RotationAxis.z * sin(RotationAngle / 2)
-  /// w = cos(RotationAngle / 2)
+  /// @code
+  ///   x = RotationAxis.x * sin(RotationAngle / 2)
+  ///   y = RotationAxis.y * sin(RotationAngle / 2)
+  ///   z = RotationAxis.z * sin(RotationAngle / 2)
+  ///   w = cos(RotationAngle / 2)
+  /// @endcode
   double orientation[4];
 
   /// Translation, ordered x, y, z, of the pose of the target frame
@@ -226,7 +236,7 @@ typedef struct TangoImageBuffer {
   int64_t frame_number;
   /// Pixel format of data.
   TangoImageFormatType format;
-  /// Pixels in HAL_PIXEL_FORMAT_YV12 format. Y samples of width x height are
+  /// Pixels in HAL_PIXEL_FORMAT_YV12 format. Y samples of stride x height are
   /// first, followed by V samples, with half the stride and half the lines of
   /// the Y data, followed by a U samples with the same dimensions as the V
   /// sample.
@@ -269,7 +279,7 @@ typedef struct TangoXYZij {
   /// points in the point cloud.
   ///
   /// For more information, see our <a href =
-  /// "../../overview/depth-perception#xyzij">
+  /// "http://developers.google.com/project-tango/overview/depth-perception#xyzij">
   /// developer overview on depth perception</a>.
   uint32_t* ij;
 
@@ -296,6 +306,10 @@ typedef struct TangoXYZij {
 /// distance (normalized image plane coordinates) of (x,y) to (cx,cy), and
 /// for a pixel at point (x_px, y_px) in pixel coordinates, the corrected output
 /// position would be (x_corr, y_corr).
+///
+/// For more information, see our page on
+/// <a href ="/project-tango/overview/intrinsics-extrinsics">Camera Intrinsics
+/// and Extrinsics</a>.
 typedef struct TangoCameraIntrinsics {
   /// ID of the camera which the intrinsics reference.
   TangoCameraId camera_id;
@@ -359,9 +373,9 @@ extern "C" {
 /// @defgroup configtemplates Configuration Templates
 /// @brief Functions for setting configurations for connecting to the device.
 ///
-/// Configuration Templates.  A configuration is a set of settings that
-/// must be set before connecting to the service, and cannot be changed after
-/// the service has been connected to.
+/// Configuration Templates.  A configuration consists of settings
+/// that must be set before connecting to the Tango service, and
+/// cannot be changed after connecting to the service.
 /// @{
 
 /// Free a TangoConfig object.
@@ -369,9 +383,10 @@ extern "C" {
 /// variable.
 void TangoConfig_free(TangoConfig config);
 
-/// Allocates and return a string with one key=value pair per line of all of
-/// the configuration values of Tango Service.  Note many of these are
-/// 'read-only', unless otherwise documented.
+/// Allocates and returns a string of key-value pairs of all the configuration
+/// values of TangoService. The string is separated into lines such that each
+/// line is one key-value pair, with format "key=value\n".  Note that many of
+/// these config values are read-only, unless otherwise documented.
 char* TangoConfig_toString(TangoConfig config);
 
 /**@} devsitenav Configuration Templates */
@@ -422,9 +437,7 @@ TangoErrorType TangoService_initialize(JNIEnv* env, jobject activity);
 /// is needed only at the time of TangoService_connect() where it is used to
 /// configure the service, and can safely be freed after it has been used in
 /// TangoService_connect().
-/// @param config_type The requested configuration type.  For convenience a
-/// enumerated set of TangoConfigType is specified as "templates".
-/// See @link configparams Configuration Parameters @endlink
+/// @param config_type The requested configuration type.
 /// @return Returns a handle (TangoConfig*) for a newly allocated TangoConfig
 /// object with settings as requested by config_type. Returns NULL if the
 /// config_type is not valid, the config could not be allocated, the service
@@ -432,12 +445,12 @@ TangoErrorType TangoService_initialize(JNIEnv* env, jobject activity);
 TangoConfig TangoService_getConfig(TangoConfigType config_type);
 
 /// Connect sets the configuration of the Tango Service and starts it running.
-/// The service will run with the current configuration, in either its default
-/// configuration with the configuration specified in config.
-/// TangoService_connect() starts the motion estimation and data (camera, depth,
-/// callbacks etc.) will become available, and pose can be queried etc..   The
-/// parameter config is used to set the configuration at this time, and can be
-/// safely freed after.
+/// The service will connect with the specified configuration, or the default
+/// configuration if none is provided.
+/// TangoService_connect() starts the motion estimation and at that point you
+/// can query the Tango Service for data (such as camera, depth, or pose), via
+/// direct calls or callbacks.  When the service starts, it uses the TangoConfig
+/// specified by config; you can free it after the call completes.
 /// @param context Optional. A user defined pointer that is returned in callback
 /// functions onPoseAvailable, onXYZijAvailable and onTangoEvent. Can be safely
 /// set to NULL if not used.
@@ -457,10 +470,12 @@ TangoErrorType TangoService_connect(void* context, TangoConfig config);
 /// needed.  All previous configuration data is invalidated.
 void TangoService_disconnect();
 
-/// Sends a reset to the motion tracking system.  This will cause pose to
-/// reinitialize and start from origin again.  This call can be done at any
-/// time.  ADF state is not affected however the device will be starting from
-/// origin until it localizes again.
+/// Resets the motion tracking system.  This reinitializes the
+/// TANGO_COORDINATE_FRAME_START_OF_SERVICE coordinate frame; if you ask for the
+/// pose with relation to start of service, it will start from this new origin.
+/// You can call this function at any time.  If you are using Area Learning,
+/// that coordinate frame is not affected; however, the device needs to localize
+/// again before you can use the area.
 void TangoService_resetMotionTracking();
 
 /**@} devsitenav Lifecycle */
@@ -474,12 +489,14 @@ void TangoService_resetMotionTracking();
 /// callback, specify the the target and base frame of interest, and the
 /// callback will be called on each change of the pose of that target with
 /// reference to that base frame.  Only some pairs of base/target are
-/// currently supported.  For example TANGO_COORDINATE_FRAME_DEVICE to
+/// currently supported.  For example, TANGO_COORDINATE_FRAME_DEVICE to
 /// base TANGO_COORDINATE_FRAME_START_OF_SERVICE is a typical motion
 /// tracking pair to track the motion of the device with reference to its
-/// starting position in the base frame of reference
+/// starting position in the base frame of reference.
+///
 /// For more information, see our page on
-/// <a href ="../../overview/frames-of-reference">frames of reference</a>.
+/// <a href ="/project-tango/overview/frames-of-reference">frames of
+/// reference</a>.
 ///
 /// @param count The number of base/target pairs to listen to.
 /// @param frames The base/target pairs to listen to.
@@ -527,8 +544,9 @@ TangoErrorType TangoService_getPoseAtTime(double timestamp,
 /// @{
 
 /// Attach an onXYZijAvailable callback.  The callback is called each time new
-/// depth data is available, at an approximate nominal period given by the
-/// double key depth_period_in_seconds, queryable by TangoConfig_getDouble().
+/// depth data is available.  The interval of time between available depth data
+/// is roughly given by the double key depth_period_in_seconds, queryable by
+/// TangoConfig_getDouble().
 /// @return Returns TANGO_ERROR if the listener function pointer is NULL.
 /// Returns TANGO_SUCCESS otherwise.
 TangoErrorType TangoService_connectOnXYZijAvailable(
@@ -590,8 +608,8 @@ TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 /// recommended for display but for applications requiring access to the
 /// HAL_PIXEL_FORMAT_YV12 pixel data.  The camera is selected via
 /// TangoCameraId.  Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE
-/// are supported.  The onFrameAvailable callback will be called when a new frame
-///  is available from the camera.
+/// are supported.  The onFrameAvailable callback will be called when a new
+/// frame is available from the camera.
 ///
 /// Note: The first scan-line of the color image is reserved for metadata
 /// instead of image pixels.
@@ -640,17 +658,16 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 /// - Tutorial: <a href ="c-area-learning">Area Learning</a>
 ///
 /// To save area descriptions, your application must have
-/// <a href
-/// ="http://developer.android.com/reference/android/Manifest.permission.html#WRITE_EXTERNAL_STORAGE">WRITE_EXTERNAL_STORAGE</a>
+/// <a href="http://developer.android.com/reference/android/Manifest.permission.html#WRITE_EXTERNAL_STORAGE">WRITE_EXTERNAL_STORAGE</a>
 /// permissions enabled in its Manifest.
 /// @{
 
 /// Saves the area description, returning the unique ID associated
 /// with the saved map.
 ///
-/// You can only save an area description after TangoService_connect()
-/// has been called, but you can save at any time after that, and
-/// save repeatedly if desired.
+/// You can only save an area description while connected to the Tango Service
+/// (after calling TangoService_connect() but before calling
+/// TangoService_disconnect()).
 /// @param uuid Upon saving, the generated TangoUUID to refer to this map is
 /// returned in uuid.
 /// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR if a failure
@@ -671,8 +688,8 @@ TangoErrorType TangoService_deleteAreaDescription(const TangoUUID uuid);
 /// device as a comma-separated list of TangoUUIDs.  Memory should not
 /// be deallocated outside the API.   Can be called any time after
 /// calling TangoService_initialize().
-/// @param uuid_list Upon successful return, uuid_list is set to a pointer to a
-/// string (char array) that is a comma separated list of UUIDs.
+/// @param uuid_list Upon successful return, uuid_list will contain a
+/// comma separated list of available UUIDs.
 /// @return Returns TANGO_SUCCESS on success, or TANGO_ERROR on failure to
 /// retrieve the list, or if the service needs to be initialized, or
 /// TANGO_INVALID if the uuid_list argument was NULL.
@@ -758,12 +775,13 @@ TangoErrorType TangoService_exportAreaDescription(
 ///
 /// @param metadata The metadata list to search through.
 /// @param key The string key value of the parameter to set.
-/// @param value_size The size in bytes of value, as allocated by the API.
+/// @param value_size The size in bytes of value, as allocated by the
+/// caller.  value will be written only up to this size in bytes.
 /// @param value The value of the data with the corresponding key stored in the
 /// metadata. The value will be returned as a binary data blob (The endianness
 /// of the binary block is platform dependent).
 /// The array memory should not be allocated by the caller, and will go out of
-/// scope after a call to TangoAreaDescriptionMetadata_free.
+/// scope after a call to TangoAreaDescriptionMetadata_free().
 /// The value will be NULL if the key does not exist or has not been set yet.
 /// @return Returns TANGO_SUCCESS if the key is found.  If the key is valid but
 /// does not have a valid value, size will be set to 0 and value will contain a
@@ -814,8 +832,7 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// The supported configuration parameters that can be set are:
 ///
 /// <table>
-/// <tr><td class="indexkey">int32 config_color_iso</td><td
-/// class="indexvalue">ISO value for the color camera.
+/// <tr><td class="indexkey">int32 config_color_iso</td><td class="indexvalue">ISO value for the color camera.
 /// For example, values like 100, 200, or 400.  Default is 100.</td></tr>
 ///
 /// <tr><td class="indexkey">int32 config_color_exp</td><td class="indexvalue">Exposure value for the color camera, in
@@ -847,7 +864,8 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Enables motion tracking if true.  Defaults to true.</td></tr>
 ///
 /// <tr><td class="indexkey">boolean config_enable_dataset_recording</td><td class="indexvalue">
-///         Enables recording of a dataset to disk.</td></tr>
+///         Enables recording of a dataset to disk. (This feature is currently
+///         disabled.)</td></tr>
 ///
 /// <tr><td class="indexkey">string config_load_area_description_UUID</td><td class="indexvalue">
 ///         Loads the given Area Description with given UUID and attempts to
@@ -863,12 +881,13 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         functionality.  The version is returned as YYMMDD-{git hash}-{ARCHITECTURE}.</td></tr>
 ///
 /// <tr><td class = "indexkey">double depth_period_in_seconds</td><td class ="indexvalue">
-///         Nominal time between successive frames of depth data.  Use the depth data
-///         structure fields to get more accurate depth frame times.</td></tr>
+///         Nominal time between successive frames of depth data.  Use the depth
+///         data structure fields to get more accurate depth frame times.</td></tr>
 ///
 /// <tr><td class = "indexkey">int32 max_point_cloud_elements</td><td class ="indexvalue">
-///         Maximum number of points returned in depth point clouds.  For a tablet device,
-///         this is 60000.  Typically no more than to 15000 are returned.</td></tr>
+///         Maximum number of points returned in depth point clouds.  For a
+///         tablet device, this is 60000.  Typically no more than to 15000
+///         are returned.</td></tr>
 /// </table>
 ///
 /// @{
