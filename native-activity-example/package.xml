@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>native_activity_example</name>
+  <version>0.0.0</version>
+  <description>
+    Native activity example for Tango Service C API.
+  </description>
+
+  <maintainer email="chengyang@google.com">chengyang</maintainer>
+  <maintainer email="xuguo@google.com">jguomoto</maintainer>
+
+  <license>Apache 2.0</license>
+
+  <!-- Add your dependencies using the build_depend tag -->
+  <build_depend>tango_client_api</build_depend>
+  <build_depend>tango_gl</build_depend>
+
+  <!-- Use buildtool_depend for build tool packages: -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>redwood_catkin</buildtool_depend>
+</package>

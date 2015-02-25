@@ -1,0 +1,142 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="top" />
+
+    <TextView
+        android:id="@+id/debug_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:paddingLeft="5dp" 
+        android:paddingTop="55dp"/>
+
+    <Button
+        android:id="@+id/reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="5dp"
+        android:text="@string/reset" />
+
+        <Button
+            android:id="@+id/place"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/first"
+            android:layout_alignLeft="@+id/third"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/place_object" />
+
+        <Button
+            android:id="@+id/first"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/third"
+            android:layout_alignLeft="@+id/third"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/first_person_cam" />
+        <Button
+            android:id="@+id/third"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/top"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/third_person_cam" />
+        <Button
+            android:id="@+id/top"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="35dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/top_down_cam" />
+    
+    <RadioGroup
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentTop="true"
+        android:layout_marginTop="50dp"
+        android:layout_marginRight="5dp"
+	    android:gravity="right"
+	    android:orientation="horizontal">
+    	<RadioButton android:id="@+id/radio_world"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onRadioButtonClicked"
+	        android:text="@string/world"/>
+    	<RadioButton android:id="@+id/radio_cube"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onRadioButtonClicked"
+	        android:text="@string/cube"/>
+    	<RadioButton android:id="@+id/radio_grid"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onRadioButtonClicked"
+	        android:text="@string/grid"/>
+	<RadioButton android:id="@+id/radio_fx"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onRadioButtonClicked"
+	        android:text="@string/focal_length"/>
+    </RadioGroup>
+	
+    <RadioGroup
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentBottom="true"
+        android:layout_marginRight="5dp"
+	    android:gravity="right"
+	    android:orientation="horizontal">
+    	<RadioButton android:id="@+id/radio_left"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/left"/>
+    	<RadioButton android:id="@+id/radio_right"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/right"/>
+    	<RadioButton android:id="@+id/radio_down"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/down"/>
+	<RadioButton android:id="@+id/radio_up"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/up"/>
+	<RadioButton android:id="@+id/radio_far"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/far"/>
+	<RadioButton android:id="@+id/radio_near"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="onDirectionButtonClicked"
+	        android:text="@string/near"/>
+    </RadioGroup>  	
+</RelativeLayout>
+<!-- From: file:/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/augmented-reality-jni-example/app/src/main/res/layout/activity_augmented_reality.xml -->

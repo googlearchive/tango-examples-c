@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet config="main"><source path="/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/src/androidTest/res"/><source path="/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/build/generated/res/rs/androidTest/debug"/><source path="/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/build/generated/res/generated/androidTest/debug"/></dataSet><mergedItems/></merger>

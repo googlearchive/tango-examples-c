@@ -129,8 +129,10 @@ typedef enum {
 /// Tango Image Formats
 ///
 /// Equivalent to those found in Android core/system/include/system/graphics.h.
+/// See TangoImageBuffer for a format description.  Only RGBA 8888 is provided.
 typedef enum {
-  TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659  // YCrCb 4:2:0 Planar
+  TANGO_HAL_PIXEL_FORMAT_RGBA_8888 = 1,    /**< RGBA 8888 */
+  TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659 /**< YCrCb 4:2:0 Planar */
 } TangoImageFormatType;
 
 /**@} devsitenav Enumerations */
@@ -222,7 +224,7 @@ typedef struct TangoPoseData {
 } TangoPoseData;
 
 /// The TangoImageBuffer contains information about a byte buffer holding
-/// image data.
+/// image data.  This data is populated by the service when it returns an image.
 typedef struct TangoImageBuffer {
   /// The width of the image data.
   uint32_t width;
@@ -236,10 +238,7 @@ typedef struct TangoImageBuffer {
   int64_t frame_number;
   /// Pixel format of data.
   TangoImageFormatType format;
-  /// Pixels in HAL_PIXEL_FORMAT_YV12 format. Y samples of stride x height are
-  /// first, followed by V samples, with half the stride and half the lines of
-  /// the Y data, followed by a U samples with the same dimensions as the V
-  /// sample.
+  /// Pixels in RGBA8888 format.
   uint8_t* data;
 } TangoImageBuffer;
 
@@ -667,12 +666,19 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 ///
 /// You can only save an area description while connected to the Tango Service
 /// (after calling TangoService_connect() but before calling
-/// TangoService_disconnect()).
-/// @param uuid Upon saving, the generated TangoUUID to refer to this map is
+/// TangoService_disconnect()), and if you have enabled Area Learning mode by
+/// setting config_enable_learning_mode to true in the TangoConfig when
+/// connecting.
+/// If you loaded an ADF before connecting (specified using
+/// config_load_area_description_UUID), then calling this method appends any new
+/// learned areas to that ADF and returns the same UUID. If you did not load an
+/// ADF, this method creates a new ADF and a new UUID for that ADF.
+/// @param uuid Upon saving, the TangoUUID to refer to this ADF is
 /// returned in uuid.
 /// @return Returns TANGO_SUCCESS on success, and TANGO_ERROR if a failure
 /// occurred when saving, or if the service needs to be initialized, or
-/// TANGO_INVALID if uuid is NULL, or of incorrect length.
+/// TANGO_INVALID if uuid is NULL, or of incorrect length, or if Area Learning
+/// Mode was not set (see logcat for details).
 TangoErrorType TangoService_saveAreaDescription(TangoUUID* uuid);
 
 /// Deletes an area description with the specified unique ID.  This
@@ -867,6 +873,17 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Enables recording of a dataset to disk. (This feature is currently
 ///         disabled.)</td></tr>
 ///
+/// <tr><td class="indexkey">boolean config_experimental_high_accuracy_small_scale_adf</td><td class="indexvalue">
+///         EXPERIMENTAL Toggles between high-accuracy-small-scale and
+///         normal-accuracy-large-scale ADFs when learning mode is enabled.
+///         The higher accuracy is only supported in environments the size of a
+///         small home. A Tagno device can contain a mixture of ADF with normal
+///         and with high accuracy. When relocalizing against an ADF, Tagno will
+///         automatically select the correct algorithms based on the type of
+///         ADF. Note that it is not possible yet to learn additional parts of
+///         an environment into the same hight accuracy ADF; all learning has to
+///         happen in one single session.</td></tr>
+///
 /// <tr><td class="indexkey">string config_load_area_description_UUID</td><td class="indexvalue">
 ///         Loads the given Area Description with given UUID and attempts to
 ///         localize against that Area Description.  Empty string will disable
@@ -995,6 +1012,111 @@ TangoErrorType TangoConfig_getDouble(TangoConfig config, const char* key,
 TangoErrorType TangoConfig_getString(TangoConfig config, const char* key,
                                      char* value, size_t size);
 /**@} devsitenav Config Params */
+
+// Experimental API only, subject to change.  Connect a Texture ID to a camera.
+// The camera is selected via TangoCameraId.
+// Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
+// The texture must be the ID of a texture that has been allocated and
+// initialized by the calling application.  This version uses a texture type
+// supported for Unity3D, and requires a RED->Greyscale shader conversion in
+// Unity to produce a luminance (black and white) image.
+//
+// Note: The first scan-line of the color image is reserved for metadata
+// instead of image pixels.
+// @param id The ID of the camera to connect this texture to.  Only
+// TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
+// @param context The context returned during the onFrameAvailable callback.
+// @param tex The texture ID of the texture to connect the camera to.  Must be
+// a valid texture in the applicaton.
+// @return Returns TANGO_INVALID if the camera ID is not valid.  Otherwise
+// returns TANGO_ERROR if an internal error occurred.
+TangoErrorType TangoService_Experimental_connectTextureIdUnity(
+    TangoCameraId id, unsigned int tex, void* context,
+    void (*callback)(void*, TangoCameraId));
+
+// Experimental API only, subject to change.
+// A mesh, described by vertices and face indices, with optional per-vertex
+// normals and colors.
+typedef struct TangoMesh_Experimental {
+  // Array of vertices. Each vertex is an {x, y, z} coordinate triplet, in
+  // meters.
+  float* vertices[3];
+
+  // Array of faces. Each face is an index triplet into the vertices array.
+  uint32_t* faces[3];
+
+  // Array of per-vertex normals. Each normal is a normalized {x, y, z} vector.
+  float* normals[3];
+
+  // Array of colors. Each color is an {R, G, B} triplet.
+  uint8_t* colors[3];
+
+  // Number of vertices, describing the size of the vertices array.
+  uint32_t num_vertices;
+
+  // Number of faces, describing the size of the faces array.
+  uint32_t num_faces;
+
+  // If true, each vertex will have an associated normal. In that case, the
+  // size of the normals array will be equal to num_vertices. Otherwise, the
+  // size of the normals array will be 0.
+  bool has_normals;
+
+  // If true, each vertex will have an associated color. In that case, the size
+  // of the colors array will be equal to num_vertices. Otherwise, the size of
+  // the colors array will be 0.
+  bool has_colors;
+} TangoMesh_Experimental;
+
+// Experimental API only, subject to change.
+// Metadata describing a uniform three-dimensional grid.
+typedef struct TangoGridMetadata_Experimental {
+  // The grid cell size, in meters.
+  float cell_size;
+
+  // The lower bounding index (inclusive) of the grid. The index is a
+  // {ix, iy, iz} triplet describing the position on the grid.
+  int32_t minimum_index[3];
+
+  // The upper bounding index (inclusive) of the grid. The index is a
+  // {ix, iy, iz} triplet describing the position on the grid.
+  int32_t maximum_index[3];
+
+  // Number of grid cells that have been instantiated.
+  uint32_t num_active_cells;
+} TangoGridMetadata_Experimental;
+
+// Experimental API only, subject to change.
+// A list of mesh segments, distributed over a uniform three-dimensional grid.
+// Each segment has a corresponding index, describing its position on the grid.
+// All the meshes are expressed with respect to the same coordinate frame. The
+// origin and principal axes of that frame is the same as the origin and
+// principal axes of the grid.
+//
+// The structure can be used to send partial updates of a larger 3D
+// reconstruction, specifying only local grid segments that changed.
+typedef struct TangoMeshSegments_Experimental {
+  // An array of mesh segments.
+  TangoMesh_Experimental* meshes;
+
+  // An array of indices. Each index is a {ix, iy, iz} triplet describing the
+  // position of the corresponding mesh segment on the grid.
+  int32_t* indices[3];
+
+  // The number of mesh segments, describing the size of the meshes and indices
+  // arrays.
+  uint32_t num_meshes;
+
+  // Describes the current state of the grid.
+  TangoGridMetadata_Experimental grid_metadata;
+} TangoMeshSegments_Experimental;
+
+// Experimental API only, subject to change.
+// Metadata describing a dense reconstruction.
+typedef struct TangoDenseReconstructionMetadata_Experimental {
+  // Describes the grid used for dense reconstruction.
+  TangoGridMetadata_Experimental grid_metadata;
+} TangoDenseReconstructionMetadata_Experimental;
 
 #ifdef __cplusplus
 }

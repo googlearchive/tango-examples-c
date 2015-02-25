@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- From: file:/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/src/main/res/values/dimens.xml -->
+    <eat-comment/>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <!-- From: file:/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/src/main/res/values/strings.xml -->
+    <eat-comment/>
+    <string name="app_name">Project Tango Native Point Cloud</string>
+    <string name="appversion">"App version: "</string>
+    <string name="averageZ">"Average depth (m): "</string>
+    <string name="first_person">First</string>
+    <string name="frameDelta">"Frame delta time (ms): "</string>
+    <string name="menu_name">Native Point Cloud</string>
+    <string name="pointCount">"Point count: "</string>
+    <string name="serviceversion">"Tango service version: "</string>
+    <string name="start">Start</string>
+    <string name="start2device">"Target->Device, Base->Start: "</string>
+    <string name="status">"Status: "</string>
+    <string name="sys_name">Project Tango Native Point Cloud</string>
+    <string name="tangoevent">"Tango System Event: "</string>
+    <string name="third_person">Third</string>
+    <string name="top_down">Top</string>
+    <string name="vertex_count">"Number of points: "</string>
+    <!-- From: file:/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/point-cloud-jni-example/app/src/main/res/values/styles.xml -->
+    <eat-comment/>
+    <style name="AppBaseTheme" parent="android:Theme.Light">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+    <style name="AppTheme" parent="AppBaseTheme">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    </style>
+</resources>
