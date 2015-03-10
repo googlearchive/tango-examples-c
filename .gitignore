@@ -4,3 +4,4 @@ build*
 *local.properties*
 *.iml
 !build.gradle
+!settings.gradle
