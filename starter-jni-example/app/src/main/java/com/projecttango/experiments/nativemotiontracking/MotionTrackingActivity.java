@@ -67,7 +67,6 @@ public class MotionTrackingActivity extends Activity {
 
         int err = 0;
         err = TangoJNINative.tangoConnectCallbacks();
-        err = 3;
         if (err == TANGO_NO_MOTION_TRACKING_PERMISSION) {
             callPermissionIntent();
         } else if (err == TANGO_SUCCESS) {
