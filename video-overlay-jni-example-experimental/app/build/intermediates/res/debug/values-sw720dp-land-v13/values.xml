@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- From: file:/home/xuguo/development/RedwoodInternal/Redwood/3rdparty/tango-examples-c/video-overlay-jni-example-experimental/app/src/main/res/values-sw720dp-land/dimens.xml -->
-    <eat-comment/>
-    <dimen name="activity_horizontal_margin">128dp</dimen>
-</resources>
