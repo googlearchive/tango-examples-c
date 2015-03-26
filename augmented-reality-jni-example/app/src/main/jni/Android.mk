@@ -13,39 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
+PROJECT_ROOT_FROM_JNI:= ../../../../..
 PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libtango-prebuilt
-LOCAL_SRC_FILES := $(PROJECT_ROOT)/tango-service-sdk/libtango_client_api.so
-LOCAL_EXPORT_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE    := libaugmented_reality_jni_example
-LOCAL_SHARED_LIBRARIES := libtango-prebuilt
+LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
-
-LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
-                    $(PROJECT_ROOT)/tango-gl/include \
-                    $(PROJECT_ROOT)/third-party/glm/
 
 LOCAL_SRC_FILES := tango_augmented_reality.cpp \
                    tango_data.cpp \
-                   marker.cpp \
-                   $(PROJECT_ROOT)/tango-gl/ar_ruler.cpp \
-                   $(PROJECT_ROOT)/tango-gl/axis.cpp \
-                   $(PROJECT_ROOT)/tango-gl/camera.cpp \
-                   $(PROJECT_ROOT)/tango-gl/conversions.cpp \
-                   $(PROJECT_ROOT)/tango-gl/cube.cpp \
-                   $(PROJECT_ROOT)/tango-gl/frustum.cpp \
-                   $(PROJECT_ROOT)/tango-gl/grid.cpp \
-                   $(PROJECT_ROOT)/tango-gl/polygon.cpp \
-                   $(PROJECT_ROOT)/tango-gl/trace.cpp \
-                   $(PROJECT_ROOT)/tango-gl/transform.cpp \
-                   $(PROJECT_ROOT)/tango-gl/util.cpp \
-                   $(PROJECT_ROOT)/tango-gl/video_overlay.cpp
+									 marker.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/ar_ruler.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/cube.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/polygon.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/video_overlay.cpp
+
+LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
+                    $(PROJECT_ROOT)/third-party/glm/
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
+
+$(call import-add-path, $(PROJECT_ROOT))
+$(call import-module,tango_client_api)
