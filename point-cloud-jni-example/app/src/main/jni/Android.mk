@@ -13,34 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
+PROJECT_ROOT_FROM_JNI:= ../../../../..
 PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libtango-prebuilt
-LOCAL_SRC_FILES := $(PROJECT_ROOT)/tango-service-sdk/libtango_client_api.so
-LOCAL_EXPORT_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE    := libpoint_cloud_jni_example
-LOCAL_SHARED_LIBRARIES := libtango-prebuilt
+LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
-
-LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
-                    $(PROJECT_ROOT)/tango-gl/include \
-                    $(PROJECT_ROOT)/third-party/glm/
 
 LOCAL_SRC_FILES := tango_data.cpp \
                    tango_pointcloud.cpp \
                    pointcloud.cpp \
-                   $(PROJECT_ROOT)/tango-gl/axis.cpp \
-                   $(PROJECT_ROOT)/tango-gl/camera.cpp \
-                   $(PROJECT_ROOT)/tango-gl/frustum.cpp \
-                   $(PROJECT_ROOT)/tango-gl/grid.cpp \
-                   $(PROJECT_ROOT)/tango-gl/transform.cpp \
-                   $(PROJECT_ROOT)/tango-gl/util.cpp
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp
 
+LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
+                    $(PROJECT_ROOT)/third-party/glm/
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
+
+$(call import-add-path, $(PROJECT_ROOT))
+$(call import-module,tango_client_api)
