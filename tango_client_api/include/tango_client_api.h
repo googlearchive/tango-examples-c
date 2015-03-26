@@ -838,11 +838,29 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// The supported configuration parameters that can be set are:
 ///
 /// <table>
-/// <tr><td class="indexkey">int32 config_color_iso</td><td class="indexvalue">ISO value for the color camera.
-/// For example, values like 100, 200, or 400.  Default is 100.</td></tr>
+/// <tr><td class="indexkey">boolean config_color_mode_auto</td><td
+/// class="indexvalue">
+/// Use auto-exposure/auto-whitebalance with the color camera.  Defaults to
+/// true, and
+/// if true, the values for config_color_iso and config_color_exp are ignored.
+/// </td></tr>
 ///
-/// <tr><td class="indexkey">int32 config_color_exp</td><td class="indexvalue">Exposure value for the color camera, in
-/// nanoseconds.  Default is 11100000 (11.1 ms).</td></tr>
+/// <tr><td class="indexkey">int32 config_color_iso</td><td
+/// class="indexvalue">ISO value for the color camera.
+///         One of 100, 200, 400 or 800.  Default is 100.  Only applied if
+///         config_color_mode_auto is set to false.</td></tr>
+///
+/// <tr><td class="indexkey">int32 config_color_exp</td><td class="indexvalue">
+///         Exposure value for the color camera, in nanoseconds.  Default is
+///         11100000 (11.1 ms).  Valid from 0 to 30000000.  Only applied if
+///         config_color_mode_auto is set to false.</td></tr>
+///
+/// <tr><td class="indexkey">int32 config_depth_framerate</td><td
+/// class="indexvalue">
+///         Request depth at this framerate in frames per second.  Defaults to 5
+///         FPS.  Can be an integer from 1 to 5 inclusive.  Higher framerates
+///         use more power and system resources.  Only has effect if
+///         config_depth_enable is true.</td></tr>
 ///
 /// <tr><td class="indexkey">boolean config_enable_auto_recovery</td><td class="indexvalue">
 ///         Automatically recovers when motion tracking becomes invalid, by
@@ -877,12 +895,21 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         EXPERIMENTAL Toggles between high-accuracy-small-scale and
 ///         normal-accuracy-large-scale ADFs when learning mode is enabled.
 ///         The higher accuracy is only supported in environments the size of a
-///         small home. A Tagno device can contain a mixture of ADF with normal
-///         and with high accuracy. When relocalizing against an ADF, Tagno will
-///         automatically select the correct algorithms based on the type of
+///         small home. A Tango device can contain a mixture of ADFs with normal
+///         and with high accuracy. When relocalizing against an ADF, the API
+///         automatically selects the correct algorithms based on the type of
 ///         ADF. Note that it is not possible yet to learn additional parts of
-///         an environment into the same hight accuracy ADF; all learning has to
+///         an environment into the same high accuracy ADF; all learning has to
 ///         happen in one single session.</td></tr>
+///
+/// <tr><td class="indexkey">boolean config_experimental_vr_pose</td><td class="indexvalue">
+///         EXPERIMENTAL This enables a low-latency source for the latest pose
+///         returned via the callback for VR applications. This option differs
+///         from the other pose callback method in several ways.  It enables
+///         integration of the latest inertial measurements and smooths the
+///         pose estimate to avoid large discontinuities. This does not affect
+///         any calls made via the pose polling mechanism (e.g.,
+///         getLatestPose).</td></tr>
 ///
 /// <tr><td class="indexkey">string config_load_area_description_UUID</td><td class="indexvalue">
 ///         Loads the given Area Description with given UUID and attempts to
