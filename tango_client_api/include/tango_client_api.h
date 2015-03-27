@@ -860,7 +860,7 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Request depth at this framerate in frames per second.  Defaults to 5
 ///         FPS.  Can be an integer from 1 to 5 inclusive.  Higher framerates
 ///         use more power and system resources.  Only has effect if
-///         config_depth_enable is true.</td></tr>
+///         config_enable_depth is true.</td></tr>
 ///
 /// <tr><td class="indexkey">boolean config_enable_auto_recovery</td><td class="indexvalue">
 ///         Automatically recovers when motion tracking becomes invalid, by
