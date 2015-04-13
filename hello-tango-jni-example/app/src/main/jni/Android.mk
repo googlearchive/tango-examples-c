@@ -19,8 +19,9 @@ PROJECT_ROOT:= $(call my-dir)/../../../../..
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libhello_tango_jni_example
 LOCAL_SHARED_LIBRARIES := tango_client_api
-LOCAL_CFLAGS    := -Werror
-LOCAL_SRC_FILES := tango_native.c
+LOCAL_CFLAGS    := -Werror -std=c++11
+LOCAL_SRC_FILES := tango_native.cc \
+                   tango_handler.cc
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
                     $(PROJECT_ROOT)/third-party/glm/
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib

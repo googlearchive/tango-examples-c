@@ -43,42 +43,42 @@ glm::vec3 position;
 glm::quat rotation;
 
 bool SetupGraphics(int w, int h) {
-    screen_width = w;
-    screen_height = h;
+  screen_width = w;
+  screen_height = h;
 
-    position = glm::vec3(0.0f, 0.0f, 0.0f);
-    rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+  position = glm::vec3(0.0f, 0.0f, 0.0f);
+  rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
-    cam = new tango_gl::Camera();
-    grid = new tango_gl::Grid();
+  cam = new tango_gl::Camera();
+  grid = new tango_gl::Grid();
 
-    if (h == 0) {
-      LOGE("Setup graphic height not valid");
-      return false;
-    }
-    cam->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
-    return true;
+  if (h == 0) {
+    LOGE("Setup graphic height not valid");
+    return false;
+  }
+  cam->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
+  return true;
 }
 
 // Render current frame.
 bool RenderFrame() {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glViewport(0, 0, screen_width, screen_height);
+  glViewport(0, 0, screen_width, screen_height);
 
-    cam->SetPosition(position + kHeightOffset);
-    cam->SetRotation(rotation);
-    grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
+  cam->SetPosition(position + kHeightOffset);
+  cam->SetRotation(rotation);
+  grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
-    return true;
+  return true;
 }
 
-void onPoseAvailable(void* context, const TangoPoseData* pose) {
-    // To be implemented.
+void onPoseAvailable(void*, const TangoPoseData*) {
+  // To be implemented.
 }
 
 #ifdef __cplusplus
@@ -86,51 +86,54 @@ extern "C" {
 #endif
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoInitialize(
-      JNIEnv* env, jobject, jobject activity) {
-    // To be implemented.
+    JNIEnv*, jobject, jobject) {
+  // To be implemented.
+  return 0;
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoSetupConfig(
-      JNIEnv*, jobject) {
-    // To be implemented.
+    JNIEnv*, jobject) {
+  // To be implemented.
 }
 
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoConnectCallbacks(
-      JNIEnv*, jobject) {
-    // To be implemented.
+    JNIEnv*, jobject) {
+  // To be implemented.
+  return 0;
 }
 
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoConnect(
-      JNIEnv*, jobject) {
-    // To be implemented.
+    JNIEnv*, jobject) {
+  // To be implemented.
+  return 0;
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoDisconnect(
-      JNIEnv*, jobject) {
-      // To be implemented.
+    JNIEnv*, jobject) {
+  // To be implemented.
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_freeGLContent(
     JNIEnv*, jobject) {
-    delete cam;
-    delete grid;
+  delete cam;
+  delete grid;
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
-    SetupGraphics(width, height);
+  SetupGraphics(width, height);
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_render(
     JNIEnv*, jobject) {
-    RenderFrame();
+  RenderFrame();
 }
 
 #ifdef __cplusplus

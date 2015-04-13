@@ -17,29 +17,12 @@
 #ifndef TANGO_GL_GRID_H_
 #define TANGO_GL_GRID_H_
 
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/line.h"
 
 namespace tango_gl {
-class Grid : public DrawableObject {
+class Grid : public Line {
  public:
   Grid(float density = 1.0f, int qx = 50, int qy = 50);
-  Grid(const Grid& other) = delete;
-  Grid& operator=(const Grid&) = delete;
-  ~Grid();
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-
- private:
-  float* vertices_;
-  float density_;
-  int quantity_x_;
-  int quantity_y_;
-  int traverse_len_;
-
-  GLuint vertex_buffer_;
-
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_GRID_H_

@@ -131,8 +131,9 @@ typedef enum {
 /// Equivalent to those found in Android core/system/include/system/graphics.h.
 /// See TangoImageBuffer for a format description.  Only RGBA 8888 is provided.
 typedef enum {
-  TANGO_HAL_PIXEL_FORMAT_RGBA_8888 = 1,    /**< RGBA 8888 */
-  TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659 /**< YCrCb 4:2:0 Planar */
+  TANGO_HAL_PIXEL_FORMAT_RGBA_8888 = 1,      /**< RGBA 8888 */
+  TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659,  /**< YV12 */
+  TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP = 0x11 /**< NV21 */
 } TangoImageFormatType;
 
 /**@} devsitenav Enumerations */
@@ -543,9 +544,8 @@ TangoErrorType TangoService_getPoseAtTime(double timestamp,
 /// @{
 
 /// Attach an onXYZijAvailable callback.  The callback is called each time new
-/// depth data is available.  The interval of time between available depth data
-/// is roughly given by the double key depth_period_in_seconds, queryable by
-/// TangoConfig_getDouble().
+/// depth data is available.  On the Tango tablet the depth callback occurs at
+/// 5 Hz.
 /// @return Returns TANGO_ERROR if the listener function pointer is NULL.
 /// Returns TANGO_SUCCESS otherwise.
 TangoErrorType TangoService_connectOnXYZijAvailable(
@@ -574,7 +574,9 @@ TangoErrorType TangoService_connectOnTangoEvent(
 /// Connect a Texture ID to a camera. The camera is selected via TangoCameraId.
 /// Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// The texture must be the ID of a texture that has been allocated and
-/// initialized by the calling application.
+/// initialized by the calling application.  The TangoConfig flag
+/// config_enable_color_camera must be set to true for connectTextureId
+/// to succeed after TangoService_connect() is called.
 ///
 /// Note: The first scan-line of the color image is reserved for metadata
 /// instead of image pixels.
@@ -608,7 +610,9 @@ TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 /// HAL_PIXEL_FORMAT_YV12 pixel data.  The camera is selected via
 /// TangoCameraId.  Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE
 /// are supported.  The onFrameAvailable callback will be called when a new
-/// frame is available from the camera.
+/// frame is available from the camera.  The TangoConfig flag
+/// config_enable_color_camera must be set to true for connectOnFrameAvailable
+/// to succeed after TangoService_connect() is called.
 ///
 /// Note: The first scan-line of the color image is reserved for metadata
 /// instead of image pixels.
@@ -855,13 +859,6 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         11100000 (11.1 ms).  Valid from 0 to 30000000.  Only applied if
 ///         config_color_mode_auto is set to false.</td></tr>
 ///
-/// <tr><td class="indexkey">int32 config_depth_framerate</td><td
-/// class="indexvalue">
-///         Request depth at this framerate in frames per second.  Defaults to 5
-///         FPS.  Can be an integer from 1 to 5 inclusive.  Higher framerates
-///         use more power and system resources.  Only has effect if
-///         config_enable_depth is true.</td></tr>
-///
 /// <tr><td class="indexkey">boolean config_enable_auto_recovery</td><td class="indexvalue">
 ///         Automatically recovers when motion tracking becomes invalid, by
 ///         returning immediately to the initializing state in the pose
@@ -869,6 +866,16 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         after recovery. If an area description is loaded, or if learning
 ///         mode is enabled, this will also automatically try to localize.
 ///         Defaults to true.</td></tr>
+///
+/// <tr><td class="indexkey">boolean config_enable_color_camera</td><td
+/// class="indexvalue">
+///         Enables the color camera if true.  Defaults to false.  Must be
+///         set to true if connecting color camera or texture callbacks after
+///         TangoService_connect() is called.  When connecting a callback before
+///         calling TangoService_connect() is called, config_enable_color_camera
+///         is set to true internally.  Due to potential lifecycle race
+///         conditions it is recommended to always set to true if the color
+///         camera is to be used.</td></tr>
 ///
 /// <tr><td class="indexkey">boolean config_enable_depth</td><td class="indexvalue">
 ///         Enables depth output if true.  Defaults to false.</td></tr>
@@ -902,14 +909,20 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         an environment into the same high accuracy ADF; all learning has to
 ///         happen in one single session.</td></tr>
 ///
-/// <tr><td class="indexkey">boolean config_experimental_vr_pose</td><td class="indexvalue">
-///         EXPERIMENTAL This enables a low-latency source for the latest pose
-///         returned via the callback for VR applications. This option differs
-///         from the other pose callback method in several ways.  It enables
-///         integration of the latest inertial measurements and smooths the
-///         pose estimate to avoid large discontinuities. This does not affect
-///         any calls made via the pose polling mechanism (e.g.,
-///         getLatestPose).</td></tr>
+/// <tr><td class="indexkey">boolean config_high_rate_pose</td><td
+/// class="indexvalue">
+///         This flag enables 100Hz pose updates in callback mode. If disabled,
+/// pose updates
+///         are provided at 33Hz in callback mode. Default value is
+/// true.</td></tr>
+///
+/// <tr><td class="indexkey">boolean config_smooth_pose</td><td
+/// class="indexvalue">
+///         This flag enables pose smoothing using a spatial smoothing method.
+/// Small pose
+///         corrections are hidden while moving, large pose corrections are
+/// applied
+///         instantly. Default value is true.</td></tr>
 ///
 /// <tr><td class="indexkey">string config_load_area_description_UUID</td><td class="indexvalue">
 ///         Loads the given Area Description with given UUID and attempts to
@@ -1065,18 +1078,20 @@ TangoErrorType TangoService_Experimental_connectTextureIdUnity(
 // A mesh, described by vertices and face indices, with optional per-vertex
 // normals and colors.
 typedef struct TangoMesh_Experimental {
+  int32_t index[3];
+
   // Array of vertices. Each vertex is an {x, y, z} coordinate triplet, in
   // meters.
-  float* vertices[3];
+  float (*vertices)[3];
 
   // Array of faces. Each face is an index triplet into the vertices array.
-  uint32_t* faces[3];
+  uint32_t (*faces)[3];
 
   // Array of per-vertex normals. Each normal is a normalized {x, y, z} vector.
-  float* normals[3];
+  float (*normals)[3];
 
   // Array of colors. Each color is an {R, G, B} triplet.
-  uint8_t* colors[3];
+  uint8_t (*colors)[3];
 
   // Number of vertices, describing the size of the vertices array.
   uint32_t num_vertices;
@@ -1144,6 +1159,20 @@ typedef struct TangoDenseReconstructionMetadata_Experimental {
   // Describes the grid used for dense reconstruction.
   TangoGridMetadata_Experimental grid_metadata;
 } TangoDenseReconstructionMetadata_Experimental;
+
+// Experimental API only, subject to change.
+TangoErrorType TangoService_Experimental_connectOnMeshSegmentAvailable(
+    void (*TangoService_onMeshSegmentAvailableCallback)(
+        void* context, const TangoMesh_Experimental* mesh_segment));
+
+// Experimental API only, subject to change.
+TangoErrorType TangoService_Experimental_startSceneReconstruction();
+
+// Experimental API only, subject to change.
+TangoErrorType TangoService_Experimental_stopSceneReconstruction();
+
+// Experimental API only, subject to change.
+TangoErrorType TangoService_Experimental_resetSceneReconstruction();
 
 #ifdef __cplusplus
 }

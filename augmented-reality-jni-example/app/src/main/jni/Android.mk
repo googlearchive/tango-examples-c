@@ -24,15 +24,16 @@ LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_SRC_FILES := tango_augmented_reality.cpp \
                    tango_data.cpp \
-									 marker.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/ar_ruler.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/cube.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/polygon.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/goal_marker.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/mesh.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \

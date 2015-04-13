@@ -17,17 +17,41 @@
 #ifndef TANGO_GL_DRAWABLE_OBJECT_H_
 #define TANGO_GL_DRAWABLE_OBJECT_H_
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <vector>
 
-#include "glm/glm.hpp"
+#include "tango-gl/color.h"
 #include "tango-gl/transform.h"
+#include "tango-gl/util.h"
 
 namespace tango_gl {
 class DrawableObject : public Transform {
  public:
+  DrawableObject() : red_(0), green_(0), blue_(0), alpha_(1.0f) {};
+  DrawableObject(const DrawableObject& other) = delete;
+  const DrawableObject& operator=(const DrawableObject&) = delete;
+  ~DrawableObject();
+
+  void SetShader();
+  void SetColor(const Color& color);
+  void SetColor(const float red, const float green, const float blue);
+  void SetAlpha(const float alpha);
+  void SetVertices(const std::vector<GLfloat>& vertices);
+  void SetVertices(const std::vector<GLfloat>& vertices,
+                   const std::vector<GLushort>& indices);
   virtual void Render(const glm::mat4& projection_mat,
                       const glm::mat4& view_mat) const = 0;
+
+ protected:
+  float red_;
+  float green_;
+  float blue_;
+  float alpha_;
+  std::vector<GLushort> indices_;
+  std::vector<GLfloat> vertices_;
+  GLuint shader_program_;
+  GLuint uniform_color_;
+  GLuint uniform_mvp_mat_;
+  GLuint attrib_vertices_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_DRAWABLE_OBJECT_H_

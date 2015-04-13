@@ -51,6 +51,5 @@ public class Renderer implements GLSurfaceView.Renderer {
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
     TangoJNINative.initializeGlContent();
     TangoJNINative.connectTexture();
-    TangoJNINative.connect();
   }
 }

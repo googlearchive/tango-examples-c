@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_CUBE_H_
-#define TANGO_GL_CUBE_H_
+#ifndef TANGO_GL_TRIANGLE_H_
+#define TANGO_GL_TRIANGLE_H_
 
 #include "tango-gl/mesh.h"
 
 namespace tango_gl {
-class Cube : public Mesh {
+class Triangle : public Mesh {
  public:
-  Cube();
+  Triangle();
 };
 }  // namespace tango_gl
-#endif  // TANGO_GL_CUBE_H_
+#endif  // TANGO_GL_TRIANGLE_H_

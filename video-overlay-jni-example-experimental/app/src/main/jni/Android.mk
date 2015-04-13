@@ -25,12 +25,14 @@ LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_SRC_FILES := tango_video_overlay.cpp \
                    tango_data.cpp \
-									 video_overlay.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/video_overlay.cpp
 
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
                     $(PROJECT_ROOT)/third-party/glm

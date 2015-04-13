@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_CUBE_H_
-#define TANGO_GL_CUBE_H_
+#ifndef TANGO_GL_LINE_H_
+#define TANGO_GL_LINE_H_
 
-#include "tango-gl/mesh.h"
+#include "tango-gl/drawable_object.h"
 
 namespace tango_gl {
-class Cube : public Mesh {
+class Line : public DrawableObject {
  public:
-  Cube();
+  Line(float line_width, GLenum render_mode)
+      : line_width_(line_width), render_mode_(render_mode) {};
+  void SetLineWidth(const float pixels);
+  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
+ protected:
+  float line_width_;
+  GLenum render_mode_;
+  std::vector<glm::vec3> vec_vertices_;
 };
 }  // namespace tango_gl
-#endif  // TANGO_GL_CUBE_H_
+#endif  // TANGO_GL_LINE_H_

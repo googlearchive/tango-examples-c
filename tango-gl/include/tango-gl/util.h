@@ -36,7 +36,10 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-#define PI 3.1415926f
+#ifndef M_PI
+#define M_PI 3.1415926f
+#endif
+
 #define RADIAN_2_DEGREE 57.2957795f
 #define DEGREE_2_RADIANS 0.0174532925f
 

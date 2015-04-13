@@ -3,5 +3,7 @@
 build*
 *local.properties*
 *.iml
+libs/
+obj/
 !build.gradle
 !settings.gradle

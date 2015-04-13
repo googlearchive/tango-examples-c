@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef AUGMENTED_REALITY_JNI_EXAMPLE_MARKER_H_
-#define AUGMENTED_REALITY_JNI_EXAMPLE_MARKER_H_
+#include "tango-gl/triangle.h"
 
-#include <tango-gl/polygon.h>
+namespace tango_gl {
 
-/**
- * @brief Wrapper around Polygon class that automatically populates the mesh
- * data using the Google Maps teardrop.
- */
-class Marker : public tango_gl::Polygon {
- public:
-  Marker();
-};
+static const GLfloat const_vertices[]
+  = {-0.15f, 0.0f, 0.0f, 0.15f, 0.0f, 0.0f, 0.0f, 0.0f, -0.2f};
 
-#endif  // AUGMENTED_REALITY_JNI_EXAMPLE_MARKER_H_
+static const GLushort const_indices[] = {0, 1, 2};
+
+Triangle::Triangle() {
+  SetShader();
+  std::vector<GLfloat> vertices(
+      const_vertices,
+      const_vertices + sizeof(const_vertices) / sizeof(GLfloat));
+  std::vector<GLushort> indices(
+      const_indices, const_indices + sizeof(const_indices) / sizeof(GLushort));
+  SetVertices(vertices, indices);
+}
+}  // namespace tango_gl

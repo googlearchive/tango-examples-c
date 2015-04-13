@@ -14,36 +14,47 @@
  * limitations under the License.
  */
 
-package com.projecttango.experiments.nativehellotango;
+#ifndef HELLO_TANGO_JNI_TANGO_HANDLER_H_
+#define HELLO_TANGO_JNI_TANGO_HANDLER_H_
 
-/**
- * Interfaces between C and Java. 
- *
- * Note that these are the functions that call into native code, native code is
- * responsible for the communication between the application and Tango Service.
- */
-public class TangoJNINative {
-  static {
-    System.loadLibrary("hello_tango_jni_example");
-  }
+#include <android/log.h>
+
+#include "tango_client_api.h"  // NOLINT
+
+#define LOG_TAG "hello-tango-jni"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+namespace hello_tango_jni {
+// TangoHandler provide functionalities to communicate with Tango Service.
+class TangoHandler {
+ public:
+  TangoHandler();
+  ~TangoHandler();
 
   // Initialize Tango Service, this function starts the communication
   // between the application and Tango Service.
   // The activity object is used for checking if the API version is outdated.
-  public static native int initialize(HelloTangoActivity activity);
-  
+  TangoErrorType Initialize(JNIEnv* env, jobject caller_activity);
+
   // Setup the configuration file of Tango Service.
-  public static native int setupConfig();
-  
+  TangoErrorType SetupConfig();
+
   // Connect the onPoseAvailable callback.
-  public static native int connectCallbacks();
+  TangoErrorType ConnectPoseCallback();
 
   // Connect to Tango Service.
   // This function will start the Tango Service pipeline, in this case, it will
   // start Motion Tracking.
-  public static native int connect();
+  TangoErrorType ConnectService();
 
   // Disconnect from Tango Service, release all the resources that the app is
   // holding from Tango Service.
-  public static native void disconnect();
-}
+  void DisconnectService();
+
+ private:
+  TangoConfig tango_config_;
+};
+}  // namespace hello_tango_jni
+
+#endif  // HELLO_TANGO_JNI_TANGO_HANDLER_H_

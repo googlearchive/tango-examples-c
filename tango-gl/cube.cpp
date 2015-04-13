@@ -15,77 +15,25 @@
  */
 
 #include "tango-gl/cube.h"
-#include "tango-gl/util.h"
 
 namespace tango_gl {
 
-static const char kVertexShader[] =
-    "attribute vec4 vertex;\n"
-    "uniform mat4 mvp;\n"
-    "void main() {\n"
-    "  gl_Position = mvp*vertex;\n"
-    "}\n";
+static const GLfloat const_vertices[] = {
+    -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f,  1.0f,  1.0f,
+    1.0f,  -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f,
+    -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f,  -1.0f};
 
-static const char kFragmentShader[] =
-    "void main() {\n"
-    "  gl_FragColor = vec4(0,1,0,1);\n"
-    "}\n";
-
-static const float vertices[] = {
-    // front
-    -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,
-
-    // right
-    0.5f,  0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  -0.5f,
-    0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f,
-
-    // back
-    0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f,
-    -0.5f, 0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-
-    // left
-    -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,  0.5f,
-    -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,
-
-    // top
-    -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  -0.5f,
-    0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
-
-    // bottom
-    -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,
-    0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f};
+static const GLushort const_indices[] = {0, 1, 2, 2, 3, 0, 3, 2, 6, 6, 7, 3,
+                                         7, 6, 5, 5, 4, 7, 4, 0, 3, 3, 7, 4,
+                                         0, 4, 5, 5, 1, 0, 1, 5, 6, 6, 2, 1};
 
 Cube::Cube() {
-  shader_program_ = util::CreateProgram(kVertexShader, kFragmentShader);
-  if (!shader_program_) {
-    LOGE("Could not create program.");
-  }
-  uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
-  attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
-
-  glGenBuffers(1, &vertex_buffer_);
+  SetShader();
+  std::vector<GLfloat> vertices(
+      const_vertices,
+      const_vertices + sizeof(const_vertices) / sizeof(GLfloat));
+  std::vector<GLushort> indices(
+      const_indices, const_indices + sizeof(const_indices) / sizeof(GLushort));
+  SetVertices(vertices, indices);
 }
-
-Cube::~Cube() { glDeleteShader(shader_program_); }
-
-void Cube::Render(const glm::mat4& projection_mat,
-                  const glm::mat4& view_mat) const {
-  glUseProgram(shader_program_);
-
-  // Calculate MVP matrix and pass it to shader.
-  glm::mat4 model_mat = GetTransformationMatrix();
-  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
-  glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
-
-  // Vertice binding
-  glEnableVertexAttribArray(attrib_vertices_);
-  glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-                        vertices);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
-  glUseProgram(0);
-}
-
 }  // namespace tango_gl
