@@ -31,10 +31,7 @@ class VideoOverlay : public DrawableObject {
   GLuint texture_id_;
 
   GLuint attrib_texture_coords_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
   GLuint uniform_texture_;
-  GLuint shader_program_;
   GLuint vertex_buffers_[3];
 };
 }  // namespace tango_gl

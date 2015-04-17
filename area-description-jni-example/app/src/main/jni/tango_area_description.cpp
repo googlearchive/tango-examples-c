@@ -23,6 +23,7 @@
 
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
+#include "tango-gl/color.h"
 #include "tango-gl/frustum.h"
 #include "tango-gl/grid.h"
 #include "tango-gl/trace.h"
@@ -99,9 +100,12 @@ const float kHighFov = 65.0f;
 const float kLowFov = 45.0f;
 
 // Color of the motion tracking trajectory.
-const float kTraceMotionColor[] = {0.22f, 0.28f, 0.67f, 1.0f};
+const tango_gl::Color kTraceMotionColor(0.22f, 0.28f, 0.67f);
 // Color of the motion tracking trajectory.
-const float kTraceADFColor[] = {0.39f, 0.56f, 0.03f, 1.0f};
+const tango_gl::Color kTraceADFColor(0.39f, 0.56f, 0.03f);
+
+// Color of the ground grid.
+const tango_gl::Color kGridColor(0.85f, 0.85f, 0.85f);
 
 // Frustum scale.
 const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
@@ -121,15 +125,15 @@ void SetCamera(CameraType camera_index) {
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -PI / 4.0f;
-      cam_cur_angle[1] = PI / 4.0f;
+      cam_cur_angle[0] = -M_PI / 4.0f;
+      cam_cur_angle[1] = M_PI / 4.0f;
       break;
     case CameraType::TOP_DOWN:
       cam->SetFieldOfView(kHighFov);
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = PI / 2.0f;
+      cam_cur_angle[1] = M_PI / 2.0f;
       break;
     default:
       break;
@@ -153,10 +157,12 @@ bool InitGlContent() {
   SetCamera(CameraType::THIRD_PERSON);
 
   // Set trace's color to show motion tracking trajectory.
-  trace_motion->SetTraceColor(kTraceMotionColor);
+  trace_motion->SetColor(kTraceMotionColor);
 
   // Set trace's color to show motion tracking trajectory.
-  trace_adf->SetTraceColor(kTraceADFColor);
+  trace_adf->SetColor(kTraceADFColor);
+
+  grid->SetColor(kGridColor);
   return true;
 }
 

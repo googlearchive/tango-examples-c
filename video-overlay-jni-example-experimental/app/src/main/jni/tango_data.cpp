@@ -35,6 +35,12 @@ bool TangoData::SetConfig() {
     LOGE("TangoService_getConfig(): Failed");
     return false;
   }
+  // Enable color camera.
+  if (TangoConfig_setBool(config_, "config_enable_color_camera", true) !=
+      TANGO_SUCCESS) {
+    LOGE("config_enable_color_camera Failed");
+    return false;
+  }
   return true;
 }
 

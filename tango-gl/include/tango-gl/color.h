@@ -14,31 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef VIDEO_OVERLAY_JNI_EXAMPLE_EXPERIMENTAL_VIDEO_OVERLAY_H_
-#define VIDEO_OVERLAY_JNI_EXAMPLE_EXPERIMENTAL_VIDEO_OVERLAY_H_
+#ifndef TANGO_GL_COLOR_H_
+#define TANGO_GL_COLOR_H_
 
-#include "tango-gl/util.h"
-
-class VideoOverlay {
+namespace tango_gl {
+class Color {
  public:
-  VideoOverlay();
-  VideoOverlay(const VideoOverlay& other) = delete;
-  VideoOverlay& operator=(const VideoOverlay&) = delete;
-  ~VideoOverlay();
+  Color() : r(0), g(0), b(0) {}
+  Color(float red, float green, float blue) : r(red), g(green), b(blue) {}
+  Color(const Color&) = default;
+  Color& operator=(const Color&) = default;
 
-  void Render() const;
-  GLuint texture_id;
-
- private:
-  GLuint vertex_buffers_;
-
-  GLuint shader_program_;
-
-  GLuint attrib_vertices;
-  GLuint attrib_textureCoords;
-  GLuint uniform_texture;
-
-  GLuint vertex_buffers[3];
+  float r;
+  float g;
+  float b;
 };
-
-#endif  // VIDEO_OVERLAY_JNI_EXAMPLE_EXPERIMENTAL_VIDEO_OVERLAY_H_
+}  // namespace tango_gl
+#endif  // TANGO_GL_COLOR_H_

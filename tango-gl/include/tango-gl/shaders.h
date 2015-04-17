@@ -14,32 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_AR_RULER_H_
-#define TANGO_GL_AR_RULER_H_
+#ifndef TANGO_GL_SHADERS_H_
+#define TANGO_GL_SHADERS_H_
 
-#include "tango-gl/drawable_object.h"
+#include <string>
 
 namespace tango_gl {
-class ArRuler : public DrawableObject {
- public:
-  ArRuler();
-  ArRuler(const ArRuler& other) = delete;
-  ArRuler& operator=(const ArRuler&) = delete;
-  ~ArRuler();
-  void SetColor(const float color[4]);
-  void SetAlpha(const float alpha);
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-
- private:
-  float color_[4];
-  float alpha_;
-  GLuint vertex_buffer_;
-  GLuint color_buffer_;
-
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_color_;
-  GLuint uniform_mvp_mat_;
-};
+namespace shaders {
+std::string GetBasicVertexShader();
+std::string GetBasicFragmentShader();
+std::string GetColorVertexShader();
+std::string GetVideoOverlayVertexShader();
+std::string GetVideoOverlayFragmentShader();
+}  // namespace shaders
 }  // namespace tango_gl
-#endif  // TANGO_GL_AR_RULER_H_
+#endif  // TANGO_GL_SHADERS_H_

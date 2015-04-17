@@ -15,31 +15,9 @@
  */
 
 #include "tango-gl/video_overlay.h"
-#include "tango-gl/util.h"
+#include "tango-gl/shaders.h"
 
 namespace tango_gl {
-
-static const char kVertexShader[] =
-  "precision highp float;\n"
-  "precision highp int;\n"
-  "attribute vec4 vertex;\n"
-  "attribute vec2 textureCoords;\n"
-  "varying vec2 f_textureCoords;\n"
-  "uniform mat4 mvp;\n"
-  "void main() {\n"
-  "  f_textureCoords = textureCoords;\n"
-  "  gl_Position = mvp * vertex;\n"
-  "}\n";
-
-static const char kFragmentShader[] =
-  "#extension GL_OES_EGL_image_external : require\n"
-  "precision highp float;\n"
-  "precision highp int;\n"
-  "uniform samplerExternalOES texture;\n"
-  "varying vec2 f_textureCoords;\n"
-  "void main() {\n"
-  "  gl_FragColor = texture2D(texture, f_textureCoords);\n"
-  "}\n";
 
 static const GLfloat kVertices[] =
   {-1.0,  1.0, 0.0,
@@ -55,7 +33,9 @@ static const GLfloat kTextureCoords[] =
 
 VideoOverlay::VideoOverlay() {
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-  shader_program_ = util::CreateProgram(kVertexShader, kFragmentShader);
+  shader_program_ =
+      util::CreateProgram(shaders::GetVideoOverlayVertexShader().c_str(),
+                          shaders::GetVideoOverlayFragmentShader().c_str());
   if (!shader_program_) {
     LOGE("Could not create program.");
   }

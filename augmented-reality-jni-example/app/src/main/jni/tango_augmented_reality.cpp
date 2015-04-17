@@ -21,15 +21,16 @@
 
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
+#include "tango-gl/color.h"
 #include "tango-gl/conversions.h"
 #include "tango-gl/cube.h"
 #include "tango-gl/frustum.h"
 #include "tango-gl/grid.h"
+#include "tango-gl/goal_marker.h"
 #include "tango-gl/trace.h"
 #include "tango-gl/util.h"
 #include "tango-gl/video_overlay.h"
 
-#include "marker.h"
 #include "tango_data.h"
 
 // Render camera's parent transformation.
@@ -51,7 +52,7 @@ tango_gl::Grid* ground;
 // Trace of pose data.
 tango_gl::Trace* trace;
 
-Marker* marker;
+tango_gl::GoalMarker* marker;
 
 // Color camera preview.
 tango_gl::VideoOverlay* video_overlay;
@@ -106,6 +107,11 @@ const glm::quat kArGridRotation = glm::quat(0.70711f, -0.70711f, 0.0f, 0.0f);
 const glm::quat kMarkerRotation = glm::quat(0.f, 0.f, 1.0f, 0.f);
 const glm::vec3 kMarkerPosition = glm::vec3(0.0f, 0.85f, -3.0f);
 const glm::vec3 kMarkerOffset = glm::vec3(0.0f, 0.85f, 0.0f);
+
+// Color of the ground grid.
+const tango_gl::Color kGridColor(0.85f, 0.85f, 0.85f);
+// Color of the goal marker.
+const tango_gl::Color kMarkerColor(1.0f, 0.f, 0.f);
 
 // AR cube position in world coordinate.
 const glm::vec3 kCubePosition = glm::vec3(-1.0f, 0.265f, -2.0f);
@@ -196,7 +202,7 @@ bool SetupGraphics() {
   frustum = new tango_gl::Frustum();
   trace = new tango_gl::Trace();
   ground = new tango_gl::Grid(1.0f, 10, 10);
-  marker = new Marker();
+  marker = new tango_gl::GoalMarker();
   video_overlay = new tango_gl::VideoOverlay();
 
   camera_type = CameraType::FIRST_PERSON;
@@ -207,10 +213,12 @@ bool SetupGraphics() {
   cc_T_oc = tango_gl::conversions::color_camera_T_opengl_camera();
 
   ground->SetPosition(world_position);
+  ground->SetColor(kGridColor);
 
   marker->SetPosition(kMarkerPosition + world_position);
   marker->SetScale(kMarkerScale);
   marker->SetRotation(kMarkerRotation);
+  marker->SetColor(kMarkerColor);
   return true;
 }
 
@@ -312,8 +320,8 @@ void SetCamera(CameraType camera_index) {
       cam->SetPosition(kZeroVec3);
       cam->SetRotation(kZeroQuat);
       cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -PI / 4.0f;
-      cam_cur_angle[1] = PI / 4.0f;
+      cam_cur_angle[0] = -M_PI / 4.0f;
+      cam_cur_angle[1] = M_PI / 4.0f;
       break;
     case CameraType::TOP_DOWN:
       video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
@@ -325,7 +333,7 @@ void SetCamera(CameraType camera_index) {
       cam->SetPosition(kZeroVec3);
       cam->SetRotation(kZeroQuat);
       cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = PI / 2.0f;
+      cam_cur_angle[1] = M_PI / 2.0f;
       break;
     default:
       break;

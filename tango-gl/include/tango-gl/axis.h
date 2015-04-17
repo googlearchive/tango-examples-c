@@ -17,26 +17,16 @@
 #ifndef TANGO_GL_AXIS_H_
 #define TANGO_GL_AXIS_H_
 
-#include "tango-gl/drawable_object.h"
-#include "tango-gl/transform.h"
+#include "tango-gl/line.h"
 
 namespace tango_gl {
-class Axis : public Transform {
+class Axis : public Line {
  public:
   Axis();
-  Axis(const Axis& other) = delete;
-  Axis& operator=(const Axis&) = delete;
-  ~Axis();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-
  private:
-  GLuint vertex_buffer_;
-  GLuint color_buffer_;
-
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
   GLuint attrib_colors_;
-  GLuint uniform_mvp_mat_;
+  std::vector<glm::vec4> vec_colors_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_AXIS_H_

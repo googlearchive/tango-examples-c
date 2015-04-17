@@ -26,29 +26,17 @@ namespace tango_gl {
 class Band : public DrawableObject {
  public:
   Band(const unsigned int max_legnth);
-  Band(const Band& other) = delete;
-  Band& operator=(const Band&) = delete;
-  ~Band();
 
-  void SetColor(const float color[4]);
-  void SetAlpha(const float alpha);
   void SetWidth(const float width);
   void UpdateVertexArray(const glm::mat4 m);
   void SetVertexArray(const std::vector<glm::vec3>& v, const glm::vec3& up);
   void ClearVertexArray();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  std::vector<glm::vec3> vertices_;
 
  private:
-  float band_color_[4];
   float band_width_;
-  float alpha_;
   unsigned int max_length_;
-
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
-  GLuint uniform_color_;
+  std::vector<glm::vec3> vertices_v_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_BAND_H_

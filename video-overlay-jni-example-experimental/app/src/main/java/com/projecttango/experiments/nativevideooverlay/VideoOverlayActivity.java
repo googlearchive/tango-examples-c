@@ -58,6 +58,7 @@ public class VideoOverlayActivity extends Activity {
     super.onResume();
     glView.onResume();
     TangoJNINative.setupConfig();
+    TangoJNINative.connect();
   }
 
   @Override

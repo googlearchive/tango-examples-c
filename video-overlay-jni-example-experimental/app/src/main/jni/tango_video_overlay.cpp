@@ -22,9 +22,9 @@
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
 #include "tango-gl/util.h"
+#include "tango-gl/video_overlay.h"
 
 #include "tango_data.h"
-#include "video_overlay.h"
 
 /// First person camera position and rotation.
 /// Position: (0,0,0).
@@ -49,11 +49,11 @@ GLuint screen_height;
 
 tango_gl::Camera* cam;
 tango_gl::Axis* axis;
-VideoOverlay* video_overlay;
+tango_gl::VideoOverlay* video_overlay;
 
 bool InitializeGlContent() {
   cam = new tango_gl::Camera();
-  video_overlay = new VideoOverlay();
+  video_overlay = new tango_gl::VideoOverlay();
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -86,7 +86,7 @@ bool RenderFrame() {
   // UpdateColorTexture() updates color camera's
   // texture and timestamp.
   TangoData::GetInstance().UpdateColorTexture();
-  video_overlay->Render();
+  video_overlay->Render(glm::mat4(1.0f), glm::mat4(1.0f));
 
   return true;
 }
@@ -146,7 +146,7 @@ Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setupConfig(
 JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_connectTexture(
     JNIEnv*, jobject) {
-  TangoData::GetInstance().ConnectTexture(video_overlay->texture_id);
+  TangoData::GetInstance().ConnectTexture(video_overlay->GetTextureId());
 }
 
 JNIEXPORT void JNICALL

@@ -17,32 +17,14 @@
 #ifndef TANGO_GL_TRACE_H_
 #define TANGO_GL_TRACE_H_
 
-#include <stdlib.h>
-#include <vector>
-
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/line.h"
 
 namespace tango_gl {
-class Trace : public DrawableObject {
+class Trace : public Line {
  public:
   Trace();
-  Trace(const Trace& other) = delete;
-  Trace& operator=(const Trace&) = delete;
-  ~Trace();
-
-  void SetTraceColor(const float color[4]);
   void UpdateVertexArray(const glm::vec3& v);
   void ClearVertexArray();
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-
- private:
-  std::vector<glm::vec3> vertices_;
-  float trace_color_[4];
-
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
-  GLuint uniform_color_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_TRACE_H_

@@ -17,30 +17,12 @@
 #ifndef TANGO_GL_FRUSTUM_H_
 #define TANGO_GL_FRUSTUM_H_
 
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/line.h"
 
 namespace tango_gl {
-class Frustum : public DrawableObject {
+class Frustum : public Line {
  public:
   Frustum();
-  Frustum(const Frustum& other) = delete;
-  Frustum& operator=(const Frustum&) = delete;
-  ~Frustum();
-
-  void SetColor(const float red, const float green, const float blue);
-  void SetAlpha(const float alpha);
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-
- private:
-  float red_;
-  float green_;
-  float blue_;
-  float alpha_;
-  GLuint vertex_buffer_;
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint uniform_mvp_mat_;
-  GLuint uniform_color_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_FRUSTUM_H_

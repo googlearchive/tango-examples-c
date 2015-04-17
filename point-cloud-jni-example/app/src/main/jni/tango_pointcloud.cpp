@@ -21,6 +21,7 @@
 
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
+#include "tango-gl/color.h"
 #include "tango-gl/frustum.h"
 #include "tango-gl/grid.h"
 #include "tango-gl/transform.h"
@@ -100,6 +101,9 @@ const float kLowFov = 37.8f;
 // Frustum scale.
 const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
 
+// Color of the ground grid.
+const tango_gl::Color kGridColor(0.85f, 0.85f, 0.85f);
+
 // Set camera type, set render camera's parent position and rotation.
 void SetCamera(CameraType camera_index) {
   camera_type = camera_index;
@@ -115,15 +119,15 @@ void SetCamera(CameraType camera_index) {
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -PI / 4.0f;
-      cam_cur_angle[1] = PI / 4.0f;
+      cam_cur_angle[0] = -M_PI / 4.0f;
+      cam_cur_angle[1] = M_PI / 4.0f;
       break;
     case CameraType::TOP_DOWN:
       cam->SetFieldOfView(kHighFov);
       cam->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       cam->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
       cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = PI / 2.0f;
+      cam_cur_angle[1] = M_PI / 2.0f;
       break;
     default:
       break;
@@ -148,7 +152,7 @@ bool InitGlContent() {
   // Put the grid at the resonable height since the motion
   // tracking pose always starts at (0, 0, 0).
   grid->SetPosition(kHeightOffset);
-
+  grid->SetColor(kGridColor);
   SetCamera(CameraType::THIRD_PERSON);
 
   glEnable(GL_DEPTH_TEST);

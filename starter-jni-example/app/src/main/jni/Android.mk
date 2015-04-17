@@ -14,19 +14,28 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
+PROJECT_ROOT_FROM_JNI:= ../../../../..
 PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
-LOCAL_MODULE    := libmotion_tracking_jni_example
+LOCAL_MODULE    := libstarter_jni_example
 LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -Werror -std=c++11
+
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
                     $(PROJECT_ROOT)/third-party/glm/
+
 LOCAL_SRC_FILES := tango_motion_tracking.cpp \
-                   $(PROJECT_ROOT)/tango-gl/camera.cpp \
-                   $(PROJECT_ROOT)/tango-gl/util.cpp \
-                   $(PROJECT_ROOT)/tango-gl/grid.cpp \
-                   $(PROJECT_ROOT)/tango-gl/transform.cpp
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
 

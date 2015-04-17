@@ -21,7 +21,7 @@ package com.projecttango.experiments.nativemotiontracking;
  */
 public class TangoJNINative {
     static {
-        System.loadLibrary("motion_tracking_jni_example");
+        System.loadLibrary("starter_jni_example");
     }
 
     public static native int tangoInitialize(MotionTrackingActivity activity);

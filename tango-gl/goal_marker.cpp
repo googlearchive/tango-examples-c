@@ -1,20 +1,13 @@
+
 /*
  * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Distributed under the Project Tango Preview Development Kit (PDK) Agreement.
+ * CONFIDENTIAL. AUTHORIZED USE ONLY. DO NOT REDISTRIBUTE.
  */
 
-#include "marker.h"
+#include "tango-gl/goal_marker.h"
+
+namespace tango_gl {
 
 static const GLfloat const_vertices[] = {
     -4.5298f,  -0.2676f,  0.0,       -4.3209f,  -1.3857f,  0.0,      -3.7242f,
@@ -50,7 +43,8 @@ static const GLushort const_indices[] = {
     40, 39, 41, 42, 40, 41, 42, 41, 43, 44, 42, 43, 44, 43, 3,  3,  2,  45, 3,
     45, 46, 3,  46, 47, 3,  47, 48, 3,  48, 49, 3,  49, 50, 44, 3,  50};
 
-Marker::Marker() {
+GoalMarker::GoalMarker() {
+  SetShader();
   std::vector<GLfloat> vertices(
       const_vertices,
       const_vertices + sizeof(const_vertices) / sizeof(GLfloat));
@@ -60,5 +54,6 @@ Marker::Marker() {
   for (size_t i = 0; i < indices.size(); ++i) {
     indices[i] = indices[i] - 1;
   }
-  SetMeshData(vertices, indices);
+  SetVertices(vertices, indices);
 }
+}  // namespace tango_gl
