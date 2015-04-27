@@ -452,8 +452,10 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// direct calls or callbacks.  When the service starts, it uses the TangoConfig
 /// specified by config; you can free it after the call completes.
 /// @param context Optional. A user defined pointer that is returned in callback
-/// functions onPoseAvailable, onXYZijAvailable and onTangoEvent. Can be safely
-/// set to NULL if not used.
+/// functions onPoseAvailable, onXYZijAvailable and onTangoEvent. If set to NULL
+/// then an additional argument can be passed to onPoseAvailable,
+/// onXYZijAvailable and onTangoEvent to optionally set individual callback
+/// contexts.
 /// @param config The service will be started with the setting specified by this
 /// TangoConfig handle.  If NULL is passed here, then the service will be
 /// started in the default configuration.
@@ -494,6 +496,9 @@ void TangoService_resetMotionTracking();
 /// tracking pair to track the motion of the device with reference to its
 /// starting position in the base frame of reference.
 ///
+/// An optional argument following the callback pointer can be supplied and will
+/// be returned in the callback context parameter if TangoService_connect() was
+/// called with a null context.
 /// For more information, see our page on
 /// <a href ="/project-tango/overview/frames-of-reference">frames of
 /// reference</a>.
@@ -504,7 +509,8 @@ void TangoService_resetMotionTracking();
 TangoErrorType TangoService_connectOnPoseAvailable(
     uint32_t count, const TangoCoordinateFramePair* frames,
     void (*TangoService_onPoseAvailable)(void* context,
-                                         const TangoPoseData* pose));
+                                         const TangoPoseData* pose),
+    ...);
 
 /// Get a pose at a given timestamp from the base to the target frame.
 ///
@@ -546,11 +552,15 @@ TangoErrorType TangoService_getPoseAtTime(double timestamp,
 /// Attach an onXYZijAvailable callback.  The callback is called each time new
 /// depth data is available.  On the Tango tablet the depth callback occurs at
 /// 5 Hz.
+/// An optional argument following the callback pointer can be supplied and will
+/// be returned in the callback context parameter if TangoService_connect() was
+/// called with a null context.
 /// @return Returns TANGO_ERROR if the listener function pointer is NULL.
 /// Returns TANGO_SUCCESS otherwise.
 TangoErrorType TangoService_connectOnXYZijAvailable(
-    void (*TangoService_onXYZijAvailable)(
-    void* context, const TangoXYZij* xyz_ij));
+    void (*TangoService_onXYZijAvailable)(void* context,
+                                          const TangoXYZij* xyz_ij),
+    ...);
 
 /**@} devsitenav Depth */
 
@@ -560,8 +570,12 @@ TangoErrorType TangoService_connectOnXYZijAvailable(
 
 /// Attach an onTangoEvent callback.  The callback is called each time a
 /// Tango event happens.
+/// An optional argument following the callback pointer can be supplied and will
+/// be returned in the callback context parameter if TangoService_connect() was
+/// called with a null context.
 TangoErrorType TangoService_connectOnTangoEvent(
-    void (*TangoService_onTangoEvent)(void* context, const TangoEvent* event));
+    void (*TangoService_onTangoEvent)(void* context, const TangoEvent* event),
+    ...);
 
 /**@} devsitenav Event Notification */
 
@@ -625,6 +639,12 @@ TangoErrorType TangoService_connectOnFrameAvailable(
     TangoCameraId id, void* context,
     void (*onFrameAvailable)(void* context, TangoCameraId id,
                              const TangoImageBuffer* buffer));
+
+/// Disconnect a camera. The camera is selected via TangoCameraId.
+/// Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
+/// This call will disconnect either or both TangoService_connectTextureId() or
+/// TangoService_connectOnFrameAvailable().
+TangoErrorType TangoService_disconnectCamera(TangoCameraId id);
 
 /// Get the intrinsic calibration parameters for a given camera.  The intrinsics
 /// are as specified by the TangoCameraIntrinsics struct.  Intrinsics are read
@@ -928,6 +948,17 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Loads the given Area Description with given UUID and attempts to
 ///         localize against that Area Description.  Empty string will disable
 ///         localization.  Defaults to empty.</td></tr>
+//
+/// <tr>
+//    <td class="indexkey">
+//      boolean config_experimental_enable_scene_reconstruction
+//    </td>
+//    <td class="indexvalue">
+//    EXPERIMENTAL This flag enables the experimental scene reconstruction APIs
+//    which can be sued to construct a mesh of an environment. Note that this
+//    API is subject to change.
+//    </td>
+//  </tr>
 /// </table>
 ///
 /// The supported configuration parameters that can be queried are:
@@ -1053,31 +1084,43 @@ TangoErrorType TangoConfig_getString(TangoConfig config, const char* key,
                                      char* value, size_t size);
 /**@} devsitenav Config Params */
 
-// Experimental API only, subject to change.  Connect a Texture ID to a camera.
+// Experimental API only, subject to change.  Connect a Texture IDs to a camera.
 // The camera is selected via TangoCameraId.
-// Currently only TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
-// The texture must be the ID of a texture that has been allocated and
-// initialized by the calling application.  This version uses a texture type
-// supported for Unity3D, and requires a RED->Greyscale shader conversion in
-// Unity to produce a luminance (black and white) image.
+// Currently only TANGO_CAMERA_COLOR is supported.
+// The texture handles will be regenerated by the API on startup after which
+// the application can use them, and will be packed RGBA8888 data containing
+// bytes of the image (so a single RGBA8888 will pack 4 neighbouring pixels).
+// If the config flag experimental_image_pixel_format is set to
+// HAL_PIXEL_FORMAT_YCrCb_420_SP, texture_y will pack 1280x720 pixels into
+// a 320x720 RGBA8888 texture.
+// texture_Cb and texture_Cr will contain copies of the 2x2 downsampled
+// interleaved UV planes packed similarly.
+// If experimental_image_pixel_format is set to HAL_PIXEL_FORMAT_YV12
+// then texture_y will have a stride of 1536 containing 1280 columns of data,
+// packed similarly in a RGBA8888 texture.
+// texture_Cb and texture_Cr will be 2x2 downsampled versions of the same.
+// See YV12 and NV21 formats for details.
 //
 // Note: The first scan-line of the color image is reserved for metadata
 // instead of image pixels.
 // @param id The ID of the camera to connect this texture to.  Only
 // TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 // @param context The context returned during the onFrameAvailable callback.
-// @param tex The texture ID of the texture to connect the camera to.  Must be
-// a valid texture in the applicaton.
+// @param texture_y The texture ID to use for the Y-plane.
+// @param texture_Cb The texture ID to use for a chroma plane.
+// @param texture_Cr The texture ID to use for a chroma plane.
 // @return Returns TANGO_INVALID if the camera ID is not valid.  Otherwise
 // returns TANGO_ERROR if an internal error occurred.
 TangoErrorType TangoService_Experimental_connectTextureIdUnity(
-    TangoCameraId id, unsigned int tex, void* context,
+    TangoCameraId id, unsigned int texture_y, unsigned int texture_Cb,
+    unsigned int texture_Cr, void* context,
     void (*callback)(void*, TangoCameraId));
 
 // Experimental API only, subject to change.
 // A mesh, described by vertices and face indices, with optional per-vertex
 // normals and colors.
 typedef struct TangoMesh_Experimental {
+  // Index into a three-dimensional fixed grid.
   int32_t index[3];
 
   // Array of vertices. Each vertex is an {x, y, z} coordinate triplet, in
@@ -1129,31 +1172,6 @@ typedef struct TangoGridMetadata_Experimental {
 } TangoGridMetadata_Experimental;
 
 // Experimental API only, subject to change.
-// A list of mesh segments, distributed over a uniform three-dimensional grid.
-// Each segment has a corresponding index, describing its position on the grid.
-// All the meshes are expressed with respect to the same coordinate frame. The
-// origin and principal axes of that frame is the same as the origin and
-// principal axes of the grid.
-//
-// The structure can be used to send partial updates of a larger 3D
-// reconstruction, specifying only local grid segments that changed.
-typedef struct TangoMeshSegments_Experimental {
-  // An array of mesh segments.
-  TangoMesh_Experimental* meshes;
-
-  // An array of indices. Each index is a {ix, iy, iz} triplet describing the
-  // position of the corresponding mesh segment on the grid.
-  int32_t* indices[3];
-
-  // The number of mesh segments, describing the size of the meshes and indices
-  // arrays.
-  uint32_t num_meshes;
-
-  // Describes the current state of the grid.
-  TangoGridMetadata_Experimental grid_metadata;
-} TangoMeshSegments_Experimental;
-
-// Experimental API only, subject to change.
 // Metadata describing a dense reconstruction.
 typedef struct TangoDenseReconstructionMetadata_Experimental {
   // Describes the grid used for dense reconstruction.
@@ -1161,17 +1179,49 @@ typedef struct TangoDenseReconstructionMetadata_Experimental {
 } TangoDenseReconstructionMetadata_Experimental;
 
 // Experimental API only, subject to change.
-TangoErrorType TangoService_Experimental_connectOnMeshSegmentAvailable(
-    void (*TangoService_onMeshSegmentAvailableCallback)(
-        void* context, const TangoMesh_Experimental* mesh_segment));
+// Attach a TangoService_onMeshVectorAvailableCallback callback. The callback is
+// is invoked when a new array of mesh segments is available. Typically, a new
+// array of meshes will be sent every time the scene reconstruction receives new
+// depth input.
+// @param TangoService_onMeshVectorAvailableCallback Function called when a
+// array of meshes is available.
+// @return Returns TANGO_SUCCESS if the callback can be attached. Returns
+// TANGO_ERROR if a connection cannot be initialized.
+TangoErrorType TangoService_Experimental_connectOnMeshVectorAvailable(
+    void (*TangoService_onMeshVectorAvailableCallback)(
+        void* context, const int num_meshes,
+        const TangoMesh_Experimental* mesh_segments), ...);
 
 // Experimental API only, subject to change.
+// Starts the scene reconstruction. After this function is called, the scene
+// reconstruction server will begin receiving depth data updates and publishing
+// the reconstruction meshes.
+// @return Returns TANGO_SUCCESS if the reconstruction can be started. Returns
+// TANGO_ERROR if a connection was not initialized with
+// TangoService_initialize(). Returns TANGO_INVALID if the scene reconstruction
+// server was not set up during initialization, which can happen if the
+// config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_startSceneReconstruction();
 
 // Experimental API only, subject to change.
+// Stops the scene reconstruction. After this function is called, the scene
+// reconstruction server will stop receiving depth data updates and publishing
+// the reconstruction meshes. The reconstruction itself will not be cleared.
+// @return Returns TANGO_SUCCESS if the reconstruction can be stopped. Returns
+// TANGO_ERROR if a connection was not initialized with
+// TangoService_initialize(). Returns TANGO_INVALID if the scene reconstruction
+// server was not set up during initialization, which can happen if the
+// config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_stopSceneReconstruction();
 
 // Experimental API only, subject to change.
+// Resets the scene reconstruction by clearing all the stored data. Can be
+// called both when the scene reconstruction running and stopped.
+// @return Returns TANGO_SUCCESS if the reconstruction can be reset. Returns
+// TANGO_ERROR if a connection was not initialized with
+// TangoService_initialize(). Returns TANGO_INVALID if the scene reconstruction
+// server was not set up during initialization, which can happen if the
+// config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_resetSceneReconstruction();
 
 #ifdef __cplusplus

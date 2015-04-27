@@ -89,36 +89,6 @@ GLuint util::CreateProgram(const char* vertex_source,
   return program;
 }
 
-glm::quat util::ConvertRotationToOpenGL(const glm::quat& rotation) {
-  // The conversion quaternion is equivalent to this conversion matrix below
-  // NOTE: the following matrix is a column major matrix, both openGL and glm
-  // take column major matrix.
-  //
-  // float conversionArray[16] = {
-  //     1.0f, 0.0f, 0.0f, 0.0f,
-  //     0.0f, 0.0f, -1.0f, 0.0f,
-  //     0.0f, 1.0f, 0.0f, 0.0f,
-  //     0.0f, 0.0f, 0.0f, 1.0f
-  // };
-  // glm::mat4 conversionMatrix;
-  // memcpy(glm::value_ptr(conversionMatrix), conversionArray, sizeof(conversionArray));
-  //
-  // glm::mat4 resultMatrix= conversionMatrix*glm::mat4_cast(rotation);
-  // return glm::quat_cast(resultMatrix);
-
-  const float M_SQRT_2_OVER_2 = sqrt(2) / 2.0f;
-  glm::quat conversionQuaternion = glm::quat(M_SQRT_2_OVER_2, -M_SQRT_2_OVER_2,
-                                             0.0f, 0.0f);
-
-  // Quaternion cumulate in the reverse way (like matrix multiplication).
-  // The following line is applying the conversionQuaternion to the rotation.
-  return conversionQuaternion * rotation;
-}
-
-glm::vec3 util::ConvertPositionToOpenGL(const glm::vec3& position) {
-  return glm::vec3(position.x, position.z, position.y * -1.0f);
-}
-
 void util::DecomposeMatrix (const glm::mat4& transform_mat,
                               glm::vec3& translation,
                               glm::quat& rotation,
@@ -161,12 +131,12 @@ void util::DecomposeMatrix (const glm::mat4& transform_mat,
   scale.z = scale_z;
 }
 
-glm::vec3 util::GetTranslationFromMatrix(const glm::mat4& transform_mat) {
-  glm::vec3 translation;
-  translation.x = transform_mat[3][0];
-  translation.y = transform_mat[3][1];
-  translation.z = transform_mat[3][2];
-  return translation;
+glm::vec3 util::GetColumnFromMatrix(const glm::mat4& mat, const int col) {
+  return glm::vec3(mat[col][0], mat[col][1], mat[col][2]);
+}
+
+glm::vec3 util::GetTranslationFromMatrix(const glm::mat4& mat) {
+  return glm::vec3(mat[3][0], mat[3][1], mat[3][2]);
 }
 
 float util::Clamp(float value, float min, float max) {
@@ -185,6 +155,11 @@ void util::PrintMatrix(const glm::mat4& matrix) {
 
 void util::PrintVector(const glm::vec3& vector) {
   LOGI("[ %f, %f, %f ]", vector[0], vector[1], vector[2]);
+  LOGI(" ");
+}
+
+void util::PrintQuaternion(const glm::quat& quat) {
+  LOGI("[ %f, %f, %f, %f ]", quat[0], quat[1], quat[2], quat[3]);
   LOGI(" ");
 }
 
