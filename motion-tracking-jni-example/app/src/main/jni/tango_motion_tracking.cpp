@@ -22,6 +22,7 @@
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
 #include "tango-gl/color.h"
+#include "tango-gl/conversions.h"
 #include "tango-gl/frustum.h"
 #include "tango-gl/grid.h"
 #include "tango-gl/trace.h"
@@ -183,10 +184,10 @@ bool RenderFrame() {
   grid->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
-  glm::vec3 position = tango_gl::util::ConvertPositionToOpenGL(
+  glm::vec3 position = tango_gl::conversions::Vec3TangoToGl(
       TangoData::GetInstance().tango_position);
   position += kHeightOffset;
-  glm::quat rotation = tango_gl::util::ConvertRotationToOpenGL(
+  glm::quat rotation = tango_gl::conversions::QuatTangoToGl(
       TangoData::GetInstance().tango_rotation);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 
