@@ -50,18 +50,22 @@ namespace util {
   GLuint CreateProgram(const char* vertex_source,
                        const char* fragment_source);
 
-  glm::quat ConvertRotationToOpenGL(const glm::quat& rotation);
-  glm::vec3 ConvertPositionToOpenGL(const glm::vec3& position);
-
   void DecomposeMatrix(const glm::mat4& transform_mat,
-                              glm::vec3& translation,
-                              glm::quat& rotation,
-                              glm::vec3& scale);
-  glm::vec3 GetTranslationFromMatrix(const glm::mat4& transform_mat);
+                       glm::vec3& translation,
+                       glm::quat& rotation,
+                       glm::vec3& scale);
+
+  // Get a 3x1 column from the upper 3x4 of a transformation matrix. Columns
+  // 0, 1, 2 are the rotation/scale portion, and column 3 is the translation.
+  glm::vec3 GetColumnFromMatrix(const glm::mat4& mat, const int col);
+
+  // Get the translation component of a transformation matrix.
+  glm::vec3 GetTranslationFromMatrix(const glm::mat4& mat);
 
   float Clamp(float value, float min, float max);
   void PrintMatrix(const glm::mat4& matrix);
   void PrintVector(const glm::vec3& vector);
+  void PrintQuaternion(const glm::quat& quat);
 
   glm::vec3 LerpVector(const glm::vec3& x, const glm::vec3& y, float a);
   float DistanceSquared(const glm::vec3& v1, const glm::vec3& v2);

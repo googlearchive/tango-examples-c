@@ -24,6 +24,7 @@
 #include "tango-gl/axis.h"
 #include "tango-gl/camera.h"
 #include "tango-gl/color.h"
+#include "tango-gl/conversions.h"
 #include "tango-gl/frustum.h"
 #include "tango-gl/grid.h"
 #include "tango-gl/trace.h"
@@ -198,13 +199,13 @@ bool RenderFrame() {
                                                                           : 0;
 
   pthread_mutex_lock(&TangoData::GetInstance().pose_mutex);
-  glm::vec3 position = tango_gl::util::ConvertPositionToOpenGL(
+  glm::vec3 position = tango_gl::conversions::Vec3TangoToGl(
       TangoData::GetInstance().tango_position[pose_index]);
-  glm::quat rotation = tango_gl::util::ConvertRotationToOpenGL(
+  glm::quat rotation = tango_gl::conversions::QuatTangoToGl(
       TangoData::GetInstance().tango_rotation[pose_index]);
-  glm::vec3 position_motion = tango_gl::util::ConvertPositionToOpenGL(
+  glm::vec3 position_motion = tango_gl::conversions::Vec3TangoToGl(
       TangoData::GetInstance().tango_position[0]);
-  glm::vec3 position_adf = tango_gl::util::ConvertPositionToOpenGL(
+  glm::vec3 position_adf = tango_gl::conversions::Vec3TangoToGl(
       TangoData::GetInstance().tango_position[1]);
   pthread_mutex_unlock(&TangoData::GetInstance().pose_mutex);
 

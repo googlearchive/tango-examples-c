@@ -35,5 +35,12 @@ glm::mat4 color_camera_T_opengl_camera() {
                    0.0f,  0.0f,  0.0f, 1.0f);
 }
 
+glm::quat QuatTangoToGl(const glm::quat& tango_q_frame) {
+  const float kSqrt2Over2 = std::sqrt(2.0) / 2.0f;
+  // Tango frame is a -90 degree rotation about +X from the GL frame.
+  glm::quat gl_q_tango = glm::quat(kSqrt2Over2, -kSqrt2Over2, 0.0f, 0.0f);
+  return gl_q_tango * tango_q_frame;
+}
+
 }  // namespace gl_tango_conversions
 }  // namespace tango_gl

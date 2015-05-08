@@ -45,10 +45,7 @@ VideoOverlay::VideoOverlay() {
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
   uniform_texture_ = glGetUniformLocation(shader_program_, "texture");
-  glUniform1i(uniform_texture_, texture_id_);
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
 
   glGenBuffers(3, vertex_buffers_);
   // Allocate vertices buffer.
@@ -90,6 +87,11 @@ VideoOverlay::VideoOverlay() {
 void VideoOverlay::Render(const glm::mat4& projection_mat,
                           const glm::mat4& view_mat) const {
   glUseProgram(shader_program_);
+
+  glUniform1i(uniform_texture_, 0);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
+
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));

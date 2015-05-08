@@ -1,0 +1,17 @@
+# Copyright 2014 Google Inc. All Rights Reserved.
+# Distributed under the Project Tango Preview Development Kit (PDK) Agreement.
+# CONFIDENTIAL. AUTHORIZED USE ONLY. DO NOT REDISTRIBUTE.
+# NDK import module for resolving symbols from selected private Android APIs.
+LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libpng_catkin
+LOCAL_SRC_FILES := ../../../lib/libpng.a
+LOCAL_CPP_FEATURES := rtti exceptions
+LOCAL_EXPORT_C_INCLUDES := @libpng_LOCAL_INCLUDE_DIR@
+LOCAL_EXPORT_LDLIBS := 
+
+include $(PREBUILT_STATIC_LIBRARY)
+
+# Add to the accumulated REDWOOD variables.
+REDWOOD_STATIC_LIBRARIES += png

@@ -25,6 +25,7 @@ LOCAL_SRC_FILES := tango_area_description.cpp \
                    tango_data.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
