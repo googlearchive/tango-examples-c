@@ -19,7 +19,8 @@ LOCAL_SRC_FILES = png.c \
                   pngwtran.c \
                   pngwutil.c \
 
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/include
 LOCAL_EXPORT_LDLIBS := -lz
  
 include $(BUILD_STATIC_LIBRARY)

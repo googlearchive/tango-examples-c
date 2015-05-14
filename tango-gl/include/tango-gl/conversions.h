@@ -20,9 +20,42 @@
 #define GLM_FORCE_RADIANS
 
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace tango_gl {
 namespace conversions {
+
+/**
+ * @brief Creates a glm::vec3 from double[3] = {x, y, z}. This is designed to
+ * work with the TangoPoseData.translation field.
+ */
+inline glm::vec3 Vec3FromArray(const double* array) {
+  return glm::vec3(array[0], array[1], array[2]);
+}
+
+/**
+ * @brief Creates a glm::quat from double[4] = {x, y, z, w}. This is designed to
+ * work with the TangoPoseData.orientation field.
+ */
+inline glm::quat QuatFromArray(const double* array) {
+  // Note GLM expects arguments in order {w, x, y, z}.
+  return glm::quat(array[3], array[0], array[1], array[2]);
+}
+
+/**
+ * @brief Creates a glm::mat4 rigid-frame transformation matrix from two arrays.
+ * This is designed for the TangoPoseData translation and orientation fields.
+ * @param A_p_B Position [x, y, z] of B_origin from A_origin, expressed in A.
+ * @param A_q_B The quaternion representation [x, y, z, w] of the rotation
+ * matrix A_R_B.
+ * @return The transformation matrix A_T_B.
+ */
+inline glm::mat4 TransformFromArrays(const double* A_p_B, const double* A_q_B) {
+  glm::vec3 glm_A_p_B = Vec3FromArray(A_p_B);
+  glm::quat glm_A_q_B = QuatFromArray(A_q_B);
+  return glm::translate(glm::mat4(1.0f), glm_A_p_B) * glm::mat4_cast(glm_A_q_B);
+}
 
 /**
  * @brief Convert (re-express, or rotate) a vector from the Tango ADF (or start-
@@ -33,7 +66,7 @@ namespace conversions {
  * @param tango_vec A vector expressed in the Tango ADF frame convention.
  * @return The same vector expressed using the Opengl frame convention.
  */
-inline glm::vec3 ConvertVec3TangoToGl(const glm::vec3& tango_vec) {
+inline glm::vec3 Vec3TangoToGl(const glm::vec3& tango_vec) {
   return glm::vec3(tango_vec.x, tango_vec.z, -tango_vec.y);
 }
 
@@ -46,9 +79,20 @@ inline glm::vec3 ConvertVec3TangoToGl(const glm::vec3& tango_vec) {
  * @param gl_vec A vector expressed in the Opengl world frame convention.
  * @return The same vector expressed using the Tango ADF frame convention.
  */
-inline glm::vec3 ConvertVec3GlToTango(const glm::vec3& gl_vec) {
+inline glm::vec3 Vec3GlToTango(const glm::vec3& gl_vec) {
   return glm::vec3(gl_vec.x, -gl_vec.z, gl_vec.y);
 }
+
+/**
+ * @brief Given a quaternion representing the rotation matrix tango_R_any,
+ * returns the quaternion representing gl_R_any, where "any" is an arbitrary
+ * frame. Note the gl base frame is rotated by 90-degrees about +X from the
+ * Tango ADF/start-of-service frame, so this is equivalent to applying such a
+ * rotation to the quaternion.
+ * @param tango_q_any A quaternion representing rotation matrix tango_R_any.
+ * @return The quaternion representing gl_R_any.
+ */
+glm::quat QuatTangoToGl(const glm::quat& tango_q_any);
 
 /**
  * Get the fixed transformation matrix relating the opengl frame convention

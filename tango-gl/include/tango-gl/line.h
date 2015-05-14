@@ -26,6 +26,9 @@ class Line : public DrawableObject {
       : line_width_(line_width), render_mode_(render_mode) {};
   void SetLineWidth(const float pixels);
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+  void UpdateLineVertices(const std::vector<glm::vec3>& vec_vertices) {
+    vec_vertices_ = vec_vertices;
+  }
 
  protected:
   float line_width_;

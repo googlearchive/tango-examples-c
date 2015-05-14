@@ -19,7 +19,8 @@
 
 namespace tango_gl {
 
-static const float kMinDistanceSquared = 0.0025f;
+// Set band resolution to 0.01m(1cm) when using UpdateVertexArray()
+static const float kMinDistanceSquared = 0.0001f;
 
 Band::Band(const unsigned int max_length)
     : band_width_(0.2), max_length_(max_length) {
@@ -32,24 +33,28 @@ void Band::SetWidth(const float width) {
 }
 
 void Band::UpdateVertexArray(const glm::mat4 m) {
-  if (vertices_v_.size() == 0 ||
-      util::DistanceSquared((vertices_v_[vertices_v_.size() - 1] +
-                             vertices_v_[vertices_v_.size() - 2]) *
-                                0.5f,
-                            glm::vec3(m[3][0], m[3][1], m[3][2])) <
-          kMinDistanceSquared) {
-    glm::mat4 left = glm::mat4(1.0f);
-    left[3][0] = -band_width_ / 2.0f;
+  bool need_to_initialize = (vertices_v_.size() < 2);
+
+  bool sufficient_delta = false;
+  if (!need_to_initialize) {
+    glm::vec3 band_front = 0.5f * (vertices_v_[vertices_v_.size() - 1] +
+                                   vertices_v_[vertices_v_.size() - 2]);
+    sufficient_delta = kMinDistanceSquared <
+        util::DistanceSquared(band_front, util::GetTranslationFromMatrix(m));
+  }
+
+  if (need_to_initialize || sufficient_delta) {
+    glm::mat4 left  = glm::mat4(1.0f);
     glm::mat4 right = glm::mat4(1.0f);
-    right[3][0] = band_width_ / 2.0f;
-    left = m * left;
+    left[3][0]  = -band_width_ / 2.0f;
+    right[3][0] =  band_width_ / 2.0f;
+    left  = m * left;
     right = m * right;
 
-    vertices_v_.push_back(glm::vec3(left[3][0], left[3][1], left[3][2]));
-    vertices_v_.push_back(glm::vec3(right[3][0], right[3][1], right[3][2]));
+    vertices_v_.push_back(util::GetTranslationFromMatrix(left));
+    vertices_v_.push_back(util::GetTranslationFromMatrix(right));
     if (vertices_v_.size() > max_length_) {
-      vertices_v_.erase(vertices_v_.begin());
-      vertices_v_.erase(vertices_v_.begin());
+      vertices_v_.erase(vertices_v_.begin(), vertices_v_.begin() + 2);
     }
   }
 }

@@ -17,15 +17,8 @@ LOCAL_PATH := $(call my-dir)
 PROJECT_ROOT_FROM_JNI:= ../../../../..
 PROJECT_ROOT:= $(call my-dir)/../../../../..
 
-#include $(CLEAR_VARS)
-#LOCAL_MODULE := libtango-prebuilt
-#LOCAL_SRC_FILES := $(PROJECT_ROOT)/tango-service-sdk/libtango_client_api.so
-#LOCAL_EXPORT_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include
-#include $(PREBUILT_SHARED_LIBRARY)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libmotion_tracking_jni_example
-#LOCAL_SHARED_LIBRARIES := libtango-prebuilt
 LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
 
@@ -37,6 +30,7 @@ LOCAL_SRC_FILES := tango_motion_tracking.cpp \
                    tango_data.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \

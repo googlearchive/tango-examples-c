@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <name>libpng</name>
+  <version>0.0.0</version>
+  <description>
+    Libpng thirdparty library.
+  </description>
+
+  <maintainer email="eitanm@google.com">eitanme</maintainer>
+  <maintainer email="mihelich@google.com">mihelich</maintainer>
+  <license>libpng</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>redwood_catkin</buildtool_depend>
+</package>
