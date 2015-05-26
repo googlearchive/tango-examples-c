@@ -464,7 +464,8 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// TangoService_initialize(), or if the camera could not be opened, which could
 /// be due to cameras being opened by other applications or a system error which
 /// may require a reboot.  Returns TANGO_INVALID if an Area Description UUID
-/// was specified but could not be found or accessed by the service.
+/// was specified but could not be found or accessed by the service, or if the
+/// provided combination of config flags is not valid.
 TangoErrorType TangoService_connect(void* context, TangoConfig config);
 
 /// Disconnect from the Tango Service. Callbacks will no longer be generated.
