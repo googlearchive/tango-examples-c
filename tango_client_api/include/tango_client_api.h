@@ -464,7 +464,8 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// TangoService_initialize(), or if the camera could not be opened, which could
 /// be due to cameras being opened by other applications or a system error which
 /// may require a reboot.  Returns TANGO_INVALID if an Area Description UUID
-/// was specified but could not be found or accessed by the service.
+/// was specified but could not be found or accessed by the service, or if the
+/// provided combination of config flags is not valid.
 TangoErrorType TangoService_connect(void* context, TangoConfig config);
 
 /// Disconnect from the Tango Service. Callbacks will no longer be generated.
@@ -1224,6 +1225,65 @@ TangoErrorType TangoService_Experimental_stopSceneReconstruction();
 // server was not set up during initialization, which can happen if the
 // config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_resetSceneReconstruction();
+
+// The 3D position of a point relative to an arbitrary reference frame.
+typedef struct TangoPositionData_Experimental {
+  /// 3D position ordered x, y, z.
+  double position[3];
+} TangoPositionData_Experimental;
+
+/// Experimental API only, subject to change.
+/// Returns a trajectory from the current device position to the specified goal
+/// position. This will only work when successfully relocalized against an ADF.
+/// The input position and the output trajectory are relative to base_frame;
+/// allowed frames are TANGO_COORDINATE_FRAME_AREA_DESCRIPTION (always) and
+/// TANGO_COORDINATE_FRAME_GLOBAL_WGS84 (only if the ADF's"transformation"
+/// metadata field populated).
+/// @param goal_position_in_base_frame The 3D coordinate of the goal position.
+/// @param base_frame Coordinate frame for the goal and output trajectory.
+/// @param[out] trajectory_size The length of the returned trajectory.
+/// @param[out] trajectory The planned trajectory.
+/// @return Returns TANGO_SUCCESS if a trajectory from the current position to
+/// goal position was found. TANGO_INVALID can occur if the your current
+/// position in the loaded ADF is not known, if no ADF is loaded, if base_frame
+/// is set to an unsupported value, or if the trajectory planner failed to
+/// initialize. Returns TANGO_ERROR if communication fails or if the service
+/// needs to be initialized.
+TangoErrorType TangoService_Experimental_getTrajectoryToGoal(
+    const TangoPositionData_Experimental goal_position_in_base_frame,
+    const TangoCoordinateFrameType base_frame, size_t* trajectory_size,
+    TangoPositionData_Experimental** trajectory);
+
+/// Experimental API only, subject to change.
+/// Returns a trajectory between the specified start and goal positions.
+/// This will only work when successfully relocalized against an ADF.
+/// The input positions and the output trajectory are relative to base_frame;
+/// allowed frames are TANGO_COORDINATE_FRAME_AREA_DESCRIPTION (always) and
+/// TANGO_COORDINATE_FRAME_GLOBAL_WGS84 (only if the ADF's"transformation"
+/// metadata field populated).
+/// @param start_position_in_base_frame The 3D coordinate of the start position.
+/// @param goal_position_in_base_frame The 3D coordinate of the goal position.
+/// @param base_frame Coordinate frame for the goal and output trajectory.
+/// @param[out] trajectory_size The length of the returned trajectory.
+/// @param[out] trajectory The planned trajectory.
+/// @return Returns TANGO_SUCCESS if a trajectory from the current position to
+/// goal position was found. TANGO_INVALID can occur if the your current
+/// position in the loaded ADF is not known, if no ADF is loaded, if base_frame
+/// is set to an unsupported value, or if the trajectory planner failed to
+/// initialize. Returns TANGO_ERROR if communication fails or if the service
+/// needs to be initialized.
+TangoErrorType TangoService_Experimental_getTrajectoryFromStartToGoal(
+    const TangoPositionData_Experimental start_position_in_base_frame,
+    const TangoPositionData_Experimental goal_position_in_base_frame,
+    const TangoCoordinateFrameType base_frame, size_t* trajectory_size,
+    TangoPositionData_Experimental** trajectory);
+
+/// Free a trajectory created by a call to
+/// TangoService_Experimental_getTrajectoryToGoal or to
+/// TangoService_Experimental_getTrajectoryFromStartToGoal.
+/// A trajectory should only be freed if the returned trajectory_size > 0.
+TangoErrorType TangoService_Experimental_freeTrajectory(
+    TangoPositionData_Experimental** trajectory);
 
 /// Experimental API only, subject to change.
 /// Loads an area description with the specified unique ID. This allows an
