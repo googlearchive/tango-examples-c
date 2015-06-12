@@ -12,4 +12,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <buildtool_depend>redwood_catkin</buildtool_depend>
+
+  <export>
+    <group>Experimental</group>
+  </export>
 </package>

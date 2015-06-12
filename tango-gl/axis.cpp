@@ -58,8 +58,6 @@ void Axis::Render(const glm::mat4& projection_mat,
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
-  glUniform4f(uniform_color_, red_, green_, blue_, alpha_);
-
   glEnableVertexAttribArray(attrib_vertices_);
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE,
                         sizeof(glm::vec3), &vec_vertices_[0]);

@@ -29,7 +29,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import java.util.Timer;
+import java.util.TimerTask;
 /**
  * Main activity shows augmented reality scene.
  */
@@ -49,7 +50,8 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
     private Point screenSize = new Point();
     private float screenDiagnal = 0.0f;
     private String appVersionString;
-
+    private Timer timer;
+    private TimerTask refresher;
     private int arElement = 0;
     private int interactionType = 0;
 
@@ -74,7 +76,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         display.getSize(screenSize);
         screenDiagnal = (float) Math.sqrt(screenSize.x * screenSize.x
                 + screenSize.y * screenSize.y);
-        
+
         setTitle(R.string.app_name);
         setContentView(R.layout.activity_augmented_reality);
 
@@ -84,7 +86,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
         arViewRenderer.activity = AugmentedRealityActivity.this;
         arViewRenderer.isAutoRecovery = true;
         arView.setRenderer(arViewRenderer);
-
+        arView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         tangoPoseStatusText = (TextView) findViewById(R.id.debug_info);
 
         PackageInfo pInfo;
@@ -95,6 +97,16 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
             e.printStackTrace();
             appVersionString = " ";
         }
+
+        // Create a timer to request a refresh at 30 Hz.
+        timer = new Timer();
+        refresher = new TimerTask() {
+            public void run() {
+                arView.requestRender();
+            };
+        };
+        // Wait 2 seconds, then refresh at a 33 ms period.
+        timer.scheduleAtFixedRate(refresher, 2000, 33);
 
         findViewById(R.id.reset).setOnClickListener(this);
         findViewById(R.id.third).setOnClickListener(this);
