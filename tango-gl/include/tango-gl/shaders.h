@@ -26,6 +26,7 @@ std::string GetBasicFragmentShader();
 std::string GetColorVertexShader();
 std::string GetVideoOverlayVertexShader();
 std::string GetVideoOverlayFragmentShader();
+std::string GetShadedVertexShader();
 }  // namespace shaders
 }  // namespace tango_gl
 #endif  // TANGO_GL_SHADERS_H_

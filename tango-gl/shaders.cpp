@@ -70,5 +70,25 @@ std::string GetVideoOverlayFragmentShader() {
          "  gl_FragColor = texture2D(texture, f_textureCoords);\n"
          "}\n";
 }
+
+std::string GetShadedVertexShader() {
+  return "attribute vec4 vertex;\n"
+         "attribute vec3 normal;\n"
+         "uniform mat4 mvp;\n"
+         "uniform mat4 mv;\n"
+         "uniform vec4 color;\n"
+         "uniform vec3 lightPos;\n"
+         "varying vec4 v_color;\n"
+         "void main() {\n"
+         "  vec3 mvVertex = vec3(mv * vertex);\n"
+         "  vec3 mvNormal = vec3(mv * vec4(normal, 0.0));\n"
+         "  float distance = length(lightPos-mvVertex);\n"
+         "  vec3 lightVec = normalize(lightPos-mvVertex);\n"
+         "  float diffuse = max(dot(mvNormal, lightVec), 1.0);\n"
+         "  diffuse = diffuse * (1.0/(1.0 + (0.4 * distance * distance)));\n"
+         "  v_color = color * diffuse;\n"
+         "  gl_Position = mvp*vertex;\n"
+         "}\n";
+}
 }  // namespace shaders
 }  // namespace tango_gl
