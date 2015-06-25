@@ -22,7 +22,16 @@
 namespace tango_gl {
 class Mesh : public DrawableObject {
  public:
+  void SetShader();
+  void SetShader(bool is_lighting_on);
+  void SetLightPosition(const glm::vec3& light_position);
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
+
+ protected:
+  bool is_lighting_on_;
+  glm::vec3 light_position_;
+  GLuint uniform_mv_mat_;
+  GLuint uniform_light_pos_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_MESH_H_

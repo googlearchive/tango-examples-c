@@ -248,10 +248,12 @@ bool RenderFrame() {
   axis->Render(cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
   // Render point cloud based on depth buffer and depth frame transformation.
-  pointcloud->Render(
-      cam->GetProjectionMatrix(), cam->GetViewMatrix(), oc_2_ow_mat_depth,
-      TangoData::GetInstance().depth_buffer_size * 3,
-      static_cast<float*>(TangoData::GetInstance().depth_buffer));
+  if (TangoData::GetInstance().cur_pose_data.status_code == TANGO_POSE_VALID) {
+    pointcloud->Render(
+        cam->GetProjectionMatrix(), cam->GetViewMatrix(), oc_2_ow_mat_depth,
+        TangoData::GetInstance().depth_buffer_size * 3,
+        static_cast<float*>(TangoData::GetInstance().depth_buffer));
+  }
 
   grid->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f) - kHeightOffset);
   // Render grid.

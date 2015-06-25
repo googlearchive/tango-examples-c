@@ -19,21 +19,38 @@
 namespace tango_gl {
 
 static const GLfloat const_vertices[] = {
-    -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f,  1.0f,  1.0f,
-    1.0f,  -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f,
-    -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f,  -1.0f};
+    -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, -1.0f,
+    1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+    -1.0f, 1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
+    1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, 1.0f,
+    -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+    1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
+    1.0f,  1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+    1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f,
+    1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f};
 
-static const GLushort const_indices[] = {0, 1, 2, 2, 3, 0, 3, 2, 6, 6, 7, 3,
-                                         7, 6, 5, 5, 4, 7, 4, 0, 3, 3, 7, 4,
-                                         0, 4, 5, 5, 1, 0, 1, 5, 6, 6, 2, 1};
+static const GLfloat const_normals[] = {
+    0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+    1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+    0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+    1.0f,  0.0f,  0.0f,  0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, -1.0f,
+    0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+    0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+    1.0f,  0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,
+    0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f};
 
 Cube::Cube() {
-  SetShader();
+  SetShader(true);
   std::vector<GLfloat> vertices(
       const_vertices,
       const_vertices + sizeof(const_vertices) / sizeof(GLfloat));
-  std::vector<GLushort> indices(
-      const_indices, const_indices + sizeof(const_indices) / sizeof(GLushort));
-  SetVertices(vertices, indices);
+  std::vector<GLfloat> normals(
+      const_normals, const_normals + sizeof(const_normals) / sizeof(GLfloat));
+  SetVertices(vertices, normals);
+  glm::vec3 point_light = glm::vec3(0.5f, 2, 0.5f);
+  SetLightPosition(point_light);
 }
 }  // namespace tango_gl
