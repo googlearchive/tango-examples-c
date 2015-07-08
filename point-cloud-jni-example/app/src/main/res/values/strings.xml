@@ -19,16 +19,16 @@
     <string name="sys_name">Project Tango Native Point Cloud</string>
     <string name="menu_name">Native Point Cloud</string>
     <string name="vertex_count">"Number of points: "</string>
-    <string name="serviceversion">"Tango service version: "</string>
-    <string name="appversion">"App version: "</string>
-    <string name="tangoevent">"Tango System Event: "</string>
-    <string name="start2device">"Target->Device, Base->Start: "</string>
+    <string name="tango_service_version">"Tango service version: "</string>
+    <string name="app_version">"App version: "</string>
+    <string name="tango_event">"Tango System Event: "</string>
+    <string name="device_wrt_start">"Target->Device, Base->Start: "</string>
     <string name="status">"Status: "</string>
     <string name="first_person">First</string>
     <string name="third_person">Third</string>
     <string name="top_down">Top</string>
     <string name="start">Start</string>
-    <string name = "averageZ">"Average depth (m): "</string>
-    <string name="pointCount">"Point count: "</string>
-    <string name="frameDelta">"Frame delta time (ms): "</string>
+    <string name = "average_depth">"Average depth (m): "</string>
+    <string name="point_count">"Point count: "</string>
+    <string name="frame_delta">"Frame delta time (ms): "</string>
 </resources>

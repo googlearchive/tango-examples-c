@@ -25,67 +25,50 @@ import android.widget.Button;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-/**
- * This activity set up the configuration for Motion Tracking application.
- */
-public class StartActivity extends Activity implements View.OnClickListener {
-  public static final String KEY_MOTIONTRACKING_AUTO_RECOVERY = 
-    "com.google.tango.tangojnimotiontracking.useautorecovery";
-  public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
-  public static final String EXTRA_VALUE_MOTION_TRACKING = 
-    "MOTION_TRACKING_PERMISSION";
+// This is the launcher activity which sets up the configuration for the Motion
+// Tracking application.
 
+// The only configuration we are setting up in this example is the Auto Recovery
+// flag.
+public class StartActivity extends Activity implements View.OnClickListener {
+  // Key string for passing user's selection to next activity (MotionTracking).
+  public static final String KEY_MOTIONTRACKING_AUTO_RECOVERY =
+      "com.google.tango.tangojnimotiontracking.useautorecovery";
+
+  // Toggle button for selecting Auto Recovery on/off.
   private ToggleButton mAutoRecoveryButton;
+
+  // Start button launchs the MotionTrackingActivity. 
   private Button mStartButton;
-  private boolean mUseAutoRecovery;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Intent intent = new Intent();
-    intent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
-    intent.putExtra(EXTRA_KEY_PERMISSIONTYPE, EXTRA_VALUE_MOTION_TRACKING);
-    startActivityForResult(intent, 0);
 
+    // Configuring the layouts.
     setTitle(R.string.app_name);
     setContentView(R.layout.activity_start);
     mAutoRecoveryButton = (ToggleButton) findViewById(R.id.autorecoverybutton);
     mStartButton = (Button) findViewById(R.id.startbutton);
     mAutoRecoveryButton.setOnClickListener(this);
     mStartButton.setOnClickListener(this);
-    mUseAutoRecovery = mAutoRecoveryButton.isChecked();
   }
 
   @Override
   public void onClick(View v) {
+    // Handle button clicks.
     switch (v.getId()) {
     case R.id.startbutton:
       startMotionTracking();
-      break;
-    case R.id.autorecoverybutton:
-      mUseAutoRecovery = mAutoRecoveryButton.isChecked();
       break;
     }
   }
 
   private void startMotionTracking() {
-    Intent startmotiontracking = new Intent(this,
-        MotionTrackingActivity.class);
+    // Save user's selection and launch the MotionTrackingActivity.
+    Intent startmotiontracking = new Intent(this, MotionTrackingActivity.class);
     startmotiontracking.putExtra(KEY_MOTIONTRACKING_AUTO_RECOVERY,
-        mUseAutoRecovery);
+        mAutoRecoveryButton.isChecked());
     startActivity(startmotiontracking);
-  }
-
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    // Check which request we're responding to
-    if (requestCode == 0) {
-        // Make sure the request was successful
-        if (resultCode == RESULT_CANCELED) {
-          Toast.makeText(this, 
-            "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
-          finish();
-        }
-    }
   }
 }

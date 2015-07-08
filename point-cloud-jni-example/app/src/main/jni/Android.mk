@@ -22,21 +22,29 @@ LOCAL_MODULE    := libpoint_cloud_jni_example
 LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
 
-LOCAL_SRC_FILES := tango_data.cpp \
-                   tango_pointcloud.cpp \
-                   pointcloud.cpp \
+LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
+                    $(PROJECT_ROOT)/tango-gl/include \
+                    $(PROJECT_ROOT)/third-party/glm/
+
+LOCAL_SRC_FILES := jni_interface.cc \
+                   point_cloud_data.cc \
+                   point_cloud_drawable.cc \
+                   point_cloud_app.cc \
+                   pose_data.cc \
+                   scene.cc \
+                   tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/gesture_camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp
-
-LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
-                    $(PROJECT_ROOT)/third-party/glm/
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

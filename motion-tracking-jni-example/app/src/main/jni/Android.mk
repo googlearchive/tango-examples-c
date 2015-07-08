@@ -26,19 +26,23 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
                     $(PROJECT_ROOT)/tango-gl/include \
                     $(PROJECT_ROOT)/third-party/glm/
 
-LOCAL_SRC_FILES := tango_motion_tracking.cpp \
-                   tango_data.cpp \
+LOCAL_SRC_FILES := jni_interface.cc \
+                   motion_tracking_app.cc \
+                   pose_data.cc \
+                   scene.cc \
+                   tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/gesture_camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/util.cpp
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

@@ -25,9 +25,19 @@
 namespace tango_gl {
 class Band : public DrawableObject {
  public:
+  enum BandMode {
+    kNormal = 0,
+    kKeepLeft = 1,
+    kKeepRight = 2
+  };
+
   Band(const unsigned int max_legnth);
 
   void SetWidth(const float width);
+  // Render a Band with arrow head, pass in the mode for rendering,
+  // kKeepLeft is left turn, kKeepRight is right turn,
+  // when making a turn, vertices only get updated in one side to avoid overlapping.
+  void UpdateVertexArray(const glm::mat4 m, BandMode mode);
   void UpdateVertexArray(const glm::mat4 m);
   void SetVertexArray(const std::vector<glm::vec3>& v, const glm::vec3& up);
   void ClearVertexArray();
@@ -37,6 +47,9 @@ class Band : public DrawableObject {
   float band_width_;
   unsigned int max_length_;
   std::vector<glm::vec3> vertices_v_;
+  // Current band head's left and right position in world frame.
+  glm::vec3 pivot_left;
+  glm::vec3 pivot_right;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_BAND_H_
