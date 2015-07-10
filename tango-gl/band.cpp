@@ -26,19 +26,23 @@ Band::Band(const unsigned int max_length)
     : band_width_(0.2), max_length_(max_length) {
   SetShader();
   vertices_v_.reserve(max_length);
+  pivot_left = glm::vec3(0, 0, 0);
+  pivot_right = glm::vec3(0, 0, 0);
 }
 
 void Band::SetWidth(const float width) {
   band_width_ = width;
 }
 
-void Band::UpdateVertexArray(const glm::mat4 m) {
-  bool need_to_initialize = (vertices_v_.size() < 2);
+void Band::UpdateVertexArray(const glm::mat4 m, BandMode mode) {
+  // First 2 vertices of a band + 3 arrow head vertices.
+  bool need_to_initialize = (vertices_v_.size() < 5);
 
   bool sufficient_delta = false;
   if (!need_to_initialize) {
-    glm::vec3 band_front = 0.5f * (vertices_v_[vertices_v_.size() - 1] +
-                                   vertices_v_[vertices_v_.size() - 2]);
+    // Band head is the first two vertices after arrow head.
+    glm::vec3 band_front = 0.5f * (vertices_v_[vertices_v_.size() - 4] +
+                                   vertices_v_[vertices_v_.size() - 5]);
     sufficient_delta = kMinDistanceSquared <
         util::DistanceSquared(band_front, util::GetTranslationFromMatrix(m));
   }
@@ -46,17 +50,70 @@ void Band::UpdateVertexArray(const glm::mat4 m) {
   if (need_to_initialize || sufficient_delta) {
     glm::mat4 left  = glm::mat4(1.0f);
     glm::mat4 right = glm::mat4(1.0f);
-    left[3][0]  = -band_width_ / 2.0f;
-    right[3][0] =  band_width_ / 2.0f;
+    glm::mat4 arrow_left = glm::mat4(1.0f);
+    glm::mat4 arrow_right = glm::mat4(1.0f);
+    glm::mat4 arrow_front = glm::mat4(1.0f);
+
+    left[3][0]  = -band_width_ * 0.5f;
+    right[3][0] = band_width_ * 0.5f;
+    arrow_left[3][0] = -band_width_ * 0.75f;
+    arrow_right[3][0] = band_width_ * 0.75f;
+    arrow_front[3][2] = -band_width_ * 0.75f;
     left  = m * left;
     right = m * right;
 
-    vertices_v_.push_back(util::GetTranslationFromMatrix(left));
-    vertices_v_.push_back(util::GetTranslationFromMatrix(right));
+    // If keep right pivot point, or normal mode,
+    // then only update left pivot point.
+    if (mode == BandMode::kNormal || mode == BandMode::kKeepRight) {
+      pivot_left = util::GetTranslationFromMatrix(left);
+    }
+    // If keep left pivot point, or normal mode,
+    // then only update right pivot point.
+    if (mode == BandMode::kNormal || mode == BandMode::kKeepLeft) {
+      pivot_right = util::GetTranslationFromMatrix(right);
+    }
+
+    glm::mat4 head_m = m;
+
+    if (mode != BandMode::kNormal) {
+      glm::vec3 up = glm::vec3(0, 1.0f, 0);
+      glm::vec3 position = 0.5f * (pivot_left + pivot_right);
+      glm::vec3 heading = glm::cross(up, pivot_right-pivot_left);
+      head_m = glm::inverse(glm::lookAt(glm::vec3(0, 0, 0), heading, up));
+      head_m[3][0] = position.x;
+      head_m[3][1] = position.y;
+      head_m[3][2] = position.z;
+    }
+
+    arrow_left  = head_m * arrow_left;
+    arrow_right  = head_m * arrow_right;
+    arrow_front = head_m * arrow_front;
+
+    if (need_to_initialize) {
+      vertices_v_.resize(5);
+    } else {
+      vertices_v_.resize(vertices_v_.size() + 2);
+    }
+
+    size_t insertion_start = vertices_v_.size() - 5;
+    vertices_v_[insertion_start + 0] = pivot_left;
+    vertices_v_[insertion_start + 1] = pivot_right;
+    vertices_v_[insertion_start + 2] =
+        util::GetTranslationFromMatrix(arrow_left);
+    vertices_v_[insertion_start + 3] =
+        util::GetTranslationFromMatrix(arrow_right);
+    vertices_v_[insertion_start + 4] =
+        util::GetTranslationFromMatrix(arrow_front);
+
     if (vertices_v_.size() > max_length_) {
       vertices_v_.erase(vertices_v_.begin(), vertices_v_.begin() + 2);
     }
   }
+}
+
+void Band::UpdateVertexArray(const glm::mat4 m) {
+  // Defualt to call update with normal mode.
+  UpdateVertexArray(m, BandMode::kNormal);
 }
 
 void Band::SetVertexArray(const std::vector<glm::vec3>& v,

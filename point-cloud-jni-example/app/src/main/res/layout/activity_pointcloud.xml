@@ -24,7 +24,6 @@
         android:layout_gravity="top" />
 
     <LinearLayout
-        android:id="@+id/linearLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -40,10 +39,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/serviceversion" />
+                android:text="@string/tango_service_version" />
 
             <TextView
-                android:id="@+id/version"
+                android:id="@+id/tango_service_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -56,10 +55,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/appversion" />
+                android:text="@string/app_version" />
 
             <TextView
-                android:id="@+id/appversion"
+                android:id="@+id/app_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="1.0" />
@@ -73,10 +72,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tangoevent" />
+                android:text="@string/tango_event" />
 
             <TextView
-                android:id="@+id/tangoevent"
+                android:id="@+id/tango_event"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -89,22 +88,21 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/start2device" />
+                android:text="@string/device_wrt_start" />
 
         </LinearLayout>
         
-          <LinearLayout
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal" >
-			
+
             <TextView
-                android:id="@+id/pose_data_textview"
+                android:id="@+id/pose_data"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="20dp"
                 android:text="@string/status" />
-			 
         </LinearLayout>
         
         <LinearLayout
@@ -115,10 +113,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/averageZ" />
+                android:text="@string/average_depth" />
 
             <TextView
-                android:id="@+id/averageZ"
+                android:id="@+id/average_depth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -131,10 +129,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pointCount" />
+                android:text="@string/point_count" />
 
             <TextView
-                android:id="@+id/pointCount"
+                android:id="@+id/point_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -147,10 +145,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/frameDelta" />
+                android:text="@string/frame_delta" />
 
             <TextView
-                android:id="@+id/frameDelta"
+                android:id="@+id/frame_delta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>

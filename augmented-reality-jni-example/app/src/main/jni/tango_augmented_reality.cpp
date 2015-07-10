@@ -195,6 +195,46 @@ void SetupIntrinsics() {
   frustum->SetScale(glm::vec3(1.0f, image_plane_ratio, image_plane_dis));
 }
 
+void SetCamera(CameraType camera_index) {
+  camera_type = camera_index;
+  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = kZero;
+  switch (camera_index) {
+    case CameraType::FIRST_PERSON:
+      cam_parent_transform->SetPosition(kZeroVec3);
+      cam_parent_transform->SetRotation(kZeroQuat);
+      video_overlay->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
+      video_overlay->SetPosition(kZeroVec3);
+      video_overlay->SetRotation(kZeroQuat);
+      video_overlay->SetParent(NULL);
+      break;
+    case CameraType::THIRD_PERSON:
+      video_overlay->SetParent(axis);
+      video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
+      video_overlay->SetRotation(kZeroQuat);
+      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
+
+      cam->SetPosition(kZeroVec3);
+      cam->SetRotation(kZeroQuat);
+      cam_cur_dist = kThirdPersonCameraDist;
+      cam_cur_angle[0] = -M_PI / 4.0f;
+      cam_cur_angle[1] = M_PI / 4.0f;
+      break;
+    case CameraType::TOP_DOWN:
+      video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
+      video_overlay->SetRotation(kZeroQuat);
+      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
+      video_overlay->SetParent(axis);
+
+      cam->SetPosition(kZeroVec3);
+      cam->SetRotation(kZeroQuat);
+      cam_cur_dist = kTopDownCameraDist;
+      cam_cur_angle[1] = M_PI / 2.0f;
+      break;
+    default:
+      break;
+  }
+}
+
 bool SetupGraphics() {
   cam_parent_transform = new tango_gl::Transform();
   cam = new tango_gl::Camera();
@@ -205,9 +245,9 @@ bool SetupGraphics() {
   marker = new tango_gl::GoalMarker();
   video_overlay = new tango_gl::VideoOverlay();
 
-  camera_type = CameraType::FIRST_PERSON;
   cam->SetParent(cam_parent_transform);
   cam->SetFieldOfView(kFov);
+  SetCamera(CameraType::FIRST_PERSON);
 
   ow_T_ss = tango_gl::conversions::opengl_world_T_tango_world();
   cc_T_oc = tango_gl::conversions::color_camera_T_opengl_camera();
@@ -269,7 +309,7 @@ bool RenderFrame() {
                                  glm::vec3(1.0f, kZero, kZero));
 
     cam_parent_transform->SetRotation(parent_cam_rot);
-    cam_parent_transform->SetPosition(ss_p_device);
+    cam_parent_transform->SetPosition(tango_gl::conversions::Vec3TangoToGl(ss_p_device));
 
     cam->SetPosition(glm::vec3(kZero, kZero, cam_cur_dist));
 
@@ -296,48 +336,6 @@ bool RenderFrame() {
   marker->SetRotation(kMarkerRotation);
   marker->Render(projection_mat, view_mat);
   return true;
-}
-
-void SetCamera(CameraType camera_index) {
-  camera_type = camera_index;
-  cam_cur_angle[0] = cam_cur_angle[1] = cam_cur_dist = kZero;
-  switch (camera_index) {
-    case CameraType::FIRST_PERSON:
-      cam_parent_transform->SetPosition(kZeroVec3);
-      cam_parent_transform->SetRotation(kZeroQuat);
-      video_overlay->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-      video_overlay->SetPosition(kZeroVec3);
-      video_overlay->SetRotation(kZeroQuat);
-      video_overlay->SetParent(NULL);
-      break;
-    case CameraType::THIRD_PERSON:
-      video_overlay->SetParent(axis);
-      video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
-      video_overlay->SetRotation(kZeroQuat);
-      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
-
-      cam_parent_transform->SetRotation(kZeroQuat);
-      cam->SetPosition(kZeroVec3);
-      cam->SetRotation(kZeroQuat);
-      cam_cur_dist = kThirdPersonCameraDist;
-      cam_cur_angle[0] = -M_PI / 4.0f;
-      cam_cur_angle[1] = M_PI / 4.0f;
-      break;
-    case CameraType::TOP_DOWN:
-      video_overlay->SetScale(glm::vec3(1.0f, image_plane_ratio, 1.0f));
-      video_overlay->SetRotation(kZeroQuat);
-      video_overlay->SetPosition(glm::vec3(kZero, kZero, -image_plane_dis));
-      video_overlay->SetParent(axis);
-
-      cam_parent_transform->SetRotation(kZeroQuat);
-      cam->SetPosition(kZeroVec3);
-      cam->SetRotation(kZeroQuat);
-      cam_cur_dist = kTopDownCameraDist;
-      cam_cur_angle[1] = M_PI / 2.0f;
-      break;
-    default:
-      break;
-  }
 }
 
 // Reset virtual world, use the current color camera's position as origin.
