@@ -25,6 +25,7 @@ class VideoOverlay : public DrawableObject {
   VideoOverlay();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
+  void SetTextureId(GLuint texture_id) { texture_id_ = texture_id; }
 
  private:
   // This id is populated on construction, and is passed to the tango service.
