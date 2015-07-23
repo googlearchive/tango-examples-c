@@ -22,13 +22,17 @@ LOCAL_MODULE    := libaugmented_reality_jni_example
 LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
 
-LOCAL_SRC_FILES := tango_augmented_reality.cpp \
-                   tango_data.cpp \
+LOCAL_SRC_FILES := augmented_reality_app.cc \
+                   jni_interface.cc \
+                   pose_data.cc \
+                   scene.cc \
+                   tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/gesture_camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/goal_marker.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \

@@ -1226,6 +1226,17 @@ TangoErrorType TangoService_Experimental_stopSceneReconstruction();
 // config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_resetSceneReconstruction();
 
+// Experimental API only, subject to change.
+// Extracts the full mesh from the scene reconstruction.
+// @param mesh A pointer to the variable to store the output mesh to.
+// @return Returns TANGO_SUCCESS if mesh was successfully extracted. Returns
+// TANGO_ERROR if a connection was not initialized with
+// TangoService_initialize(). Returns TANGO_INVALID if the scene reconstruction
+// server was not set up during initialization, which can happen if the
+// config_experimental_enable_scene_reconstruction flag was not enabled.
+TangoErrorType TangoService_Experimental_extractMesh(
+    TangoMesh_Experimental* mesh);
+
 // The 3D position of a point relative to an arbitrary reference frame.
 typedef struct TangoPositionData_Experimental {
   /// 3D position ordered x, y, z.

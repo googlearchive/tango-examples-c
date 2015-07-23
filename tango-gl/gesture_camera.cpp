@@ -113,6 +113,7 @@ void GestureCamera::SetCameraType(CameraType camera_index) {
       cam_cur_dist_ = 0.0f;
       cam_cur_angle_.x = 0.0f;
       cam_cur_angle_.y = 0.0f;
+      cam_parent_transform_->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
       StartCameraToCurrentTransform();
       break;
     case CameraType::kThirdPerson:

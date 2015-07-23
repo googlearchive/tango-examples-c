@@ -4,6 +4,8 @@ project(libfreetype)
 find_package(redwood_catkin REQUIRED)
 add_definitions(-DFT2_BUILD_LIBRARY)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-maybe-uninitialized")
+
 catkin_simple()
 
 cs_add_library(freetype

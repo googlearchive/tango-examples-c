@@ -13,52 +13,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.projecttango.experiments.nativeaugmentedreality;
 
-/**
- * Interfaces between C and Java.
- */
+// Interfaces between native C++ code and Java code.
 public class TangoJNINative {
-    static {
-        System.loadLibrary("augmented_reality_jni_example");
-    }
+  static {
+    System.loadLibrary("augmented_reality_jni_example");
+  }
 
-    public static native int initialize(AugmentedRealityActivity activity);
+  // Initialize the Tango Service, this function starts the communication
+  // between the application and Tango Service.
+  // The activity object is used for checking if the API version is outdated.
+  public static native int initialize(AugmentedRealityActivity activity);
 
-    public static native void setupConfig(boolean isAutoRecovery);
+  // Setup the configuration file of the Tango Service. We are also setting up
+  // the auto-recovery option from here.
+  public static native int setupConfig();
 
-    public static native void connectTexture();
+  // Connect the onPoseAvailable callback.
+  public static native int connectCallbacks();
 
-    public static native int connectService();
+  // Connect to the Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking.
+  public static native int connect();
 
-    public static native void disconnectService();
+  // Disconnect from the Tango Service, release all the resources that the app is
+  // holding from the Tango Service.
+  public static native void disconnect();
 
-    public static native void onDestroy();
+  // Release all OpenGL resources that are allocated from the program.
+  public static native void freeGLContent();
 
-    public static native void setupGraphic();
+  // Allocate OpenGL resources for rendering.
+  public static native void initGlContent();
 
-    public static native void setupViewport(int width, int height);
+  // Setup the view port width and height.
+  public static native void setupGraphic(int width, int height);
 
-    public static native void render();
+  // Main render loop.
+  public static native void render();
 
-    public static native void setCamera(int cameraIndex);
+  // Set the render camera's viewing angle:
+  //   first person, third person, or top down.
+  public static native void setCamera(int cameraIndex);
 
-    public static native void resetMotionTracking();
+  // Explicitly reset motion tracking and restart the pipeline.
+  // Note that this will cause motion tracking to re-initialize.
+  public static native void resetMotionTracking();
 
-    public static native byte updateStatus();
+  // Get the latest pose string from our application for display in our debug UI.
+  public static native String getPoseString();
 
-    public static native String getPoseString();
+  // Get the latest event string from our application for display in our debug UI.
+  public static native String getEventString();
 
-    public static native String getVersionNumber();
-    
-    public static native boolean getIsLocalized();
+  // Get the TangoCore version from our application for display in our debug UI.
+  public static native String getVersionNumber();
 
-    public static native void updateARElement(int arElement, int interactionType);
-
-    public static native float startSetCameraOffset();
-
-    public static native float setCameraOffset(float rotX, float rotY, float zDistance);
-
-    public static native void placeObject();
+  // Pass touch events to the native layer.
+  public static native void onTouchEvent(int touchCount, int event0,
+                                         float x0, float y0, float x1, float y1);
 }
-
