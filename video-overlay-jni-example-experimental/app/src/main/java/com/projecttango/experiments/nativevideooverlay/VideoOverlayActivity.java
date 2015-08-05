@@ -16,48 +16,37 @@
 
 package com.projecttango.experiments.nativevideooverlay;
 
-import com.google.tango.tangojnivideooverlay.R;
-
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.widget.Toast;
 
-/**
- * Main activity shows video overlay scene.
- */
+// Main activity shows video overlay scene.
 public class VideoOverlayActivity extends Activity {
-  GLSurfaceView glView;
-
-  private static final int TANGO_INVALID = -2;
-  private static final int TANGO_ERROR = -1;
-  private static final int TANGO_SUCCESS = 0;
-
+  private GLSurfaceView glView;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    // Initialize the Tango service
-    int err = TangoJNINative.initialize(this);
-    if (err != TANGO_SUCCESS) {
-      if (err == TANGO_INVALID) {
-        Toast.makeText(this, 
-          "Tango Service version mis-match", Toast.LENGTH_SHORT).show();
-      } else {
-        Toast.makeText(this, 
-          "Tango Service initialize internal error", Toast.LENGTH_SHORT).show();
-      }
-    }
     setContentView(R.layout.activity_video_overlay);
     glView = (GLSurfaceView) findViewById(R.id.surfaceview);
     glView.setRenderer(new Renderer());
+
+    // Initialize Tango Service, this function starts the communication
+    // between the application and Tango Service.
+    // The activity object is used for checking if the API version is outdated.
+    TangoJNINative.initialize(this);
   }
   
   @Override
   protected void onResume() {
     super.onResume();
     glView.onResume();
+    // Setup the configuration for the TangoService.
     TangoJNINative.setupConfig();
+
+    // Connect to Tango Service.
+    // This function will start the Tango Service pipeline, in this case,
+    // it will start Motion Tracking.
     TangoJNINative.connect();
   }
 
@@ -65,6 +54,8 @@ public class VideoOverlayActivity extends Activity {
   protected void onPause() {
     super.onPause();
     glView.onPause();
+    // Disconnect from Tango Service, release all the resources that the app is
+    // holding from Tango Service.
     TangoJNINative.disconnect();
     TangoJNINative.freeGLContent();
   }

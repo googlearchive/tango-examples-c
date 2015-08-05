@@ -78,6 +78,10 @@ int AugmentedRealityApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
   // initialize the service. We'll do that here, passing on the JNI environment
   // and jobject corresponding to the Android activity that is calling us.
   int ret = TangoService_initialize(env, caller_activity);
+
+  // We want to be able to trigger rendering on demand in our Java code.
+  // As such, we need to store the activity we'd like to interact with and the
+  // id of the method we'd like to call on that activity.
   jclass cls = env->GetObjectClass(caller_activity);
   on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
 
@@ -197,8 +201,6 @@ void AugmentedRealityApp::TangoResetMotionTracking() {
 
 void AugmentedRealityApp::InitializeGLContent() {
   main_scene_.InitGLContent();
-
-  LOGI("jasonps: texture id = %d", main_scene_.GetVideoOverlayTextureId());
 
   // Connect color camera texture. TangoService_connectTextureId expects a valid
   // texture id from the caller, so we will need to wait until the GL content is
@@ -379,6 +381,7 @@ TangoErrorType AugmentedRealityApp::UpdateExtrinsics() {
 }
 
 void AugmentedRealityApp::RequestRender() {
+  // Here, we notify the Java activity that we'd like it to trigger a render.
   JNIEnv* env;
   java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
   env->CallVoidMethod(calling_activity_obj_, on_demand_render_);

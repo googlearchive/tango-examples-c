@@ -110,11 +110,13 @@ typedef enum {
   TANGO_EVENT_FEATURE_TRACKING, /**< Feature Tracking Event */
 } TangoEventType;
 
-/// Tango Camera Calibration types.
+/// Tango Camera Calibration types. See TangoCameraIntrinsics for a detailed
+/// description.
 typedef enum {
   TANGO_CALIBRATION_UNKNOWN,
-  /// f-theta fisheye lens model. See
-  /// <a href="http://scholar.google.com/scholar?cluster=13508836606423559694">Straight
+  /// The FOV camera model described in
+  /// <a
+  /// href="http://scholar.google.com/scholar?cluster=13508836606423559694">Straight
   /// lines have to be straight</a>.
   TANGO_CALIBRATION_EQUIDISTANT,
   TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
@@ -288,24 +290,28 @@ typedef struct TangoXYZij {
 } TangoXYZij;
 
 /// The TangoCameraIntrinsics struct contains intrinsic parameters for a camera.
-/// For image coordinates, the obervations, [u, v]^T in pixels.
-/// Normalized image plane coordinates refer to:
 ///
-/// x = (u - cx) / fx
+/// Given a 3D point (X, Y, Z) in camera coordinates, the corresponding
+/// pixel coordinates (x, y) are:
 ///
-/// y = (v - cy) / fy
+/// x = X / Z * fx * rd / ru + cx
+/// y = X / Z * fy * rd / ru + cy
 ///
-/// Distortion model type is as given by calibration_type.  For example, for the
-/// color camera, TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS means that the
-/// distortion parameters are in distortion[] as {k1, k2 ,k3} where
+/// The normalized radial distance ru is given by:
 ///
-/// x_corr_px = x_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
-/// y_corr_px = y_px (1 + k1 * r2 + k2 * r4 + k3 * r6)
+/// ru = sqrt((X^2 + Y^2) / (Z^2))
 ///
-/// where r2, r4, r6 are the 2nd, 4th, and 6th powers of the r, where r is the
-/// distance (normalized image plane coordinates) of (x,y) to (cx,cy), and
-/// for a pixel at point (x_px, y_px) in pixel coordinates, the corrected output
-/// position would be (x_corr, y_corr).
+/// The distorted radial distance rd depends on the distortion model used.
+///
+/// For TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS, rd is a polynomial that
+/// depends on the 3 distortion coefficients k1, k2 and k3:
+///
+/// rd = ru + k1 * ru^3 + k2 * ru^5 + k3 * ru^7
+///
+/// For TANGO_CALIBRATION_EQUIDISTANT, rd depends on the single distortion
+/// coefficient w:
+///
+/// rd = 1 / w * arctan(2 * ru * tan(w / 2))
 ///
 /// For more information, see our page on
 /// <a href ="/project-tango/overview/intrinsics-extrinsics">Camera Intrinsics
@@ -313,7 +319,8 @@ typedef struct TangoXYZij {
 typedef struct TangoCameraIntrinsics {
   /// ID of the camera which the intrinsics reference.
   TangoCameraId camera_id;
-  // Calibration model type that the distortion parameters reference.
+  // The type of distortion model used. This determines the meaning of the
+  // distortion coefficients.
   TangoCalibrationType calibration_type;
 
   /// The width of the image in pixels.
@@ -330,7 +337,8 @@ typedef struct TangoCameraIntrinsics {
   /// Principal point y coordinate on the image, in pixels.
   double cy;
 
-  /// Distortion coefficients, k1, k2, k3 for color image.
+  /// Distortion coefficients. Number and meaning of these values depends on
+  /// the distortion model specified by calibration_type.
   double distortion[5];
 } TangoCameraIntrinsics;
 

@@ -16,57 +16,90 @@
 
 package com.projecttango.experiments.nativearealearning;
 
-/**
- * Interfaces between C and Java.
- */
+import android.app.Activity;
+
+// Interfaces between native C++ code and Java code.
 public class TangoJNINative {
   static {
     System.loadLibrary("area_description_jni_example");
   }
 
-  public static native void initGlContent();
+  // Initialize the Tango Service, this function starts the communication
+  // between the application and Tango Service.
+  // The activity object is used for checking if the API version is outdated.
+  public static native int initialize(Activity activity);
 
-  public static native int initialize(Object activity);
-
-  public static native void setupConfig(boolean isLearning, boolean isLoadedADF);
-
-  public static native boolean connectCallbacks();
-
+  // Setup the configuration file of the Tango Service. We are also setting up
+  // the auto-recovery option from here.
+  public static native int setupConfig(boolean isAreaLearningEnabled,
+                                       boolean isLoadingADF);
+  
+  // Connect the onPoseAvailable callback.
+  public static native int connectCallbacks();
+  
+  // Connect to the Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking.
   public static native int connect();
 
+  // Disconnect from the Tango Service, release all the resources that the app is
+  // holding from the Tango Service.
   public static native void disconnect();
 
-  public static native void freeGLContent();
+  // Release/reset all resources that are allocated from the native code.
+  public static native void freeContent();
 
-  public static native void setupGraphic(int width, int height);
+  // Allocate OpenGL resources for rendering.
+  public static native void initGlContent();
 
+  // Setup the view port width and height.
+  public static native void setupGraphics(int width, int height);
+
+  // Main render loop.
   public static native void render();
 
+  // Set the render camera's viewing angle:
+  //   first person, third person, or top down.
   public static native void setCamera(int cameraIndex);
-
-  public static native double getCurrentTimestamp(int index);
-
-  public static native boolean saveADF();
-
-  public static native String getUUID();
-
-  public static native String getAllUUIDs();
-
-  public static native int getADFCount();
-
-  public static native String getUUIDMetadataValue(String uuid, String key);
-
-  public static native void setUUIDMetadataValue(String uuid, String key, int size, String value);
-
-  public static native void deleteADF(String uuid);
-
-  public static native String getPoseString(int index);
   
-  public static native String getVersionString();
+  // Explicitly reset motion tracking and restart the pipeline.
+  // Note that this will cause motion tracking to re-initialize.
+  public static native void resetMotionTracking();
   
+  // Get the latest pose string from our application for display in our debug UI.
+  public static native String getStartServiceTDeviceString();
+
+  // Get the latest pose string from our application for display in our debug UI.
+  public static native String getAdfTDeviceString();
+
+  // Get the latest pose string from our application for display in our debug UI.
+  public static native String getAdfTStartServiceString();
+  
+  // Get the latest event string from our application for display in our debug UI.
   public static native String getEventString();
   
-  public static native float startSetCameraOffset();
+  // Get the TangoCore version from our application for display in our debug UI.
+  public static native String getVersionNumber();
   
-  public static native float setCameraOffset(float rotX, float rotY, float zDistance);
+  // Pass touch events to the native layer.
+  public static native void onTouchEvent(int touchCount, int event0,
+                                         float x0, float y0, float x1, float y1);
+
+  // Get the loaded ADF's UUID.
+  public static native String getLoadedADFUUIDString();
+
+  // Save ADF in learning mode.
+  public static native String saveAdf();
+
+  // Query metadata from an exsiting ADF using the key.
+  public static native String getAdfMetadataValue(String uuid, String key);
+
+  // Assign a key value of a specific ADF's metadata.
+  public static native void setAdfMetadataValue(String uuid, String key, String value);
+
+  // Query all ADF file's UUID, the string includes all UUIDs saperated by comma.
+  public static native String getAllAdfUuids();
+
+  // Delete a ADF from Tango space.
+  public static native void deleteAdf(String uuid);
 }

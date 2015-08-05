@@ -20,36 +20,20 @@ import android.opengl.GLSurfaceView;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * Renderer renders graphic content.
- */
+// Render render all GL content to the glSurfaceView.
 public class Renderer implements GLSurfaceView.Renderer {
+  // Render loop of the Gl context.
   public void onDrawFrame(GL10 gl) {
     TangoJNINative.render();
   }
 
+  // Called when the surface size changes.
   public void onSurfaceChanged(GL10 gl, int width, int height) {
     TangoJNINative.setupGraphic(width, height);
   }
 
-  // onSurfaceCreated() is called when the rendering thread starts.
-  //
-  // The ConnectTexture() function needs a texture ID which requires a GL context
-  // to initialized. This surface lifecylcle tightened together with the activity 
-  // lifecycle, each time we pause/resume from the application, the onSurfaceCreated()
-  // will be called. 
-  //
-  // Couple of notes about connecting texture ID:
-  // 1. Texutre ID needs to be connected before the service is connected.
-  // 2. Each time the service is reconnected, the texture ID will need to be
-  //    reconnected again.
-  // 3. The graphic surface should be ready before connecting to texture.
-  // 4. The texture and timestamp will be updated when TangoService_updateTexture() 
-  //    is called. 
-  // 5. Connect/update texture requires camera permission in the AndroidManifest.xml:
-  //    <uses-permission android:name="android.permission.CAMERA" />
+  // Called when the surface is created or recreated.
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-    TangoJNINative.initializeGlContent();
-    TangoJNINative.connectTexture();
+    TangoJNINative.initGlContent();
   }
 }

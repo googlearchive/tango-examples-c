@@ -16,29 +16,39 @@
 
 package com.projecttango.experiments.nativevideooverlay;
 
-/**
- * Interfaces between C and Java.
- */
+// Interfaces between native C++ code and Java code.
 public class TangoJNINative {
   static {
     System.loadLibrary("video_overlay_jni_example");
   }
 
-  public static native void initializeGlContent();
-
+  // Initialize the Tango Service, this function starts the communication
+  // between the application and Tango Service.
+  // The activity object is used for checking if the API version is outdated.
   public static native int initialize(VideoOverlayActivity activity);
 
-  public static native void setupConfig();
+  // Setup the configuration file of the Tango Service. We are also setting up
+  // the auto-recovery option from here.
+  public static native int setupConfig();
 
-  public static native void connectTexture();
+  // Connect to the Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start the video overlay update.
+  public static native int connect();
 
-  public static native void connect();
-
+  // Disconnect from the Tango Service, release all the resources that the app is
+  // holding from the Tango Service.
   public static native void disconnect();
 
+  // Release all OpenGL resources that are allocated from the program.
   public static native void freeGLContent();
 
+  // Allocate OpenGL resources for rendering.
+  public static native void initGlContent();
+
+  // Setup the view port width and height.
   public static native void setupGraphic(int width, int height);
 
+  // Main render loop.
   public static native void render();
 }
