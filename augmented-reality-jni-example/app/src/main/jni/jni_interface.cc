@@ -25,6 +25,8 @@ static tango_augmented_reality::AugmentedRealityApp app;
 extern "C" {
 #endif
 jint JNI_OnLoad(JavaVM* vm, void*) {
+  // We need to store a reference to the Java VM so that we can call into the
+  // Java layer to trigger rendering.
   app.SetJavaVM(vm);
   return JNI_VERSION_1_6;
 }

@@ -21,16 +21,19 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := libarea_description_jni_example
 LOCAL_SHARED_LIBRARIES := tango_client_api
 LOCAL_CFLAGS    := -std=c++11
-LOCAL_SRC_FILES := tango_area_description.cpp \
-                   tango_data.cpp \
+LOCAL_SRC_FILES := jni_interface.cc \
+                   area_learning_app.cc \
+                   pose_data.cc \
+                   scene.cc \
+                   tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/frustum.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/gesture_camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/grid.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/line.cpp \
-                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/mesh.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/shaders.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/trace.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/transform.cpp \

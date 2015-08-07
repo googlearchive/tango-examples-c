@@ -141,7 +141,10 @@ public class AugmentedRealityActivity extends Activity implements
     // Set up button click listeners
     mMotionReset.setOnClickListener(this);
 
-    // Configure OpenGL renderer
+    // Configure OpenGL renderer. The RENDERMODE_WHEN_DIRTY is set explicitly
+    // for reducing the CPU load. The request render function call is triggered
+    // by the onTextureAvailable callback from the Tango Service in the native
+    // code.
     mRenderer = new AugmentedRealityRenderer();
     mGLView.setRenderer(mRenderer);
     mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);

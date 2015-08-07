@@ -25,25 +25,19 @@ import android.widget.Button;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-/**
- * This activity set up the configuration for Area Learning application.
- */
+// This starter activity allows user to setup the Area Learning configuration.
 public class StartActivity extends Activity implements View.OnClickListener {
-  public static final String EXTRA_KEY_PERMISSIONTYPE = "PERMISSIONTYPE";
-  public static final String EXTRA_VALUE_MOTION_TRACKING = "MOTION_TRACKING_PERMISSION";
-  public static final String EXTRA_VALUE_ADF = "ADF_LOAD_SAVE_PERMISSION";
-
+  // The unique key string for storing user's input.
   public static final String USE_AREA_LEARNING = 
     "com.projecttango.experiments.areadescriptionjava.usearealearning";
   public static final String LOAD_ADF = 
     "com.projecttango.experiments.areadescriptionjava.loadadf";
 
-  public static final int MOTION_TRACKING_INTENT_REQUEST_CODE = 0;
-  public static final int ADF_INTENT_REQUEST_CODE = 1;
-
+  // UI elements.
   private ToggleButton mLearningModeToggleButton;
   private ToggleButton mLoadADFToggleButton;
-  private Button mStartButton;
+  private Button mStartMainActivityButton;
+  private Button mStartADFListActivityButton;
 
   private boolean mIsUseAreaLearning;
   private boolean mIsLoadADF;
@@ -55,29 +49,26 @@ public class StartActivity extends Activity implements View.OnClickListener {
     setTitle(R.string.app_name);
     setContentView(R.layout.activity_start);
     
+    // Setup UI elements and listeners.
     mLearningModeToggleButton = (ToggleButton) findViewById(R.id.learningmode);
-    mLoadADFToggleButton = (ToggleButton) findViewById(R.id.loadadf);
-    mStartButton = (Button) findViewById(R.id.start);
     mLearningModeToggleButton.setOnClickListener(this);
-    mLoadADFToggleButton.setOnClickListener(this);
-    mStartButton.setOnClickListener(this);
 
-    findViewById(R.id.ADFListView).setOnClickListener(this);
+    mLoadADFToggleButton = (ToggleButton) findViewById(R.id.loadadf);
+    mLoadADFToggleButton.setOnClickListener(this);
+
+    mStartMainActivityButton = (Button) findViewById(R.id.start);
+    mStartMainActivityButton.setOnClickListener(this);
+
+    mStartADFListActivityButton = (Button) findViewById(R.id.ADFListView);
+    mStartADFListActivityButton.setOnClickListener(this);
 
     mIsUseAreaLearning = mLearningModeToggleButton.isChecked();
     mIsLoadADF = mLoadADFToggleButton.isChecked();
 
-    // Invoke intent to give permission to use Motion Tracking features.
-    Intent motionTrackingPermissionIntent = new Intent();
-    motionTrackingPermissionIntent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
-    motionTrackingPermissionIntent.putExtra(EXTRA_KEY_PERMISSIONTYPE, EXTRA_VALUE_MOTION_TRACKING);
-    startActivityForResult(motionTrackingPermissionIntent, MOTION_TRACKING_INTENT_REQUEST_CODE);
-
-    // Invoke intent to give permission to use Area Description/Learning features.
-    Intent adfPermissionIntent = new Intent();
-    adfPermissionIntent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
-    adfPermissionIntent.putExtra(EXTRA_KEY_PERMISSIONTYPE, EXTRA_VALUE_ADF);
-    startActivityForResult(adfPermissionIntent, ADF_INTENT_REQUEST_CODE);
+    // Initialize Tango Service, this function starts the communication
+    // between the application and Tango Service.
+    // The activity object is used for checking if the API version is outdated.
+    TangoJNINative.initialize((Activity)this);
   }
 
   @Override
@@ -98,26 +89,7 @@ public class StartActivity extends Activity implements View.OnClickListener {
     }
   }
 
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == MOTION_TRACKING_INTENT_REQUEST_CODE) {
-        // Check for the result of Motion Tracking permission Intent.
-        if (resultCode == RESULT_CANCELED) {
-          Toast.makeText(this, 
-            "Motion Tracking Permission Needed!", Toast.LENGTH_SHORT).show();
-          finish();
-        }
-    }
-    // Check for the result of ADF permission Intent.
-    if (requestCode == ADF_INTENT_REQUEST_CODE) {
-        if (resultCode == RESULT_CANCELED) {
-          Toast.makeText(this, 
-            "ADF Permission Needed!", Toast.LENGTH_SHORT).show();
-          finish();
-        }
-    }
-  }
-
+  // Start the main area description activity and pass in user's configuration.
   private void startAreaDescriptionActivity() {
     Intent startADIntent = new Intent(this, AreaDescriptionActivity.class);
     startADIntent.putExtra(USE_AREA_LEARNING, mIsUseAreaLearning);
@@ -125,6 +97,7 @@ public class StartActivity extends Activity implements View.OnClickListener {
     startActivity(startADIntent);
   }
 
+  // Start the ADF list activity.
   private void startADFListView() {
     Intent startADFListViewIntent = new Intent(this, ADFUUIDListViewActivity.class);
     startActivity(startADFListViewIntent);
