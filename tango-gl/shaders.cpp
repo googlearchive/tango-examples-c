@@ -84,7 +84,7 @@ std::string GetShadedVertexShader() {
          "  vec3 mvNormal = vec3(mv * vec4(normal, 0.0));\n"
          "  float distance = length(lightPos-mvVertex);\n"
          "  vec3 lightVec = normalize(lightPos-mvVertex);\n"
-         "  float diffuse = max(dot(mvNormal, lightVec), 1.0);\n"
+         "  float diffuse = max(dot(mvNormal, lightVec), 0.0);\n"
          "  diffuse = diffuse * (1.0/(1.0 + (0.4 * distance * distance)));\n"
          "  v_color = color * diffuse;\n"
          "  gl_Position = mvp*vertex;\n"
