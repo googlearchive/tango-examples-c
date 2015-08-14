@@ -46,4 +46,22 @@ void Camera::SetFieldOfView(float fov) {
 Camera::~Camera() {
 }
 
+glm::mat4 Camera::ProjectionMatrixForCameraIntrinsics(float width, float height,
+                                                      float fx, float fy,
+                                                      float cx, float cy,
+                                                      float near, float far) {
+  const float xscale = near / fx;
+  const float yscale = near / fy;
+
+  const float xoffset =  (cx - (width  / 2.0)) * xscale;
+  // OpenGL coordinates has y pointing downwards so we negate this term.
+  const float yoffset = -(cy - (height / 2.0)) * yscale;
+
+  return  glm::frustum(xscale * -width  / 2.0f - xoffset,
+                       xscale *  width  / 2.0f - xoffset,
+                       yscale * -height / 2.0f - yoffset,
+                       yscale *  height / 2.0f - yoffset,
+                       near, far);
+}
+
 }  // namespace tango_gl

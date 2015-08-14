@@ -241,7 +241,7 @@ typedef struct TangoImageBuffer {
   int64_t frame_number;
   /// Pixel format of data.
   TangoImageFormatType format;
-  /// Pixels in RGBA8888 format.
+  /// Pixels in the format of this image buffer.
   uint8_t* data;
 } TangoImageBuffer;
 
@@ -1317,6 +1317,20 @@ TangoErrorType TangoService_Experimental_freeTrajectory(
 /// communication fails or if the service needs to be initialized.
 TangoErrorType TangoService_Experimental_loadAreaDescription(
     const TangoUUID uuid);
+
+/// Experimental API only, subject to change.
+/// Loads an area description with the specified file path. This allows an
+/// application to load an ADF for relocalization after connecting to the
+/// service. It should only be called after calling TangoService_connect(), and
+/// then only if the connect configuration did not specify an ADF to load, and
+/// did not enable learning mode.
+/// @param file_path The file path for the ADF to load.
+/// @return Returns TANGO_SUCCESS if the ADF is successfully loaded for
+/// relocalization. Returns TANGO_INVALID if the file path is invalid, or an ADF
+/// is already being learned. Returns TANGO_ERROR if communication fails or if
+/// the service needs to be initialized.
+TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
+    const char* file_path);
 
 #ifdef __cplusplus
 }
