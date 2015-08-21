@@ -18,7 +18,9 @@
 namespace tango_gl {
 namespace shaders {
 std::string GetBasicVertexShader() {
-  return "attribute vec4 vertex;\n"
+  return "precision mediump float;\n"
+         "precision mediump int;\n"
+         "attribute vec4 vertex;\n"
          "uniform mat4 mvp;\n"
          "uniform vec4 color;\n"
          "varying vec4 v_color;\n"
@@ -37,7 +39,9 @@ std::string GetBasicFragmentShader() {
 }
 
 std::string GetColorVertexShader() {
-  return "attribute vec4 vertex;\n"
+  return "precision mediump float;\n"
+         "precision mediump int;\n"
+         "attribute vec4 vertex;\n"
          "attribute vec4 color;\n"
          "uniform mat4 mvp;\n"
          "varying vec4 v_color;\n"

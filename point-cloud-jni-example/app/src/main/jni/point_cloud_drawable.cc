@@ -72,7 +72,7 @@ void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
   glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_POINTS, 0, vertices.size());
+  glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
 
   glUseProgram(0);
   tango_gl::util::CheckGlError("Pointcloud::Render");

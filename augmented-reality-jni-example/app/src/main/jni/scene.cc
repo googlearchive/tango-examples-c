@@ -119,7 +119,8 @@ void Scene::Render(const glm::mat4& cur_pose_transformation) {
     gesture_camera_->SetAnchorPosition(position);
 
     frustum_->SetTransformationMatrix(cur_pose_transformation);
-
+    // Set the frustum scale to 4:3, this doesn't necessarily match the physical
+    // camera's aspect ratio, this is just for visualization purposes.
     frustum_->SetScale(
         glm::vec3(1.0f, camera_image_plane_ratio_, image_plane_distance_));
     frustum_->Render(ar_camera_projection_matrix_,

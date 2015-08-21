@@ -32,6 +32,23 @@ class Camera : public Transform {
 
   glm::mat4 GetViewMatrix();
   glm::mat4 GetProjectionMatrix();
+
+  /**
+   * Create an OpenGL perspective matrix from window size, camera intrinsics, and clip settings.
+   *
+   * @param width  - The width of the camera image.
+   * @param height - The height of the camera image.
+   * @param fx     - The x-axis focal length of the camera.
+   * @param fy     - The y-axis focal length of the camera.
+   * @param cx     - The x-coordinate principal point in pixels.
+   * @param cy     - The y-coordinate principal point in pixels.
+   * @param near   - The desired near z-clipping plane.
+   * @param far    - The desired far z-clipping plane.
+   */
+  static glm::mat4 ProjectionMatrixForCameraIntrinsics(float width, float height,
+                                                       float fx,    float fy,
+                                                       float cx,    float cy,
+                                                       float near,  float far);
  private:
   float field_of_view_;
   float aspect_ratio_;
