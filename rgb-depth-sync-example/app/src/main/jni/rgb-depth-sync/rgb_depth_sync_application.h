@@ -116,13 +116,11 @@ class SynchronizationApplication {
   // this example.
   TangoConfig tango_config_;
 
-  // Depth Extrinsics
-  glm::mat4 Dj_T_Cj_;
-  glm::mat4 Cj_T_Dj_;
+  // Extrinsic transformation of color frame wrt device frame.
+  glm::mat4 device_T_color_;
 
-  // Color Extrinsics
-  glm::mat4 Di_T_Ci_;
-  glm::mat4 Ci_T_Di_;
+  // Extrinsic transformation of depth frame wrt device frame.
+  glm::mat4 device_T_depth_;
 
   // OpenGL to Start of Service
   glm::mat4 OW_T_SS_;

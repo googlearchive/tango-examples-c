@@ -36,13 +36,14 @@ DepthImage::~DepthImage() {
 // the depth image into a texture.
 // This function also takes care of swapping the Render buffer and shared buffer
 // if there is new point cloud data available.
-// Ci_T_Cj: 'i' represents the color camera frame's timestamp, 'j' represents
-// the depth camera timestamp. The transformation is the camera's frame on
-// timestamp j with respect the camera's frame on timestamp i.
-// This transform can move a point from depth camera frame to color camera
-// frame.
+// color_t1_T__depth_t0: 't1' represents the color camera frame's timestamp,
+// 't0'
+// represents
+// the depth camera timestamp. The transformation is the depth camera's frame on
+// timestamp t0 with respect the rgb camera's frame on timestamp t1.
 void DepthImage::UpdateAndUpsampleDepth(
-    glm::mat4& Ci_T_Cj, const std::vector<float>& render_point_cloud_buffer) {
+    glm::mat4& color_t1_T_depth_t0,
+    const std::vector<float>& render_point_cloud_buffer) {
 
   int depth_image_width = rgb_camera_intrinsics_.width;
   int depth_image_height = rgb_camera_intrinsics_.height;
@@ -60,19 +61,22 @@ void DepthImage::UpdateAndUpsampleDepth(
     float y = render_point_cloud_buffer[i + 1];
     float z = render_point_cloud_buffer[i + 2];
 
-    // Cj_point is the point in camera frame on timestamp j (depth timestamp).
-    glm::vec4 Cj_point = glm::vec4(x, y, z, 1.0);
-    // Ci_point is the point in camera frame on timestamp i (color timestamp).
-    glm::vec4 Ci_point = Ci_T_Cj * Cj_point;
+    // depth_t0_point is the point in depth camera frame on timestamp t0.
+    // (depth image timestamp).
+    glm::vec4 depth_t0_point = glm::vec4(x, y, z, 1.0);
+
+    // color_t1_point is the point in camera frame on timestamp t1.
+    // (color image timestamp).
+    glm::vec4 color_t1_point = color_t1_T_depth_t0 * depth_t0_point;
 
     int pixel_x, pixel_y;
     // get the coordinate on image plane.
     pixel_x = static_cast<int>((rgb_camera_intrinsics_.fx) *
-                                   (Ci_point.x / Ci_point.z) +
+                                   (color_t1_point.x / color_t1_point.z) +
                                rgb_camera_intrinsics_.cx);
 
     pixel_y = static_cast<int>((rgb_camera_intrinsics_.fy) *
-                                   (Ci_point.y / Ci_point.z) +
+                                   (color_t1_point.y / color_t1_point.z) +
                                rgb_camera_intrinsics_.cy);
 
     // Color value is the GL_LUMINANCE value used for displaying the depth
@@ -80,9 +84,9 @@ void DepthImage::UpdateAndUpsampleDepth(
     // We can query for depth value in mm from grayscale image buffer by
     // getting a `pixel_value` at (pixel_x,pixel_y) and calculating
     // pixel_value * (kMaxDepthDistance / USHRT_MAX)
-    float depth_value = Ci_point.z;
+    float depth_value = color_t1_point.z;
     uint16_t grayscale_value =
-        (Ci_point.z * kMeterToMillimeter) * USHRT_MAX / kMaxDepthDistance;
+        (color_t1_point.z * kMeterToMillimeter) * USHRT_MAX / kMaxDepthDistance;
 
     UpSampleDepthAroundPoint(grayscale_value, depth_value, pixel_x, pixel_y,
                              &grayscale_display_buffer_, &depth_map_buffer_);

@@ -58,6 +58,18 @@ inline glm::mat4 TransformFromArrays(const double* A_p_B, const double* A_q_B) {
 }
 
 /**
+ * @brief Creates a glm::mat4 rigid-frame transformation matrix from glm::vec3 and glm::quat.
+ * This is designed for the TangoPoseData translation and orientation fields.
+ * @param A_p_B A position vector of B_origin from A_origin, expressed in A.
+ * @param A_q_B A quaternion representation of the rotation.
+ * matrix A_R_B.
+ * @return The transformation matrix A_T_B.
+ */
+inline glm::mat4 TransformFromVecAndQuat(const glm::vec3& A_p_B, const glm::quat& A_q_B) {
+  return glm::translate(glm::mat4(1.0f), A_p_B) * glm::mat4_cast(A_q_B);
+}
+
+/**
  * @brief Convert (re-express, or rotate) a vector from the Tango ADF (or start-
  * of-service) frame convention [right, forward, up] to the typical OpenGl world
  * frame convention [right, up, backward]. Note this assumes the two frames are
@@ -107,6 +119,13 @@ glm::mat4 opengl_world_T_tango_world();
  * frame (with Z-backward, X-right).
  */
 glm::mat4 color_camera_T_opengl_camera();
+
+/**
+ * Get the fixed transformation matrix relating the frame convention of the
+ * device's depth camera frame (with Z-forward, X-right) and the opengl camera
+ * frame (with Z-backward, X-right).
+ */
+glm::mat4 depth_camera_T_opengl_camera();
 
 }  // namespace conversions
 }  // namespace tango_gl

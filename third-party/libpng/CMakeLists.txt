@@ -5,6 +5,8 @@ find_package(redwood_catkin REQUIRED)
 
 catkin_simple()
 
+redwood_disable_warnings(-Wno-sign-conversion)
+
 cs_add_library(png
   png.c
   pngerror.c

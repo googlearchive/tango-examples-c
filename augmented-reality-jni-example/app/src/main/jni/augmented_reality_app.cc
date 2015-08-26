@@ -19,12 +19,10 @@
 #include "tango-augmented-reality/augmented_reality_app.h"
 
 namespace {
-const int kVersionStringLength = 27;
-
-// Scale frustum size for closer near clipping plane.
-const float kFovScaler = 0.1f;
+const int kVersionStringLength = 128;
 
 // Far clipping plane of the AR camera.
+const float kArCameraNearClippingPlane = 0.1f;
 const float kArCameraFarClippingPlane = 100.0f;
 
 // This function routes onTangoEvent callbacks to the application object for
@@ -134,10 +132,10 @@ int AugmentedRealityApp::TangoSetupConfig() {
   }
 
   // Get TangoCore version string from service.
+  char tango_core_version[kVersionStringLength];
   ret = TangoConfig_getString(
       tango_config_, "tango_service_library_version",
-      const_cast<char*>(tango_core_version_string_.c_str()),
-      kVersionStringLength);
+      tango_core_version, kVersionStringLength);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "AugmentedRealityApp: get tango core version failed with error"
@@ -145,6 +143,7 @@ int AugmentedRealityApp::TangoSetupConfig() {
         ret);
     return ret;
   }
+  tango_core_version_string_ = tango_core_version;
 
   return ret;
 }
@@ -232,15 +231,18 @@ void AugmentedRealityApp::SetViewPort(int width, int height) {
 
   float image_width = static_cast<float>(color_camera_intrinsics_.width);
   float image_height = static_cast<float>(color_camera_intrinsics_.height);
-  float focus_length = static_cast<float>(color_camera_intrinsics_.fx);
+  float fx = static_cast<float>(color_camera_intrinsics_.fx);
+  float fy = static_cast<float>(color_camera_intrinsics_.fy);
+  float cx = static_cast<float>(color_camera_intrinsics_.cx);
+  float cy = static_cast<float>(color_camera_intrinsics_.cy);
 
   float image_plane_ratio = image_height / image_width;
-  float image_plane_distance = 2.0f * focus_length / image_width;
+  float image_plane_distance = 2.0f * fx / image_width;
 
-  glm::mat4 projection_mat_ar = glm::frustum(
-      -1.0f * kFovScaler, 1.0f * kFovScaler, -image_plane_ratio * kFovScaler,
-      image_plane_ratio * kFovScaler, image_plane_distance * kFovScaler,
-      kArCameraFarClippingPlane);
+  glm::mat4 projection_mat_ar =
+      tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+          image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
+          kArCameraFarClippingPlane);
 
   main_scene_.SetFrustumScale(
       glm::vec3(1.0f, image_plane_ratio, image_plane_distance));
