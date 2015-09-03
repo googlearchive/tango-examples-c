@@ -56,10 +56,8 @@ glm::mat4 PoseData::GetExtrinsicsAppliedOpenGLWorldFrame(
   //      opengl_world_T_start_service *
   //      start_service_T_device *
   //      device_T_imu *
-  //      imu_T_color_camera *
-  //      color_camera_T_opengl_camera;
-  // Note that color camera and depth camera are the same hardware, they share
-  // the same frame.
+  //      imu_T_depth_camera *
+  //      depth_camera_T_opengl_camera;
   //
   // More information about frame transformation can be found here:
   // Frame of reference:
@@ -67,8 +65,8 @@ glm::mat4 PoseData::GetExtrinsicsAppliedOpenGLWorldFrame(
   // Coordinate System Conventions:
   //   https://developers.google.com/project-tango/overview/coordinate-systems
   return tango_gl::conversions::opengl_world_T_tango_world() * pose_matrix *
-         glm::inverse(GetImuTDevice()) * GetImuTColorCamera() *
-         tango_gl::conversions::color_camera_T_opengl_camera();
+         glm::inverse(GetImuTDevice()) * GetImuTDepthCamera() *
+         tango_gl::conversions::depth_camera_T_opengl_camera();
 }
 
 glm::mat4 PoseData::GetMatrixFromPose(const TangoPoseData& pose) {

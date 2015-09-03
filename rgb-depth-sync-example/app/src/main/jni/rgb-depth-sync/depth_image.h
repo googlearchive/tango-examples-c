@@ -23,7 +23,7 @@
 #include <mutex>
 namespace rgb_depth_sync {
 
-// DepthImage is a class which projects point cloud on to a drawable
+// DepthImage is a class which projects point cloud on to a color camera's
 // image plane.
 class DepthImage {
  public:
@@ -31,17 +31,18 @@ class DepthImage {
   ~DepthImage();
 
   // Update the depth texture with current transformation and current depth map.
-  // @param  Ci_T_Cj: The transformation between the camera frame on timestamp i
-  //    (color camera timestamp) and the camera frame on timestamp j (depth
+  // @param  color_t1_T_depth_t0: The transformation between the color camera frame on timestamp i
+  //    (color camera timestamp) and the depth camera frame on timestamp j (depth
   //    camera timestamp)
-  // To convert a point in the camera frame on timestamp j to the camera frame
-  // on timestamp i, you could do:
-  //    Ci_point = Ci_T_Cj * Cj_point;
+  // To convert a point in the depth camera frame on timestamp t0 to the color
+  // camera frame
+  // on timestamp t1, you could do:
+  //    color_t1_point = color_t1_T_depth_t0 * depth_t0_point;
   //
   // @param render_point_cloud_buffer: This contains the latest point cloud data
   // that gets projected on to the image plane and fills up the depth_map_buffer
   void UpdateAndUpsampleDepth(
-      glm::mat4& Ci_T_Cj, const std::vector<float>& render_point_cloud_buffer);
+      glm::mat4& color_t1_T_depth_t0, const std::vector<float>& render_point_cloud_buffer);
 
   // Returns the depth texture id.
   GLuint GetTextureId() const { return texture_id_; }
@@ -96,6 +97,8 @@ class DepthImage {
   // depth camera are the same hardware on the device.
   TangoCameraIntrinsics rgb_camera_intrinsics_;
 
+  // Transform between Color camera and Depth Camera.
+  glm::mat4 depth_camera_T_color_camera_;
 };
 }  // namespace rgb_depth_sync
 

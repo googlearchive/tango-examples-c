@@ -35,6 +35,12 @@ glm::mat4 color_camera_T_opengl_camera() {
                    0.0f,  0.0f,  0.0f, 1.0f);
 }
 
+glm::mat4 depth_camera_T_opengl_camera() {
+  // Note glm is column-wise.
+  return glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                   -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 glm::quat QuatTangoToGl(const glm::quat& tango_q_frame) {
   const float kSqrt2Over2 = std::sqrt(2.0) / 2.0f;
   // Tango frame is a -90 degree rotation about +X from the GL frame.

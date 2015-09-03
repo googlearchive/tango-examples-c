@@ -21,7 +21,7 @@
 #include "tango-area-learning/area_learning_app.h"
 
 namespace {
-const int kVersionStringLength = 27;
+const int kVersionStringLength = 128;
 
 // This function routes onPoseAvailable callbacks to the application object for
 // handling.

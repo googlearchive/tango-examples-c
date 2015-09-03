@@ -19,7 +19,7 @@
 #include "tango-motion-tracking/motion_tracking_app.h"
 
 namespace {
-const int kVersionStringLength = 27;
+const int kVersionStringLength = 128;
 
 // This function routes onPoseAvailable callbacks to the application object for
 // handling.
@@ -92,10 +92,10 @@ int MotiongTrackingApp::TangoSetupConfig(bool is_atuo_recovery) {
   }
 
   // Get TangoCore version string from service.
+  char tango_core_version[kVersionStringLength];
   ret = TangoConfig_getString(
       tango_config_, "tango_service_library_version",
-      const_cast<char*>(tango_core_version_string_.c_str()),
-      kVersionStringLength);
+      tango_core_version, kVersionStringLength);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "MotiongTrackingApp: get tango core version failed with error"
@@ -103,6 +103,7 @@ int MotiongTrackingApp::TangoSetupConfig(bool is_atuo_recovery) {
         ret);
     return ret;
   }
+  tango_core_version_string_ = tango_core_version;
 
   return ret;
 }

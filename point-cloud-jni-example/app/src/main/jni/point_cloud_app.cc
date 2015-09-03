@@ -19,7 +19,7 @@
 #include "tango-point-cloud/point_cloud_app.h"
 
 namespace {
-const int kVersionStringLength = 27;
+const int kVersionStringLength = 128;
 
 // This function routes onXYZijAvailable callbacks to the application object for
 // handling.
@@ -119,10 +119,10 @@ int PointCloudApp::TangoSetupConfig(bool is_atuo_recovery) {
   }
 
   // Get TangoCore version string from service.
+  char tango_core_version[kVersionStringLength];
   ret = TangoConfig_getString(
       tango_config_, "tango_service_library_version",
-      const_cast<char*>(tango_core_version_string_.c_str()),
-      kVersionStringLength);
+      tango_core_version, kVersionStringLength);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "PointCloudApp: get tango core version failed with error"
@@ -130,6 +130,7 @@ int PointCloudApp::TangoSetupConfig(bool is_atuo_recovery) {
         ret);
     return ret;
   }
+  tango_core_version_string_ = tango_core_version;
 
   return ret;
 }
@@ -352,7 +353,7 @@ TangoErrorType PointCloudApp::UpdateExtrinsics() {
 
   // Get color camera with respect to imu transformation matrix.
   frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
+  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_DEPTH;
   ret = TangoService_getPoseAtTime(0.0, frame_pair, &pose_data);
   if (ret != TANGO_SUCCESS) {
     LOGE(
@@ -360,7 +361,7 @@ TangoErrorType PointCloudApp::UpdateExtrinsics() {
         "and device frames");
     return ret;
   }
-  pose_data_.SetImuTColorCamera(pose_data_.GetMatrixFromPose(pose_data));
+  pose_data_.SetImuTDepthCamera(pose_data_.GetMatrixFromPose(pose_data));
   return ret;
 }
 
