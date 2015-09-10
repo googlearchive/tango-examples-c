@@ -93,10 +93,9 @@ void util::DecomposeMatrix (const glm::mat4& transform_mat,
                               glm::vec3& translation,
                               glm::quat& rotation,
                               glm::vec3& scale) {
-  float scale_x = glm::length( glm::vec3( transform_mat[0][0], transform_mat[1][0], transform_mat[2][0] ) );
-  float scale_y = glm::length( glm::vec3( transform_mat[0][1], transform_mat[1][1], transform_mat[2][1] ) );
-  float scale_z = glm::length( glm::vec3( transform_mat[0][2], transform_mat[1][2], transform_mat[2][2] ) );
-
+  float scale_x = glm::length( glm::vec3( transform_mat[0][0], transform_mat[0][1], transform_mat[0][2] ) );
+  float scale_y = glm::length( glm::vec3( transform_mat[1][0], transform_mat[1][1], transform_mat[1][2] ) );
+  float scale_z = glm::length( glm::vec3( transform_mat[2][0], transform_mat[2][1], transform_mat[2][2] ) );
 
   float determinant = glm::determinant( transform_mat );
   if( determinant < 0.0 )
@@ -113,18 +112,18 @@ void util::DecomposeMatrix (const glm::mat4& transform_mat,
   glm::mat4 transform_unscaled = transform_mat;
 
   transform_unscaled[0][0] *= inverse_scale_x;
-  transform_unscaled[1][0] *= inverse_scale_x;
-  transform_unscaled[2][0] *= inverse_scale_x;
+  transform_unscaled[0][1] *= inverse_scale_x;
+  transform_unscaled[0][2] *= inverse_scale_x;
 
-  transform_unscaled[0][1] *= inverse_scale_y;
+  transform_unscaled[1][0] *= inverse_scale_y;
   transform_unscaled[1][1] *= inverse_scale_y;
-  transform_unscaled[2][1] *= inverse_scale_y;
+  transform_unscaled[1][2] *= inverse_scale_y;
 
-  transform_unscaled[0][2] *= inverse_scale_z;
-  transform_unscaled[1][2] *= inverse_scale_z;
+  transform_unscaled[2][0] *= inverse_scale_z;
+  transform_unscaled[2][1] *= inverse_scale_z;
   transform_unscaled[2][2] *= inverse_scale_z;
 
-  rotation = glm::quat_cast( transform_mat );
+  rotation = glm::quat_cast( transform_unscaled );
 
   scale.x = scale_x;
   scale.y = scale_y;
