@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_LINE_H_
-#define TANGO_GL_LINE_H_
+#ifndef TANGO_GL_CIRCLE_H_
+#define TANGO_GL_CIRCLE_H_
 
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/mesh.h"
 
 namespace tango_gl {
-class Line : public DrawableObject {
+class Circle : public Mesh {
  public:
-  Line(float line_width, GLenum render_mode);
-  void SetLineWidth(const float pixels);
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  void UpdateLineVertices(const std::vector<glm::vec3>& vec_vertices) {
-    vec_vertices_ = vec_vertices;
-  }
-
- protected:
-  float line_width_;
-  std::vector<glm::vec3> vec_vertices_;
+  Circle(float radius, int resolution);
 };
 }  // namespace tango_gl
-#endif  // TANGO_GL_LINE_H_
+#endif  // TANGO_GL_CIRCLE_H_

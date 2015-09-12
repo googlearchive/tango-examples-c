@@ -54,7 +54,7 @@ glm::mat4 Camera::ProjectionMatrixForCameraIntrinsics(float width, float height,
   const float yscale = near / fy;
 
   const float xoffset =  (cx - (width  / 2.0)) * xscale;
-  // OpenGL coordinates has y pointing downwards so we negate this term.
+  // Color camera's coordinates has y pointing downwards so we negate this term.
   const float yoffset = -(cy - (height / 2.0)) * yscale;
 
   return  glm::frustum(xscale * -width  / 2.0f - xoffset,

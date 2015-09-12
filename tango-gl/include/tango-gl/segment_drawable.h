@@ -14,32 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_MESH_H_
-#define TANGO_GL_MESH_H_
+#ifndef TANGO_GL_SEGMENT_DRAWABLE_H_
+#define TANGO_GL_SEGMENT_DRAWABLE_H_
 
-#include "tango-gl/bounding_box.h"
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/line.h"
 #include "tango-gl/segment.h"
 
 namespace tango_gl {
-class Mesh : public DrawableObject {
+class SegmentDrawable : public Line {
  public:
-  Mesh();
-  Mesh(GLenum render_mode);
-  void SetShader();
-  void SetShader(bool is_lighting_on);
-  void SetBoundingBox();
-  void SetLightDirection(const glm::vec3& light_direction);
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  bool IsIntersecting(const Segment& segment);
-
- protected:
-  BoundingBox* bounding_box_;
-  bool is_lighting_on_;
-  bool is_bounding_box_on_;
-  glm::vec3 light_direction_;
-  GLuint uniform_mv_mat_;
-  GLuint uniform_light_vec_;
+  SegmentDrawable();
+  void UpdateSegment(const Segment& segment);
 };
 }  // namespace tango_gl
-#endif  // TANGO_GL_MESH_H_
+#endif  // TANGO_GL_SEGMENT_DRAWABLE_H_

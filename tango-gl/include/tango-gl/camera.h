@@ -49,7 +49,7 @@ class Camera : public Transform {
                                                        float fx,    float fy,
                                                        float cx,    float cy,
                                                        float near,  float far);
- private:
+ protected:
   float field_of_view_;
   float aspect_ratio_;
   float near_clip_plane_, far_clip_plane_;

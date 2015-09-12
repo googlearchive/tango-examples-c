@@ -14,32 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_MESH_H_
-#define TANGO_GL_MESH_H_
+#ifndef TANGO_VIDEO_OVERLAY_YUV_DRAWABLE_H_
+#define TANGO_VIDEO_OVERLAY_YUV_DRAWABLE_H_
 
-#include "tango-gl/bounding_box.h"
 #include "tango-gl/drawable_object.h"
-#include "tango-gl/segment.h"
 
-namespace tango_gl {
-class Mesh : public DrawableObject {
+namespace tango_video_overlay {
+class YUVDrawable : public tango_gl::DrawableObject {
  public:
-  Mesh();
-  Mesh(GLenum render_mode);
-  void SetShader();
-  void SetShader(bool is_lighting_on);
-  void SetBoundingBox();
-  void SetLightDirection(const glm::vec3& light_direction);
+  YUVDrawable();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  bool IsIntersecting(const Segment& segment);
+  GLuint GetTextureId() const { return texture_id_; }
+  void SetTextureId(GLuint texture_id) { texture_id_ = texture_id; }
 
- protected:
-  BoundingBox* bounding_box_;
-  bool is_lighting_on_;
-  bool is_bounding_box_on_;
-  glm::vec3 light_direction_;
-  GLuint uniform_mv_mat_;
-  GLuint uniform_light_vec_;
+ private:
+  // This id is populated on construction, and is passed to the tango service.
+  GLuint texture_id_;
+
+  GLuint attrib_texture_coords_;
+  GLuint uniform_texture_;
+  GLuint vertex_buffers_[3];
 };
-}  // namespace tango_gl
-#endif  // TANGO_GL_MESH_H_
+}  // namespace tango_video_overlay
+#endif  // TANGO_VIDEO_OVERLAY_YUV_DRAWABLE_H_

@@ -50,7 +50,5 @@ Cube::Cube() {
   std::vector<GLfloat> normals(
       const_normals, const_normals + sizeof(const_normals) / sizeof(GLfloat));
   SetVertices(vertices, normals);
-  glm::vec3 point_light = glm::vec3(0.5f, 2, 0.5f);
-  SetLightPosition(point_light);
 }
 }  // namespace tango_gl

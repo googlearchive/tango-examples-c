@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_AUGMENTED_REALITY_AUGMENTED_REALITY_APP_H_
-#define TANGO_AUGMENTED_REALITY_AUGMENTED_REALITY_APP_H_
+#ifndef TANGO_VIDEO_OVERLAY_VIDEO_OVERLAY_APP_H_
+#define TANGO_VIDEO_OVERLAY_VIDEO_OVERLAY_APP_H_
 
+#include <atomic>
 #include <jni.h>
 #include <memory>
+#include <mutex>
 
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
+#include <tango-video-overlay/yuv_drawable.h>
 #include <tango-gl/video_overlay.h>
 
 namespace tango_video_overlay {
@@ -32,6 +35,14 @@ class VideoOverlayApp {
   // Constructor and deconstructor.
   VideoOverlayApp();
   ~VideoOverlayApp();
+
+  enum TextureMethod {
+    kYUV,
+    kTextureId
+  };
+
+  // YUV data callback.
+  void OnFrameAvailable(const TangoImageBuffer* buffer);
 
   // Initialize Tango Service, this function starts the communication
   // between the application and Tango Service.
@@ -63,6 +74,11 @@ class VideoOverlayApp {
   // Release all OpenGL resources that allocate from the program.
   void FreeGLContent();
 
+  // Set texture method.
+  void SetTextureMethod(int method) {
+    current_texture_method_ = static_cast<TextureMethod>(method);
+  }
+
  private:
   // Tango configration file, this object is for configuring Tango Service setup
   // before connect to service. For example, we set the flag
@@ -70,8 +86,28 @@ class VideoOverlayApp {
   TangoConfig tango_config_;
 
   // video_overlay_ render the camera video feedback onto the screen.
-  tango_gl::VideoOverlay* video_overlay_;
+  tango_gl::VideoOverlay* video_overlay_drawable_;
+  YUVDrawable* yuv_drawable_;
+
+  TextureMethod current_texture_method_;
+
+  std::vector<uint8_t> yuv_buffer_;
+  std::vector<uint8_t> yuv_temp_buffer_;
+  std::vector<GLubyte> rgb_buffer_;
+
+  std::atomic<bool> is_yuv_texture_available_;
+  std::atomic<bool> swap_buffer_signal_;
+  std::mutex yuv_buffer_mutex_;
+
+  size_t yuv_width_;
+  size_t yuv_height_;
+  size_t yuv_size_;
+  size_t uv_buffer_offset_;
+
+  void AllocateTexture(GLuint texture_id, int width, int height);
+  void RenderYUV();
+  void RenderTextureId();
 };
 }  // namespace tango_video_overlay
 
-#endif  // TANGO_AUGMENTED_REALITY_AUGMENTED_REALITY_APP_H_
+#endif  // TANGO_VIDEO_OVERLAY_VIDEO_OVERLAY_APP_H_

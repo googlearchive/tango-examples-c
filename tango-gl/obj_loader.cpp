@@ -100,22 +100,39 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
       temp_normals.push_back(normal[1]);
       temp_normals.push_back(normal[2]);
     } else if (strcmp(lineHeader, "f") == 0) {
-      GLushort vertexIndex[3];
-      GLushort normalIndex[3];
-      int matches = fscanf(file, "%hu//%hu %hu//%hu %hu//%hu\n",
-                           &vertexIndex[0], &normalIndex[0], &vertexIndex[1],
-                           &normalIndex[1], &vertexIndex[2], &normalIndex[2]);
-      if (matches != 6) {
+      GLushort vertexIndex[4];
+      GLushort normalIndex[4];
+      int matches = fscanf(file, "%hu//%hu %hu//%hu %hu//%hu %hu//%hu\n",
+                           &vertexIndex[0], &normalIndex[0], &vertexIndex[1], &normalIndex[1],
+                           &vertexIndex[2], &normalIndex[2], &vertexIndex[3], &normalIndex[3]);
+
+      // .obj file is 1-indexed, so subtract 1 from all indices.
+      if (matches == 6) {
+        // If triangles provided.
+        vertexIndices.push_back(vertexIndex[0] - 1);
+        vertexIndices.push_back(vertexIndex[1] - 1);
+        vertexIndices.push_back(vertexIndex[2] - 1);
+        normalIndices.push_back(normalIndex[0] - 1);
+        normalIndices.push_back(normalIndex[1] - 1);
+        normalIndices.push_back(normalIndex[2] - 1);
+      } else if(matches == 8) {
+        // If quads provided.
+        vertexIndices.push_back(vertexIndex[0] - 1);
+        vertexIndices.push_back(vertexIndex[1] - 1);
+        vertexIndices.push_back(vertexIndex[2] - 1);
+        vertexIndices.push_back(vertexIndex[0] - 1);
+        vertexIndices.push_back(vertexIndex[2] - 1);
+        vertexIndices.push_back(vertexIndex[3] - 1);
+        normalIndices.push_back(normalIndex[0] - 1);
+        normalIndices.push_back(normalIndex[1] - 1);
+        normalIndices.push_back(normalIndex[2] - 1);
+        normalIndices.push_back(normalIndex[0] - 1);
+        normalIndices.push_back(normalIndex[2] - 1);
+        normalIndices.push_back(normalIndex[3] - 1);
+      } else {
         LOGE("Format of 'f int//int int//int int//int' required for each face");
         return false;
       }
-      // .obj file is 1-indexed, so subtract 1 from all indices.
-      vertexIndices.push_back(vertexIndex[0] - 1);
-      vertexIndices.push_back(vertexIndex[1] - 1);
-      vertexIndices.push_back(vertexIndex[2] - 1);
-      normalIndices.push_back(normalIndex[0] - 1);
-      normalIndices.push_back(normalIndex[1] - 1);
-      normalIndices.push_back(normalIndex[2] - 1);
     } else {
       char comments_buffer[1000];
       fgets(comments_buffer, 1000, file);

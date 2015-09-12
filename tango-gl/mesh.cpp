@@ -18,9 +18,19 @@
 #include "tango-gl/shaders.h"
 
 namespace tango_gl {
+Mesh::Mesh() {
+  render_mode_ = GL_TRIANGLES;
+}
+Mesh::Mesh(GLenum render_mode) {
+  render_mode_ = render_mode;
+}
+
 void Mesh::SetShader() {
   DrawableObject::SetShader();
+  // Default mode set to no lighting.
   is_lighting_on_ = false;
+  // Default mode set to without bounding box detection.
+  is_bounding_box_on_ = false;
 }
 
 void Mesh::SetShader(bool is_lighting_on) {
@@ -33,19 +43,44 @@ void Mesh::SetShader(bool is_lighting_on) {
     }
     uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
     uniform_mv_mat_ = glGetUniformLocation(shader_program_, "mv");
-    uniform_light_pos_ = glGetUniformLocation(shader_program_, "lightPos");
+    uniform_light_vec_ = glGetUniformLocation(shader_program_, "lightVec");
     uniform_color_ = glGetUniformLocation(shader_program_, "color");
 
     attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
     attrib_normals_ = glGetAttribLocation(shader_program_, "normal");
     is_lighting_on_ = true;
+    // Set a defualt direction for directional light.
+    light_direction_ = glm::vec3(-1.0f, -3.0f, -1.0f);
+    light_direction_ = glm::normalize(light_direction_);
   } else {
     SetShader();
   }
 }
 
-void Mesh::SetLightPosition(const glm::vec3& light_position) {
-  light_position_ = light_position;
+void Mesh::SetBoundingBox(){
+  // Traverse all the vertices to define an axis-aligned
+  // bounding box for this mesh, needs to be called after SetVertices().
+  if(vertices_.size()==0){
+    LOGE("Please set up vertices first!");
+    return;
+  }
+  is_bounding_box_on_ = true;
+  bounding_box_ = new BoundingBox(vertices_);
+}
+
+void Mesh::SetLightDirection(const glm::vec3& light_direction) {
+  light_direction_ = light_direction;
+}
+
+bool Mesh::IsIntersecting(const Segment& segment) {
+  // If there is no bounding box defined based on all vertices,
+  // we can not calculate intersection.
+  if (!is_bounding_box_on_) {
+    LOGE("Mesh::IsIntersecting, bounding box is not available.");
+    return false;
+  }
+  return bounding_box_->IsIntersecting(segment, GetRotation(),
+                                       GetTransformationMatrix());
 }
 
 void Mesh::Render(const glm::mat4& projection_mat,
@@ -63,11 +98,8 @@ void Mesh::Render(const glm::mat4& projection_mat,
     glEnableVertexAttribArray(attrib_normals_);
     glVertexAttribPointer(attrib_normals_, 3, GL_FLOAT, GL_FALSE,
                           3 * sizeof(GLfloat), &normals_[0]);
-
-    glm::vec4 light = glm::vec4(light_position_.x, light_position_.y,
-                                light_position_.z, 1.0f);
-    glm::vec4 transformed_light = view_mat * light;
-    glUniform3fv(uniform_light_pos_, 1, glm::value_ptr(transformed_light));
+    glm::vec3 light_direction = glm::mat3(view_mat) * light_direction_;
+    glUniform3fv(uniform_light_vec_, 1, glm::value_ptr(light_direction));
   }
 
   glEnableVertexAttribArray(attrib_vertices_);
@@ -75,12 +107,12 @@ void Mesh::Render(const glm::mat4& projection_mat,
   if (!indices_.empty()) {
     glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE,
                           3 * sizeof(GLfloat), vertices_.data());
-    glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_SHORT,
+    glDrawElements(render_mode_, indices_.size(), GL_UNSIGNED_SHORT,
                    indices_.data());
   } else {
     glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE,
                           3 * sizeof(GLfloat), &vertices_[0]);
-    glDrawArrays(GL_TRIANGLES, 0, vertices_.size() / 3);
+    glDrawArrays(render_mode_, 0, vertices_.size() / 3);
   }
 
   glDisableVertexAttribArray(attrib_vertices_);

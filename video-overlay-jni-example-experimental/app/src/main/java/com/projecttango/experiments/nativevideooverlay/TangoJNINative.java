@@ -51,4 +51,10 @@ public class TangoJNINative {
 
   // Main render loop.
   public static native void render();
+
+  // Set texture method.
+  public static native void setYUVMethod();
+
+  // Set texture method.
+  public static native void setTextureMethod();
 }

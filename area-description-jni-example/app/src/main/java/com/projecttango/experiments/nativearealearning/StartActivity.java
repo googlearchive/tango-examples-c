@@ -29,9 +29,16 @@ import android.widget.ToggleButton;
 public class StartActivity extends Activity implements View.OnClickListener {
   // The unique key string for storing user's input.
   public static final String USE_AREA_LEARNING = 
-    "com.projecttango.experiments.areadescriptionjava.usearealearning";
+      "com.projecttango.experiments.areadescriptionjava.usearealearning";
   public static final String LOAD_ADF = 
-    "com.projecttango.experiments.areadescriptionjava.loadadf";
+      "com.projecttango.experiments.areadescriptionjava.loadadf";
+  // Key string for load/save Area Description Files.
+  private static final String AREA_LEARNING_PERMISSION =
+      "ADF_LOAD_SAVE_PERMISSION";
+
+  // Permission request action.
+  private static final String REQUEST_PERMISSION_ACTION =
+      "android.intent.action.REQUEST_TANGO_PERMISSION";
 
   // UI elements.
   private ToggleButton mLearningModeToggleButton;
@@ -69,6 +76,11 @@ public class StartActivity extends Activity implements View.OnClickListener {
     // between the application and Tango Service.
     // The activity object is used for checking if the API version is outdated.
     TangoJNINative.initialize((Activity)this);
+
+    if (!Util.hasPermission(getApplicationContext(),
+                            AREA_LEARNING_PERMISSION)) {
+      getPermission(AREA_LEARNING_PERMISSION);
+    }
   }
 
   @Override
@@ -87,6 +99,34 @@ public class StartActivity extends Activity implements View.OnClickListener {
       startADFListView();
       break;
     }
+  }
+
+  @Override
+  protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+    // The result of the permission activity.
+    //
+    // Note that when the permission activity is dismissed, the
+    // MotionTrackingActivity's onResume() callback is called. As the
+    // TangoService is connected in the onResume() function, we do not call
+    // connect here.
+    if (requestCode == 0) {
+      if (resultCode == RESULT_CANCELED) {
+        finish();
+      }
+    }
+  }
+
+  // Call the permission intent for the Tango Service to ask for permissions.
+  // All permission types can be found here:
+  //   https://developers.google.com/project-tango/apis/c/c-user-permissions
+  private void getPermission(String permissionType) {
+    Intent intent = new Intent();
+    intent.setAction(REQUEST_PERMISSION_ACTION);
+    intent.putExtra("PERMISSIONTYPE", permissionType);
+
+    // After the permission activity is dismissed, we will receive a callback
+    // function onActivityResult() with user's result.
+    startActivityForResult(intent, 0);
   }
 
   // Start the main area description activity and pass in user's configuration.

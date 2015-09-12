@@ -40,6 +40,7 @@ typedef enum {
   TANGO_CONFIG_CURRENT,         /**< Current */
   TANGO_CONFIG_MOTION_TRACKING, /**< Motion tracking */
   TANGO_CONFIG_AREA_LEARNING,   /**< Area learning */
+  TANGO_CONFIG_RUNTIME,         /**< Runtime settable configuration */
   TANGO_MAX_CONFIG_TYPE         /**< Maximum number allowable.  */
 } TangoConfigType;
 
@@ -414,14 +415,13 @@ char* TangoConfig_toString(TangoConfig config);
 
 /// Initializes the Tango Service. This function must be called first before
 /// other Tango functions are called. To succeed, the calling application must
-/// have camera permissions enabled. The initialization is invalidated on
-/// calling TangoService_disconnect() or if the service is stopped or faults
-/// while a client is running.  TangoService_initialize() uses two parameters,
-/// the JNI context, env, and the native activity object, activity, to check the
-/// version that the version of Tango Service installed on the device meets the
-/// minimum number required by the client library. The parameters
-/// <code>env</code> and <code>activity</code> may be retrieved in a native
-/// activity for example by:
+/// have camera permissions enabled. The initialization is invalidated if the
+/// service is stopped or faults while a client is running.
+/// TangoService_initialize() uses two parameters, the JNI context, env, and the
+/// native activity object, activity, to check the version that the version of
+/// Tango Service installed on the device meets the minimum number required by
+/// the client library. The parameters <code>env</code> and
+/// <code>activity</code> may be retrieved in a native activity for example by:
 /// @code
 /// void android_main(struct android_app* state) {
 ///   JNIEnv* env;
@@ -486,6 +486,15 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// was specified but could not be found or accessed by the service, or if the
 /// provided combination of config flags is not valid.
 TangoErrorType TangoService_connect(void* context, TangoConfig config);
+
+/// Sets configuration parameters at runtime.  Only configuration parameters
+/// prefixed config_runtime_ are settable with this and others are ignored.
+/// Must be called after TangoService_connect(), on a running system.
+/// @param config The service will be configured while running to the newly
+/// specified setting.
+/// @return Returns <code>TANGO_SUCCESS</code> on successfully reconfiguring the
+/// service. Returns <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoService_setRuntimeConfig(TangoConfig tconfig);
 
 /// Disconnects from the Tango Service. Callbacks will no longer be generated
 /// or provide sensor data. Applications should always call
@@ -1019,6 +1028,23 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Maximum number of points returned in depth point clouds.  For a
 ///         tablet device, this is 60000.  Typically no more than to 15000
 ///         are returned.</td></tr>
+/// </table>
+///
+/// The supported configuration parameters that can be queried and set at
+/// runtime are:
+///
+/// <table>
+/// <tr><td>int32 config_runtime_depth_framerate</td><td>
+///         Sets the framerate, in frames per second, at which depth is acquired
+///         and returned via the depth callback.  Setting this parameter to 0
+///         disables acquisition of depth data and the callback will not be
+///         called and will resume if set to greater than 0.  Setting this
+///         above depth_max_framerate will result in callbacks at the rate of
+///         depth_max_framerate. config_enable_depth must have been set to true,
+///         or the depth callback must be connected before
+///         TangoService_connect() in order for depth to be active so that
+///         this flag has effect. The Project Tango Tablet Development Kit
+///         supports depth framerates of 0, 1, 2, 3 and 5.</td></tr>
 /// </table>
 ///
 /// @{

@@ -28,6 +28,7 @@ LOCAL_SRC_FILES := augmented_reality_app.cc \
                    scene.cc \
                    tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/axis.cpp \
+                   $(PROJECT_ROOT_FROM_JNI)/tango-gl/bounding_box.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/drawable_object.cpp \
