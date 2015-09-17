@@ -172,4 +172,47 @@ float util::DistanceSquared(const glm::vec3& v1, const glm::vec3& v2) {
   return glm::dot(delta, delta);
 }
 
+bool util::SegmentAABBIntersect(const glm::vec3& aabb_min,
+                            const glm::vec3& aabb_max,
+                            const glm::vec3& start,
+                            const glm::vec3& end) {
+  float tmin, tmax, tymin, tymax, tzmin, tzmax;
+  glm::vec3 direction = end - start;
+  if (direction.x >= 0) {
+    tmin = (aabb_min.x - start.x) / direction.x;
+    tmax = (aabb_max.x - start.x) / direction.x;
+  } else {
+    tmin = (aabb_max.x - start.x) / direction.x;
+    tmax = (aabb_min.x - start.x) / direction.x;
+  }
+  if (direction.y >= 0) {
+    tymin = (aabb_min.y - start.y) / direction.y;
+    tymax = (aabb_max.y - start.y) / direction.y;
+  } else {
+    tymin = (aabb_max.y - start.y) / direction.y;
+    tymax = (aabb_min.y - start.y) / direction.y;
+  }
+  if ((tmin > tymax) || (tymin > tmax)) return false;
+
+  if (tymin > tmin) tmin = tymin;
+  if (tymax < tmax) tmax = tymax;
+  if (direction.z >= 0) {
+    tzmin = (aabb_min.z - start.z) / direction.z;
+    tzmax = (aabb_max.z - start.z) / direction.z;
+  } else {
+    tzmin = (aabb_max.z - start.z) / direction.z;
+    tzmax = (aabb_min.z - start.z) / direction.z;
+  }
+  if ((tmin > tzmax) || (tzmin > tmax)) return false;
+
+  if (tzmin > tmin) tmin = tzmin;
+  if (tzmax < tmax) tmax = tzmax;
+  // Use the full length of the segment.
+  return ((tmin < 1.0f) && (tmax > 0));
+}
+
+glm::vec3 util::ApplyTransform(const glm::mat4& mat, const glm::vec3& vec) {
+  return glm::vec3(mat * glm::vec4(vec, 1.0f));
+}
+
 }  // namespace tango_gl

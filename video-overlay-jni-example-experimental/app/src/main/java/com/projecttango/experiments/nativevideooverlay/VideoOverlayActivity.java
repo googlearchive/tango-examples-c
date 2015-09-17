@@ -19,10 +19,22 @@ package com.projecttango.experiments.nativevideooverlay;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ToggleButton;
+
+import android.util.Log;
 
 // Main activity shows video overlay scene.
-public class VideoOverlayActivity extends Activity {
+public class VideoOverlayActivity extends Activity
+    implements View.OnClickListener {
+  public enum TextureMethod {
+    YUV,
+    TEXTURE_ID
+  }
+
   private GLSurfaceView glView;
+  private ToggleButton mYUVRenderSwitcher;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -30,6 +42,9 @@ public class VideoOverlayActivity extends Activity {
     setContentView(R.layout.activity_video_overlay);
     glView = (GLSurfaceView) findViewById(R.id.surfaceview);
     glView.setRenderer(new Renderer());
+
+    mYUVRenderSwitcher = (ToggleButton) findViewById(R.id.yuv_switcher);
+    mYUVRenderSwitcher.setOnClickListener(this);
 
     // Initialize Tango Service, this function starts the communication
     // between the application and Tango Service.
@@ -48,6 +63,8 @@ public class VideoOverlayActivity extends Activity {
     // This function will start the Tango Service pipeline, in this case,
     // it will start Motion Tracking.
     TangoJNINative.connect();
+
+    EnableYUVTexture(mYUVRenderSwitcher.isChecked());
   }
 
   @Override
@@ -60,7 +77,27 @@ public class VideoOverlayActivity extends Activity {
     TangoJNINative.freeGLContent();
   }
 
+  @Override
+  public void onClick(View v) {
+    switch (v.getId()) {
+    case R.id.yuv_switcher:
+      EnableYUVTexture(mYUVRenderSwitcher.isChecked());
+      break;
+    }
+  }
+
+  @Override
   protected void onDestroy() {
     super.onDestroy();
+    TangoJNINative.freeGLContent();
+  }
+
+  private void EnableYUVTexture(boolean isEnabled) {
+    if (isEnabled) {
+        // Turn on YUV
+        TangoJNINative.setYUVMethod();
+      } else {
+        TangoJNINative.setTextureMethod();
+      }
   }
 }

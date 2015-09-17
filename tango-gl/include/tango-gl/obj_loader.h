@@ -24,18 +24,19 @@
 namespace tango_gl {
 namespace obj_loader {
 //  Load standard .obj file into vertices, indices or normals vectors,
-//  OBJ file can be exported from 3D tools like 3ds Max, when exporting,
-//  faces must be triangulated.
+//  OBJ file can be exported from 3D tools like 3ds Max or Blender.
 //  A readable file with only vertices should look like
 //  "v 1.00 2.00 3.00
 //   ...
 //   f 1 2 3
+//   f 1 2 3 4
 //   ..."
 //
 //  If exported with normals, file should look like
 //  "v 1.00 2.00 3.00
 //   ...
 //   f 1//1 2//3 3//4
+//   f 1//1 2//3 3//4 4//6
 //   ...
 //   vn 1.00 2.00 3.00
 //   ..."
@@ -53,8 +54,8 @@ namespace obj_loader {
 bool LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
                  std::vector<GLushort>& indices);
 
-  bool LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
-                   std::vector<GLfloat>& normals);
+bool LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
+                 std::vector<GLfloat>& normals);
 }  // namespace obj_loader
 }  // namespace tango_gl
 #endif  // TANGO_GL_OBJ_LOADER

@@ -18,6 +18,7 @@
 #define TANGO_GL_GESTURE_CAMERA_H_
 
 #include "tango-gl/camera.h"
+#include "tango-gl/segment.h"
 #include "tango-gl/transform.h"
 
 namespace tango_gl {
@@ -43,6 +44,14 @@ class GestureCamera : public Camera {
 
   void OnTouchEvent(int touch_count, TouchEvent event, float x0, float y0,
                     float x1, float y1);
+
+  // Get the ray in opengl world frame given the 2d touch position on screen,
+  // normalized touch_x and normalized touch_y should be the same value get from
+  // OnTouchEvent, x0 and y0, touch_range is the depth of the touch in
+  // camera frame.
+  Segment GetSegmentFromTouch(float normalized_x, float normalized_y,
+                              float touch_range);
+
   void SetAnchorPosition(const glm::vec3& pos);
 
   // Set camera type, set render camera's parent position and rotation.

@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_LINE_H_
-#define TANGO_GL_LINE_H_
-
-#include "tango-gl/drawable_object.h"
+#include "tango-gl/segment_drawable.h"
 
 namespace tango_gl {
-class Line : public DrawableObject {
- public:
-  Line(float line_width, GLenum render_mode);
-  void SetLineWidth(const float pixels);
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  void UpdateLineVertices(const std::vector<glm::vec3>& vec_vertices) {
-    vec_vertices_ = vec_vertices;
-  }
-
- protected:
-  float line_width_;
-  std::vector<glm::vec3> vec_vertices_;
-};
+SegmentDrawable::SegmentDrawable() : tango_gl::Line(5.0f, GL_LINES) {
+  SetShader();
+  vec_vertices_.push_back(glm::vec3(0, 0, 0));
+  vec_vertices_.push_back(glm::vec3(1.f, 1.f, 1.f));
+}
+void SegmentDrawable::UpdateSegment(const Segment& segment) {
+  vec_vertices_[0] = segment.start;
+  vec_vertices_[1] = segment.end;
+}
 }  // namespace tango_gl
-#endif  // TANGO_GL_LINE_H_

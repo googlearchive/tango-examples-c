@@ -71,6 +71,19 @@ Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_freeGLConten
     JNIEnv*, jobject) {
   app.FreeGLContent();
 }
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setYUVMethod(
+    JNIEnv*, jobject) {
+  app.SetTextureMethod(0);
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setTextureMethod(
+    JNIEnv*, jobject) {
+  app.SetTextureMethod(1);
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -57,10 +57,6 @@ public class AreaDescriptionActivity extends Activity implements
   private static final String MOTION_TRACKING_PERMISSION =
       "MOTION_TRACKING_PERMISSION";
 
-  // Key string for load/save Area Description Files.
-  private static final String AREA_LEARNING_PERMISSION =
-      "ADF_LOAD_SAVE_PERMISSION";
-
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
@@ -130,9 +126,6 @@ public class AreaDescriptionActivity extends Activity implements
     if (!Util.hasPermission(getApplicationContext(),
                             MOTION_TRACKING_PERMISSION)) {
       getPermission(MOTION_TRACKING_PERMISSION);
-    } else if (!Util.hasPermission(getApplicationContext(),
-                                   AREA_LEARNING_PERMISSION)) {
-      getPermission(AREA_LEARNING_PERMISSION);
     } else {
       // If the requested permissions are granted to the application, we can
       // connect to the Tango Service. For this example, we'll be calling

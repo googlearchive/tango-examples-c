@@ -14,35 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_CONE_H_
-#define TANGO_GL_CONE_H_
+#ifndef TANGO_GL_SEGMENT_H_
+#define TANGO_GL_SEGMENT_H_
 
-#include <stdlib.h>
-#include <vector>
-#include <math.h>
-
-#include "tango-gl/drawable_object.h"
+#include "glm/glm.hpp"
 
 namespace tango_gl {
-class Cone : public DrawableObject {
+class Segment {
  public:
-  Cone();
-  Cone(const Cone& other) = delete;
-  Cone& operator=(const Cone&) = delete;
-  ~Cone();
+  Segment() : start(glm::vec3(0, 0, 0)), end(glm::vec3(0, 0, 0)) {}
+  Segment(const glm::vec3& segment_start, const glm::vec3& segment_end)
+      : start(segment_start), end(segment_end) {}
+  Segment(const Segment&) = default;
+  Segment& operator=(const Segment&) = default;
 
-  void SetAlpha(const float alpha);
-  void SetVertexArray();
-  void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
-  std::vector<glm::vec3> vertices_;
-  std::vector<glm::vec4> colors_;
-
- private:
-  float alpha_;
-  GLuint shader_program_;
-  GLuint attrib_vertices_;
-  GLuint attrib_colors_;
-  GLuint uniform_mvp_mat_;
+  glm::vec3 start;
+  glm::vec3 end;
 };
 }  // namespace tango_gl
-#endif  // TANGO_GL_CONE_H_
+#endif  // TANGO_GL_SEGMENT_H_

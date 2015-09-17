@@ -17,7 +17,10 @@
 #include "tango-gl/line.h"
 
 namespace tango_gl {
-
+Line::Line(float line_width, GLenum render_mode) {
+  line_width_ = line_width;
+  render_mode_ = render_mode;
+}
 void Line::SetLineWidth(const float pixels) { line_width_ = pixels; }
 void Line::Render(const glm::mat4& projection_mat,
                   const glm::mat4& view_mat) const {

@@ -99,6 +99,25 @@ void GestureCamera::OnTouchEvent(int touch_count, TouchEvent event, float x0,
   }
 }
 
+Segment GestureCamera::GetSegmentFromTouch(float normalized_x,
+                                           float normalized_y,
+                                           float touch_range) {
+  float screen_height = touch_range * (2.0f * glm::tan(field_of_view_ * 0.5f));
+  float screen_width = screen_height * aspect_ratio_;
+  // normalized_x and normalized_x are from OnTouchEvent, top-left corner of the
+  // screen
+  // is [0, 0], transform it to opengl frame.
+  normalized_x = normalized_x - 0.5f;
+  normalized_y = 0.5f - normalized_y;
+  glm::vec3 start =
+      util::ApplyTransform(GetTransformationMatrix(), glm::vec3(0, 0, 0));
+  glm::vec3 end = util::ApplyTransform(GetTransformationMatrix(), 
+      glm::vec3(normalized_x * screen_width, normalized_y * screen_height,
+                -touch_range));
+  Segment segment(start, end);
+  return segment;
+}
+
 void GestureCamera::SetAnchorPosition(const glm::vec3& pos) {
   cam_parent_transform_->SetPosition(pos);
 }
@@ -147,5 +166,4 @@ void GestureCamera::StartCameraToCurrentTransform() {
   SetPosition(glm::vec3(0.0f, 0.0f, cam_cur_dist_));
   cam_parent_transform_->SetRotation(parent_cam_rot);
 }
-
 }  // namespace tango_gl

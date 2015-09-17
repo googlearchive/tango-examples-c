@@ -48,29 +48,21 @@ void Band::UpdateVertexArray(const glm::mat4 m, BandMode mode) {
   }
 
   if (need_to_initialize || sufficient_delta) {
-    glm::mat4 left  = glm::mat4(1.0f);
-    glm::mat4 right = glm::mat4(1.0f);
-    glm::mat4 arrow_left = glm::mat4(1.0f);
-    glm::mat4 arrow_right = glm::mat4(1.0f);
-    glm::mat4 arrow_front = glm::mat4(1.0f);
-
-    left[3][0]  = -band_width_ * 0.5f;
-    right[3][0] = band_width_ * 0.5f;
-    arrow_left[3][0] = -band_width_ * 0.75f;
-    arrow_right[3][0] = band_width_ * 0.75f;
-    arrow_front[3][2] = -band_width_ * 0.75f;
-    left  = m * left;
-    right = m * right;
+    glm::vec3 left  = glm::vec3(-band_width_ * 0.5f, 0, 0);
+    glm::vec3 right = glm::vec3(band_width_ * 0.5f, 0, 0);
+    glm::vec3 arrow_left = glm::vec3(-band_width_ * 0.75f, 0, 0);
+    glm::vec3 arrow_right = glm::vec3(band_width_ * 0.75f, 0, 0);
+    glm::vec3 arrow_front = glm::vec3(0, 0, -band_width_ * 0.75f);
 
     // If keep right pivot point, or normal mode,
     // then only update left pivot point.
     if (mode == BandMode::kNormal || mode == BandMode::kKeepRight) {
-      pivot_left = util::GetTranslationFromMatrix(left);
+      pivot_left = util::ApplyTransform(m, left);
     }
     // If keep left pivot point, or normal mode,
     // then only update right pivot point.
     if (mode == BandMode::kNormal || mode == BandMode::kKeepLeft) {
-      pivot_right = util::GetTranslationFromMatrix(right);
+      pivot_right = util::ApplyTransform(m, right);
     }
 
     glm::mat4 head_m = m;
@@ -85,10 +77,6 @@ void Band::UpdateVertexArray(const glm::mat4 m, BandMode mode) {
       head_m[3][2] = position.z;
     }
 
-    arrow_left  = head_m * arrow_left;
-    arrow_right  = head_m * arrow_right;
-    arrow_front = head_m * arrow_front;
-
     if (need_to_initialize) {
       vertices_v_.resize(5);
     } else {
@@ -98,12 +86,9 @@ void Band::UpdateVertexArray(const glm::mat4 m, BandMode mode) {
     size_t insertion_start = vertices_v_.size() - 5;
     vertices_v_[insertion_start + 0] = pivot_left;
     vertices_v_[insertion_start + 1] = pivot_right;
-    vertices_v_[insertion_start + 2] =
-        util::GetTranslationFromMatrix(arrow_left);
-    vertices_v_[insertion_start + 3] =
-        util::GetTranslationFromMatrix(arrow_right);
-    vertices_v_[insertion_start + 4] =
-        util::GetTranslationFromMatrix(arrow_front);
+    vertices_v_[insertion_start + 2] = util::ApplyTransform(head_m, arrow_left);
+    vertices_v_[insertion_start + 3] = util::ApplyTransform(head_m, arrow_right);
+    vertices_v_[insertion_start + 4] = util::ApplyTransform(head_m, arrow_front);
 
     if (vertices_v_.size() > max_length_) {
       vertices_v_.erase(vertices_v_.begin(), vertices_v_.begin() + 2);

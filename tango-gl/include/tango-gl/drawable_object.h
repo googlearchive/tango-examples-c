@@ -52,6 +52,7 @@ class DrawableObject : public Transform {
   std::vector<GLfloat> vertices_;
   std::vector<GLfloat> normals_;
 
+  GLenum render_mode_;
   GLuint shader_program_;
   GLuint uniform_color_;
   GLuint uniform_mvp_mat_;
