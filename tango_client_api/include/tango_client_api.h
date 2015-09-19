@@ -109,6 +109,7 @@ typedef enum {
   TANGO_EVENT_COLOR_CAMERA,     /**< Color Camera Event */
   TANGO_EVENT_IMU,              /**< IMU Event */
   TANGO_EVENT_FEATURE_TRACKING, /**< Feature Tracking Event */
+  TANGO_EVENT_AREA_LEARNING,    /**< Area Learning Event */
 } TangoEventType;
 
 /// Tango Camera Calibration types. See TangoCameraIntrinsics for a detailed
@@ -372,6 +373,7 @@ typedef struct TangoCameraIntrinsics {
 /// pixel value X px.
 /// - "TooFewFeaturesTracked:X" - too few features were tracked in the fisheye
 /// image.  The number of features tracked is X.
+/// - "AreaDescriptionSaveProgress:X" - ADF saving is X * 100 percent complete.
 /// - "Unknown"
 typedef struct TangoEvent {
   /// Timestamp, in seconds, of the event.
@@ -735,19 +737,33 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 /// permissions enabled in its Manifest.
 /// @{
 
-/// Saves the area description, returning the unique ID associated
-/// with the saved map.
+/// Optimizes and saves the area description, returning the unique ID associated
+/// with the saved ADF.
 ///
 /// You can only save an area description while connected to the Tango Service
 /// (after calling TangoService_connect() but before calling
 /// TangoService_disconnect()), and if you have enabled Area Learning mode by
 /// setting config_enable_learning_mode to true in the TangoConfig when
 /// connecting.
-/// If you loaded an ADF before connecting (specified using
-/// <code>config_load_area_description_UUID</code>), then calling this method
-/// appends any new learned areas to that ADF and returns the same UUID. If you
-/// did not load an ADF, this method creates a new ADF and a new UUID for that
-/// ADF.
+///
+/// If you enabled Area Learning mode and you also loaded an ADF when connecting
+/// (specified using <code>config_load_area_description_UUID</code>) then
+/// calling this method appends any new learned areas to the loaded areas and
+/// returns a new UUID for the new ADF (the original ADF is not modified).
+///
+/// This method may be long-running (do not call it on the UI thread). Since
+/// the Tango Service locks internally, other API calls (such as
+/// TangoService_getPoseAtTime()) will block while this method is running.
+/// Feedback about the progress of this operation is provided via a TangoEvent
+/// of type TANGO_EVENT_AREA_LEARNING with key "AreaDescriptionSaveProgress".
+///
+/// Calling this method will permanently stop motion tracking and area learning.
+/// After this method completes you may use TangoService_getPoseAtTime()
+/// repeatedly to query for the optimized pose estimate for any pose from the
+/// past using its timestamp. To re-start motion tracking or localize on the
+/// learned area description you must call TangoService_disconnect() and then
+/// connect again as normal.
+///
 /// @param uuid Upon saving, the TangoUUID to refer to this ADF is
 /// returned in <i>uuid</i>.
 /// @return Returns <code>TANGO_SUCCESS</code> on success, and
@@ -1234,6 +1250,25 @@ typedef struct TangoMesh_Experimental {
 } TangoMesh_Experimental;
 
 // Experimental API only, subject to change.
+// Metadata from the scene reconstruction.
+typedef struct TangoReconstructionMetadata_Experimental {
+  // Number of volumes allocated.
+  int64_t num_volumes_allocated;
+
+  // The allocated memory by the volumes in bytes.
+  int64_t volumes_memory_size;
+
+  // The volumes dimension in meters.
+  float volume_size;
+
+  // The entire grid bounding box lower boundary in meters.
+  float bbx_min[3];
+
+  // The entire grid bounding box upper boundary in meters.
+  float bbx_max[3];
+} TangoReconstructionMetadata_Experimental;
+
+// Experimental API only, subject to change.
 // Metadata describing a uniform three-dimensional grid.
 typedef struct TangoGridMetadata_Experimental {
   // The grid cell size, in meters.
@@ -1319,6 +1354,18 @@ TangoErrorType TangoService_Experimental_resetSceneReconstruction();
 // config_experimental_enable_scene_reconstruction flag was not enabled.
 TangoErrorType TangoService_Experimental_extractMesh(
     TangoMesh_Experimental* mesh);
+
+// Experimental API only, subject to change.
+// Gets the metadata from the scene reconstruction.
+// @param metadata A pointer to the variable to store the output metadata.
+// @return Returns <code>TANGO_SUCCESS</code> if metadata was successfully
+// extracted. Returns </code>TANGO_ERROR</code> if a connection was not
+// initialized with TangoService_initialize(). Returns
+// <code>TANGO_INVALID</code> if the scene reconstruction server was not set up
+// during initialization, which can happen if the
+// config_experimental_enable_scene_reconstruction flag was not enabled.
+TangoErrorType TangoService_Experimental_getReconstructionMetadata(
+    TangoReconstructionMetadata_Experimental* metadata);
 
 // The 3D position of a point relative to an arbitrary reference frame.
 typedef struct TangoPositionData_Experimental {

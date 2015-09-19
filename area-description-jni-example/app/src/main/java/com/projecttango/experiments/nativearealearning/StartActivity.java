@@ -32,6 +32,7 @@ public class StartActivity extends Activity implements View.OnClickListener {
       "com.projecttango.experiments.areadescriptionjava.usearealearning";
   public static final String LOAD_ADF = 
       "com.projecttango.experiments.areadescriptionjava.loadadf";
+
   // Key string for load/save Area Description Files.
   private static final String AREA_LEARNING_PERMISSION =
       "ADF_LOAD_SAVE_PERMISSION";
@@ -71,11 +72,6 @@ public class StartActivity extends Activity implements View.OnClickListener {
 
     mIsUseAreaLearning = mLearningModeToggleButton.isChecked();
     mIsLoadADF = mLoadADFToggleButton.isChecked();
-
-    // Initialize Tango Service, this function starts the communication
-    // between the application and Tango Service.
-    // The activity object is used for checking if the API version is outdated.
-    TangoJNINative.initialize((Activity)this);
 
     if (!Util.hasPermission(getApplicationContext(),
                             AREA_LEARNING_PERMISSION)) {

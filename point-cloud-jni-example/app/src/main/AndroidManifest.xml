@@ -21,7 +21,7 @@
         <activity
             android:label="@string/menu_name"
             android:name="com.projecttango.experiments.nativepointcloud.PointcloudActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

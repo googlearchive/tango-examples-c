@@ -25,6 +25,13 @@ static tango_area_learning::AreaLearningApp app;
 #ifdef __cplusplus
 extern "C" {
 #endif
+jint JNI_OnLoad(JavaVM* vm, void*) {
+  // We need to store a reference to the Java VM so that we can call into the
+  // Java layer to trigger rendering.
+  app.SetJavaVM(vm);
+  return JNI_VERSION_1_6;
+}
+
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initialize(
     JNIEnv* env, jobject, jobject activity) {
@@ -33,11 +40,11 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initialize(
 
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupConfig(
-    JNIEnv*, jobject, bool isAreaLearningEnabled, bool isLoadingADF) {
-  return app.TangoSetupConfig(isAreaLearningEnabled, isLoadingADF);
+    JNIEnv*, jobject, bool is_area_learningEnabled, bool is_loading_adf) {
+  return app.TangoSetupConfig(is_area_learningEnabled, is_loading_adf);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jboolean JNICALL
 Java_com_projecttango_experiments_nativearealearning_TangoJNINative_connect(
     JNIEnv*, jobject) {
   return app.TangoConnect();
@@ -84,6 +91,12 @@ JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativearealearning_TangoJNINative_freeContent(
     JNIEnv*, jobject) {
   app.FreeContent();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_isRelocalized(
+    JNIEnv*, jobject) {
+  return app.IsRelocalized();
 }
 
 JNIEXPORT jstring JNICALL

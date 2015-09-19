@@ -47,6 +47,7 @@
     <string name="uuid">UUID</string>
     <string name="tango_error">"Tango Exception! Try Again!"</string>
     <string name="tango_out_of_date_error">"Tango Service outdated!"</string>
+    <string name="tango_cant_initialize">"Couldn't initialize Tango. Try again in a moment."</string>
     <string name="no_uuid_tango_error">"No such UUID in ADFs"</string>
     <string name="adf_save">"ADF saved with UUID: "</string>
     <string name="adf_exists_app_space">"Tango Error! ADF already exists in app space or File system."</string> 
@@ -54,6 +55,10 @@
     <string name="no_adfs_tango_error">No ADF UUIDs</string>
     <string name="no_permissions">"Permission not granted!"</string>
     <string name="tango_invalid">"Tango Invalid Exception! Try again!"</string>
+    <string name="adf_saving">Saving ADF</string>
+    <string name="default_adf_name">New ADF</string>
+    <string name="save_adf_failed_toast_format">"Failed to save ADF '%1$s'."</string>
+    <string name="save_adf_success_toast_format">"Saved ADF '%1$s' (%2$s)."</string>
     <string-array
         name ="SetDialogMenuItemsAPISpace" > 
         <item >Rename</item>

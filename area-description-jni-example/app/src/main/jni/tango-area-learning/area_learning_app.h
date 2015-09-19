@@ -54,7 +54,7 @@ class AreaLearningApp {
 
   // Connect to Tango Service.
   // This function will start the Tango Service pipeline.
-  int TangoConnect();
+  bool TangoConnect();
 
   // Disconnect from Tango Service, release all the resources that the app is
   // holding from Tango Service.
@@ -122,6 +122,9 @@ class AreaLearningApp {
   // Release/reset all resources that allocate from the program.
   void FreeContent();
 
+  // Return true if Tango has relocalized to the current ADF at least once.
+  bool IsRelocalized();
+
   // Get the debug string for the Device with respect to Start Service frame.
   //
   // @return: pose debug strings for dispaly on Java activity.
@@ -162,6 +165,17 @@ class AreaLearningApp {
   // @param: y1, normalized touch location for touch 1 on y axis.
   void OnTouchEvent(int touch_count, tango_gl::GestureCamera::TouchEvent event,
                     float x0, float y0, float x1, float y1);
+
+  // Cache the Java VM
+  //
+  // @JavaVM java_vm: the Java VM is using from the Java layer.
+  void SetJavaVM(JavaVM* java_vm) { java_vm_ = java_vm; }
+
+  // Callback function when the Adf saving progress.
+  //
+  // @JavaVM progress: current progress value, the value is between 1 to 100,
+  //                   inclusive.
+  void OnAdfSavingProgressChanged(int progress);
 
  private:
   // Get the Tango Service version.
@@ -207,6 +221,12 @@ class AreaLearningApp {
 
   // Current loaded ADF.
   std::string loaded_adf_string_;
+
+  // Cached Java VM, caller activity object and the request render method. These
+  // variables are used for get the saving Adf progress bar update.
+  JavaVM* java_vm_;
+  jobject calling_activity_obj_;
+  jmethodID on_saving_adf_progress_updated_;
 };
 }  // namespace tango_area_learning
 

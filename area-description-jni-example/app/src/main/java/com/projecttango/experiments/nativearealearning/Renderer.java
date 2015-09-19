@@ -23,6 +23,8 @@ import javax.microedition.khronos.opengles.GL10;
 // Renderer renders graphic content. This includes the ground grid, camera
 // frustum, camera axis, and trajectory based on the Tango device's pose.
 public class Renderer implements GLSurfaceView.Renderer {
+  public AreaDescriptionActivity mAreaDescriptionActivity;
+
   // Render loop of the Gl context.
   public void onDrawFrame(GL10 gl) {
     TangoJNINative.render();
@@ -36,5 +38,6 @@ public class Renderer implements GLSurfaceView.Renderer {
   // Called when the surface is created or recreated.
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
     TangoJNINative.initGlContent();
+    mAreaDescriptionActivity.mIsSurfaceCreated = true;
   }
 }

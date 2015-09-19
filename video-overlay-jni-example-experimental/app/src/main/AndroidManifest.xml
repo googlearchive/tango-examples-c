@@ -24,7 +24,7 @@
         <activity
             android:name="com.projecttango.experiments.nativevideooverlay.VideoOverlayActivity"
             android:label="@string/app_name" 
-            android:screenOrientation="landscape"> 
+            android:screenOrientation="nosensor"> 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

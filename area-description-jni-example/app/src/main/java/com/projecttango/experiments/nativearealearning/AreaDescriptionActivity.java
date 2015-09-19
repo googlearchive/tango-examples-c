@@ -18,6 +18,7 @@ package com.projecttango.experiments.nativearealearning;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -33,10 +34,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.lang.Override;
+
 // The AreaDescriptionActivity of the application which shows debug information
 // and a glSurfaceView that renders graphic content.
 public class AreaDescriptionActivity extends Activity implements
-    View.OnClickListener, SetADFNameDialog.SetNameAndUUIDCommunicator {
+    View.OnClickListener, SetADFNameDialog.CallbackListener, SaveAdfTask.SaveAdfListener {
+
   // The user has not given permission to use Motion Tracking functionality.
   private static final int TANGO_NO_MOTION_TRACKING_PERMISSION = -3;
   // The input argument is invalid.
@@ -62,6 +66,9 @@ public class AreaDescriptionActivity extends Activity implements
   // service for pose and event information.
   private static final int kUpdateIntervalMs = 100;
 
+  // The flag to check if the surface is created.
+  public boolean mIsSurfaceCreated = false;
+
   // Debug information text.
   // Current frame's pose information.
   private TextView mStartServiceTDevicePoseData;
@@ -81,10 +88,10 @@ public class AreaDescriptionActivity extends Activity implements
   private Renderer mRenderer;
   private GLSurfaceView mGLView;
 
-  // Flag that controls wether user wants to run area learning mode.
+  // Flag that controls whether user wants to run area learning mode.
   private boolean mIsAreaLearningEnabled = false;
 
-  // Flag that controls wether user wants to load the latest ADF file.
+  // Flag that controls whether user wants to load the latest ADF file.
   private boolean mIsLoadingADF = false;
 
   // A flag to check if the Tango Service is connected. This flag avoids the
@@ -95,6 +102,9 @@ public class AreaDescriptionActivity extends Activity implements
   
   // Screen size for normalizing the touch input for orbiting the render camera.
   private Point mScreenSize = new Point();
+
+  // Long-running task to save an ADF.
+  private SaveAdfTask mSaveAdfTask;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +117,7 @@ public class AreaDescriptionActivity extends Activity implements
     // Initialize Tango Service, this function starts the communication
     // between the application and Tango Service.
     // The activity object is used for checking if the API version is outdated.
-    TangoJNINative.initialize((Activity)this);
+    TangoJNINative.initialize(this);
 
     // UI thread handles the task of updating all debug text.
     startUIThread();
@@ -139,19 +149,23 @@ public class AreaDescriptionActivity extends Activity implements
       // Connect the onPoseAvailable callback.
       TangoJNINative.connectCallbacks();
 
-      // Connect to Tango Service.
-      // This function will start the Tango Service pipeline, in this case, 
-      // it will start Motion Tracking.
-      TangoJNINative.connect();
+      // Connect to Tango Service (returns true on success).
+      // Starts Motion Tracking and Area Learning.
+      if (TangoJNINative.connect()) {
+        // Take the TangoCore version number from Tango Service.
+        mVersion.setText(TangoJNINative.getVersionNumber());
 
-      // Take the TangoCore version number from Tango Service.
-      mVersion.setText(TangoJNINative.getVersionNumber());
+        // Display loaded ADF's UUID.
+        mAdfUuidTextView.setText(TangoJNINative.getLoadedADFUUIDString());
 
-      // Display loaded ADF's UUID.
-      mAdfUuidTextView.setText(TangoJNINative.getLoadedADFUUIDString());
+        // Set the connected service flag to true.
+        mIsConnectedService = true;
 
-      // Set the connected service flag to true.
-      mIsConnectedService = true;
+      } else {
+        // End the activity and let the user know something went wrong.
+        Toast.makeText(this, R.string.tango_cant_initialize, Toast.LENGTH_LONG).show();
+        finish();
+      }
     }
   }
 
@@ -159,7 +173,10 @@ public class AreaDescriptionActivity extends Activity implements
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    TangoJNINative.freeContent();
+    if (mIsSurfaceCreated) {
+      TangoJNINative.freeContent();
+      mIsSurfaceCreated = false;
+    }
 
     // If the service is connected, we disconnect it here.
     if (mIsConnectedService) {
@@ -193,12 +210,8 @@ public class AreaDescriptionActivity extends Activity implements
         TangoJNINative.setCamera(1);
         break;
       case R.id.save_adf_button:
-        String adfName = TangoJNINative.saveAdf();
-        if (!adfName.isEmpty()) {
-          showSetNameDialog(adfName);
-        } else {
-          Toast.makeText(this, "Cannot Save ADF", Toast.LENGTH_LONG).show();
-        }
+        // Ask the user for an ADF name, then save if OK was clicked.
+        showSetADFNameDialog();
         break;
       default:
         Log.w(TAG, "Unknown button click");
@@ -231,7 +244,7 @@ public class AreaDescriptionActivity extends Activity implements
         float normalizedX1 = event.getX(1) / mScreenSize.x;
         float normalizedY1 = event.getY(1) / mScreenSize.y;
         TangoJNINative.onTouchEvent(2, event.getActionMasked(),
-            normalizedX0, normalizedY0, normalizedX1, normalizedY1);
+                normalizedX0, normalizedY0, normalizedX1, normalizedY1);
       }
     }
     return true;
@@ -253,11 +266,66 @@ public class AreaDescriptionActivity extends Activity implements
     }
   }
 
-  // This callback is called when save button is clicked from the
-  // SetADFNameDialog fragment.
+  /**
+   * Implementation of callback listener interface in SetADFNameDialog.
+   */
   @Override
-  public void setAdfNameAndUUID(String name, String uuid) {
-    TangoJNINative.setAdfMetadataValue(uuid, "name", name);
+  public void onAdfNameOk(String adfName, String adfUuid) {
+    saveAdf(adfName);
+  }
+
+  /**
+   * Implementation of callback listener interface in SetADFNameDialog.
+   */
+  @Override
+  public void onAdfNameCancelled() {
+    // Continue running.
+  }
+
+  /**
+   * Save the current Area Description File.
+   * Performs saving on a background thread and displays a progress dialog.
+   */
+  private void saveAdf(String adfName) {
+    mSaveAdfTask = new SaveAdfTask(this, this, adfName);
+    mSaveAdfTask.execute();
+  }
+
+  /**
+   * Handles failed save from mSaveAdfTask.
+   */
+  @Override
+  public void onSaveAdfFailed(String adfName) {
+    String toastMessage = String.format(
+      getResources().getString(R.string.save_adf_failed_toast_format),
+      adfName);
+    Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show();
+    mSaveAdfTask = null;
+  }
+
+  /**
+   * Handles successful save from mSaveAdfTask.
+   */
+  @Override
+  public void onSaveAdfSuccess(String adfName, String adfUuid) {
+    String toastMessage = String.format(
+      getResources().getString(R.string.save_adf_success_toast_format),
+      adfName, adfUuid);
+    Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show();
+    mSaveAdfTask = null;
+    finish();
+  }
+
+  /**
+   * Updates the save progress dialog (called from area_learning_app.cc).
+   */
+  public void updateSavingAdfProgress(int progress) {
+    // Note: this method is not called from the UI thread. We read mSaveAdfTask into
+    // a local variable because the UI thread may null-out the member variable at any time.
+    SaveAdfTask saveAdfTask = mSaveAdfTask;
+    if (saveAdfTask != null) {
+      saveAdfTask.publishProgress(progress);
+    }
   }
 
   // Query user's input for the Tango Service configuration.
@@ -309,8 +377,11 @@ public class AreaDescriptionActivity extends Activity implements
     findViewById(R.id.top_down_button).setOnClickListener(this);
     findViewById(R.id.save_adf_button).setOnClickListener(this);
 
-    // Hide to save ADF button if leanring mode is off.
-    if (!mIsAreaLearningEnabled) {
+    if (mIsAreaLearningEnabled) {
+      // Disable save ADF button until Tango relocalizes to the current ADF.
+      findViewById(R.id.save_adf_button).setEnabled(false);
+    } else {
+      // Hide to save ADF button if leanring mode is off.
       findViewById(R.id.save_adf_button).setVisibility(View.GONE);
     }
 
@@ -319,16 +390,14 @@ public class AreaDescriptionActivity extends Activity implements
 
     // Configure OpenGL renderer
     mRenderer = new Renderer();
+    mRenderer.mAreaDescriptionActivity = this;
     mGLView.setRenderer(mRenderer);
   }
 
-  private void showSetNameDialog(String mCurrentUUID) {
+  private void showSetADFNameDialog() {
     Bundle bundle = new Bundle();
-    String name = TangoJNINative.getAdfMetadataValue(mCurrentUUID, "name");
-    if (name != null) {
-      bundle.putString("name", name);
-    }
-    bundle.putString("id", mCurrentUUID);
+    bundle.putString("name", getResources().getString(R.string.default_adf_name));
+    bundle.putString("id", ""); // UUID is generated after the ADF is saved.
 
     FragmentManager manager = getFragmentManager();
     SetADFNameDialog setADFNameDialog = new SetADFNameDialog();
@@ -377,10 +446,17 @@ public class AreaDescriptionActivity extends Activity implements
   }
 
   private void updateUI() {
+    // Update the UI debug displays.
     mEvent.setText(TangoJNINative.getEventString());
     mStartServiceTDevicePoseData.setText(
         TangoJNINative.getStartServiceTDeviceString());
     mADFTDevicePoseData.setText(TangoJNINative.getAdfTDeviceString());
     mADFTStartServicePoseData.setText(TangoJNINative.getAdfTStartServiceString());
+
+    // If Tango has relocalized, allow saving the ADF.
+    // Note: Tango returns TANGO_INVALID if saveAdf() is called before relocalization.
+    if (TangoJNINative.isRelocalized()) {
+      findViewById(R.id.save_adf_button).setEnabled(true);
+    }
   }
 }
