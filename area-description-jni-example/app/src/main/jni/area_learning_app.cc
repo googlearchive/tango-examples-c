@@ -57,6 +57,11 @@ void AreaLearningApp::onPoseAvailable(const TangoPoseData* pose) {
 void AreaLearningApp::onTangoEventAvailable(const TangoEvent* event) {
   std::lock_guard<std::mutex> lock(tango_event_mutex_);
   tango_event_data_.UpdateTangoEvent(event);
+
+  if (event->type == TangoEventType::TANGO_EVENT_AREA_LEARNING &&
+      !strcmp(event->event_key, "AreaDescriptionSaveProgress")) {
+    OnAdfSavingProgressChanged(std::atof(event->event_value) * 100);
+  }
 }
 
 AreaLearningApp::AreaLearningApp() {
@@ -64,13 +69,26 @@ AreaLearningApp::AreaLearningApp() {
   loaded_adf_string_ = "Loaded ADF: N/A";
 }
 
-AreaLearningApp::~AreaLearningApp() { TangoConfig_free(tango_config_); }
+AreaLearningApp::~AreaLearningApp() {
+  TangoConfig_free(tango_config_);
+  JNIEnv* env;
+  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+  env->DeleteGlobalRef(calling_activity_obj_);
+}
 
 int AreaLearningApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
   // The first thing we need to do for any Tango enabled application is to
   // initialize the service. We'll do that here, passing on the JNI environment
   // and jobject corresponding to the Android activity that is calling us.
-  return TangoService_initialize(env, caller_activity);
+  int ret = TangoService_initialize(env, caller_activity);
+
+  jclass cls = env->GetObjectClass(caller_activity);
+  on_saving_adf_progress_updated_ =
+      env->GetMethodID(cls, "updateSavingAdfProgress", "(I)V");
+
+  calling_activity_obj_ =
+      reinterpret_cast<jobject>(env->NewGlobalRef(caller_activity));
+  return ret;
 }
 
 int AreaLearningApp::TangoSetupConfig(bool is_area_learning_enabled,
@@ -148,14 +166,14 @@ int AreaLearningApp::TangoConnectCallbacks() {
 
 // Connect to Tango Service, service will start running, and
 // pose can be queried.
-int AreaLearningApp::TangoConnect() {
+bool AreaLearningApp::TangoConnect() {
   TangoErrorType ret = TangoService_connect(this, tango_config_);
-  if (ret != TANGO_SUCCESS) {
+  bool is_connected = (ret == TANGO_SUCCESS);
+  if (!is_connected) {
     LOGE("AreaLearningApp: Failed to connect to the Tango service with"
          "error code: %d", ret);
-    return ret;
   }
-  return ret;
+  return is_connected;
 }
 
 void AreaLearningApp::TangoDisconnect() {
@@ -174,15 +192,21 @@ void AreaLearningApp::TangoResetMotionTracking() {
 }
 
 std::string AreaLearningApp::SaveAdf() {
+  std::string adf_uuid_string;
   if(!pose_data_.IsRelocalized()) {
-    return std::string();
+    return adf_uuid_string;
   }
   TangoUUID uuid;
   int ret = TangoService_saveAreaDescription(&uuid);
-  if (ret != TANGO_SUCCESS) {
+  if (ret == TANGO_SUCCESS) {
+    LOGI("AreaLearningApp: Successfully saved ADF with UUID: %s", uuid);
+    adf_uuid_string = std::string(uuid);
+  } else {
+    // Note: uuid is set to a nullptr in this case, so don't always try to
+    // construct a string from it!
     LOGE("AreaLearningApp: Failed to save ADF with error code: %d", ret);
   }
-  return std::string(uuid);
+  return adf_uuid_string;
 }
 
 std::string AreaLearningApp::GetAdfMetadataValue(const std::string& uuid,
@@ -272,6 +296,11 @@ void AreaLearningApp::FreeContent() {
   main_scene_.FreeGLContent();
 }
 
+bool AreaLearningApp::IsRelocalized() {
+  std::lock_guard<std::mutex> lock(pose_mutex_);
+  return pose_data_.IsRelocalized();
+}
+
 std::string AreaLearningApp::GetStartServiceTDeviceString() {
   std::lock_guard<std::mutex> lock(pose_mutex_);
   return pose_data_.GetStartServiceTDeviceString();
@@ -342,6 +371,15 @@ std::string AreaLearningApp::GetTangoServiceVersion() {
          ret);
   }
   return std::string(version_buffer);
+}
+
+void AreaLearningApp::OnAdfSavingProgressChanged(int progress) {
+  // Here, we notify the Java activity that we'd like it to update the saving
+  // Adf progress.
+  JNIEnv* env;
+  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+  env->CallVoidMethod(calling_activity_obj_, on_saving_adf_progress_updated_,
+                      progress);
 }
 
 }  // namespace tango_area_learning

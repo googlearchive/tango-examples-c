@@ -41,8 +41,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-// Data container for store ADF's UUID and name, these date is used in the
-// list view.
+/**
+ * Contains an ADF Name and its UUID.
+ */
 class AdfData {
   public String mUuid = new String(); 
   public String mName = new String(); 
@@ -53,8 +54,9 @@ class AdfData {
   }
 }
 
-// This is an adapter class which maps the ListView with a Data Source(Array of
-// strings).
+/**
+ * Maps AdfData to Strings for display in the ListView.
+ */
 class AdfUuidArrayAdapter extends ArrayAdapter<String> {
   Context mContext;
   private String[] mUuidArray, mNameArray;
@@ -99,12 +101,15 @@ class AdfUuidArrayAdapter extends ArrayAdapter<String> {
   }
 }
 
-// This class lets you manage ADFs between this class's Application Package
-// folder and API private space. This showcases three things:
-// Import, Export, Delete an ADF file from API private space to any known and
-// accessible file path.
+/**
+ * Creates a ListVIew to manage ADFs owned by the Tango Service.
+ * Showcases:
+ * - Importing an ADF to the Tango Service from this class's Application Package folder.
+ * - Exporting an ADF from the Tango Service to this class's Application Package folder.
+ * - Deleting an ADF owned by the Tango Service.
+ */
 public class ADFUUIDListViewActivity extends Activity implements
-      SetADFNameDialog.SetNameAndUUIDCommunicator {
+      SetADFNameDialog.CallbackListener {
   private static final String INTENT_CLASS_PACKAGE = "com.projecttango.tango";
   private static final String INTENT_REQUEST_PERMISSION_CLASSNAME =
       "com.google.atap.tango.RequestPermissionActivity";
@@ -227,13 +232,25 @@ public class ADFUUIDListViewActivity extends Activity implements
     updateList();
   }
 
+  /**
+   * Implementation of callback listener interface in SetADFNameDialog.
+   */
   @Override
-  public void setAdfNameAndUUID(String name, String uuid) {
+  public void onAdfNameOk(String name, String uuid) {
     TangoJNINative.setAdfMetadataValue(uuid, "name", name);
     updateList();
   }
 
-  // Import an ADF from app space to Tango space.
+  /**
+   * Implementation of callback listener interface in SetADFNameDialog.
+   */
+  @Override
+  public void onAdfNameCancelled() {
+  }
+
+  /**
+   * Import an ADF from app space to Tango space.
+   */
   private void importAdf(String uuid) {
     String filepath = mAppSpaceADFFolder + File.separator + uuid;
     Intent importIntent = new Intent();
@@ -242,7 +259,9 @@ public class ADFUUIDListViewActivity extends Activity implements
     startActivityForResult(importIntent, TANGO_INTENT_ACTIVITY_CODE);
   }
 
-  // Export an ADF from Tango space to app space.
+  /**
+   * Export an ADF from Tango space to app space.
+   */
   private void exportAdf(String uuid) {
     Intent exportIntent = new Intent();
     exportIntent.setClassName(INTENT_CLASS_PACKAGE, INTENT_IMPORT_EXPORT_CLASSNAME);

@@ -19,7 +19,7 @@
         <activity
             android:name="com.projecttango.experiments.nativemotiontracking.StartActivity"
             android:label="@string/menu_name"
-            android:screenOrientation="landscape">
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -28,7 +28,7 @@
         <activity
             android:name="com.projecttango.experiments.nativemotiontracking.MotionTrackingActivity"
             android:label="@string/menu_name" 
-            android:screenOrientation="landscape"> 
+            android:screenOrientation="nosensor"> 
         </activity>
     </application>
 

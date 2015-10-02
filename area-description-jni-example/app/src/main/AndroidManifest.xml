@@ -19,7 +19,7 @@
         <activity
             android:label="@string/menu_name"
             android:name="com.projecttango.experiments.nativearealearning.StartActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -27,11 +27,11 @@
         </activity>
         <activity
             android:name="com.projecttango.experiments.nativearealearning.AreaDescriptionActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="nosensor">
         </activity>
         <activity
             android:name="com.projecttango.experiments.nativearealearning.ADFUUIDListViewActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="nosensor">
         </activity>
     </application>
 

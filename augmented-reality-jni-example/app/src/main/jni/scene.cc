@@ -94,7 +94,6 @@ void Scene::SetupViewPort(int x, int y, int w, int h) {
 
 void Scene::Render(const glm::mat4& cur_pose_transformation) {
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
 
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
