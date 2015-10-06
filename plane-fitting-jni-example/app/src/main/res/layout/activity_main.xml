@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2015 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<com.projecttango.experiments.nativeplanefitting.CustomDrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="#ff000000">
+
+            <android.opengl.GLSurfaceView
+                android:id="@+id/gl_surface_view"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_gravity="top"
+                android:layout_marginStart="2dp"
+                android:paddingStart="15dip" />
+
+            <LinearLayout
+                android:layout_width="@dimen/menu_width"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/main_margin_horizontal"
+                android:layout_marginTop="@dimen/main_margin_vertical"
+                android:background="@drawable/bg_white_shadow"
+                android:gravity="top"
+                android:orientation="horizontal"
+                android:paddingStart="5dp"
+                android:paddingEnd="12dp">
+
+                <ImageButton
+                    android:id="@+id/drawer_button"
+                    style="@style/MenuButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/menu_height"
+                    android:layout_marginEnd="@dimen/menu_drawer_margin"
+                    android:contentDescription="@string/open_drawer_button"
+                    android:src="@drawable/ic_drawer" />
+            </LinearLayout>
+        </RelativeLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/drawer_view"
+        android:layout_width="@dimen/drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/background_light"
+        android:gravity="start"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/drawer_header"
+            android:src="@drawable/drawer_header_main" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/grey_pressed" />
+
+        <Button
+            android:id="@+id/button_settings"
+            style="@style/TextPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/drawer_content_height_primary"
+            android:background="@drawable/bg_button_grey_light_press"
+            android:drawableStart="@drawable/ic_about_default"
+            android:drawablePadding="@dimen/drawer_content_padding"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/drawer_content_padding"
+            android:text="@string/settings" />
+    </LinearLayout>
+</com.projecttango.experiments.nativeplanefitting.CustomDrawerLayout>
