@@ -18,13 +18,24 @@
         android:max="100"
         android:progress="50"
         android:indeterminate="false" />
-        <CheckBox
-            android:id="@+id/debug_overlay_checkbox"
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:text="Debug Overlay"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:checked="false"
-            android:layout_margin="2dp" />
+
+    <CheckBox
+        android:id="@+id/gpu_upsample_checkbox"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="GPU Upsample"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="false"
+        android:checked="false"
+        android:layout_margin="2dp" />
+
+    <CheckBox
+        android:id="@+id/debug_overlay_checkbox"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="Debug Overlay"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:checked="false"
+        android:layout_margin="2dp" />
 </RelativeLayout>

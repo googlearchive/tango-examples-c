@@ -95,6 +95,9 @@ class SynchronizationApplication {
   // Set the transparency of Depth Image.
   void SetDepthAlphaValue(float alpha);
 
+  // Set whether to use GPU or CPU upsampling
+  void SetGPUUpsample(bool on);
+
   // Callback for point clouds that come in from the Tango service.
   //
   // @param xyz_ij The point cloud returned by the service.
@@ -159,6 +162,8 @@ class SynchronizationApplication {
   // point cloud buffer available and swap the shared and render buffers
   // accordingly.
   bool swap_signal;
+
+  bool gpu_upsample_;
 };
 }  // namespace rgb_depth_sync
 

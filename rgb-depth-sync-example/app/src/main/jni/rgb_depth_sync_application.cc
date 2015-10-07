@@ -44,7 +44,9 @@ void SynchronizationApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
   }
 }
 
-SynchronizationApplication::SynchronizationApplication() {
+  SynchronizationApplication::SynchronizationApplication() :
+    swap_signal(false),
+    gpu_upsample_(false) {
   // We'll store the fixed transform between the opengl frame convention.
   // (Y-up, X-right) and tango frame convention. (Z-up, X-right).
   OW_T_SS_ = tango_gl::conversions::opengl_world_T_tango_world();
@@ -237,12 +239,14 @@ void SynchronizationApplication::Render() {
 
   double color_timestamp = 0.0;
   double depth_timestamp = 0.0;
+  bool new_points = false;
   {
     std::lock_guard<std::mutex> lock(point_cloud_mutex_);
     depth_timestamp = depth_timestamp_;
     if (swap_signal) {
       shared_point_cloud_buffer_.swap(render_point_cloud_buffer_);
       swap_signal = false;
+      new_points = true;
     }
   }
   // We need to make sure that we update the texture associated with the color
@@ -320,8 +324,13 @@ void SynchronizationApplication::Render() {
           color_t1_T_device_t1 * glm::inverse(start_service_T_device_t1) *
           start_service_T_device_t0 * device_t0_T_depth_t0;
 
-      depth_image_->UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
-                                           render_point_cloud_buffer_);
+      if(gpu_upsample_) {
+        depth_image_->RenderDepthToTexture(color_image_t1_T_depth_image_t0,
+                                           render_point_cloud_buffer_, new_points);
+      } else {
+        depth_image_->UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
+                                             render_point_cloud_buffer_);
+      }
     } else {
       LOGE("Invalid pose for ss_t_depth at time: %lf", depth_timestamp);
     }
@@ -339,6 +348,10 @@ void SynchronizationApplication::FreeGLContent() {
 
 void SynchronizationApplication::SetDepthAlphaValue(float alpha) {
   main_scene_->SetDepthAlphaValue(alpha);
+}
+
+void SynchronizationApplication::SetGPUUpsample(bool on) {
+  gpu_upsample_ = on;
 }
 
 }  // namespace rgb_depth_sync
