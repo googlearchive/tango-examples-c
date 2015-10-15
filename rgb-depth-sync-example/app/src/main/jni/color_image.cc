@@ -19,7 +19,6 @@
 namespace rgb_depth_sync {
 
 ColorImage::ColorImage() {
-  glEnable(GL_TEXTURE_EXTERNAL_OES);
   glGenTextures(1, &texture_id_);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

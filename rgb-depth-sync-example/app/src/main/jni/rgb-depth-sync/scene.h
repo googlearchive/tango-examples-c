@@ -37,7 +37,7 @@ class Scene {
   // Setup GL view port.
   void SetupViewPort(int w, int h);
 
-  // Renders the scene onto the camera image.
+  // Renders the scene onto the camera image using the provided depth texture.
   void Render();
 
   // Set the depth texture's alpha blending value. The range is [0.0, 1.0].
@@ -61,6 +61,10 @@ class Scene {
 
   tango_gl::Grid grid_;
   CameraTextureDrawable camera_texture_drawable_;
+
+  // These are non-owning pointers and should not be deleted.
+  ColorImage* color_image_;
+  DepthImage* depth_image_;
 };
 }  // namespace rgb_depth_sync
 

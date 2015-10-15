@@ -15,20 +15,169 @@
  */
 
 #include "tango-gl/conversions.h"
+#include "tango-gl/camera.h"
 
 #include "rgb-depth-sync/depth_image.h"
 
+namespace {
+const std::string kPointCloudVertexShader =
+    "precision mediump float;\n"
+    "\n"
+    "attribute vec4 vertex;\n"
+    "\n"
+    "uniform mat4 mvp;\n"
+    "uniform float maxdepth;\n"
+    "uniform float pointsize;\n"
+    "\n"
+    "varying vec4 v_color;\n"
+    "\n"
+    "void main() {\n"
+    "  gl_PointSize = pointsize;\n"
+    "  gl_Position = mvp*vertex;\n"
+    "  float depth = clamp(vertex.z / maxdepth, 0.0, 1.0);\n"
+    "  v_color = vec4(depth, depth, depth, 1.0);\n"
+    "}\n";
+const std::string kPointCloudFragmentShader =
+    "precision mediump float;\n"
+    "\n"
+    "varying vec4 v_color;\n"
+    "void main() {\n"
+    "  gl_FragColor = v_color;\n"
+    "}\n";
+}  // namespace
+
 namespace rgb_depth_sync {
 
-DepthImage::DepthImage() {
-  glEnable(GL_TEXTURE_2D);
-  glActiveTexture(GL_TEXTURE1);
-  glGenTextures(1, &texture_id_);
-  tango_gl::util::CheckGlError("DepthImage while initialization");
-}
+DepthImage::DepthImage()
+    : texture_id_(0),
+      cpu_texture_id_(0),
+      gpu_texture_id_(0),
+      depth_map_buffer_(0),
+      grayscale_display_buffer_(0),
+      texture_render_program_(0),
+      fbo_handle_(0),
+      vertex_buffer_handle_(0),
+      vertices_handle_(0),
+      mvp_handle_(0) {}
 
 DepthImage::~DepthImage() {
-  glDeleteTextures(1, &texture_id_);
+  glDeleteTextures(1, &cpu_texture_id_);
+  glDeleteTextures(1, &gpu_texture_id_);
+
+  glDeleteBuffers(1, &vertex_buffer_handle_);
+  glDeleteFramebuffers(1, &fbo_handle_);
+  glDeleteProgram(texture_render_program_);
+}
+
+bool DepthImage::CreateOrBindGPUTexture() {
+  if (gpu_texture_id_) {
+    glBindTexture(GL_TEXTURE_2D, gpu_texture_id_);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle_);
+    return false;
+  } else {
+    glGenTextures(1, &gpu_texture_id_);
+    texture_render_program_ = tango_gl::util::CreateProgram(
+        kPointCloudVertexShader.c_str(), kPointCloudFragmentShader.c_str());
+
+    mvp_handle_ = glGetUniformLocation(texture_render_program_, "mvp");
+
+    glUseProgram(texture_render_program_);
+    // Assume these are constant for the life the program
+    GLuint max_depth_handle =
+        glGetUniformLocation(texture_render_program_, "maxdepth");
+    GLuint point_size_handle =
+        glGetUniformLocation(texture_render_program_, "pointsize");
+    glUniform1f(max_depth_handle,
+                static_cast<float>(kMaxDepthDistance) / kMeterToMillimeter);
+    glUniform1f(point_size_handle, 2 * kWindowSize + 1);
+
+    vertices_handle_ = glGetAttribLocation(texture_render_program_, "vertex");
+
+    glGenBuffers(1, &vertex_buffer_handle_);
+
+    glBindTexture(GL_TEXTURE_2D, gpu_texture_id_);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgb_camera_intrinsics_.width,
+                 rgb_camera_intrinsics_.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glGenFramebuffers(1, &fbo_handle_);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle_);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D,
+                           gpu_texture_id_, 0);
+
+    return true;
+  }
+}
+
+bool DepthImage::CreateOrBindCPUTexture() {
+  if (cpu_texture_id_) {
+    glBindTexture(GL_TEXTURE_2D, cpu_texture_id_);
+    return false;
+  } else {
+    glGenTextures(1, &cpu_texture_id_);
+    glBindTexture(GL_TEXTURE_2D, cpu_texture_id_);
+    glTexImage2D(GL_TEXTURE_2D, 0,  // mip-map level
+                 GL_LUMINANCE, rgb_camera_intrinsics_.width,
+                 rgb_camera_intrinsics_.height, 0,  // border
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    return true;
+  }
+}
+
+void DepthImage::RenderDepthToTexture(
+    glm::mat4& color_t1_T_depth_t0,
+    const std::vector<float>& render_point_cloud_buffer, bool new_points) {
+  new_points = this->CreateOrBindGPUTexture() || new_points;
+
+  glViewport(0, 0, rgb_camera_intrinsics_.width, rgb_camera_intrinsics_.height);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  // Special program needed to color by z-distance
+  glUseProgram(texture_render_program_);
+
+  glDisable(GL_BLEND);
+  glEnable(GL_DEPTH_TEST);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_handle_);
+  if(new_points) {
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * render_point_cloud_buffer.size(),
+                 render_point_cloud_buffer.data(), GL_STATIC_DRAW);
+  }
+  tango_gl::util::CheckGlError("DepthImage Buffer");
+
+  // Skip negation of Y-axis as is normally done in opengl_T_color
+  // since we are rendering to a texture that we want to match the Y-axis
+  // of the color image.
+  const glm::mat4 opengl_T_color(1.0f, 0.0f, 0.0f, 0.0f,
+                                 0.0f, 1.0f, 0.0f, 0.0f,
+                                 0.0f, 0.0f, -1.0f, 0.0f,
+                                 0.0f, 0.0f, 0.0f, 1.0f);
+
+  glm::mat4 mvp_mat = projection_matrix_ar_ * opengl_T_color * color_t1_T_depth_t0;
+
+  glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+
+  glEnableVertexAttribArray(vertices_handle_);
+  glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0,  nullptr);
+
+  glDrawArrays(GL_POINTS, 0, render_point_cloud_buffer.size() / 3);
+  glDisableVertexAttribArray(vertices_handle_);
+
+  tango_gl::util::CheckGlError("DepthImage Draw");
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glUseProgram(0);
+
+  tango_gl::util::CheckGlError("DepthImage RenderTexture");
+
+  texture_id_ = gpu_texture_id_;
 }
 
 // Update function will be called in application's main render loop. This funct-
@@ -85,31 +234,34 @@ void DepthImage::UpdateAndUpsampleDepth(
     // getting a `pixel_value` at (pixel_x,pixel_y) and calculating
     // pixel_value * (kMaxDepthDistance / USHRT_MAX)
     float depth_value = color_t1_point.z;
-    uint16_t grayscale_value =
-        (color_t1_point.z * kMeterToMillimeter) * USHRT_MAX / kMaxDepthDistance;
+    uint8_t grayscale_value =
+        (color_t1_point.z * kMeterToMillimeter) * UCHAR_MAX / kMaxDepthDistance;
 
     UpSampleDepthAroundPoint(grayscale_value, depth_value, pixel_x, pixel_y,
                              &grayscale_display_buffer_, &depth_map_buffer_);
   }
 
-  glEnable(GL_TEXTURE_2D);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture_id_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, depth_image_width,
-               depth_image_height, 0, GL_LUMINANCE, GL_UNSIGNED_SHORT,
-               grayscale_display_buffer_.data());
-  tango_gl::util::CheckGlError("DepthImage glTexImage2D");
+  this->CreateOrBindCPUTexture();
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depth_image_width, depth_image_height,
+                  GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                  grayscale_display_buffer_.data());
+  tango_gl::util::CheckGlError("DepthImage glTexSubImage2D");
+
+  texture_id_ = cpu_texture_id_;
 }
 
 void DepthImage::SetCameraIntrinsics(TangoCameraIntrinsics intrinsics) {
   rgb_camera_intrinsics_ = intrinsics;
+  const float kNearClip = 0.1;
+  const float kFarClip = 10.0;
+  projection_matrix_ar_ = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+      intrinsics.width, intrinsics.height, intrinsics.fx, intrinsics.fy,
+      intrinsics.cx, intrinsics.cy, kNearClip, kFarClip);
 }
 
 void DepthImage::UpSampleDepthAroundPoint(
-    uint16_t grayscale_value, float depth_value, int pixel_x, int pixel_y,
-    std::vector<uint16_t>* grayscale_buffer,
+    uint8_t grayscale_value, float depth_value, int pixel_x, int pixel_y,
+    std::vector<uint8_t>* grayscale_buffer,
     std::vector<float>* depth_map_buffer) {
 
   int image_width = rgb_camera_intrinsics_.width;

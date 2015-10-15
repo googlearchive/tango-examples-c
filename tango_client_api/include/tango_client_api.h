@@ -71,6 +71,8 @@ typedef enum {
 /// Errors less then 0 should be dealt with by the program.
 /// Success is denoted by <code>TANGO_SUCCESS = 0</code>.
 typedef enum {
+  /// The user has not given permissions to read and write datasets.
+  TANGO_NO_DATASET_PERMISSION = -7,
   /// The user has not given permission to export or import ADF files.
   TANGO_NO_IMPORT_EXPORT_PERMISSION = -6,
   /// The user has not given permission to access the device's camera.
@@ -495,7 +497,10 @@ TangoErrorType TangoService_connect(void* context, TangoConfig config);
 /// @param config The service will be configured while running to the newly
 /// specified setting.
 /// @return Returns <code>TANGO_SUCCESS</code> on successfully reconfiguring the
-/// service. Returns <code>TANGO_ERROR</code> on failure.
+/// service. Returns <code>TANGO_INVALID</code> if the app has not connected
+/// to the service, in which case no changes are made, or if tconfig is NULL.
+/// Returns <code>TANGO_ERROR</code> on failure or if the service was not found
+/// on the device.
 TangoErrorType TangoService_setRuntimeConfig(TangoConfig tconfig);
 
 /// Disconnects from the Tango Service. Callbacks will no longer be generated
@@ -1054,13 +1059,12 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Sets the framerate, in frames per second, at which depth is acquired
 ///         and returned via the depth callback.  Setting this parameter to 0
 ///         disables acquisition of depth data and the callback will not be
-///         called and will resume if set to greater than 0.  Setting this
-///         above depth_max_framerate will result in callbacks at the rate of
-///         depth_max_framerate. config_enable_depth must have been set to true,
-///         or the depth callback must be connected before
-///         TangoService_connect() in order for depth to be active so that
-///         this flag has effect. The Project Tango Tablet Development Kit
-///         supports depth framerates of 0, 1, 2, 3 and 5.</td></tr>
+///         called and will resume if set to greater than 0.
+///         config_enable_depth must have been set to true, or the depth
+///         callback must be connected before TangoService_connect() in order
+///         for depth to be active so that this flag has effect. The Project
+///         Tango Tablet Development Kit supports depth framerates of 0, 1, 2, 3
+///         and 5.</td></tr>
 /// </table>
 ///
 /// @{
@@ -1455,6 +1459,35 @@ TangoErrorType TangoService_Experimental_loadAreaDescription(
 /// be initialized.
 TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
     const char* file_path);
+
+/// Experimental API only, subject to change.
+/// Returns a list of Tango dataset UUIDs, containing a UUID for each valid
+/// dataset recorded to the Tango Service application directory. Memory will be
+/// dynamically allocated by this call, and must be deallocated using @link
+/// TangoService_Experimental_ReleaseDatasetUUIDs @endlink. The service does not
+/// need to be connected in order to call this function.
+/// @param dataset_uuids a dynamic array of TangoUUIDs. Will be dynamically
+/// allocated by this call.
+/// @param num_dataset_uuids. An output parameter for the number of dataset
+/// UUIDs returned.
+/// @return Returns <code>TANGO_SUCCESS</code> if the dataset UUIDs were
+/// successfully retrieved. Returns <code>TANGO_ERROR</code> if communication
+/// failed or the datasets could not be enumerated. Returns <code>
+/// TANGO_NO_DATASET_PERMISSION</code> if user has not given permissions to read
+/// and write datasets. Returns <code>TANGO_INVALID</code> if any of the
+/// arguments passed were NULL.
+TangoErrorType TangoService_Experimental_getDatasetUUIDs(
+    TangoUUID** dataset_uuids, int* num_dataset_uuids);
+
+/// Experimental API only, subject to change
+/// Frees up memory allocated by @link TangoService_Experimental_GetDatasetUUIDs
+/// @endlink
+/// @param dataset_uuids a dynamic array of TangoUUIDs. Will be deallocated by
+/// this call.
+/// @returns Returns <code>TANGO_INVALID</code> if any of the arguments passed
+/// were NULL, and <code>TANGO_SUCCESS</code> otherwise.
+TangoErrorType TangoService_Experimental_releaseDatasetUUIDs(
+    TangoUUID** dataset_uuids);
 
 #ifdef __cplusplus
 }

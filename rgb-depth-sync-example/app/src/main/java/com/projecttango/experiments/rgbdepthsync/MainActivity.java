@@ -60,12 +60,13 @@ public class MainActivity extends Activity {
 
     private SeekBar mDepthOverlaySeekbar;
     private CheckBox mdebugOverlayCheckbox;
+    private CheckBox mGPUUpsampleCheckbox;
 
     private boolean mIsConnectedService = false;
 
     private static final String TAG = "RGBDepthSync";
 
-    private class DepthOverlaySeekbarListner implements SeekBar.OnSeekBarChangeListener {
+    private class DepthOverlaySeekbarListener implements SeekBar.OnSeekBarChangeListener {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress,
                 boolean fromUser) {
@@ -79,7 +80,7 @@ public class MainActivity extends Activity {
         public void onStopTrackingTouch(SeekBar seekBar) {}
     }
 
-    private class DebugOverlayCheckboxListner implements CheckBox.OnCheckedChangeListener {
+    private class DebugOverlayCheckboxListener implements CheckBox.OnCheckedChangeListener {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (buttonView == mdebugOverlayCheckbox) {
@@ -93,6 +94,13 @@ public class MainActivity extends Activity {
                     mDepthOverlaySeekbar.setVisibility(View.GONE);
                 }
             }
+        }
+    }
+
+    private class GPUUpsampleListener implements CheckBox.OnCheckedChangeListener {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            JNIInterface.setGPUUpsample(isChecked);
         }
     }
 
@@ -121,16 +129,20 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         mDepthOverlaySeekbar = (SeekBar) findViewById(R.id.depth_overlay_alpha_seekbar);
-        mDepthOverlaySeekbar.setOnSeekBarChangeListener(new DepthOverlaySeekbarListner());
+        mDepthOverlaySeekbar.setOnSeekBarChangeListener(new DepthOverlaySeekbarListener());
         mDepthOverlaySeekbar.setVisibility(View.GONE);
         
         mdebugOverlayCheckbox = (CheckBox) findViewById(R.id.debug_overlay_checkbox);
-        mdebugOverlayCheckbox.setOnCheckedChangeListener(new DebugOverlayCheckboxListner());
+        mdebugOverlayCheckbox.setOnCheckedChangeListener(new DebugOverlayCheckboxListener());
+
+        mGPUUpsampleCheckbox = (CheckBox) findViewById(R.id.gpu_upsample_checkbox);
+        mGPUUpsampleCheckbox.setOnCheckedChangeListener(new GPUUpsampleListener());
 
         // OpenGL view where all of the graphics are drawn
         mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
 
         // Configure OpenGL renderer
+        mGLView.setEGLContextClientVersion(2);
         mRenderer = new GLSurfaceRenderer(this);
         mGLView.setRenderer(mRenderer);
     }

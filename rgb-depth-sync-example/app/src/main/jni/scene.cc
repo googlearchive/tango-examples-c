@@ -54,8 +54,10 @@ Scene::Scene(ColorImage* color_image, DepthImage* depth_image) {
 
   grid_.SetColor(kGridColor);
 
+  color_image_ = color_image;
+  depth_image_ = depth_image;
+
   camera_texture_drawable_.SetColorTextureId(color_image->GetTextureId());
-  camera_texture_drawable_.SetDepthTextureId(depth_image->GetTextureId());
   camera_texture_drawable_.SetBlendAlpha(0.0f);
 }
 
@@ -68,7 +70,6 @@ void Scene::SetupViewPort(int w, int h) {
   if (h == 0 || w == 0) {
     LOGE("The Scene received an invalid height of 0 in SetupViewPort.");
   }
-  glViewport(0, 0, screen_width_, screen_height_);
 }
 
 // We'll render the scene from a pose.
@@ -76,8 +77,11 @@ void Scene::Render() {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
 
+  glViewport(0, 0, screen_width_, screen_height_);
+
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  camera_texture_drawable_.SetDepthTextureId(depth_image_->GetTextureId());
   camera_texture_drawable_.RenderImage();
 }
 
