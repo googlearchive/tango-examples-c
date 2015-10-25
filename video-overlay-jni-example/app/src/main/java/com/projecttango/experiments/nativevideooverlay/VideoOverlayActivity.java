@@ -89,7 +89,6 @@ public class VideoOverlayActivity extends Activity
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    TangoJNINative.freeGLContent();
   }
 
   private void EnableYUVTexture(boolean isEnabled) {
