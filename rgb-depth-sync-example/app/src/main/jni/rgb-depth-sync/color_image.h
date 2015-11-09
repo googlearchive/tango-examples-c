@@ -27,6 +27,8 @@ class ColorImage {
   ~ColorImage();
   GLuint GetTextureId() const { return texture_id_; }
 
+  void InitializeGL();
+
  private:
   GLuint texture_id_;
 };

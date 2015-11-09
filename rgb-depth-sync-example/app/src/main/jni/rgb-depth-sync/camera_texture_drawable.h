@@ -31,6 +31,9 @@ class CameraTextureDrawable {
   // Render the color texture on screen.
   void RenderImage();
 
+  // Call this function when the GL context has been reinitialized
+  void InitializeGL();
+
   // Returns current color texture id.
   // @return: color texture id
   GLuint GetColorTextureId() const { return color_texture_id_; }

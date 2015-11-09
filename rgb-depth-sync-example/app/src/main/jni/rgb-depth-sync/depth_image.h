@@ -30,6 +30,9 @@ class DepthImage {
   explicit DepthImage();
   ~DepthImage();
 
+  // Invalid the GL data structures.
+  void InitializeGL();
+
   // Update the depth texture with current transformation and current depth map.
   // @param  color_t1_T_depth_t0: The transformation between the color camera frame on timestamp i
   //    (color camera timestamp) and the depth camera frame on timestamp j (depth

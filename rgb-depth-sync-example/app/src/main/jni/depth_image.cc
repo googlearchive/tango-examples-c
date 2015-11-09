@@ -60,18 +60,22 @@ DepthImage::DepthImage()
       vertices_handle_(0),
       mvp_handle_(0) {}
 
-DepthImage::~DepthImage() {
-  glDeleteTextures(1, &cpu_texture_id_);
-  glDeleteTextures(1, &gpu_texture_id_);
+DepthImage::~DepthImage() {}
 
-  glDeleteBuffers(1, &vertex_buffer_handle_);
-  glDeleteFramebuffers(1, &fbo_handle_);
-  glDeleteProgram(texture_render_program_);
+void DepthImage::InitializeGL() {
+  texture_id_ = 0;
+  cpu_texture_id_ = 0;
+  gpu_texture_id_ = 0;
+
+  texture_render_program_ = 0;
+  fbo_handle_ = 0;
+  vertex_buffer_handle_ = 0;
+  vertices_handle_ = 0;
+  mvp_handle_ = 0;
 }
 
 bool DepthImage::CreateOrBindGPUTexture() {
   if (gpu_texture_id_) {
-    glBindTexture(GL_TEXTURE_2D, gpu_texture_id_);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle_);
     return false;
   } else {
@@ -95,12 +99,14 @@ bool DepthImage::CreateOrBindGPUTexture() {
 
     glGenBuffers(1, &vertex_buffer_handle_);
 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gpu_texture_id_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgb_camera_intrinsics_.width,
                  rgb_camera_intrinsics_.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenFramebuffers(1, &fbo_handle_);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle_);
@@ -114,10 +120,12 @@ bool DepthImage::CreateOrBindGPUTexture() {
 
 bool DepthImage::CreateOrBindCPUTexture() {
   if (cpu_texture_id_) {
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, cpu_texture_id_);
     return false;
   } else {
     glGenTextures(1, &cpu_texture_id_);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, cpu_texture_id_);
     glTexImage2D(GL_TEXTURE_2D, 0,  // mip-map level
                  GL_LUMINANCE, rgb_camera_intrinsics_.width,
@@ -193,7 +201,6 @@ void DepthImage::RenderDepthToTexture(
 void DepthImage::UpdateAndUpsampleDepth(
     glm::mat4& color_t1_T_depth_t0,
     const std::vector<float>& render_point_cloud_buffer) {
-
   int depth_image_width = rgb_camera_intrinsics_.width;
   int depth_image_height = rgb_camera_intrinsics_.height;
   int depth_image_size = depth_image_width * depth_image_height;
@@ -246,6 +253,7 @@ void DepthImage::UpdateAndUpsampleDepth(
                   GL_LUMINANCE, GL_UNSIGNED_BYTE,
                   grayscale_display_buffer_.data());
   tango_gl::util::CheckGlError("DepthImage glTexSubImage2D");
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   texture_id_ = cpu_texture_id_;
 }

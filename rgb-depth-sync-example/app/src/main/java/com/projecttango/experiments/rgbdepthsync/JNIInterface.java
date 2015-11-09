@@ -42,8 +42,6 @@ public class JNIInterface {
 
     public static native void initializeGLContent();
 
-    public static native void freeGLContent();
-
     public static native void setViewPort(int width, int height);
 
     public static native void render();

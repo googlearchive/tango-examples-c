@@ -27,7 +27,11 @@ const GLfloat kTextureCoords[] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
 
 namespace rgb_depth_sync {
 
-CameraTextureDrawable::CameraTextureDrawable() {
+CameraTextureDrawable::CameraTextureDrawable() : shader_program_(0) {}
+
+CameraTextureDrawable::~CameraTextureDrawable() {}
+
+void CameraTextureDrawable::InitializeGL() {
   shader_program_ =
       tango_gl::util::CreateProgram(rgb_depth_sync::shader::kColorCameraVert,
                                     rgb_depth_sync::shader::kColorCameraFrag);
@@ -75,11 +79,11 @@ CameraTextureDrawable::CameraTextureDrawable() {
   blend_alpha_handle_ = glGetUniformLocation(shader_program_, "blendAlpha");
 }
 
-CameraTextureDrawable::~CameraTextureDrawable() {
-  glDeleteShader(shader_program_);
-}
-
 void CameraTextureDrawable::RenderImage() {
+  if (shader_program_ == 0) {
+    InitializeGL();
+  }
+
   glDisable(GL_DEPTH_TEST);
 
   glUseProgram(shader_program_);
@@ -91,13 +95,13 @@ void CameraTextureDrawable::RenderImage() {
   // not getting any handle from shader neither binding any texture here.
   // Once this is fix, we will need to bind the texture to the correct sampler2D
   // handle.
-  glUniform1i(color_texture_handle_, 0);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, color_texture_id_);
+  glUniform1i(color_texture_handle_, 0);
 
   // Bind depth texture to texture unit 1.
-  glBindTexture(GL_TEXTURE_2D, depth_texture_id_);
   glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, depth_texture_id_);
   glUniform1i(depth_texture_handle_, 1);
 
   // Bind vertices buffer.
@@ -120,6 +124,7 @@ void CameraTextureDrawable::RenderImage() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   glUseProgram(0);
+  glActiveTexture(GL_TEXTURE0);
   tango_gl::util::CheckGlError("CameraTextureDrawable::render");
 }
 
