@@ -30,60 +30,62 @@ static const float kCamViewMaxDist = 100.f;
 // Scale frustum size for closer near clipping plane.
 static const float kFovScaler = 0.1f;
 
-// Color of the ground grid.
-static const tango_gl::Color kGridColor(0.85f, 0.85f, 0.85f);
-
-// We'll build our projection matrix for AR off of the intrinsics from the
-// color camera.
 void Scene::SetCameraIntrinsics(const TangoCameraIntrinsics& cc_intrinsics) {
-  float image_width = cc_intrinsics.width;
-  float image_height = cc_intrinsics.height;
-  // Image plane focal length for x axis.
-  float img_fl = static_cast<float>(cc_intrinsics.fx);
-  float image_plane_ratio = image_height / image_width;
-  float image_plane_dis = 2.0f * img_fl / image_width;
-  projection_matrix_ar_ = glm::frustum(
-      -1.0f * kFovScaler, 1.0f * kFovScaler, -image_plane_ratio * kFovScaler,
-      image_plane_ratio * kFovScaler, image_plane_dis * kFovScaler,
-      kCamViewMaxDist);
+  const float image_width = cc_intrinsics.width;
+  const float image_height = cc_intrinsics.height;
+  image_plane_ratio_ = image_height / image_width;
 }
 
-Scene::Scene(ColorImage* color_image, DepthImage* depth_image) {
+Scene::Scene() {
   OW_T_W_ = tango_gl::conversions::opengl_world_T_tango_world();
   CC_T_OC_ = tango_gl::conversions::color_camera_T_opengl_camera();
 
-  grid_.SetColor(kGridColor);
-
-  color_image_ = color_image;
-  depth_image_ = depth_image;
-
-  camera_texture_drawable_.SetColorTextureId(color_image->GetTextureId());
   camera_texture_drawable_.SetBlendAlpha(0.0f);
 }
 
 Scene::~Scene() {}
 
-void Scene::SetupViewPort(int w, int h) {
-  screen_width_ = w;
-  screen_height_ = h;
-
-  if (h == 0 || w == 0) {
+void Scene::SetupViewPort(int screen_width, int screen_height) {
+  if (screen_height == 0 || screen_width == 0) {
     LOGE("The Scene received an invalid height of 0 in SetupViewPort.");
+    return;
+  }
+
+  float render_width = screen_height / image_plane_ratio_;
+  if (render_width > screen_width) {
+    // The render screen has a wider aspect ratio than the camera image and
+    // applies padding on the left and right.
+    viewport_x_ = (screen_width - render_width) / 2;
+    viewport_y_ = 0;
+    viewport_width_ = render_width;
+    viewport_height_ = screen_height;
+  } else {
+    // The render screen has a narrower aspect ratio than the camera image and
+    // applies padding on the top and bottom.
+    float render_height = screen_width * image_plane_ratio_;
+    viewport_x_ = 0;
+    viewport_y_ = (screen_height - render_height) / 2;
+    viewport_width_ = screen_width;
+    viewport_height_ = render_height;
   }
 }
 
 // We'll render the scene from a pose.
-void Scene::Render() {
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
+void Scene::Render(GLuint color_texture, GLuint depth_texture) {
+  if (color_texture == 0 || depth_texture == 0) {
+    return;
+  }
 
-  glViewport(0, 0, screen_width_, screen_height_);
+  glViewport(viewport_x_, viewport_y_, viewport_width_, viewport_height_);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  camera_texture_drawable_.SetDepthTextureId(depth_image_->GetTextureId());
+  camera_texture_drawable_.SetColorTextureId(color_texture);
+  camera_texture_drawable_.SetDepthTextureId(depth_texture);
   camera_texture_drawable_.RenderImage();
 }
+
+void Scene::InitializeGL() { camera_texture_drawable_.InitializeGL(); }
 
 void Scene::SetDepthAlphaValue(float alpha) {
   camera_texture_drawable_.SetBlendAlpha(alpha);

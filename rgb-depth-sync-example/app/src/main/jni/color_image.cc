@@ -18,7 +18,9 @@
 
 namespace rgb_depth_sync {
 
-ColorImage::ColorImage() {
+ColorImage::ColorImage() : texture_id_(0) {}
+
+void ColorImage::InitializeGL() {
   glGenTextures(1, &texture_id_);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -26,5 +28,5 @@ ColorImage::ColorImage() {
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
 }
 
-ColorImage::~ColorImage() { glDeleteTextures(1, &texture_id_); }
+ColorImage::~ColorImage() {}
 }  // namespace rgb_depth_sync

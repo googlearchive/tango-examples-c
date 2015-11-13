@@ -36,12 +36,12 @@ typedef enum {
 
 /// @brief Tango runtime configuration enumerations.
 typedef enum {
-  TANGO_CONFIG_DEFAULT = 0,     /**< Default, motion tracking only. */
-  TANGO_CONFIG_CURRENT,         /**< Current */
-  TANGO_CONFIG_MOTION_TRACKING, /**< Motion tracking */
-  TANGO_CONFIG_AREA_LEARNING,   /**< Area learning */
-  TANGO_CONFIG_RUNTIME,         /**< Runtime settable configuration */
-  TANGO_MAX_CONFIG_TYPE         /**< Maximum number allowable.  */
+  TANGO_CONFIG_DEFAULT = 0, /**< Default, motion tracking only. */
+  TANGO_CONFIG_CURRENT,     /**< Current */
+  TANGO_CONFIG_MOTION_TRACKING,  /**< Motion tracking */
+  TANGO_CONFIG_AREA_LEARNING, /**< Area learning */
+  TANGO_CONFIG_RUNTIME,       /**< Runtime settable configuration */
+  TANGO_MAX_CONFIG_TYPE       /**< Maximum number allowable.  */
 } TangoConfigType;
 
 /// @brief Tango coordinate frame enumerations.
@@ -80,6 +80,7 @@ typedef enum {
   /// The user has not given permission to save or change ADF files.
   TANGO_NO_ADF_PERMISSION = -4,
   /// The user has not given permission to use Motion Tracking functionality.
+  /// Note: Motion Tracking permission is deprecated, apps are always permitted.
   TANGO_NO_MOTION_TRACKING_PERMISSION = -3,
   /// The input argument is invalid.
   TANGO_INVALID = -2,
@@ -140,6 +141,17 @@ typedef enum {
   TANGO_HAL_PIXEL_FORMAT_YV12 = 0x32315659,  /**< YV12 */
   TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP = 0x11 /**< NV21 */
 } TangoImageFormatType;
+
+// Experimental API only, subject to change.
+// Dataset recording mode.
+typedef enum {
+  /// Unknown dataset recording mode.
+  TANGO_RECORDING_MODE_UNKNOWN = -1,
+  /// Contains only data required for motion tracking.
+  TANGO_RECORDING_MODE_MOTION_TRACKING = 0,
+  /// Contains data required for motion tracking and scene reconstruction.
+  TANGO_RECORDING_MODE_SCENE_RECONSTRUTCION = 1,
+} TangoRecordingMode_Experimental;
 
 /**@} */
 
@@ -417,10 +429,10 @@ char* TangoConfig_toString(TangoConfig config);
 /// the Tango Service.
 /// @{
 
-/// Initializes the Tango Service. This function must be called first before
-/// other Tango functions are called. To succeed, the calling application must
-/// have camera permissions enabled. The initialization is invalidated if the
-/// service is stopped or faults while a client is running.
+/// @deprecated This function is implicitly called when needed.
+/// Initialize the Tango Service. To succeed, the calling
+/// application must have camera permissions enabled. The initialization is
+/// invalidated if the service is stopped or faults while a client is running.
 /// TangoService_initialize() uses two parameters, the JNI context, env, and the
 /// native activity object, activity, to check the version that the version of
 /// Tango Service installed on the device meets the minimum number required by
@@ -482,9 +494,8 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// TangoConfig handle.  If NULL is passed here, then the service will be
 /// started in the default configuration.
 /// @return Returns <code>TANGO_SUCCESS</code> on successfully starting the
-/// configuration. Returns <code>TANGO_ERROR</code> on failure, or if a
-/// connection was not initialized with TangoService_initialize(), or if the
-/// camera could not be opened, which could be due to cameras being opened by
+/// configuration. Returns <code>TANGO_ERROR</code> on failure, or if the
+/// camera could not be opened which could be due to cameras being opened by
 /// other applications or could be caused by a system error which may require
 /// a reboot.  Returns <code>TANGO_INVALID</code> if an Area Description UUID
 /// was specified but could not be found or accessed by the service, or if the
@@ -583,10 +594,9 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 /// @return Returns <code>TANGO_SUCCESS</code> if a pose was returned
 /// successfully.  Check the <i>status_code</i> attribute on the returned
 /// <i>pose</i> to see if it is valid.  Returns <code>TANGO_INVALID</code>
-/// if no connection was initialized with TangoService_initialize(), or if the
-/// base and target frame are the same, or if the base or if the target frame
-/// is not valid, or if timestamp is less than 0, or if the service has not yet
-/// begun running (TangoService_connect() has not completed).
+/// if the base and target frame are the same, or if the base or if the target
+/// frame is not valid, or if timestamp is less than 0, or if the service has
+/// not yet begun running (TangoService_connect() has not completed).
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
     TangoCoordinateFramePair frame, TangoPoseData* pose);
 
@@ -668,9 +678,9 @@ TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
 /// are supported.
 /// @param timestamp Upon return, if not NULL upon calling, timestamp contains
 /// the timestamp of the image that has been pushed to the connected texture.
-/// @return Returns <code>TANGO_INVALID</code> if <i>id</i> is out of range, if
-/// TangoService_initialize() must be called first, or if a texture ID was never
-/// associated with the camera.  Otherwise returns <code>TANGO_SUCCESS</code>.
+/// @return Returns <code>TANGO_INVALID</code> if <i>id</i> is out of range or
+/// if a texture ID was never associated with the camera.  Otherwise returns
+/// <code>TANGO_SUCCESS</code>.
 TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 
 /// Connect a callback to a camera for access to the pixels. This is not
@@ -717,8 +727,7 @@ TangoErrorType TangoService_disconnectCamera(TangoCameraId id);
 /// <i>camera_id</i> upon successful return.
 /// @return Returns <code>TANGO_SUCCESS</code> on successfully retrieving
 /// calibration intrinsics.  Returns <code>TANGO_INVALID</code> if the camera_id
-/// is out of range, or if intrinsics argument was null, or if the service must
-/// be initialized with TangoService_initialize().  Returns
+/// is out of range or if intrinsics argument was null.  Returns
 /// <code>TANGO_ERROR</code> if an internal error occurs while getting
 /// intrinsics.
 TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
@@ -782,8 +791,7 @@ TangoErrorType TangoService_getCameraIntrinsics(TangoCameraId camera_id,
 TangoErrorType TangoService_saveAreaDescription(TangoUUID* uuid);
 
 /// Deletes an area description with the specified unique ID.  This
-/// method can be called after TangoService_initialize(), but should
-/// not be called to delete the ADF that is currently loaded.
+/// method should not be called to delete the ADF that is currently loaded.
 /// @param uuid The area description to delete.
 /// @return Returns <code>TANGO_SUCCESS</code> if area description file with
 /// specified unique ID is found and can be removed.  Returns
@@ -793,8 +801,7 @@ TangoErrorType TangoService_deleteAreaDescription(const TangoUUID uuid);
 
 /// Gets the full list of unique area description IDs available on a
 /// device as a comma-separated list of TangoUUIDs.  Memory should not
-/// be deallocated outside the API.   Can be called any time after
-/// calling TangoService_initialize().
+/// be deallocated outside the API.
 /// @param uuid_list Upon successful return, <i>uuid_list</i> will contain a
 /// comma separated list of available UUIDs.
 /// @return Returns <code>TANGO_SUCCESS</code> on success, or
@@ -1491,6 +1498,24 @@ TangoErrorType TangoService_Experimental_getDatasetUUIDs(
 TangoErrorType TangoService_Experimental_releaseDatasetUUIDs(
     TangoUUID** dataset_uuids);
 
+/// Experimental API only, subject to change.
+/// Deletes a dataset.
+/// @param dataset_uuid The ID of the dataset to be deleted.
+/// @return Returns <code>TANGO_SUCCESS</code> if the dataset was successfully
+/// deleted. Returns <code>TANGO_ERROR</code> if communication failed or the
+/// datasets could not be found. Returns
+/// <code>TANGO_NO_DATASET_PERMISSION</code> if user has not given permissions
+/// to read and write datasets.
+TangoErrorType TangoService_Experimental_deleteDataset(
+    const TangoUUID dataset_uuid);
+
+/// Experimental API only, subject to change.
+/// Gets the current dataset UUID.
+/// @param dataset_uuid The current dataset UUID.
+/// @return Returns <code>TANGO_SUCCESS</code> if the id was successfully
+/// retrieved. Returns <code>TANGO_ERROR</code> if communication failed.
+TangoErrorType TangoService_Experimental_getCurrentDatasetUUID(
+    TangoUUID* dataset_uuid);
 #ifdef __cplusplus
 }
 #endif

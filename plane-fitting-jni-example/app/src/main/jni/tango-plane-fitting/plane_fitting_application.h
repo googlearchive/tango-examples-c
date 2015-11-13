@@ -97,6 +97,8 @@ class PlaneFittingApplication {
 
   bool point_cloud_debug_render_;
 
+  double last_gpu_timestamp_;
+
   // Cached transforms
   // Pose of color camera with respect to device.
   glm::mat4 device_T_color_;
