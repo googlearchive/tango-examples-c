@@ -67,8 +67,8 @@ TangoErrorType TangoSupport_copyXYZij(const TangoXYZij* input_point_cloud,
 /// @brief Fits a plane to a point cloud near a user-specified location. This
 /// occurs in two passes. First, all points are projected to the image plane
 /// and only points near the user selection are kept. Then a plane is fit to
-/// the subset using RANSAC. After the RANASC fit all inliers from the original
-/// input point cloud are used to refine the plane model.  The output is in the
+/// the subset using RANSAC. After the RANSAC fit, all inliers from the original
+/// input point cloud are used to refine the plane model. The output is in the
 /// coordinate system of the input point cloud.
 ///
 /// @param point_cloud The input point cloud. Cannot be NULL and must have at
@@ -83,7 +83,7 @@ TangoErrorType TangoSupport_copyXYZij(const TangoXYZij* input_point_cloud,
 /// @param plane_model The four parameters a, b, c, d for the general plane
 ///   equation ax + by + cz + d = 0 of the plane fit. The first three
 ///   components are a unit vector. The output is in the coordinate system of
-///   the point cloud.  Cannot be NULL.
+///   the point cloud. Cannot be NULL.
 /// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
 ///   invalid input, and <code>TANGO_ERROR</code> on failure.
 TangoErrorType TangoSupport_fitPlaneModelNearClick(
@@ -91,6 +91,29 @@ TangoErrorType TangoSupport_fitPlaneModelNearClick(
     const TangoPoseData* color_camera_T_point_cloud,
     const float uv_coordinates[2], double intersection_point[3],
     double plane_model[4]);
+
+/// @brief Calculates the relative pose from the target frame at time
+/// target_timestamp to the base frame at time base_timestamp.
+///
+/// @param base_timestamp The timestamp for base frame position. Must be
+///   non-negative. If set to 0.0, the most recent pose estimate is used.
+/// @param base_frame the coordinate frame type of target frame. Must be
+///   TANGO_COORDINATE_FRAME_CAMERA_*.
+/// @param target_timestamp The timestamp for target frame position. Must be
+///   non-negative. If set to 0.0, the most recent pose estimate is used.
+/// @param target_frame The coordinate frame type of base frame. Must be
+///   TANGO_COORDINATE_FRAME_CAMERA_*.
+/// @param base_frame_T_target_frame A TangoPoseData object with the calculated
+///   orientation and translation. The output represents the transform from
+///   target frame to base frame.
+/// @return A TangoErrorType value of <code>TANGO_SUCCESS</code> on successful
+///   calculation. Returns <code>TANGO_INVALID</code> if inputs are not
+///   supported. Returns <code>TANGO_ERROR</code> if an internal transform
+///   cannot be calculated.
+TangoErrorType TangoSupport_calculateRelativePose(
+    double base_timestamp, TangoCoordinateFrameType base_frame,
+    double target_timestamp, TangoCoordinateFrameType target_frame,
+    TangoPoseData* base_frame_T_target_frame);
 
 /**@} */
 
@@ -144,13 +167,13 @@ TangoErrorType TangoSupport_copyMesh(const TangoMesh_Experimental* input_mesh,
 /// @param input_mesh The input mesh. Cannot be NULL.
 /// @param target_num_faces Target number of faces in the output mesh.
 /// @param output_mesh The output mesh. Cannot be NULL.
-/// @return Returns <code>TANGO_SUCCESS</code> on successful copy.  Returns
+/// @return Returns <code>TANGO_SUCCESS</code> on successful copy. Returns
 ///   <code>TANGO_INVALID</code> if input_mesh or output_mesh is NULL.
 TangoErrorType TangoSupport_createSimplifiedMesh(
     const TangoMesh_Experimental* input_mesh, const uint32_t target_num_faces,
     TangoMesh_Experimental* output_mesh);
 
-/**@} */
+/// @}
 
 #ifdef __cplusplus
 }

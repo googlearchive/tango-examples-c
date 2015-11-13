@@ -36,8 +36,6 @@ import android.widget.Toast;
 // The main activity of the application. This activity shows debug information
 // and a glSurfaceView that renders graphic content.
 public class PointcloudActivity extends Activity implements OnClickListener {
-  // The user has not given permission to use Motion Tracking functionality.
-  private static final int TANGO_NO_MOTION_TRACKING_PERMISSION = -3;
   // The input argument is invalid.
   private static final int  TANGO_INVALID = -2;
   // This error code denotes some sort of hard error occurred.
@@ -48,14 +46,11 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   // Tag for debug logging.
   private static final String TAG = PointcloudActivity.class.getSimpleName();
 
-  // Motion Tracking permission request action.
-  private static final String MOTION_TRACKING_PERMISSION_ACTION =
-      "android.intent.action.REQUEST_TANGO_PERMISSION";
+  // The minimum Tango Core version required from this application.
+  private static final int  MIN_TANGO_CORE_VERSION = 6804;
 
-  // Key string for requesting and checking Motion Tracking permission.
-  private static final String MOTION_TRACKING_PERMISSION =
-      "MOTION_TRACKING_PERMISSION";
-
+  // The package name of Tang Core, used for checking minimum Tango Core version.
+  private static final String TANGO_PACKAGE_NAME = "com.projecttango.tango";
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
@@ -82,14 +77,14 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   private Renderer mRenderer;
   private GLSurfaceView mGLView;
 
+  // Screen size for normalizing the touch input for orbiting the render camera.
+  private Point mScreenSize = new Point();
+
   // A flag to check if the Tango Service is connected. This flag avoids the
   // program attempting to disconnect from the service while it is not
   // connected.This is especially important in the onPause() callback for the
   // activity class.
   private boolean mIsConnectedService = false;
-
-  // Screen size for normalizing the touch input for orbiting the render camera.
-  private Point mScreenSize = new Point();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -145,6 +140,14 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     mGLView.setRenderer(mRenderer);
 
     startUIThread();
+
+    // Check if the Tango Core is out dated.
+    if (!CheckTangoCoreVersion(MIN_TANGO_CORE_VERSION)) {
+      Toast.makeText(this, "Tango Core out dated, please update in Play Store", 
+                     Toast.LENGTH_LONG).show();
+      finish();
+      return;
+    }
   }
 
   @Override
@@ -152,37 +155,23 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     super.onResume();
     mGLView.onResume();
 
-    // In the onResume function, we first check if the MOTION_TRACKING_PERMISSION is
-    // granted to this application, if not, we send a permission intent to
-    // the Tango Service to launch the permission activity.
-    // Note that the onPause() callback will be called once the permission 
-    // activity is foregrounded.
-    if (!Util.hasPermission(getApplicationContext(),
-                            MOTION_TRACKING_PERMISSION)) {
-      getMotionTrackingPermission();
-    } else {
-      // If motion tracking permission is granted to the application, we can
-      // connect to the Tango Service. For this example, we'll be calling
-      // through the JNI to the C++ code that actually interfaces with the
-      // service.
+    // Setup the configuration for the TangoService, passing in our setting
+    // for the auto-recovery option.
+    TangoJNINative.setupConfig(true);
+    
+    // Connect the onPoseAvailable callback.
+    TangoJNINative.connectCallbacks();
 
-      // Setup the configuration for the TangoService, passing in our setting
-      // for the auto-recovery option.
-      TangoJNINative.setupConfig(true);
-      
-      // Connect the onPoseAvailable callback.
-      TangoJNINative.connectCallbacks();
-
-      // Connect to Tango Service.
-      // This function will start the Tango Service pipeline, in this case, 
-      // it will start Motion Tracking and Point Cloud callbacks.
-      TangoJNINative.connect();
-
+    // Connect to Tango Service (returns true on success).
+    // Starts Motion Tracking and Area Learning.
+    if (TangoJNINative.connect() == TANGO_SUCCESS) {
+      mIsConnectedService = true;
       // Take the TangoCore version number from Tango Service.
       mVersion.setText(TangoJNINative.getVersionNumber());
-
-      // Set the connected service flag to true.
-      mIsConnectedService = true;
+    } else {
+      // End the activity and let the user know something went wrong.
+      Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
+      finish();
     }
   }
 
@@ -191,22 +180,12 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     super.onPause();
     mGLView.onPause();
     TangoJNINative.freeGLContent();
-    
-    // If the service is connected, we disconnect it here.
-    if (mIsConnectedService) {
-      mIsConnectedService = false;
-      // Disconnect from the Tango Service, release all the resources that the app is
-      // holding from the Tango Service.
-      TangoJNINative.disconnect();
-    }
-  }
 
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
+    // Disconnect from the Tango Service, release all the resources that the app is
+    // holding from the Tango Service.
     if (mIsConnectedService) {
-      mIsConnectedService = false;
       TangoJNINative.disconnect();
+      mIsConnectedService = false;
     }
   }
 
@@ -259,35 +238,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     return true;
   }
 
-  // Call the permission intent for the Tango Service to ask for motion tracking
-  // permissions. All permission types can be found here:
-  //   https://developers.google.com/project-tango/apis/c/c-user-permissions
-  private void getMotionTrackingPermission() {
-    Intent intent = new Intent();
-    intent.setAction(MOTION_TRACKING_PERMISSION_ACTION);
-    intent.putExtra("PERMISSIONTYPE", MOTION_TRACKING_PERMISSION);
-
-    // After the permission activity is dismissed, we will receive a callback
-    // function onActivityResult() with user's result.
-    startActivityForResult(intent, 0);
-  }
-
-  @Override
-  protected void onActivityResult (int requestCode, int resultCode, Intent data) {
-    // The result of the permission activity.
-    //
-    // Note that when the permission activity is dismissed, the
-    // MotionTrackingActivity's onResume() callback is called. As the
-    // TangoService is connected in the onResume() function, we do not call
-    // connect here.
-    if (requestCode == 0) {
-      if (resultCode == RESULT_CANCELED) {
-        mIsConnectedService = false;
-        finish();
-      }
-    }
-  }
-
   // UI thread for handling debug text changes.
   private void startUIThread() {
     new Thread(new Runnable() {
@@ -317,5 +267,18 @@ public class PointcloudActivity extends Activity implements OnClickListener {
           }
         }
     }).start();
+  }
+
+  private boolean CheckTangoCoreVersion(int minVersion) {
+    int versionNumber = 0;
+    String packageName = TANGO_PACKAGE_NAME;
+    try {
+      PackageInfo pi = getApplicationContext().getPackageManager().getPackageInfo(packageName,
+          PackageManager.GET_META_DATA);
+      versionNumber = pi.versionCode;
+    } catch (NameNotFoundException e) {
+      e.printStackTrace();
+    }
+    return (minVersion <= versionNumber);
   }
 }

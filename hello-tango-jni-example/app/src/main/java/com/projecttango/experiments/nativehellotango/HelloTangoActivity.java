@@ -20,6 +20,9 @@ import com.google.tango.hellotangojni.R;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -27,9 +30,6 @@ import android.widget.Toast;
  * Main activity controls Tango lifecycle.
  */
 public class HelloTangoActivity extends Activity {
-  // The user has not given permission to use Motion Tracking functionality.
-  private static final int TANGO_NO_MOTION_TRACKING_PERMISSION = -3;
-
   // The input argument is invalid.
   private static final int  TANGO_INVALID = -2;
 
@@ -39,17 +39,31 @@ public class HelloTangoActivity extends Activity {
   // This code indicates success.
   private static final int  TANGO_SUCCESS = 0;
 
-  // The unique request code for permission intent.
-  private static final int PERMISSION_REQUEST_CODE = 0;
+  // The minimum Tango Core version required from this application.
+  private static final int  MIN_TANGO_CORE_VERSION = 6804;
 
-  // The flag to check if Tango Service is connect.
-  private boolean mIsTangoServiceConnected = false;
+  // The package name of Tang Core, used for checking minimum Tango Core version.
+  private static final String TANGO_PACKAGE_NAME = "com.projecttango.tango";
+
+  // A flag to check if the Tango Service is connected. This flag avoids the
+  // program attempting to disconnect from the service while it is not
+  // connected.This is especially important in the onPause() callback for the
+  // activity class.
+  private boolean mIsConnectedService = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     setTitle(R.string.app_name);
+
+    // Check if the Tango Core is out dated.
+    if (!CheckTangoCoreVersion(MIN_TANGO_CORE_VERSION)) {
+      Toast.makeText(this, "Tango Core out dated, please update in Play Store", 
+                     Toast.LENGTH_LONG).show();
+      finish();
+      return;
+    }
 
     // Initialize Tango service.
     // The activity object is used for TangoService to check if the API version
@@ -72,22 +86,16 @@ public class HelloTangoActivity extends Activity {
 
     // Setup Tango configuraturation.
     TangoJNINative.setupConfig();
+    TangoJNINative.connectCallbacks();
 
-    // connectCallbacks() returns TANGO_NO_MOTION_TRACKING_PERMISSION error code
-    // if the application doesn't have permissions to use Motion Tracking.
-    //
-    // Permission intent will be called if there is no permission. The intent is
-    // used to invoke permission activity.
-    //
-    // If there is a permission to use Motion Tracking features, the application
-    // will connect to TangoService.
-    int status = 0;
-    status = TangoJNINative.connectCallbacks();
-    if (status == TANGO_NO_MOTION_TRACKING_PERMISSION) {
-      callPermissionIntent();
-    } else if (status == TANGO_SUCCESS) {
-      TangoJNINative.connect();
-      mIsTangoServiceConnected = true;
+    // Connect to Tango Service (returns true on success).
+    // Starts Motion Tracking and Area Learning.
+    if (TangoJNINative.connect() == TANGO_SUCCESS) {
+      mIsConnectedService = true;
+    } else {
+      // End the activity and let the user know something went wrong.
+      Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
+      finish();
     }
   }
 
@@ -96,41 +104,22 @@ public class HelloTangoActivity extends Activity {
     // Note that this function will be called when the permission activity is
     // foregrounded.
     super.onPause();
-    if (mIsTangoServiceConnected) {
+    if (mIsConnectedService) {
       TangoJNINative.disconnect();
+      mIsConnectedService = false;
     }
   }
 
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-  }
-
-  private void callPermissionIntent() {
-    // Start permission activity.
-    //
-    // All permission types can be found from:
-    // https://developers.google.com/project-tango/apis/c/c-user-permissions
-    Intent intent = new Intent();
-    intent.setAction("android.intent.action.REQUEST_TANGO_PERMISSION");
-    intent.putExtra("PERMISSIONTYPE", "MOTION_TRACKING_PERMISSION");
-    startActivityForResult(intent, PERMISSION_REQUEST_CODE);
-  }
-
-  @Override
-  protected void onActivityResult (int requestCode,
-                                   int resultCode,
-                                   Intent data) {
-    // Check if this the request we sent for permission activity.
-    //
-    // Note that the onResume() will be called after permission activity
-    // is dismissed, because the current activity (application) is foregrounded.
-    if (requestCode == PERMISSION_REQUEST_CODE) {
-      if (resultCode == RESULT_CANCELED) {
-        mIsTangoServiceConnected = false;
-        finish();
-      }
+  private boolean CheckTangoCoreVersion(int minVersion) {
+    int versionNumber = 0;
+    String packageName = TANGO_PACKAGE_NAME;
+    try {
+      PackageInfo pi = getApplicationContext().getPackageManager().getPackageInfo(packageName,
+          PackageManager.GET_META_DATA);
+      versionNumber = pi.versionCode;
+    } catch (NameNotFoundException e) {
+      e.printStackTrace();
     }
+    return (minVersion <= versionNumber);
   }
-
 }

@@ -86,11 +86,6 @@ public class VideoOverlayActivity extends Activity
     }
   }
 
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-  }
-
   private void EnableYUVTexture(boolean isEnabled) {
     if (isEnabled) {
         // Turn on YUV

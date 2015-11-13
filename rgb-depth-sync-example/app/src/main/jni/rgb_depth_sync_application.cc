@@ -44,18 +44,27 @@ void SynchronizationApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
   }
 }
 
-  SynchronizationApplication::SynchronizationApplication() :
-    swap_signal(false),
-    gpu_upsample_(false) {
-  // We'll store the fixed transform between the opengl frame convention.
-  // (Y-up, X-right) and tango frame convention. (Z-up, X-right).
-  OW_T_SS_ = tango_gl::conversions::opengl_world_T_tango_world();
-}
+SynchronizationApplication::SynchronizationApplication()
+    : color_image_(),
+      depth_image_(),
+      main_scene_(),
+      // We'll store the fixed transform between the opengl frame convention.
+      // (Y-up, X-right) and tango frame convention. (Z-up, X-right).
+      OW_T_SS_(tango_gl::conversions::opengl_world_T_tango_world()),
+      swap_signal(false),
+      gpu_upsample_(false) {}
 
-SynchronizationApplication::~SynchronizationApplication() {}
+SynchronizationApplication::~SynchronizationApplication() {
+  if (tango_config_) {
+    TangoConfig_free(tango_config_);
+  }
+}
 
 int SynchronizationApplication::TangoInitialize(JNIEnv* env,
                                                 jobject caller_activity) {
+  SetDepthAlphaValue(0.0);
+  SetGPUUpsample(false);
+
   // The first thing we need to do for any Tango enabled application is to
   // initialize the service. We'll do that here, passing on the JNI environment
   // and jobject corresponding to the Android activity that is calling us.
@@ -63,6 +72,10 @@ int SynchronizationApplication::TangoInitialize(JNIEnv* env,
 }
 
 int SynchronizationApplication::TangoSetupConfig() {
+  if (tango_config_ != nullptr) {
+    return TANGO_SUCCESS;
+  }
+
   // Here, we'll configure the service to run in the way we'd want. For this
   // application, we'll start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
@@ -101,7 +114,7 @@ int SynchronizationApplication::TangoConnectTexture() {
   // graphic buffer directly. As we're interested in rendering the color image
   // in our render loop, we'll be polling for the color image as needed.
   return TangoService_connectTextureId(
-      TANGO_CAMERA_COLOR, color_image_->GetTextureId(), this, nullptr);
+      TANGO_CAMERA_COLOR, color_image_.GetTextureId(), this, nullptr);
 }
 
 int SynchronizationApplication::TangoConnectCallbacks() {
@@ -138,20 +151,8 @@ int SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
         "camera.");
     return ret;
   }
-  depth_image_->SetCameraIntrinsics(color_camera_intrinsics);
-  main_scene_->SetCameraIntrinsics(color_camera_intrinsics);
-
-  float image_width = static_cast<float>(color_camera_intrinsics.width);
-  float image_height = static_cast<float>(color_camera_intrinsics.height);
-  float image_plane_ratio = image_height / image_width;
-  float screen_ratio = screen_height_ / screen_width_;
-
-  if (image_plane_ratio < screen_ratio) {
-    glViewport(0, 0, screen_width_, screen_width_ * image_plane_ratio);
-  } else {
-    glViewport((screen_width_ - screen_height_ / image_plane_ratio) / 2, 0,
-               screen_height_ / image_plane_ratio, screen_height_);
-  }
+  depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
+  main_scene_.SetCameraIntrinsics(color_camera_intrinsics);
 
   // Pose of device frame wrt imu.
   TangoPoseData pose_imu_T_device;
@@ -218,25 +219,22 @@ int SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
 }
 
 void SynchronizationApplication::TangoDisconnect() {
-  TangoConfig_free(tango_config_);
-  tango_config_ = nullptr;
   TangoService_disconnect();
 }
 
 void SynchronizationApplication::InitializeGLContent() {
-  depth_image_ = new rgb_depth_sync::DepthImage();
-  color_image_ = new rgb_depth_sync::ColorImage();
-  main_scene_ = new rgb_depth_sync::Scene(color_image_, depth_image_);
+  depth_image_.InitializeGL();
+  color_image_.InitializeGL();
+  main_scene_.InitializeGL();
 }
 
 void SynchronizationApplication::SetViewPort(int width, int height) {
   screen_width_ = static_cast<float>(width);
   screen_height_ = static_cast<float>(height);
-  main_scene_->SetupViewPort(width, height);
+  main_scene_.SetupViewPort(width, height);
 }
 
 void SynchronizationApplication::Render() {
-
   double color_timestamp = 0.0;
   double depth_timestamp = 0.0;
   bool new_points = false;
@@ -325,29 +323,26 @@ void SynchronizationApplication::Render() {
           start_service_T_device_t0 * device_t0_T_depth_t0;
 
       if(gpu_upsample_) {
-        depth_image_->RenderDepthToTexture(color_image_t1_T_depth_image_t0,
-                                           render_point_cloud_buffer_, new_points);
+        depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,
+                                          render_point_cloud_buffer_,
+                                          new_points);
       } else {
-        depth_image_->UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
-                                             render_point_cloud_buffer_);
+        depth_image_.UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
+                                            render_point_cloud_buffer_);
+
       }
+      main_scene_.Render(color_image_.GetTextureId(),
+                         depth_image_.GetTextureId());
     } else {
       LOGE("Invalid pose for ss_t_depth at time: %lf", depth_timestamp);
     }
   } else {
     LOGE("Invalid pose for ss_t_color at time: %lf", color_timestamp);
   }
-  main_scene_->Render();
-}
-
-void SynchronizationApplication::FreeGLContent() {
-  delete color_image_;
-  delete depth_image_;
-  delete main_scene_;
 }
 
 void SynchronizationApplication::SetDepthAlphaValue(float alpha) {
-  main_scene_->SetDepthAlphaValue(alpha);
+  main_scene_.SetDepthAlphaValue(alpha);
 }
 
 void SynchronizationApplication::SetGPUUpsample(bool on) {

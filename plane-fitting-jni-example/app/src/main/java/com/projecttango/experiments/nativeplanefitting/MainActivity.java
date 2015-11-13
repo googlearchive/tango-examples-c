@@ -20,6 +20,9 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.SharedPreferences;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -39,9 +42,6 @@ import java.util.Map;
 
 // Primary activity of the example.
 public class MainActivity extends Activity {
-    // The user has not given permission to use motion tracking functionality.
-    private static final int TANGO_NO_MOTION_TRACKING_PERMISSION = -3;
-
     // The input argument is invalid.
     private static final int TANGO_INVALID = -2;
 
@@ -51,16 +51,19 @@ public class MainActivity extends Activity {
     // This code indicates success.
     private static final int TANGO_SUCCESS = 0;
 
-    // Used in startActivityForResult for our motion tracking permission.
-    private static final int REQUEST_PERMISSION_MOTION_TRACKING = 0;
+    private static final String TAG = MainActivity.class.getSimpleName();
 
-    // Motion Tracking permission request action.
-    private static final String MOTION_TRACKING_PERMISSION_ACTION =
-        "android.intent.action.REQUEST_TANGO_PERMISSION";
+    // The minimum Tango Core version required from this application.
+    private static final int  MIN_TANGO_CORE_VERSION = 6804;
 
-    // Key string for requesting and checking Motion Tracking permission.
-    private static final String MOTION_TRACKING_PERMISSION =
-        "MOTION_TRACKING_PERMISSION";
+    // The package name of Tang Core, used for checking minimum Tango Core version.
+    private static final String TANGO_PACKAGE_NAME = "com.projecttango.tango";
+
+    // A flag to check if the Tango Service is connected. This flag avoids the
+    // program attempting to disconnect from the service while it is not
+    // connected.This is especially important in the onPause() callback for the
+    // activity class.
+    private boolean mIsConnectedService = false;
 
     // GLSurfaceView and renderer, all of the graphic content is rendered
     // through OpenGL ES 2.0 in native code.
@@ -70,14 +73,6 @@ public class MainActivity extends Activity {
     private CustomDrawerLayout mDrawerLayout;
     private ImageButton mDrawerButton;
     private Button mSettingsButton;
-
-    // A flag to check if the Tango Service is connected. This flag avoids the
-    // program attempting to disconnect from the service while it is not
-    // connected. This is especially important in the onPause() callback for the
-    // activity class.
-    private boolean mIsConnectedService = false;
-
-    private static final String TAG = "PlaneFittingActivity";
 
     private SharedPreferences mPreferences;
 
@@ -105,6 +100,14 @@ public class MainActivity extends Activity {
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        // Check if the Tango Core is out dated.
+        if (!CheckTangoCoreVersion(MIN_TANGO_CORE_VERSION)) {
+            Toast.makeText(this, "Tango Core out dated, please update in Play Store", 
+                    Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         initializeTango();
 
@@ -195,29 +198,13 @@ public class MainActivity extends Activity {
         super.onResume();
         mGLView.onResume();
 
-        // We first check if the MOTION_TRACKING_PERMISSION is granted to this
-        // application, if not, we send a permission intent to the Tango Service
-        // to launch the permission activity. Note that the onPause() callback
-        // will be called once the permission activity is foregrounded.
-        if (!Util.hasPermission(getApplicationContext(),
-                                MOTION_TRACKING_PERMISSION)) {
-            getMotionTrackingPermission();
-        } else {
-            // If motion tracking permission is granted to the application, we
-            // can connect to the Tango Service. For this example, we will be
-            // calling through the JNI to the C++ code that actually interfaces
-            // with the service.
+        // Setup the configuration of the Tango Service.
+        int ret = JNIInterface.tangoSetupAndConnect();
 
-            // Setup the configuration of the Tango Service.
-            int ret = JNIInterface.tangoSetupAndConnect();
-
-            if (ret != TANGO_SUCCESS) {
-                Log.e(TAG, "Failed to set config and connect with code: " + ret);
-                finish();
-            }
-
-            // Set the connected service flag to true.
+        if (ret != TANGO_SUCCESS) {
             mIsConnectedService = true;
+            Log.e(TAG, "Failed to set config and connect with code: " + ret);
+            finish();
         }
     }
 
@@ -227,50 +214,11 @@ public class MainActivity extends Activity {
         mGLView.onPause();
         JNIInterface.freeGLContent();
 
-        // If the Tango Service is connected, we disconnect it here.
+        // Disconnect from the Tango Service, release all the resources that
+        // the app is holding from the Tango Service.
         if (mIsConnectedService) {
-            mIsConnectedService = false;
-
-            // Disconnect from the Tango Service, release all the resources that
-            // the app is holding from the Tango Service.
             JNIInterface.tangoDisconnect();
-        }
-    }
-
-    // Call the permission intent for the Tango Service to ask for motion tracking
-    // permissions. All permission types can be found here:
-    //     https://developers.google.com/project-tango/apis/c/c-user-permissions
-    private void getMotionTrackingPermission() {
-        Intent intent = new Intent();
-        intent.setAction(MOTION_TRACKING_PERMISSION_ACTION);
-        intent.putExtra("PERMISSIONTYPE", MOTION_TRACKING_PERMISSION);
-
-        // After the permission activity is dismissed, we will receive a callback
-        // function onActivityResult() with user's result.
-        startActivityForResult(intent, 0);
-    }
-
-    @Override
-    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
-        // The result of the permission activity.
-        if (requestCode == REQUEST_PERMISSION_MOTION_TRACKING &&
-            resultCode == RESULT_CANCELED) {
             mIsConnectedService = false;
-            finish();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // If the service is connected, we disconnect it here.
-        if (mIsConnectedService) {
-            mIsConnectedService = false;
-
-            // Disconnect from the Tango Service, release all the resources that
-            // the app is holding from the Tango Service.
-            JNIInterface.tangoDisconnect();
         }
     }
 
@@ -289,5 +237,18 @@ public class MainActivity extends Activity {
             Map.Entry pair = (Map.Entry) i.next();
             updatePreferences(mPreferences, (String) pair.getKey());
         }
+    }
+
+    private boolean CheckTangoCoreVersion(int minVersion) {
+        int versionNumber = 0;
+        String packageName = TANGO_PACKAGE_NAME;
+        try {
+            PackageInfo pi = getApplicationContext().getPackageManager().getPackageInfo(packageName,
+                    PackageManager.GET_META_DATA);
+            versionNumber = pi.versionCode;
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return (minVersion <= versionNumber);
     }
 }
