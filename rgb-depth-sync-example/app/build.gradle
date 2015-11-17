@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
     compileSdkVersion 19
@@ -34,7 +35,7 @@ tasks.withType(JavaCompile) {
 task ndkBuild(type: Exec) {
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def ndkbuild = properties.getProperty('ndk.dir', null)+"/ndk-build"
+    def ndkbuild = properties.getProperty('ndk.dir', null) +"/ndk-build" + (Os.isFamily(Os.FAMILY_WINDOWS) ? ".cmd" : "")
     commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
 }
 
