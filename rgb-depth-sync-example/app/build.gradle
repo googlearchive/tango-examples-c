@@ -35,7 +35,7 @@ tasks.withType(JavaCompile) {
 task ndkBuild(type: Exec) {
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def ndkbuild = properties.getProperty('ndk.dir', null) +"/ndk-build" + (Os.isFamily(Os.FAMILY_WINDOWS) ? ".cmd" : "")
+    def ndkbuild = properties.getProperty('ndk.dir', null)+"/ndk-build"+(Os.isFamily(Os.FAMILY_WINDOWS) ? ".cmd" : "")
     commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
 }
 
