@@ -33,7 +33,7 @@ tasks.withType(JavaCompile) {
 
 task ndkBuild(type: Exec) {
     Properties properties = new Properties()
-     properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
     def ndkbuild = properties.getProperty('ndk.dir', null) + "/ndk-build"
     commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
 }
@@ -41,3 +41,4 @@ task ndkBuild(type: Exec) {
 dependencies {
     compile 'com.android.support:support-v4:22.1.1'
 }
+

@@ -23,6 +23,7 @@
 #include <tango-gl/util.h>
 
 #include "tango-plane-fitting/plane_fitting.h"
+#include <tango_support_api.h>
 
 namespace tango_plane_fitting {
 
@@ -336,7 +337,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   // This transform relates the point cloud at acquisition time (t0) to the
   // start of service.
   const glm::mat4 start_service_T_device_t0 =
-      point_cloud_->GetCurrentTransform();
+      point_cloud_->GetPointCloudStartServiceTDeviceTransform();
 
   /// Calculate the conversion from the latest depth camera position to the
   /// position of the most recent color camera image. This corrects for screen

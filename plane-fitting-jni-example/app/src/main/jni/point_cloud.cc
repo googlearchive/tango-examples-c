@@ -58,10 +58,9 @@ const std::string kPointCloudFragmentShader =
 PointCloud::PointCloud(int32_t max_point_cloud_size)
     : plane_distance_(0.05f),
       debug_colors_(false),
-      plane_model_(glm::vec4(0.0, 0.0, 1.0, 0.0)),
-      points_back_(max_point_cloud_size),
-      points_swap_(max_point_cloud_size),
-      points_front_(max_point_cloud_size) {
+      plane_model_(glm::vec4(0.0, 0.0, 1.0, 0.0)) {
+  TangoSupport_createPointCloudManager(max_point_cloud_size,
+                                        &point_cloud_manager_);
   opengl_world_T_start_service_ =
       tango_gl::conversions::opengl_world_T_tango_world();
 
@@ -82,82 +81,35 @@ PointCloud::PointCloud(int32_t max_point_cloud_size)
 PointCloud::~PointCloud() {
   glDeleteProgram(shader_program_);
   glDeleteBuffers(0, &vertex_buffer_);
+  TangoSupport_freePointCloudManager(point_cloud_manager_);
 }
 
 void PointCloud::UpdateVertices(const TangoXYZij* cloud) {
-  // Get the transform.
-  TangoCoordinateFramePair frame_pair;
-  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  TangoPoseData pose_start_service_T_device_t1;
-
-  if (TangoService_getPoseAtTime(cloud->timestamp, frame_pair,
-                                 &pose_start_service_T_device_t1) !=
-      TANGO_SUCCESS) {
-    LOGE("PointCloud: Could not localize point cloud data");
-    return;
-  }
-
-  const glm::mat4 start_service_T_device =
-      tango_gl::conversions::TransformFromArrays(
-          pose_start_service_T_device_t1.translation,
-          pose_start_service_T_device_t1.orientation);
-
-  // Copy into back buffer.
-  TangoSupport_copyXYZij(cloud, &points_back_.cloud);
-  points_back_.start_service_T_device_t1 = start_service_T_device;
-
-  {
-    std::lock_guard<std::mutex> lock(buffer_lock_);
-    SwapPointCloudData(points_back_, points_swap_);
-  }
-}
-
-PointCloud::PointData::PointData(int32_t max_point_cloud_size)
-    : start_service_T_device_t1(1.0) {
-  TangoSupport_createXYZij(max_point_cloud_size, &cloud);
-}
-
-PointCloud::PointData::~PointData() { TangoSupport_freeXYZij(&cloud); }
-
-void PointCloud::SwapPointCloudData(PointCloud::PointData& a,
-                                    PointCloud::PointData& b) const {
-  std::swap(a.cloud.xyz, b.cloud.xyz);
-  std::swap(a.cloud.xyz_count, b.cloud.xyz_count);
-  std::swap(a.cloud.timestamp, b.cloud.timestamp);
-  std::swap(a.start_service_T_device_t1, b.start_service_T_device_t1);
-}
-
-bool PointCloud::UpdateRenderPoints() {
-  bool updated = false;
-  std::lock_guard<std::mutex> lock(buffer_lock_);
-  if (points_swap_.cloud.timestamp > points_front_.cloud.timestamp) {
-    updated = true;
-    SwapPointCloudData(points_swap_, points_front_);
-  }
-  return updated;
+  TangoSupport_updatePointCloud(point_cloud_manager_, cloud);
 }
 
 void PointCloud::Render(const glm::mat4& projection,
                         const glm::mat4& opengl_camera_T_start_service,
                         const glm::mat4& device_T_depth) {
   // Update point data.
-  const bool points_need_buffering = this->UpdateRenderPoints();
+  if(TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_) == TANGO_INVALID) {
+    return;
+  }
+
   if (!debug_colors_) {
     return;
   }
 
   glUseProgram(shader_program_);
 
-  const size_t number_of_vertices = points_front_.cloud.xyz_count;
+  const size_t number_of_vertices = front_cloud_->xyz_count;
 
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  if (points_need_buffering) {
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * number_of_vertices,
-                 points_front_.cloud.xyz[0], GL_STATIC_DRAW);
-  }
-  const glm::mat4 start_service_T_device_t1 =
-      points_front_.start_service_T_device_t1;
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * number_of_vertices,
+               front_cloud_->xyz[0], GL_STATIC_DRAW);
+
+  const glm::mat4 start_service_T_device_t1 = this->GetPointCloudStartServiceTDeviceTransform();
+
   const glm::mat4 mvp_mat = projection * opengl_camera_T_start_service *
                             start_service_T_device_t1 * device_T_depth;
 
@@ -188,6 +140,29 @@ void PointCloud::Render(const glm::mat4& projection,
 
   glUseProgram(0);
   tango_gl::util::CheckGlError("Pointcloud::Render");
+}
+
+const glm::mat4 PointCloud::GetPointCloudStartServiceTDeviceTransform() {
+  TangoCoordinateFramePair frame_pair;
+  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+  TangoPoseData pose_start_service_T_device_t1;
+
+  TangoService_getPoseAtTime(front_cloud_->timestamp, frame_pair,
+                             &pose_start_service_T_device_t1);
+
+  const glm::mat4 start_service_T_device =
+  tango_gl::conversions::TransformFromArrays(
+      pose_start_service_T_device_t1.translation,
+      pose_start_service_T_device_t1.orientation);
+
+  return start_service_T_device;
+}
+
+const TangoXYZij* PointCloud::GetCurrentPointData() {
+  TangoSupport_getLatestPointCloud(point_cloud_manager_,
+                                            &front_cloud_);
+  return front_cloud_;
 }
 
 }  // namespace tango_plane_fitting

@@ -17,19 +17,17 @@
 package com.projecttango.experiments.nativepointcloud;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +52,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
-  private static final int UPDATE_INTERVAL = 100;
+  private static final int UPDATE_UI_INTERVAL_MS = 100;
 
   // Current frame's pose information.
   private TextView mPoseData;
@@ -85,6 +83,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   // connected.This is especially important in the onPause() callback for the
   // activity class.
   private boolean mIsConnectedService = false;
+
+  // Handles the debug text UI update loop.
+  private Handler mHandler = new Handler();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -139,8 +140,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     mRenderer = new Renderer();
     mGLView.setRenderer(mRenderer);
 
-    startUIThread();
-
     // Check if the Tango Core is out dated.
     if (!CheckTangoCoreVersion(MIN_TANGO_CORE_VERSION)) {
       Toast.makeText(this, "Tango Core out dated, please update in Play Store", 
@@ -173,6 +172,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
       Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
       finish();
     }
+
+    // Start the debug text UI update loop.
+    mHandler.post(mUpdateUiLoopRunnable);
   }
 
   @Override
@@ -187,6 +189,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
       TangoJNINative.disconnect();
       mIsConnectedService = false;
     }
+
+    // Stop the debug text UI update loop.
+    mHandler.removeCallbacksAndMessages(null);
   }
 
   @Override
@@ -238,35 +243,26 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     return true;
   }
 
-  // UI thread for handling debug text changes.
-  private void startUIThread() {
-    new Thread(new Runnable() {
-      @Override
-        public void run() {
-          while (true) {
-            try {
-              Thread.sleep(UPDATE_INTERVAL);
-              runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    mEvent.setText(TangoJNINative.getEventString());
-                    mPoseData.setText(TangoJNINative.getPoseString());
-                    mPointCount.setText(String.valueOf(TangoJNINative.getVerticesCount()));
-                    mAverageZ.setText(String.format("%.3f", TangoJNINative.getAverageZ()));
-                    mFrameDeltaTime.setText(
-                        String.format("%.3f", TangoJNINative.getFrameDeltaTime()));
-                  } catch (Exception e) {
-                      e.printStackTrace();
-                  }
-                }
-              });
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-          }
-        }
-    }).start();
+  // Debug text UI update loop, updating at 10Hz.
+  private Runnable mUpdateUiLoopRunnable = new Runnable() {
+    public void run() {
+      updateUi();
+      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+    }
+  };
+
+  // Update the debug text UI.
+  private void updateUi() {
+    try {
+      mEvent.setText(TangoJNINative.getEventString());
+      mPoseData.setText(TangoJNINative.getPoseString());
+      mPointCount.setText(String.valueOf(TangoJNINative.getVerticesCount()));
+      mAverageZ.setText(String.format("%.3f", TangoJNINative.getAverageZ()));
+      mFrameDeltaTime.setText(
+              String.format("%.3f", TangoJNINative.getFrameDeltaTime()));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private boolean CheckTangoCoreVersion(int minVersion) {

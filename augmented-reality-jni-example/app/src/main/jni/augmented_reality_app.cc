@@ -62,13 +62,11 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
   }
 }
 
-AugmentedRealityApp::AugmentedRealityApp() {}
+AugmentedRealityApp::AugmentedRealityApp()
+    : calling_activity_obj_(nullptr), on_demand_render_(nullptr) {}
 
 AugmentedRealityApp::~AugmentedRealityApp() {
   TangoConfig_free(tango_config_);
-  JNIEnv* env;
-  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
-  env->DeleteGlobalRef(calling_activity_obj_);
 }
 
 int AugmentedRealityApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
@@ -87,6 +85,15 @@ int AugmentedRealityApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
       reinterpret_cast<jobject>(env->NewGlobalRef(caller_activity));
 
   return ret;
+}
+
+void AugmentedRealityApp::ActivityDestroyed() {
+  JNIEnv* env;
+  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+  env->DeleteGlobalRef(calling_activity_obj_);
+
+  calling_activity_obj_ = nullptr;
+  on_demand_render_ = nullptr;
 }
 
 int AugmentedRealityApp::TangoSetupConfig() {
@@ -383,6 +390,11 @@ TangoErrorType AugmentedRealityApp::UpdateExtrinsics() {
 }
 
 void AugmentedRealityApp::RequestRender() {
+  if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {
+    LOGE("Can not reference Activity to request render");
+    return;
+  }
+
   // Here, we notify the Java activity that we'd like it to trigger a render.
   JNIEnv* env;
   java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);

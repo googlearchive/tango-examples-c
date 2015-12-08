@@ -15,6 +15,7 @@
  */
 
 #include <tango-gl/conversions.h>
+#include <tango_support_api.h>
 
 #include "tango-motion-tracking/scene.h"
 
@@ -84,27 +85,23 @@ void Scene::Render(const TangoPoseData& cur_pose) {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  // Convert pose data to vec3 for position and quaternion for orientation.
-  // Note that the pose data we received here is in the Tango device frame with
-  // respect to the Tango start service frame.
+  glm::dvec3 d_position;
+  glm::dquat d_rotation;
+
+  // TangoSupport_GetWorldTCameraPose converts the device with respect to start
+  // service TangoPoseData to a pose in the OPENGL coordinate frame.
   //
   // More information about frame transformation can be found here:
   // Frame of reference:
   //   https://developers.google.com/project-tango/overview/frames-of-reference
   // Coordinate System Conventions:
   //   https://developers.google.com/project-tango/overview/coordinate-systems
-  glm::vec3 tango_position =
-      glm::vec3(cur_pose.translation[0], cur_pose.translation[1],
-                cur_pose.translation[2]);
-  glm::quat tango_rotation =
-      glm::quat(cur_pose.orientation[3], cur_pose.orientation[0],
-                cur_pose.orientation[1], cur_pose.orientation[2]);
+  TangoSupport_getWorldTCameraPose(TANGO_SUPPORT_COORDINATE_CONVENTION_OPENGL,
+                                   &cur_pose, glm::value_ptr(d_position),
+                                   glm::value_ptr(d_rotation));
 
-  // tango_gl::conversions provides some handy utility functions for the
-  // conversion between different frames.
-  // We are converting everything into OpenGL frame.
-  glm::vec3 position = tango_gl::conversions::Vec3TangoToGl(tango_position);
-  glm::quat rotation = tango_gl::conversions::QuatTangoToGl(tango_rotation);
+  glm::vec3 position = glm::vec3(d_position);
+  glm::quat rotation = glm::quat(d_rotation);
 
   position += kHeightOffset;
 

@@ -23,6 +23,7 @@
 
 #include <tango_client_api.h>
 #include <tango-gl/util.h>
+#include <tango_support_api.h>
 
 namespace tango_plane_fitting {
 
@@ -56,18 +57,14 @@ class PointCloud {
   void SetPlaneEquation(const glm::vec4& plane) { plane_model_ = plane; }
 
   // Get a reference to the current point data.
-  const TangoXYZij* GetCurrentPointData() { return &points_front_.cloud; }
+  const TangoXYZij* GetCurrentPointData();
+
   // Get a copy of the current point cloud transform of device with respect to
   // start of service.
-  glm::mat4 GetCurrentTransform() {
-    return points_front_.start_service_T_device_t1;
-  }
+  const glm::mat4 GetPointCloudStartServiceTDeviceTransform();
 
  private:
-  // Bring points written in the background into the front buffer.
-  // Intended to be called from the render thread.
   bool UpdateRenderPoints();
-
   GLuint shader_program_;
   GLuint vertex_buffer_;
   GLuint mvp_handle_;
@@ -88,24 +85,9 @@ class PointCloud {
   // This is initialized and never updated.
   glm::mat4 opengl_world_T_start_service_;
 
-  class PointData {
-   public:
-    PointData(int32_t max_size);
-    ~PointData();
-
-    PointData(const PointData&) = delete;
-
-    TangoXYZij cloud;
-    glm::mat4 start_service_T_device_t1;
-  };
-
-  // Constant time swap of two PointData structures.
-  void SwapPointCloudData(PointData& a, PointData& b) const;
-
-  std::mutex buffer_lock_;
-  PointData points_back_;
-  PointData points_swap_;
-  PointData points_front_;
+  // Point data manager.
+  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoXYZij* front_cloud_;
 };
 
 }  // namespace tango_plane_fitting
