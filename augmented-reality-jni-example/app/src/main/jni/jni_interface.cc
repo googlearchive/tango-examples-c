@@ -63,6 +63,12 @@ Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_disconne
 }
 
 JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_destroyActivity(
+    JNIEnv*, jobject) {
+  app.ActivityDestroyed();
+}
+
+JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_resetMotionTracking(
     JNIEnv*, jobject) {
   app.TangoResetMotionTracking();

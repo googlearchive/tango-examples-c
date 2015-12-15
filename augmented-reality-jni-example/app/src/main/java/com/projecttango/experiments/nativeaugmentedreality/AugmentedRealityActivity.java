@@ -17,13 +17,13 @@
 package com.projecttango.experiments.nativeaugmentedreality;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -56,7 +56,7 @@ public class AugmentedRealityActivity extends Activity implements
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
-  private static final int kUpdateIntervalMs = 100;
+  private static final int UPDATE_UI_INTERVAL_MS = 100;
 
   // Debug information text.
   // Current frame's pose information.
@@ -86,6 +86,9 @@ public class AugmentedRealityActivity extends Activity implements
 
   // Screen size for normalizing the touch input for orbiting the render camera.
   private Point mScreenSize = new Point();
+
+  // Handles the debug text UI update loop.
+  private Handler mHandler = new Handler();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -156,9 +159,6 @@ public class AugmentedRealityActivity extends Activity implements
     // between the application and Tango Service.
     // The activity object is used for checking if the API version is outdated.
     TangoJNINative.initialize(this);
-
-    // UI thread handles the task of updating all debug text.
-    startUIThread();
   }
 
   @Override
@@ -182,6 +182,9 @@ public class AugmentedRealityActivity extends Activity implements
       Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
       finish();
     }
+
+    // Start the debug text UI update loop.
+    mHandler.post(mUpdateUiLoopRunnable);
   }
 
   @Override
@@ -196,6 +199,15 @@ public class AugmentedRealityActivity extends Activity implements
       TangoJNINative.disconnect();
       mIsConnectedService = false;
     }
+
+    // Stop the debug text UI update loop.
+    mHandler.removeCallbacksAndMessages(null);
+  }
+
+  @Override
+  protected void onDestroy() {
+      super.onDestroy();
+      TangoJNINative.destroyActivity();
   }
 
   @Override
@@ -258,32 +270,22 @@ public class AugmentedRealityActivity extends Activity implements
     mGLView.requestRender();
   }
 
-  // UI thread for handling debug text changes.
-  private void startUIThread() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(kUpdateIntervalMs);
-            runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  mEvent.setText(TangoJNINative.getEventString());
-                  mPoseData.setText(TangoJNINative.getPoseString());
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
+  // Debug text UI update loop, updating at 10Hz.
+  private Runnable mUpdateUiLoopRunnable = new Runnable() {
+    public void run() {
+      updateUi();
+      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+    }
+  };
 
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }
-    }).start();
+  // Update the debug text UI.
+  private void updateUi() {
+    try {
+      mEvent.setText(TangoJNINative.getEventString());
+      mPoseData.setText(TangoJNINative.getPoseString());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private boolean CheckTangoCoreVersion(int minVersion) {

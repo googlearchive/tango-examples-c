@@ -18,7 +18,6 @@ package com.projecttango.experiments.nativearealearning;
 
 import android.app.Activity;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -26,16 +25,13 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
-
-import java.lang.Override;
 
 // The AreaDescriptionActivity of the application which shows debug information
 // and a glSurfaceView that renders graphic content.
@@ -60,7 +56,7 @@ public class AreaDescriptionActivity extends Activity implements
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
-  private static final int kUpdateIntervalMs = 100;
+  private static final int UPDATE_UI_INTERVAL_MS = 100;
 
   // The flag to check if the surface is created.
   public boolean mIsSurfaceCreated = false;
@@ -102,6 +98,9 @@ public class AreaDescriptionActivity extends Activity implements
   // Long-running task to save an ADF.
   private SaveAdfTask mSaveAdfTask;
 
+  // Handles the debug text UI update loop.
+  private Handler mHandler = new Handler();
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -122,9 +121,6 @@ public class AreaDescriptionActivity extends Activity implements
     // between the application and Tango Service.
     // The activity object is used for checking if the API version is outdated.
     TangoJNINative.initialize(this);
-
-    // UI thread handles the task of updating all debug text.
-    startUIThread();
   }
 
   @Override
@@ -153,6 +149,9 @@ public class AreaDescriptionActivity extends Activity implements
       Toast.makeText(this, R.string.tango_cant_initialize, Toast.LENGTH_LONG).show();
       finish();
     }
+
+    // Start the debug text UI update loop.
+    mHandler.post(mUpdateUiLoopRunnable);
   }
 
   @Override
@@ -170,6 +169,9 @@ public class AreaDescriptionActivity extends Activity implements
       TangoJNINative.disconnect();
       mIsConnectedService = false;
     }
+
+    // Stop the debug text UI update loop.
+    mHandler.removeCallbacksAndMessages(null);
   }
 
   @Override
@@ -365,45 +367,31 @@ public class AreaDescriptionActivity extends Activity implements
     setADFNameDialog.show(manager, "ADFNameDialog");
   }
 
-  // UI thread for handling debug text changes.
-  private void startUIThread() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(kUpdateIntervalMs);
-            runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  updateUI();
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
+  // Debug text UI update loop, updating at 10Hz.
+  private Runnable mUpdateUiLoopRunnable = new Runnable() {
+    public void run() {
+      updateUi();
+      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+    }
+  };
 
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
+  // Update the debug text UI.
+  private void updateUi() {
+    try {
+      // Update the UI debug displays.
+      mEvent.setText(TangoJNINative.getEventString());
+      mStartServiceTDevicePoseData.setText(
+              TangoJNINative.getStartServiceTDeviceString());
+      mADFTDevicePoseData.setText(TangoJNINative.getAdfTDeviceString());
+      mADFTStartServicePoseData.setText(TangoJNINative.getAdfTStartServiceString());
+
+      // If Tango has relocalized, allow saving the ADF.
+      // Note: Tango returns TANGO_INVALID if saveAdf() is called before relocalization.
+      if (TangoJNINative.isRelocalized()) {
+        findViewById(R.id.save_adf_button).setEnabled(true);
       }
-    }).start();
-  }
-
-  private void updateUI() {
-    // Update the UI debug displays.
-    mEvent.setText(TangoJNINative.getEventString());
-    mStartServiceTDevicePoseData.setText(
-        TangoJNINative.getStartServiceTDeviceString());
-    mADFTDevicePoseData.setText(TangoJNINative.getAdfTDeviceString());
-    mADFTStartServicePoseData.setText(TangoJNINative.getAdfTStartServiceString());
-
-    // If Tango has relocalized, allow saving the ADF.
-    // Note: Tango returns TANGO_INVALID if saveAdf() is called before relocalization.
-    if (TangoJNINative.isRelocalized()) {
-      findViewById(R.id.save_adf_button).setEnabled(true);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

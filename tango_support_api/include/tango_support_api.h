@@ -17,6 +17,8 @@
 
 #include <tango_client_api.h>
 
+#include <stdint.h>
+
 /// @file tango_support_api.h
 /// @brief File containing the Project Tango Support C API. The Project Tango
 /// Support C API provides helper functions useful to external developers for
@@ -26,6 +28,81 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @defgroup CallbackHelpers Callback Data Support Functions
+/// @brief Functions for managing data received from callbacks.
+/// @{
+
+/// The TangoSupportImageBufferManager maintains a set of image buffers to
+/// manage transferring a TangoImageBuffer from the callback thread to a render
+/// or computation thread. This holds three buffers internally (back, swap,
+/// front). The back buffer is used as the destination for pixels copied from
+/// the callback thread. When the copy is complete the back buffer is swapped
+/// with the swap buffer while holding a lock. Calling
+/// TangoSupport_getLatestImagebuffer holds the lock to swap the swap buffer
+/// with the front buffer (if there is newer data in the swap buffer than the
+/// current front buffer).
+struct TangoSupportImageBufferManager;
+
+/// @brief Create an object for maintaining a set of image buffers for a
+/// specified image format and size.
+///
+/// @param format Format of the color camera image.
+/// @param width Width in pixels of the color images.
+/// @param height Height in pixels of the color images.
+/// @param manager A handle to the manager object.
+/// @return Returns <code>TANGO_SUCCESS</code> on successful allocation.
+///   Returns <code>TANGO_INVALID</code> if manager is NULL.
+TangoErrorType TangoSupport_createImageBufferManager(
+    TangoImageFormatType format, int width, int height,
+    TangoSupportImageBufferManager** manager);
+
+/// @brief Delete the image buffer manager object.
+///
+/// @param manager A handle to the manager to delete.
+/// @return Returns <code>TANGO_SUCCESS</code> on free.
+///   Returns <code>TANGO_INVALID</code> if manager is NULL.
+TangoErrorType TangoSupport_freeImageBufferManager(
+    TangoSupportImageBufferManager* manager);
+
+/// @brief Limit copying of the incoming image to a specific range of
+/// scan lines. This is an optimization when only a portion of the image is
+/// required.
+///
+/// @param manager A handle to the image buffer manager.
+/// @param y_only For YUV images copy only the Y-portion (grayscale
+///   intensities) if value is non-zero. For zero value copy Y and UV portions.
+/// @param begin_line Copy only scan lines start at this row.
+/// @param end_line Copy only scan lines to this row.
+/// @pre 0 <= begin_line <= end_line <= image_height - 1.
+/// @return Returns <code>TANGO_SUCCESS</code> on update of the copy region.
+TangoErrorType TangoSupport_setImageBufferCopyRegion(
+    TangoSupportImageBufferManager* manager, int y_only, uint32_t begin_line,
+    uint32_t end_line);
+
+/// @brief Updates the back buffer of the manager with new data from the
+/// callback. This should be called from the image callback thread.
+///
+/// @param manager A handle to the image buffer manager.
+/// @param image_buffer New image buffer data from the camera callback thread.
+/// @return Returns <code>TANGO_SUCCESS</code> on update of the back image
+/// buffer.
+TangoErrorType TangoSupport_updateImageBuffer(
+    TangoSupportImageBufferManager* manager,
+    const TangoImageBuffer* image_buffer);
+
+/// @brief Check if updated color image data is available. If so, swap new data
+/// to the front buffer.  Set image_buffer to point to the front buffer. This
+/// should be called from a single computation or render thread.
+///
+/// @param manager A handle to the image buffer manager.
+/// @param image_buffer After the call contains a pointer to the most recent
+///   camera image buffer.
+/// @return Returns <code>TANGO_SUCCESS</code>.
+TangoErrorType TangoSupport_getLatestImageBuffer(
+    TangoSupportImageBufferManager* manager, TangoImageBuffer** image_buffer);
+
+/// @}
 
 /// @defgroup DepthSupport Depth Interface Support Functions
 /// @brief Functions for managing depth data.
@@ -115,6 +192,58 @@ TangoErrorType TangoSupport_calculateRelativePose(
     double target_timestamp, TangoCoordinateFrameType target_frame,
     TangoPoseData* base_frame_T_target_frame);
 
+/// The TangoSupportPointCloudManager maintains a set of point clouds to
+/// manage transferring a TangoXYZij from the callback thread to a render
+/// or computation thread. This holds three buffers internally (back, swap,
+/// front). The back buffer is used as the destination for data copied from
+/// the callback thread. When the copy is complete the back buffer is swapped
+/// with the swap buffer while holding a lock. If there is newer data in
+/// the swap buffer than the current front buffer then calling SwapBuffer holds
+/// the lock and swaps the swap buffer with the front buffer.
+struct TangoSupportPointCloudManager;
+
+/// @brief Create an object for maintaining a set of point clouds for a
+/// specified size.
+///
+/// @param max_points Maximum number of points in TangoXYZij. Get value from
+///   config.
+/// @param manager A handle to the manager object.
+/// @return A TangoErrorType value of <code>TANGO_INVALID</code> if
+///   max_points <= 0. Returns <code>TANGO_SUCCESS</code> otherwise.
+TangoErrorType TangoSupport_createPointCloudManager(
+    size_t max_points, TangoSupportPointCloudManager** manager);
+
+/// @brief Delete the point cloud manager object.
+///
+/// @param manager A handle to the manager to delete.
+/// @return A TangoErrorType value of <code>TANGO_SUCCESS</code> if
+///   successful. Returns <code>TANGO_INVALID</code> if manager is NULL.
+TangoErrorType TangoSupport_freePointCloudManager(
+    TangoSupportPointCloudManager* manager);
+
+/// @brief Updates the back buffer of the manager. Can be safely called from
+///   the callback thread. Update is skipped if point cloud is empty.
+///
+/// @param manager A handle to the point cloud manager.
+/// @param point_cloud New point cloud data from the camera callback thread.
+/// @return A TangoErrorType value of <code>TANGO_INVALID</code> if manager
+///   or point_cloud are NULL. Returns <code>TANGO_SUCCESS</code> if update
+///   is successful.
+TangoErrorType TangoSupport_updatePointCloud(
+    TangoSupportPointCloudManager* manager, const TangoXYZij* point_cloud);
+
+/// @brief Assign the pointer to the updated front buffer.
+///   Can safely be called from the render thread. Update
+///   only occurs if point_cloud timestamp is more recent.
+///
+/// @param manager A handle to the point cloud manager.
+/// @param point_cloud After the call contains a pointer to the most recent
+///   depth camera buffer.
+/// @return A TangoErrorType value of <code>TANGO_INVALID</code> if manager
+///   is NULL. Returns <code>TANGO_SUCCESS</code> otherwise.
+TangoErrorType TangoSupport_getLatestPointCloud(
+    TangoSupportPointCloudManager* manager, TangoXYZij** latest_point_cloud);
+
 /**@} */
 
 /// @defgroup SceneReconstructionSupport Scene Reconstruction Support Functions
@@ -172,6 +301,62 @@ TangoErrorType TangoSupport_copyMesh(const TangoMesh_Experimental* input_mesh,
 TangoErrorType TangoSupport_createSimplifiedMesh(
     const TangoMesh_Experimental* input_mesh, const uint32_t target_num_faces,
     TangoMesh_Experimental* output_mesh);
+
+/// @}
+
+/// @defgroup TransformationSupport Transformation Support.
+/// @brief Functions for supporting easy transformation between different
+/// frames.
+/// @{
+
+/// @brief Coordinate conventions supported by the Tango Support API.
+typedef enum {
+  /// OpenGL coordinate convention.
+  TANGO_SUPPORT_COORDINATE_CONVENTION_OPENGL,
+  /// Unity3D coordinate convention.
+  TANGO_SUPPORT_COORDINATE_CONVENTION_UNITY,
+} TangoCoordinateConvention;
+
+/// @brief Calculates the relative pose from the target frame at time
+/// target_timestamp to the base frame at time base_timestamp.
+///
+/// @param base_timestamp The timestamp for base frame position. Must be
+///   non-negative. If set to 0.0, the most recent pose estimate is used.
+/// @param base_frame the coordinate frame type of target frame. Must be
+///   TANGO_COORDINATE_FRAME_CAMERA_*.
+/// @param target_timestamp The timestamp for target frame position. Must be
+///   non-negative. If set to 0.0, the most recent pose estimate is used.
+/// @param target_frame The coordinate frame type of base frame. Must be
+///   TANGO_COORDINATE_FRAME_CAMERA_*.
+/// @param base_frame_T_target_frame A TangoPoseData object with the calculated
+///   orientation and translation. The output represents the transform from
+///   target frame to base frame.
+/// @return A TangoErrorType value of <code>TANGO_SUCCESS</code> on successful
+///   calculation. Returns <code>TANGO_INVALID</code> if inputs are not
+///   supported. Returns <code>TANGO_ERROR</code> if an internal transform
+///   cannot be calculated.
+TangoErrorType TangoSupport_calculateRelativePose(
+    double base_timestamp, TangoCoordinateFrameType base_frame,
+    double target_timestamp, TangoCoordinateFrameType target_frame,
+    TangoPoseData* base_frame_T_target_frame);
+
+/// @brief Convert device with respect to start of service pose into camera
+/// with respect to world pose for supported platforms.
+///
+/// @param coordinate_convention The targeted coordinate convention.
+/// @param tango_pose_data A pointer to the TangoPoseData going to be
+///   converted. This must be for the frame pair (base frame: START_SERVICE,
+///   target frame: DEVICE).
+/// @param translation The camera with respect to world translation,
+///   in the order of x, y, z.
+/// @param orientation The camera with respect to world orientation,
+///   in the order of x, y, z, w.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code>
+///   on invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_getWorldTCameraPose(
+    TangoCoordinateConvention coordinate_convention,
+    const TangoPoseData* pose_start_service_T_device, double translation[3],
+    double orientation[4]);
 
 /// @}
 

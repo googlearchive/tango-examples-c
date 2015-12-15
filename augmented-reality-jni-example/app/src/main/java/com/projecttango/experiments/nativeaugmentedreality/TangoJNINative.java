@@ -31,6 +31,9 @@ public class TangoJNINative {
   // the auto-recovery option from here.
   public static native int setupConfig();
 
+  // Signal that the activity has been destroyed and remove any cached references.
+  public static native void destroyActivity();
+
   // Connect the onPoseAvailable callback.
   public static native int connectCallbacks();
 

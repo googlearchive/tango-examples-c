@@ -38,11 +38,18 @@ class AugmentedRealityApp {
   ~AugmentedRealityApp();
 
   // Initialize Tango Service, this function starts the communication
-  // between the application and Tango Service.
-  // The activity object is used for checking if the API version is outdated.
+  // between the application and Tango Service.  This also records a
+  // reference to the caller activity to request rendering when new
+  // texture data is available.  The activity object is also used to
+  // check if the API version is outdated.
   int TangoInitialize(JNIEnv* env, jobject caller_activity);
 
-  // Setup the configuration file for the Tango Service. We'll also se whether
+  // When the Android activity is destroyed signal the JNI layer to
+  // remove references to the activity. This should be called from the
+  // onDestroy() callback of the parent activity lifecycle.
+  void ActivityDestroyed();
+
+  // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
   int TangoSetupConfig();
 

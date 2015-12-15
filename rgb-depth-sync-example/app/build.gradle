@@ -21,9 +21,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-    
+
     lintOptions {
-        abortOnError false
+	      abortOnError false
     }
 }
 
@@ -41,3 +41,4 @@ task ndkBuild(type: Exec) {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
+

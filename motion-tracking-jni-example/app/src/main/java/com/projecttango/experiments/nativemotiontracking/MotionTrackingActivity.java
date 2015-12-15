@@ -24,6 +24,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -55,7 +56,7 @@ public class MotionTrackingActivity extends Activity implements
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
-  private static final int kUpdateIntervalMs = 100;
+  private static final int UPDATE_UI_INTERVAL_MS = 100;
 
   // Debug information text.
   // Current frame's pose information.
@@ -87,6 +88,9 @@ public class MotionTrackingActivity extends Activity implements
   // connected.This is especially important in the onPause() callback for the
   // activity class.
   private boolean mIsConnectedService = false;
+
+  // Handles the debug text UI update loop.
+  private Handler mHandler = new Handler();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -153,9 +157,6 @@ public class MotionTrackingActivity extends Activity implements
     // between the application and Tango Service.
     // The activity object is used for checking if the API version is outdated.
     TangoJNINative.initialize(this);
-
-    // UI thread handles the task of updating all debug text.
-    startUIThread();
   }
 
   @Override
@@ -181,6 +182,9 @@ public class MotionTrackingActivity extends Activity implements
       Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
       finish();
     }
+
+    // Start the debug text UI update loop.
+    mHandler.post(mUpdateUiLoopRunnable);
   }
 
   @Override
@@ -195,6 +199,9 @@ public class MotionTrackingActivity extends Activity implements
       TangoJNINative.disconnect();
       mIsConnectedService = false;
     }
+
+    // Stop the debug text UI update loop.
+    mHandler.removeCallbacksAndMessages(null);
   }
 
   @Override
@@ -249,33 +256,23 @@ public class MotionTrackingActivity extends Activity implements
     }
     return true;
   }
-  
-  // UI thread for handling debug text changes.
-  private void startUIThread() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(kUpdateIntervalMs);
-            runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  mEvent.setText(TangoJNINative.getEventString());
-                  mPoseData.setText(TangoJNINative.getPoseString());
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
-              }
-            });
 
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      }
-    }).start();
+  // Debug text UI update loop, updating at 10Hz.
+  private Runnable mUpdateUiLoopRunnable = new Runnable() {
+    public void run() {
+      updateUi();
+      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+    }
+  };
+
+  // Update the debug text UI.
+  private void updateUi() {
+    try {
+      mEvent.setText(TangoJNINative.getEventString());
+      mPoseData.setText(TangoJNINative.getPoseString());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private boolean CheckTangoCoreVersion(int minVersion) {
