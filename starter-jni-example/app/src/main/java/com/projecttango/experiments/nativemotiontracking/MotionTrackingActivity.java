@@ -60,7 +60,7 @@ public class MotionTrackingActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onPause();
+        super.onResume();
         mGLView.onResume();
 
         TangoJNINative.tangoSetupConfig();
