@@ -27,7 +27,9 @@ namespace tango_point_cloud {
 class PointCloudDrawable {
  public:
   PointCloudDrawable();
-  ~PointCloudDrawable();
+
+  // Free all GL Resources, i.e, shaders, buffers.
+  void DeleteGlResources();
 
   // Update current point cloud data.
   //

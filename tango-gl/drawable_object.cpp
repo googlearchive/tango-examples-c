@@ -31,7 +31,11 @@ void DrawableObject::SetShader() {
   uniform_color_ = glGetUniformLocation(shader_program_, "color");
 }
 
-DrawableObject::~DrawableObject() { glDeleteShader(shader_program_); }
+void DrawableObject::DeleteGlResources() {
+  if (shader_program_) {
+    glDeleteShader(shader_program_);
+  }
+}
 
 void DrawableObject::SetColor(float red, float green, float blue) {
   red_ = red;

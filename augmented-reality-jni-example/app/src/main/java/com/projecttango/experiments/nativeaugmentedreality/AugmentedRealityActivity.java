@@ -135,6 +135,9 @@ public class AugmentedRealityActivity extends Activity implements
 
     // OpenGL view where all of the graphics are drawn
     mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+    
+    // Configure OpenGL renderer
+    mGLView.setEGLContextClientVersion(2);
 
     // Set up button click listeners
     mMotionReset.setOnClickListener(this);
@@ -165,7 +168,7 @@ public class AugmentedRealityActivity extends Activity implements
   protected void onResume() {
     super.onResume();
     mGLView.onResume();
-
+    
     // Setup the configuration for the TangoService.
     TangoJNINative.setupConfig();
 
@@ -191,7 +194,7 @@ public class AugmentedRealityActivity extends Activity implements
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    TangoJNINative.freeGLContent();
+    TangoJNINative.deleteResources();
 
     // Disconnect from Tango Service, release all the resources that the app is
     // holding from Tango Service.

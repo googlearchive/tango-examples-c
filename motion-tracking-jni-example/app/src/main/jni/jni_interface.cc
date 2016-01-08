@@ -81,9 +81,9 @@ Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_freeGLContent(
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
-  app.FreeGLContent();
+  app.DeleteResources();
 }
 
 JNIEXPORT jstring JNICALL

@@ -42,15 +42,23 @@ const float kHighFov = 65.0f;
 glm::vec3 position;
 glm::quat rotation;
 
+void InitGLContent() {
+  cam = new tango_gl::Camera();
+  grid = new tango_gl::Grid();
+}
+
+void DeleteResources() {
+  delete cam;
+  delete grid;
+}
+
+
 bool SetupGraphics(int w, int h) {
   screen_width = w;
   screen_height = h;
 
   position = glm::vec3(0.0f, 0.0f, 0.0f);
   rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-
-  cam = new tango_gl::Camera();
-  grid = new tango_gl::Grid();
 
   if (h == 0) {
     LOGE("Setup graphic height not valid");
@@ -118,10 +126,15 @@ Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoDisco
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_freeGLContent(
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
-  delete cam;
-  delete grid;
+  DeleteResources();
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initGLContent(
+    JNIEnv*, jobject) {
+  InitGLContent();
 }
 
 JNIEXPORT void JNICALL

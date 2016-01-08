@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tango-plane-fitting/point_cloud.h"
+#include "tango-plane-fitting/point_cloud_renderer.h"
 
 #include <tango-gl/conversions.h>
 #include <tango_support_api.h>
@@ -55,12 +55,10 @@ const std::string kPointCloudFragmentShader =
 
 }  // namespace
 
-PointCloud::PointCloud(int32_t max_point_cloud_size)
+PointCloudRenderer::PointCloudRenderer()
     : plane_distance_(0.05f),
       debug_colors_(false),
       plane_model_(glm::vec4(0.0, 0.0, 1.0, 0.0)) {
-  TangoSupport_createPointCloudManager(max_point_cloud_size,
-                                        &point_cloud_manager_);
   opengl_world_T_start_service_ =
       tango_gl::conversions::opengl_world_T_tango_world();
 
@@ -75,26 +73,17 @@ PointCloud::PointCloud(int32_t max_point_cloud_size)
   plane_distance_handle_ =
       glGetUniformLocation(shader_program_, "plane_distance");
 
-  tango_gl::util::CheckGlError("Pointcloud::Construction");
+  tango_gl::util::CheckGlError("PointCloudRenderer::Construction");
 }
 
-PointCloud::~PointCloud() {
+PointCloudRenderer::~PointCloudRenderer() {
   glDeleteProgram(shader_program_);
   glDeleteBuffers(0, &vertex_buffer_);
-  TangoSupport_freePointCloudManager(point_cloud_manager_);
 }
 
-void PointCloud::UpdateVertices(const TangoXYZij* cloud) {
-  TangoSupport_updatePointCloud(point_cloud_manager_, cloud);
-}
-
-void PointCloud::Render(const glm::mat4& projection,
-                        const glm::mat4& opengl_camera_T_start_service,
-                        const glm::mat4& device_T_depth) {
-  // Update point data.
-  if(TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_) == TANGO_INVALID) {
-    return;
-  }
+void PointCloudRenderer::Render(const glm::mat4& projection_T_depth,
+                          const glm::mat4&start_service_T_depth,
+                          const TangoXYZij* point_cloud) {
 
   if (!debug_colors_) {
     return;
@@ -102,26 +91,20 @@ void PointCloud::Render(const glm::mat4& projection,
 
   glUseProgram(shader_program_);
 
-  const size_t number_of_vertices = front_cloud_->xyz_count;
+  const size_t number_of_vertices = point_cloud->xyz_count;
 
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * number_of_vertices,
-               front_cloud_->xyz[0], GL_STATIC_DRAW);
-
-  const glm::mat4 start_service_T_device_t1 = this->GetPointCloudStartServiceTDeviceTransform();
-
-  const glm::mat4 mvp_mat = projection * opengl_camera_T_start_service *
-                            start_service_T_device_t1 * device_T_depth;
+               point_cloud->xyz[0], GL_STATIC_DRAW);
 
   const glm::mat4 depth_T_opengl =
-      glm::inverse(opengl_world_T_start_service_ * start_service_T_device_t1 *
-                   device_T_depth);
+      glm::inverse(opengl_world_T_start_service_ * start_service_T_depth);
 
   // Transform plane into depth camera coordinates.
   glm::vec4 camera_plane;
   PlaneTransform(plane_model_, depth_T_opengl, &camera_plane);
 
-  glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+  glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(projection_T_depth));
 
   glUniform4fv(plane_handle_, 1, glm::value_ptr(camera_plane));
 
@@ -139,30 +122,7 @@ void PointCloud::Render(const glm::mat4& projection,
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glUseProgram(0);
-  tango_gl::util::CheckGlError("Pointcloud::Render");
-}
-
-const glm::mat4 PointCloud::GetPointCloudStartServiceTDeviceTransform() {
-  TangoCoordinateFramePair frame_pair;
-  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  TangoPoseData pose_start_service_T_device_t1;
-
-  TangoService_getPoseAtTime(front_cloud_->timestamp, frame_pair,
-                             &pose_start_service_T_device_t1);
-
-  const glm::mat4 start_service_T_device =
-  tango_gl::conversions::TransformFromArrays(
-      pose_start_service_T_device_t1.translation,
-      pose_start_service_T_device_t1.orientation);
-
-  return start_service_T_device;
-}
-
-const TangoXYZij* PointCloud::GetCurrentPointData() {
-  TangoSupport_getLatestPointCloud(point_cloud_manager_,
-                                            &front_cloud_);
-  return front_cloud_;
+  tango_gl::util::CheckGlError("PointCloudRenderer::Render");
 }
 
 }  // namespace tango_plane_fitting

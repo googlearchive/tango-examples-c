@@ -40,8 +40,8 @@ public class TangoJNINative {
   // holding from the Tango Service.
   public static native void disconnect();
 
-  // Release all OpenGL resources that are allocated from the program.
-  public static native void freeGLContent();
+  // Release all image-buffer resources that are allocated from the program.
+  public static native void freeBufferData();
 
   // Allocate OpenGL resources for rendering.
   public static native void initGlContent();

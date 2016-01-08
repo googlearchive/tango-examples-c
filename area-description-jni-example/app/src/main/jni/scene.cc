@@ -66,7 +66,7 @@ void Scene::InitGLContent() {
       tango_gl::GestureCamera::CameraType::kThirdPerson);
 }
 
-void Scene::FreeGLContent() {
+void Scene::DeleteResources() {
   delete gesture_camera_;
   delete axis_;
   delete frustum_;

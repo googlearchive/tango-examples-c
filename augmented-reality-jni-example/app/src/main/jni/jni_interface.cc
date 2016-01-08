@@ -93,9 +93,9 @@ Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_freeGLContent(
+Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
-  app.FreeGLContent();
+  app.DeleteResources();
 }
 
 JNIEXPORT jstring JNICALL

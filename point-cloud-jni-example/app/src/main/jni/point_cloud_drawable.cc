@@ -21,15 +21,18 @@
 
 namespace {
 const std::string kPointCloudVertexShader =
+    "precision mediump float;\n"
+    "precision mediump int;\n"
     "attribute vec4 vertex;\n"
     "uniform mat4 mvp;\n"
     "varying vec4 v_color;\n"
     "void main() {\n"
-    "  gl_PointSize = 5.0;\n"
     "  gl_Position = mvp*vertex;\n"
     "  v_color = vertex;\n"
     "}\n";
 const std::string kPointCloudFragmentShader =
+    "precision mediump float;\n"
+    "precision mediump int;\n"
     "varying vec4 v_color;\n"
     "void main() {\n"
     "  gl_FragColor = vec4(v_color);\n"
@@ -43,7 +46,6 @@ const glm::mat4 kOpengGL_T_Depth =
 namespace tango_point_cloud {
 
 PointCloudDrawable::PointCloudDrawable() {
-  LOGI("PointCloudDrawable constructor");
   shader_program_ = tango_gl::util::CreateProgram(
       kPointCloudVertexShader.c_str(), kPointCloudFragmentShader.c_str());
 
@@ -52,13 +54,19 @@ PointCloudDrawable::PointCloudDrawable() {
   glGenBuffers(1, &vertex_buffers_);
 }
 
-PointCloudDrawable::~PointCloudDrawable() { glDeleteProgram(shader_program_); }
+void PointCloudDrawable::DeleteGlResources() {
+  if (vertex_buffers_) {
+    glDeleteBuffers(1, &vertex_buffers_);
+  }
+  if (shader_program_) {
+    glDeleteShader(shader_program_);
+  }
+}
 
 void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
                                 glm::mat4 model_mat,
                                 const std::vector<float>& vertices) {
   glUseProgram(shader_program_);
-  glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
   mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
 
   // Calculate model view projection matrix.
@@ -75,7 +83,7 @@ void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
   glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
 
   glUseProgram(0);
-  tango_gl::util::CheckGlError("Pointcloud::Render");
+  tango_gl::util::CheckGlError("Pointcloud::Render()");
 }
 
 }  // namespace tango_point_cloud

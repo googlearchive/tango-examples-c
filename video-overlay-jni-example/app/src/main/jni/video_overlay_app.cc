@@ -40,6 +40,8 @@ namespace tango_video_overlay {
 VideoOverlayApp::VideoOverlayApp() {
   is_yuv_texture_available_ = false;
   swap_buffer_signal_ = false;
+  video_overlay_drawable_ = NULL;
+  yuv_drawable_ = NULL;
 }
 
 VideoOverlayApp::~VideoOverlayApp() {
@@ -147,7 +149,17 @@ void VideoOverlayApp::TangoDisconnect() {
   TangoService_disconnect();
 }
 
+void VideoOverlayApp::DeleteDrawables() {
+  delete video_overlay_drawable_;
+  delete yuv_drawable_;
+  video_overlay_drawable_ = NULL;
+  yuv_drawable_ = NULL;
+}
+
 void VideoOverlayApp::InitializeGLContent() {
+  if (video_overlay_drawable_ != NULL || yuv_drawable_ != NULL) {
+    this->DeleteDrawables();
+  }
   video_overlay_drawable_ = new tango_gl::VideoOverlay();
   yuv_drawable_ = new YUVDrawable();
 
@@ -182,14 +194,13 @@ void VideoOverlayApp::Render() {
   }
 }
 
-void VideoOverlayApp::FreeGLContent() {
+void VideoOverlayApp::FreeBufferData() {
   is_yuv_texture_available_ = false;
   swap_buffer_signal_ = false;
   rgb_buffer_.clear();
   yuv_buffer_.clear();
   yuv_temp_buffer_.clear();
-  delete yuv_drawable_;
-  delete video_overlay_drawable_;
+  this->DeleteDrawables();
 }
 
 void VideoOverlayApp::AllocateTexture(GLuint texture_id, int width,

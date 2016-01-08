@@ -269,7 +269,7 @@ void PointCloudApp::Render() {
                      vertices_cpy);
 }
 
-void PointCloudApp::FreeGLContent() { main_scene_.FreeGLContent(); }
+void PointCloudApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 std::string PointCloudApp::GetPoseString() {
   std::lock_guard<std::mutex> lock(pose_mutex_);

@@ -295,14 +295,14 @@ void AugmentedRealityApp::Render() {
       pose_data_.GetExtrinsicsAppliedOpenGLWorldFrame(color_camera_pose);
   if (status != TANGO_SUCCESS) {
     LOGE(
-        "AugmentedRealityApp: Failed to update video overlay texture with"
+        "AugmentedRealityApp: Failed to update video overlay texture with "
         "error code: %d",
         status);
   }
   main_scene_.Render(color_camera_pose);
 }
 
-void AugmentedRealityApp::FreeGLContent() { main_scene_.FreeGLContent(); }
+void AugmentedRealityApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 std::string AugmentedRealityApp::GetPoseString() {
   std::lock_guard<std::mutex> lock(pose_mutex_);
