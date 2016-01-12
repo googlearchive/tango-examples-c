@@ -22,7 +22,7 @@ static const int kMaxExponentiation = 12;
 
 static int RoundUpPowerOfTwo(int w) {
   int start = 2;
-  for (int i = 0; i <= MAX_EXPONENTIATION; ++i) {
+  for (int i = 0; i <= kMaxExponentiation; ++i) {
     if (w < start) {
       w = start;
       break;
