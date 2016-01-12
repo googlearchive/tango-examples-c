@@ -42,6 +42,11 @@ class AreaLearningApp {
   // The activity object is used for checking if the API version is outdated.
   int TangoInitialize(JNIEnv* env, jobject caller_activity);
 
+  // When the Android activity is destroyed, signal the JNI layer to remove
+  // references to the activity. This should be called from the onDestroy()
+  // callback of the parent activity lifecycle.
+  void ActivityDestroyed();
+
   // Setup the configuration file for the Tango Service. We'll also se whether
   // we'd like auto-recover enabled.
   //
@@ -119,8 +124,8 @@ class AreaLearningApp {
   // Main render loop.
   void Render();
 
-  // Release/reset all resources that allocate from the program.
-  void FreeContent();
+  // Reset pose data and release resources that allocate from the program.
+  void DeleteResources();
 
   // Return true if Tango has relocalized to the current ADF at least once.
   bool IsRelocalized();

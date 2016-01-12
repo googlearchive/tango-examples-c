@@ -64,16 +64,14 @@ void AreaLearningApp::onTangoEventAvailable(const TangoEvent* event) {
   }
 }
 
-AreaLearningApp::AreaLearningApp() {
-  tango_core_version_string_ = "N/A";
-  loaded_adf_string_ = "Loaded ADF: N/A";
-}
+AreaLearningApp::AreaLearningApp()
+    : tango_core_version_string_("N/A"),
+      loaded_adf_string_("Loaded ADF: N/A"),
+      calling_activity_obj_(nullptr),
+      on_saving_adf_progress_updated_(nullptr) {}
 
 AreaLearningApp::~AreaLearningApp() {
   TangoConfig_free(tango_config_);
-  JNIEnv* env;
-  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
-  env->DeleteGlobalRef(calling_activity_obj_);
 }
 
 int AreaLearningApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
@@ -89,6 +87,14 @@ int AreaLearningApp::TangoInitialize(JNIEnv* env, jobject caller_activity) {
   calling_activity_obj_ =
       reinterpret_cast<jobject>(env->NewGlobalRef(caller_activity));
   return ret;
+}
+
+void AreaLearningApp::ActivityDestroyed() {
+  JNIEnv* env;
+  java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+  env->DeleteGlobalRef(calling_activity_obj_);
+  calling_activity_obj_ = nullptr;
+  on_saving_adf_progress_updated_ = nullptr;
 }
 
 int AreaLearningApp::TangoSetupConfig(bool is_area_learning_enabled,
@@ -291,9 +297,9 @@ void AreaLearningApp::Render() {
   main_scene_.Render(cur_pose, pose_data_.IsRelocalized());
 }
 
-void AreaLearningApp::FreeContent() {
+void AreaLearningApp::DeleteResources() { 
+  main_scene_.DeleteResources();
   pose_data_.ResetPoseData();
-  main_scene_.FreeGLContent();
 }
 
 bool AreaLearningApp::IsRelocalized() {
@@ -376,6 +382,12 @@ std::string AreaLearningApp::GetTangoServiceVersion() {
 void AreaLearningApp::OnAdfSavingProgressChanged(int progress) {
   // Here, we notify the Java activity that we'd like it to update the saving
   // Adf progress.
+  if (calling_activity_obj_ == nullptr ||
+      on_saving_adf_progress_updated_ == nullptr) {
+    LOGE("AreaLearningApp: Cannot reference activity on ADF saving progress changed.");
+    return;
+  }
+
   JNIEnv* env;
   java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
   env->CallVoidMethod(calling_activity_obj_, on_saving_adf_progress_updated_,

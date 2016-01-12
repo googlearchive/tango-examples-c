@@ -42,8 +42,8 @@ public class JNIInterface {
     // camera texture.
     public static native int initializeGLContent();
 
-    // Release all the OpenGL resources that are allocated.
-    public static native void freeGLContent();
+    // Release resources that are allocated.
+    public static native void deleteResources();
 
     // Display debug colors on point cloud.
     public static native void setRenderDebugPointCloud(boolean debugRender);

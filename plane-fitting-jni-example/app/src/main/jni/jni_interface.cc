@@ -67,9 +67,9 @@ Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_freeGLContent(
+Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_deleteResources(
     JNIEnv* /*env*/, jobject /*obj*/) {
-  app.FreeGLContent();
+  app.DeleteResources();
 }
 
 JNIEXPORT void JNICALL

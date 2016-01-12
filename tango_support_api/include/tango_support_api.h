@@ -61,7 +61,6 @@ TangoErrorType TangoSupport_createImageBufferManager(
 ///
 /// @param manager A handle to the manager to delete.
 /// @return Returns <code>TANGO_SUCCESS</code> on free.
-///   Returns <code>TANGO_INVALID</code> if manager is NULL.
 TangoErrorType TangoSupport_freeImageBufferManager(
     TangoSupportImageBufferManager* manager);
 
@@ -72,10 +71,14 @@ TangoErrorType TangoSupport_freeImageBufferManager(
 /// @param manager A handle to the image buffer manager.
 /// @param y_only For YUV images copy only the Y-portion (grayscale
 ///   intensities) if value is non-zero. For zero value copy Y and UV portions.
-/// @param begin_line Copy only scan lines start at this row.
-/// @param end_line Copy only scan lines to this row.
+/// @param begin_line Copy only scan lines start at this row. Must be less than
+///   end_line.
+/// @param end_line Copy only scan lines to this row. Must be greater than
+///   begin_line.
 /// @pre 0 <= begin_line <= end_line <= image_height - 1.
-/// @return Returns <code>TANGO_SUCCESS</code> on update of the copy region.
+/// @return Returns <code>TANGO_SUCCESS</code> on update of the copy
+///   region. Returns <code>TANGO_INVALID</code> if the preconditions are not
+///   satisfied.
 TangoErrorType TangoSupport_setImageBufferCopyRegion(
     TangoSupportImageBufferManager* manager, int y_only, uint32_t begin_line,
     uint32_t end_line);
@@ -150,7 +153,8 @@ TangoErrorType TangoSupport_copyXYZij(const TangoXYZij* input_point_cloud,
 ///
 /// @param point_cloud The input point cloud. Cannot be NULL and must have at
 ///   least three points.
-/// @param intrinsics The camera intrinsics for the color camera.
+/// @param camera_intrinsics The camera intrinsics for the color camera. Cannot
+///   be NULL.
 /// @param color_camera_T_point_cloud The pose of the point cloud relative to
 ///   the color camera used to obtain uv_coordinates.
 /// @param uv_coordinates The UV coordinates for the user selection. This is
@@ -164,7 +168,8 @@ TangoErrorType TangoSupport_copyXYZij(const TangoXYZij* input_point_cloud,
 /// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
 ///   invalid input, and <code>TANGO_ERROR</code> on failure.
 TangoErrorType TangoSupport_fitPlaneModelNearClick(
-    const TangoXYZij* point_cloud, const TangoCameraIntrinsics* intrinsics,
+    const TangoXYZij* point_cloud,
+    const TangoCameraIntrinsics* camera_intrinsics,
     const TangoPoseData* color_camera_T_point_cloud,
     const float uv_coordinates[2], double intersection_point[3],
     double plane_model[4]);
@@ -216,8 +221,7 @@ TangoErrorType TangoSupport_createPointCloudManager(
 /// @brief Delete the point cloud manager object.
 ///
 /// @param manager A handle to the manager to delete.
-/// @return A TangoErrorType value of <code>TANGO_SUCCESS</code> if
-///   successful. Returns <code>TANGO_INVALID</code> if manager is NULL.
+/// @return A TangoErrorType value of <code>TANGO_SUCCESS</code> on free.
 TangoErrorType TangoSupport_freePointCloudManager(
     TangoSupportPointCloudManager* manager);
 
@@ -261,7 +265,6 @@ TangoErrorType TangoSupport_initializeEmptyMesh(TangoMesh_Experimental* mesh);
 ///
 /// @param mesh A pointer to the mesh to be deleted. Cannot be NULL.
 /// @return Returns <code>TANGO_SUCCESS</code> on successful free.
-///   Returns <code>TANGO_INVALID</code> if mesh is NULL.
 TangoErrorType TangoSupport_freeMesh(TangoMesh_Experimental* mesh);
 
 /// @brief Creates a mesh, allocating memory for vertices, faces, and
@@ -351,12 +354,181 @@ TangoErrorType TangoSupport_calculateRelativePose(
 ///   in the order of x, y, z.
 /// @param orientation The camera with respect to world orientation,
 ///   in the order of x, y, z, w.
-/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code>
-///   on invalid input, and <code>TANGO_ERROR</code> on failure.
+/// @return <code>TANGO_SUCCESS</code> on success and <code>TANGO_INVALID</code>
+///   on invalid input.
 TangoErrorType TangoSupport_getWorldTCameraPose(
     TangoCoordinateConvention coordinate_convention,
     const TangoPoseData* pose_start_service_T_device, double translation[3],
     double orientation[4]);
+
+/// @}
+
+/// @defgroup DepthInterpolationSupport Depth Interpolation Support Functions
+/// @brief Functions for interpolating depth.
+/// @{
+
+/// @brief Calculates the depth in the color camera space at a user-specified
+/// location using nearest-neighbor interpolation.
+///
+/// @param point_cloud The point cloud. Cannot be NULL and must have at least
+///   one point.
+/// @param camera_intrinsics The camera intrinsics for the color camera. Cannot
+//    be NULL.
+/// @param color_camera_T_point_cloud The pose of the point cloud relative to
+///   the color camera used to obtain uv_coordinates.
+/// @param uv_coordinates The UV coordinates for the user selection. This is
+///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+/// @param point_cloud_point The point (x, y, z), where (x, y) is the
+///   back-projection of the UV coordinates to the color camera space and z is
+//    the z coordinate of the point in the point cloud nearest to the user
+//    selection after projection onto the image plane. If there is not a point
+//    cloud point close to the user selection after projection onto the image
+//    plane, then the point will be set to (0.0, 0.0, 0.0) and is_valid_point
+///   will be set to 0.
+/// @param is_valid_point A flag valued 1 if there is a point cloud point close
+///   to the user selection after projection onto the image plane and valued 0
+///   otherwise.
+/// @return <code>TANGO_SUCCESS</code> on success and <code>TANGO_INVALID</code>
+///   on invalid input.
+TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
+    const TangoXYZij* point_cloud,
+    const TangoCameraIntrinsics* camera_intrinsics,
+    const TangoPoseData* color_camera_T_point_cloud,
+    const float uv_coordinates[2], float point_cloud_point[3],
+    int* is_valid_point);
+
+/// @brief The TangoSupportDepthInterpolator contains references to camera
+/// intrinsics
+/// and cached data structures needed to upsample depth data to a camera image.
+struct TangoSupportDepthInterpolator;
+
+/// @brief Create an object for depth interpolation.
+///
+/// @param intrinsics The camera intrinsics for the camera to upsample.
+/// @param interpolator A handle to the interpolator object.
+/// @return A TangoErrorType value of <code>TANGO_INVALID</code> if intrinsics
+///   is null. Returns <code>TANGO_SUCCESS</code> otherwise.
+TangoErrorType TangoSupport_createDepthInterpolator(
+    TangoCameraIntrinsics* intrinsics,
+    TangoSupportDepthInterpolator** interpolator);
+
+/// @brief Free the depth interpolation object.
+///
+/// @param A handle to the interpolator object.
+/// @return <code>TANGO_SUCCESS</code>
+TangoErrorType TangoSupport_freeDepthInterpolator(
+    TangoSupportDepthInterpolator* interpolator);
+
+/// @brief Calculates the depth in the color camera space at a user-specified
+/// location using bilateral filtering weighted by both spatial distance from
+/// the user coordinate and by intensity similarity.
+///
+/// @param interpolator A handle to the interpolator object. The intrinsics of
+///   this interpolator object must match those of the image_buffer.
+/// @param point_cloud The point cloud. Cannot be NULL and must have at least
+///   one point.
+/// @param image_buffer The RGB image buffer. This must have intrinsics matching
+///   those used to create the interpolator object. Cannot be NULL.
+/// @param color_camera_T_point_cloud The pose of the point cloud relative to
+///   the color camera used to obtain uv_coordinates.
+/// @param uv_coordinates The UV coordinates for the user selection. This is
+///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+/// @param point_cloud_point The point (x, y, z), where (x, y) is the
+///   back-projection of the UV coordinates to the color camera space and z is
+///   the bilateral interpolation of the z coordinate of the point. If there is
+///   not a point cloud point close to the user selection after projection onto
+///   the image plane, then the point will be set to (0.0, 0.0, 0.0) and
+///   is_valid_point will be set to 0.
+/// @param is_valid_point A flag valued 1 if there is a point cloud point close
+///   to the user selection after projection onto the image plane and valued 0
+///   otherwise.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
+///   invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_getDepthAtPointBilateral(
+    const TangoSupportDepthInterpolator* interpolator,
+    const TangoXYZij* point_cloud, const TangoImageBuffer* image_buffer,
+    const TangoPoseData* color_camera_T_point_cloud,
+    const float uv_coordinates[2], float point_cloud_point[3],
+    int* is_valid_point);
+
+/// @brief A structure to hold depth values for image upsampling. The units of
+/// the depth are the same as for <code>TangoXYZij</code>.
+struct TangoSupportDepthBuffer {
+  float* depths;
+  uint32_t width;
+  uint32_t height;
+};
+
+/// @brief Allocate memory for a depth buffer for the given image resolution.
+///
+/// @param width The width of the image. This should match the width given by
+///   the camera intrinsics.
+/// @param height The height of the image. This should match the height given by
+///   the camera intrinsics.
+/// @param depth_buffer The depth buffer to initialize.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
+///   invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_initializeDepthBuffer(
+    uint32_t width, uint32_t height, TangoSupportDepthBuffer* depth_buffer);
+
+/// @brief Free memory for the depth buffer.
+///
+/// @param depth_buffer The depth buffer to free.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
+///   invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_freeDepthBuffer(
+    TangoSupportDepthBuffer* depth_buffer);
+
+/// @brief Upsamples the depth data to the resolution of the color image. This
+/// uses the resolution specified by the intrinsics used to construct the
+/// interpolator. This function fills depth around each sample using a fixed
+/// radius. The resolution of the intrinsics provided to the interpolator and
+/// the the resolution of the output depth_buffer must match.
+///
+/// @param interpolator A handle to the interpolator object. The intrinsics of
+///   this interpolator object must match those of the image_buffer. Cannot be
+///   NULL.
+/// @param point_cloud The point cloud. Cannot be NULL and must have at least
+///   one point.
+/// @param color_camera_T_point_cloud The pose of the point cloud relative to
+///   the color camera used to obtain uv_coordinates. Cannot be NULL.
+/// @param depth_buffer A buffer for output of the depth data. Each pixel
+///   contains a depth value (in meters) or zero if there is no depth data near
+///   enough to the pixel. Cannot be NULL.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
+///   invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_upsampleImageNearest(
+    const TangoSupportDepthInterpolator* interpolator,
+    const TangoXYZij* point_cloud,
+    const TangoPoseData* color_camera_T_point_cloud,
+    TangoSupportDepthBuffer* depth_buffer);
+
+/// @brief Upsamples the depth data to the resolution of the color image. This
+/// uses the resolution specified by the intrinsics used to construct the
+/// interpolator. This function fills depth around using a bilateral filtering
+/// approach. The resolution of the intrinsics provided to the interpolator and
+/// the the resolution of the output depth_buffer must match.
+///
+/// @param interpolator A handle to the interpolator object. The intrinsics of
+///   this interpolator object must match those of the image_buffer. Cannot be
+///   NULL.
+/// @param approximate If non-zero, uses an approximation technique that is
+///   faster but somewhat less accurate. If zero, use the a slower technique
+///   that is slightly more accurate.
+/// @param point_cloud The point cloud. Cannot be NULL and must have at least
+///   one point.
+/// @param color_camera_T_point_cloud The pose of the point cloud relative to
+///   the color camera used to obtain uv_coordinates. Cannot be NULL.
+/// @param depth_buffer A buffer for output of the depth data. Each pixel
+///   contains a depth value (in meters) or zero if there is no depth data near
+///   enough to the pixel. Cannot be NULL.
+/// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code> on
+///   invalid input, and <code>TANGO_ERROR</code> on failure.
+TangoErrorType TangoSupport_upsampleImageBilateral(
+    const TangoSupportDepthInterpolator* interpolator, int approximate,
+    const TangoXYZij* point_cloud, const TangoImageBuffer* image_buffer,
+    const TangoPoseData* color_camera_T_point_cloud,
+    TangoSupportDepthBuffer* depth_buffer);
 
 /// @}
 

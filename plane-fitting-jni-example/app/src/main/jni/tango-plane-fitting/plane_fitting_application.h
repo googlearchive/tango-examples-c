@@ -24,7 +24,7 @@
 #include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
 
-#include "tango-plane-fitting/point_cloud.h"
+#include "tango-plane-fitting/point_cloud_renderer.h"
 
 namespace tango_plane_fitting {
 
@@ -61,8 +61,8 @@ class PlaneFittingApplication {
   // Get current camera position and render.
   void Render();
 
-  // Free the GL context when the context is deleted.
-  void FreeGLContent();
+  // Delete the allocate resources.
+  void DeleteResources();
 
   //
   // Callback for point clouds that come in from the Tango service.
@@ -83,12 +83,19 @@ class PlaneFittingApplication {
   // Details of rendering to OpenGL after determining transforms.
   void GLRender(const glm::mat4& w_T_cc);
 
+  // Update the current point data.
+  void UpdateCurrentPointData();
+
+  // return pose for device position with respect to
+  // start of service.
+  glm::mat4 GetStartServiceTDeviceTransform();
+
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
 
   // Render objects
   tango_gl::VideoOverlay* video_overlay_;
-  PointCloud* point_cloud_;
+  PointCloudRenderer* point_cloud_renderer_;
   tango_gl::Cube* cube_;
 
   // The dimensions of the render window.
@@ -110,6 +117,10 @@ class PlaneFittingApplication {
   glm::mat4 color_camera_T_opengl_camera_;
   // OpenGL projection matrix.
   glm::mat4 projection_matrix_ar_;
+
+  // Point data manager.
+  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoXYZij* front_cloud_;
 };
 
 }  // namespace tango_plane_fitting

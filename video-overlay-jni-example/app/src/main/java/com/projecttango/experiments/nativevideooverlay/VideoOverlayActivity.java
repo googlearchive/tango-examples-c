@@ -32,6 +32,8 @@ public class VideoOverlayActivity extends Activity
     TEXTURE_ID
   }
 
+  private boolean mIsConnected = false;
+
   private GLSurfaceView glView;
   private ToggleButton mYUVRenderSwitcher;
 
@@ -41,6 +43,10 @@ public class VideoOverlayActivity extends Activity
 
     setContentView(R.layout.activity_video_overlay);
     glView = (GLSurfaceView) findViewById(R.id.surfaceview);
+    
+    // Configure OpenGL renderer
+    glView.setEGLContextClientVersion(2);
+
     glView.setRenderer(new Renderer());
 
     mYUVRenderSwitcher = (ToggleButton) findViewById(R.id.yuv_switcher);
@@ -62,7 +68,10 @@ public class VideoOverlayActivity extends Activity
     // Connect to Tango Service.
     // This function will start the Tango Service pipeline, in this case,
     // it will start Motion Tracking.
-    TangoJNINative.connect();
+    if (!mIsConnected) {
+      TangoJNINative.connect();
+      mIsConnected = true;
+    }
 
     EnableYUVTexture(mYUVRenderSwitcher.isChecked());
   }
@@ -73,8 +82,11 @@ public class VideoOverlayActivity extends Activity
     glView.onPause();
     // Disconnect from Tango Service, release all the resources that the app is
     // holding from Tango Service.
-    TangoJNINative.disconnect();
-    TangoJNINative.freeGLContent();
+    if (mIsConnected) {
+      TangoJNINative.disconnect();
+      mIsConnected = false;
+    }
+    TangoJNINative.freeBufferData();
   }
 
   @Override

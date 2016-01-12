@@ -62,7 +62,7 @@ class VideoOverlayApp {
   // holding from Tango Service.
   void TangoDisconnect();
 
-  // Allocate OpenGL resources for rendering, mainly initializing the Scene.
+  // Initializing the Scene.
   void InitializeGLContent();
 
   // Setup the view port width and height.
@@ -72,7 +72,7 @@ class VideoOverlayApp {
   void Render();
 
   // Release all OpenGL resources that allocate from the program.
-  void FreeGLContent();
+  void FreeBufferData();
 
   // Set texture method.
   void SetTextureMethod(int method) {
@@ -107,6 +107,7 @@ class VideoOverlayApp {
   void AllocateTexture(GLuint texture_id, int width, int height);
   void RenderYUV();
   void RenderTextureId();
+  void DeleteDrawables();
 };
 }  // namespace tango_video_overlay
 

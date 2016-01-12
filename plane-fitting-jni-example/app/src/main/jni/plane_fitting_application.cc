@@ -47,7 +47,7 @@ void OnXYZijAvailableRouter(void* context, const TangoXYZij* xyz_ij) {
 }  // end namespace
 
 void PlaneFittingApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
-  point_cloud_->UpdateVertices(xyz_ij);
+  TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
 }
 
 PlaneFittingApplication::PlaneFittingApplication()
@@ -60,6 +60,8 @@ PlaneFittingApplication::PlaneFittingApplication()
 
 PlaneFittingApplication::~PlaneFittingApplication() {
   TangoConfig_free(tango_config_);
+  TangoSupport_freePointCloudManager(point_cloud_manager_);
+  point_cloud_manager_ = nullptr;
 }
 
 int PlaneFittingApplication::TangoInitialize(JNIEnv* env,
@@ -68,7 +70,7 @@ int PlaneFittingApplication::TangoInitialize(JNIEnv* env,
   // initialize the service. We will do that here, passing on the JNI
   // environment and jobject corresponding to the Android activity that is
   // calling us.
-  const int ret = TangoService_initialize(env, caller_activity);
+  int ret = TangoService_initialize(env, caller_activity);
   if(ret != TANGO_SUCCESS) {
     return ret;
   }
@@ -78,6 +80,23 @@ int PlaneFittingApplication::TangoInitialize(JNIEnv* env,
     LOGE("Unable to get tango config");
     return TANGO_ERROR;
   }
+
+  if (point_cloud_manager_ == nullptr) {
+    int32_t max_point_cloud_elements;
+    ret = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
+                                         &max_point_cloud_elements);
+    if(ret != TANGO_SUCCESS) {
+      LOGE("Failed to query maximum number of point cloud elements.");
+      return ret;
+    }
+
+    ret = TangoSupport_createPointCloudManager(max_point_cloud_elements,
+                                          &point_cloud_manager_);
+    if(ret != TANGO_SUCCESS) {
+      return ret;
+    }
+  }
+
   return TANGO_SUCCESS;
 }
 
@@ -220,16 +239,8 @@ void PlaneFittingApplication::TangoDisconnect() {
 }
 
 int PlaneFittingApplication::InitializeGLContent() {
-  int32_t max_point_cloud_elements;
-  const int ret = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
-                                       &max_point_cloud_elements);
-  if(ret != TANGO_SUCCESS) {
-    LOGE("Failed to query maximum number of point cloud elements.");
-    return ret;
-  }
-
   video_overlay_ = new tango_gl::VideoOverlay();
-  point_cloud_ = new PointCloud(max_point_cloud_elements);
+  point_cloud_renderer_ = new PointCloudRenderer();
   cube_ = new tango_gl::Cube();
   cube_->SetScale(glm::vec3(kCubeScale, kCubeScale, kCubeScale));
   cube_->SetColor(0.7f, 0.7f, 0.7f);
@@ -244,7 +255,7 @@ int PlaneFittingApplication::InitializeGLContent() {
 }
 
 void PlaneFittingApplication::SetRenderDebugPointCloud(bool on) {
-  point_cloud_->SetRenderDebugColors(on);
+  point_cloud_renderer_->SetRenderDebugColors(on);
 }
 
 void PlaneFittingApplication::SetViewPort(int width, int height) {
@@ -309,8 +320,12 @@ void PlaneFittingApplication::GLRender(
   glEnable(GL_BLEND);
   video_overlay_->Render(glm::mat4(1.0), glm::mat4(1.0));
   glEnable(GL_DEPTH_TEST);
-  point_cloud_->Render(projection_matrix_ar_, opengl_camera_T_ss,
-                       device_T_depth_);
+  UpdateCurrentPointData();
+  const glm::mat4 start_service_T_device_t1 = GetStartServiceTDeviceTransform();
+  const glm::mat4 projection_T_depth = projection_matrix_ar_ * opengl_camera_T_ss *
+                            start_service_T_device_t1 * device_T_depth_;
+  const glm::mat4 start_service_T_depth = start_service_T_device_t1 * device_T_depth_;
+  point_cloud_renderer_->Render(projection_T_depth, start_service_T_depth, front_cloud_);
   glDisable(GL_BLEND);
 
   glm::mat4 opengl_camera_T_opengl_world =
@@ -319,33 +334,22 @@ void PlaneFittingApplication::GLRender(
   cube_->Render(projection_matrix_ar_, opengl_camera_T_opengl_world);
 }
 
-void PlaneFittingApplication::FreeGLContent() {
+void PlaneFittingApplication::DeleteResources() {
   delete video_overlay_;
-  delete point_cloud_;
   delete cube_;
   video_overlay_ = nullptr;
-  point_cloud_ = nullptr;
   cube_ = nullptr;
 }
 
 // We assume the Java layer ensures this function is called on the GL thread.
 void PlaneFittingApplication::OnTouchEvent(float x, float y) {
-  // Get the current point cloud data and transform.  This assumes the data has
-  // been recently updated on the render thread and does not attempt to update
-  // again here.
-  const TangoXYZij* current_cloud = point_cloud_->GetCurrentPointData();
-  // This transform relates the point cloud at acquisition time (t0) to the
-  // start of service.
-  const glm::mat4 start_service_T_device_t0 =
-      point_cloud_->GetPointCloudStartServiceTDeviceTransform();
-
   /// Calculate the conversion from the latest depth camera position to the
   /// position of the most recent color camera image. This corrects for screen
   /// lag between the two systems. 
   TangoPoseData pose_color_camera_t0_T_depth_camera_t1;
   int ret = TangoSupport_calculateRelativePose(
       last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
-      current_cloud->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
+      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
       &pose_color_camera_t0_T_depth_camera_t1);
   if (ret != TANGO_SUCCESS) {
     LOGE("%s: could not calculate relative pose", __func__);
@@ -356,7 +360,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   glm::dvec3 double_depth_position;
   glm::dvec4 double_depth_plane_equation;
   if (TangoSupport_fitPlaneModelNearClick(
-          current_cloud, &color_camera_intrinsics_,
+          front_cloud_, &color_camera_intrinsics_,
           &pose_color_camera_t0_T_depth_camera_t1, glm::value_ptr(uv),
           glm::value_ptr(double_depth_position),
           glm::value_ptr(double_depth_plane_equation)) != TANGO_SUCCESS) {
@@ -369,7 +373,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
       static_cast<glm::vec4>(double_depth_plane_equation);
 
   const glm::mat4 opengl_world_T_depth = opengl_world_T_start_service_ *
-                                                start_service_T_device_t0 *
+                                                GetStartServiceTDeviceTransform() *
                                                 device_T_depth_;
 
   // Transform to world coordinates
@@ -380,7 +384,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   PlaneTransform(depth_plane_equation, opengl_world_T_depth,
                  &world_plane_equation);
 
-  point_cloud_->SetPlaneEquation(world_plane_equation);
+  point_cloud_renderer_->SetPlaneEquation(world_plane_equation);
 
   const glm::vec3 plane_normal(world_plane_equation);
 
@@ -404,6 +408,25 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
 
   cube_->SetRotation(rotation);
   cube_->SetPosition(glm::vec3(world_position) + plane_normal * kCubeScale);
+}
+
+glm::mat4 PlaneFittingApplication::GetStartServiceTDeviceTransform() {
+  TangoCoordinateFramePair frame_pair;
+  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+  TangoPoseData pose_start_service_T_device_t1;
+
+  TangoService_getPoseAtTime(front_cloud_->timestamp, frame_pair,
+                             &pose_start_service_T_device_t1);
+
+  return tango_gl::conversions::TransformFromArrays(
+      pose_start_service_T_device_t1.translation,
+      pose_start_service_T_device_t1.orientation);
+}
+
+void PlaneFittingApplication::UpdateCurrentPointData() {
+  TangoSupport_getLatestPointCloud(point_cloud_manager_,
+                                            &front_cloud_);
 }
 
 }  // namespace tango_plane_fitting

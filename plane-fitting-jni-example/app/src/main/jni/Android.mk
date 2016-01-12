@@ -25,7 +25,7 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-gl/include \
 LOCAL_SRC_FILES := jni_interface.cc \
                    plane_fitting.cc \
                    plane_fitting_application.cc \
-                   point_cloud.cc \
+                   point_cloud_renderer.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/bounding_box.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/camera.cpp \
                    $(PROJECT_ROOT_FROM_JNI)/tango-gl/conversions.cpp \

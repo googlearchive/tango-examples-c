@@ -34,7 +34,9 @@ public class TangoJNINative {
 
     public static native void tangoDisconnect();
 
-    public static native void freeGLContent();
+    public static native void initGLContent();
+
+    public static native void deleteResources();
 
     public static native void setupGraphic(int width, int height);
 

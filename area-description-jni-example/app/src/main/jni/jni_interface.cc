@@ -38,6 +38,12 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initialize(
   return app.TangoInitialize(env, activity);
 }
 
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_destroyActivity(
+    JNIEnv*, jobject) {
+  app.ActivityDestroyed();
+}
+
 JNIEXPORT jint JNICALL
 Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupConfig(
     JNIEnv*, jobject, bool is_area_learningEnabled, bool is_loading_adf) {
@@ -88,9 +94,9 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_freeContent(
+Java_com_projecttango_experiments_nativearealearning_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
-  app.FreeContent();
+  app.DeleteResources();
 }
 
 JNIEXPORT jboolean JNICALL

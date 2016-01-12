@@ -178,7 +178,7 @@ void MotiongTrackingApp::Render() {
   main_scene_.Render(cur_pose);
 }
 
-void MotiongTrackingApp::FreeGLContent() { main_scene_.FreeGLContent(); }
+void MotiongTrackingApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 std::string MotiongTrackingApp::GetPoseString() {
   std::lock_guard<std::mutex> lock(pose_mutex_);

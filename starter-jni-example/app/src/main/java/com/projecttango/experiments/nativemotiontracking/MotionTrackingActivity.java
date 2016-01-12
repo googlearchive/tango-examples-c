@@ -50,6 +50,9 @@ public class MotionTrackingActivity extends Activity {
         setContentView(R.layout.activity_motion_tracking);
         // OpenGL view where all of the graphics are drawn
         mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+    
+        // Configure OpenGL renderer
+        mGLView.setEGLContextClientVersion(2);
 
         // Configure OpenGL renderer
         mRenderer = new MotionTrackingRenderer();
@@ -64,21 +67,19 @@ public class MotionTrackingActivity extends Activity {
         mGLView.onResume();
 
         TangoJNINative.tangoSetupConfig();
+        
+        TangoJNINative.tangoConnectCallbacks();
 
-        int err = 0;
-        err = TangoJNINative.tangoConnectCallbacks();
-        if (err == TANGO_NO_MOTION_TRACKING_PERMISSION) {
-            callPermissionIntent();
-        } else if (err == TANGO_SUCCESS) {
-            TangoJNINative.tangoConnect();
-            mIsConnectedService = true;
-        }
+        TangoJNINative.tangoConnect();
+        mIsConnectedService = true;
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mGLView.onPause();
+        TangoJNINative.deleteResources();
+
         if (mIsConnectedService) {
             TangoJNINative.tangoDisconnect();
         }

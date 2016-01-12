@@ -85,8 +85,8 @@ class MotiongTrackingApp {
   // Main render loop.
   void Render();
 
-  // Release all OpenGL resources that allocate from the program.
-  void FreeGLContent();
+  // Release all resources that allocate from the program.
+  void DeleteResources();
 
   // Retrun pose debug string.
   std::string GetPoseString();

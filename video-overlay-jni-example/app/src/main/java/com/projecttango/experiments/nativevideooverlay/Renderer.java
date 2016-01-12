@@ -22,6 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 // Render render all GL content to the glSurfaceView.
 public class Renderer implements GLSurfaceView.Renderer {
+
   // Render loop of the Gl context.
   public void onDrawFrame(GL10 gl) {
     TangoJNINative.render();

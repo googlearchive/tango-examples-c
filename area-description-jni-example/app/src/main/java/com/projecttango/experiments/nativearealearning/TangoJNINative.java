@@ -34,6 +34,11 @@ public class TangoJNINative {
   public static native int initialize(AreaDescriptionActivity activity);
 
   /**
+   * Signal that the activity has been destroyed and remove any references.
+   */
+  public static native void destroyActivity();
+
+  /**
    * Setup the configuration file of the Tango Service. We are also setting up
    * the auto-recovery option from here.
    */
@@ -59,9 +64,9 @@ public class TangoJNINative {
   public static native void disconnect();
 
   /**
-   * Release/reset all resources that are allocated from the native code.
+   * Reset Pose Data and release non-GL resources that are allocated from the native code.
    */
-  public static native void freeContent();
+  public static native void deleteResources();
 
   /**
    * Allocate OpenGL resources for rendering.

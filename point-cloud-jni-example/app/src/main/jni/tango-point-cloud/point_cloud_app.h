@@ -93,8 +93,8 @@ class PointCloudApp {
   // Main render loop.
   void Render();
 
-  // Release all OpenGL resources that allocate from the program.
-  void FreeGLContent();
+  // Release all non-OpenGL allocated resources.
+  void DeleteResources();
 
   // Return pose debug string.
   std::string GetPoseString();

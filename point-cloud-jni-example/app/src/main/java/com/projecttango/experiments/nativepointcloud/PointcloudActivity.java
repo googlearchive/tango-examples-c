@@ -135,6 +135,9 @@ public class PointcloudActivity extends Activity implements OnClickListener {
 
     // OpenGL view where all of the graphics are drawn.
     mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+    
+    // Configure OpenGL renderer
+    mGLView.setEGLContextClientVersion(2);
 
     // Configure the OpenGL renderer.
     mRenderer = new Renderer();
@@ -147,6 +150,8 @@ public class PointcloudActivity extends Activity implements OnClickListener {
       finish();
       return;
     }
+    
+    TangoJNINative.initialize(this);
   }
 
   @Override
@@ -181,7 +186,8 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    TangoJNINative.freeGLContent();
+    // Delete all the non-OpenGl resources.
+    TangoJNINative.deleteResources();
 
     // Disconnect from the Tango Service, release all the resources that the app is
     // holding from the Tango Service.

@@ -29,8 +29,8 @@ class DrawableObject : public Transform {
   DrawableObject() : red_(0), green_(0), blue_(0), alpha_(1.0f) {};
   DrawableObject(const DrawableObject& other) = delete;
   const DrawableObject& operator=(const DrawableObject&) = delete;
-  ~DrawableObject();
 
+  void DeleteGlResources();
   void SetShader();
   void SetColor(const Color& color);
   void SetColor(const float red, const float green, const float blue);

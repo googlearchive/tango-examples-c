@@ -158,10 +158,7 @@ public class AreaDescriptionActivity extends Activity implements
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    if (mIsSurfaceCreated) {
-      TangoJNINative.freeContent();
-      mIsSurfaceCreated = false;
-    }
+    TangoJNINative.deleteResources();
 
     // Disconnect from Tango Service, release all the resources that the app is
     // holding from Tango Service.
@@ -172,6 +169,12 @@ public class AreaDescriptionActivity extends Activity implements
 
     // Stop the debug text UI update loop.
     mHandler.removeCallbacksAndMessages(null);
+  }
+  
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    TangoJNINative.destroyActivity();
   }
 
   @Override
@@ -349,6 +352,9 @@ public class AreaDescriptionActivity extends Activity implements
 
     // OpenGL view where all of the graphics are drawn.
     mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
+    
+    // Configure OpenGL renderer
+    mGLView.setEGLContextClientVersion(2);
 
     // Configure OpenGL renderer
     mRenderer = new Renderer();

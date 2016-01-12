@@ -50,8 +50,8 @@ class Scene {
   // Allocate OpenGL resources for rendering.
   void InitGLContent();
 
-  // Release OpenGL resources allocated.
-  void FreeGLContent();
+  // Release non-OpenGL resources.
+  void DeleteResources();
 
   // Setup GL view port.
   // @param: x, left of the screen.

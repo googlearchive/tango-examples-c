@@ -67,9 +67,9 @@ Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_freeGLContent(
+Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_freeBufferData(
     JNIEnv*, jobject) {
-  app.FreeGLContent();
+  app.FreeBufferData();
 }
 
 JNIEXPORT void JNICALL

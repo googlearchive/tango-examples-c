@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
     // program attempting to disconnect from the service while it is not
     // connected.This is especially important in the onPause() callback for the
     // activity class.
-    private boolean mIsConnectedService = false;
+    private boolean mIsServiceConnected = false;
 
     // GLSurfaceView and renderer, all of the graphic content is rendered
     // through OpenGL ES 2.0 in native code.
@@ -200,9 +200,10 @@ public class MainActivity extends Activity {
 
         // Setup the configuration of the Tango Service.
         int ret = JNIInterface.tangoSetupAndConnect();
+        mIsServiceConnected = true;
 
         if (ret != TANGO_SUCCESS) {
-            mIsConnectedService = true;
+            mIsServiceConnected = false;
             Log.e(TAG, "Failed to set config and connect with code: " + ret);
             finish();
         }
@@ -212,13 +213,13 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         mGLView.onPause();
-        JNIInterface.freeGLContent();
+        JNIInterface.deleteResources();
 
         // Disconnect from the Tango Service, release all the resources that
         // the app is holding from the Tango Service.
-        if (mIsConnectedService) {
+        if (mIsServiceConnected) {
             JNIInterface.tangoDisconnect();
-            mIsConnectedService = false;
+            mIsServiceConnected = false;
         }
     }
 
