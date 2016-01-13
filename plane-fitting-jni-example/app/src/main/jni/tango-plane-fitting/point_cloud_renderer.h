@@ -51,6 +51,9 @@ class PointCloudRenderer {
   // A plane equation in world coordinates for debug rendering.
   void SetPlaneEquation(const glm::vec4& plane) { plane_model_ = plane; }
 
+  // A call to manually free the OpenGL resources
+  void DeleteGLResources();
+
  private:
   GLuint shader_program_;
   GLuint vertex_buffer_;

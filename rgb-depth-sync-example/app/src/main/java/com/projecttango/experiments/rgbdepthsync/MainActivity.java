@@ -118,29 +118,7 @@ public class MainActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        int status = JNIInterface.tangoInitialize(this);
-        if (status != TANGO_SUCCESS) {
-          if (status == TANGO_INVALID) {
-            Toast.makeText(this, 
-              "Tango Service version mis-match", Toast.LENGTH_SHORT).show();
-          } else {
-            Toast.makeText(this, 
-              "Tango Service initialize internal error",
-              Toast.LENGTH_SHORT).show();
-          }
-        }
-
-        status = JNIInterface.tangoSetupConfig();
-        if (status != TANGO_SUCCESS) {
-            Log.e(TAG, "Failed to set config with code: "  + status);
-            finish();
-        }
-
-        status = JNIInterface.tangoSetIntrinsicsAndExtrinsics();
-        if (status != TANGO_SUCCESS) {
-            Log.e(TAG, "Failed to set extrinsics and intrinsics code: "  + status);
-            finish();
-        }
+        
 
         setContentView(R.layout.activity_main);
 
@@ -169,6 +147,18 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
+
+        int status = JNIInterface.tangoInitialize(this);
+        if (status != TANGO_SUCCESS) {
+          if (status == TANGO_INVALID) {
+            Toast.makeText(this, 
+              "Tango Service version mis-match", Toast.LENGTH_SHORT).show();
+          } else {
+            Toast.makeText(this, 
+              "Tango Service initialize internal error",
+              Toast.LENGTH_SHORT).show();
+          }
+        }
     }
 
     @Override
@@ -176,13 +166,31 @@ public class MainActivity extends Activity {
         // We moved most of the onResume lifecycle calls to the surfaceCreated,
         // surfaceCreated will be called after the GLSurface is created.
         super.onResume();
-
         mGLView.onResume();
 
-        int ret = JNIInterface.tangoConnect();
-        if (ret != TANGO_SUCCESS) {
+        int status = JNIInterface.tangoSetupConfig();
+        if (status != TANGO_SUCCESS) {
+            Log.e(TAG, "Failed to set config with code: "  + status);
+            finish();
+        }
+
+        status = JNIInterface.tangoConnectCallbacks();
+        if (status != TANGO_SUCCESS) {
+            Log.e(TAG, "Failed to set connect cbs with code: "  + status);
+            finish();
+        }
+
+        status = JNIInterface.tangoConnect();
+        if (status == TANGO_SUCCESS) {
             mIsConnectedService = true;
-            Log.e(TAG, "Failed to set connect service with code: "  + ret);
+        } else {
+            Log.e(TAG, "Failed to set connect service with code: "  + status);
+            finish();
+        }
+
+        status = JNIInterface.tangoSetIntrinsicsAndExtrinsics();
+        if (status != TANGO_SUCCESS) {
+            Log.e(TAG, "Failed to set extrinsics and intrinsics code: "  + status);
             finish();
         }
     }
@@ -202,12 +210,6 @@ public class MainActivity extends Activity {
         int ret = JNIInterface.tangoConnectTexture();
         if (ret != TANGO_SUCCESS) {
             Log.e(TAG, "Failed to connect texture with code: "  + ret);
-            finish();
-        }
-
-        ret = JNIInterface.tangoConnectCallbacks();
-        if (ret != TANGO_SUCCESS) {
-            Log.e(TAG, "Failed to set connect cbs with code: "  + ret);
             finish();
         }
     }

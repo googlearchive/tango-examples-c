@@ -76,7 +76,9 @@ PointCloudRenderer::PointCloudRenderer()
   tango_gl::util::CheckGlError("PointCloudRenderer::Construction");
 }
 
-PointCloudRenderer::~PointCloudRenderer() {
+PointCloudRenderer::~PointCloudRenderer() {}
+
+void PointCloudRenderer::DeleteGLResources() {
   glDeleteProgram(shader_program_);
   glDeleteBuffers(0, &vertex_buffer_);
 }

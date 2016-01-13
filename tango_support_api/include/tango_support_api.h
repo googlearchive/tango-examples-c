@@ -89,7 +89,7 @@ TangoErrorType TangoSupport_setImageBufferCopyRegion(
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer New image buffer data from the camera callback thread.
 /// @return Returns <code>TANGO_SUCCESS</code> on update of the back image
-/// buffer.
+/// buffer. Returns <code>TANGO_INVALID</code> otherwise.
 TangoErrorType TangoSupport_updateImageBuffer(
     TangoSupportImageBufferManager* manager,
     const TangoImageBuffer* image_buffer);
@@ -101,9 +101,13 @@ TangoErrorType TangoSupport_updateImageBuffer(
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer After the call contains a pointer to the most recent
 ///   camera image buffer.
-/// @return Returns <code>TANGO_SUCCESS</code>.
+/// @param new_data Bool representing if the image_buffer_manager updated the
+///   front_buffer.
+/// @return Returns <code>TANGO_SUCCESS</code> if params are valid. Returns
+/// <code>TANGO_INVALID</code> otherwise.
 TangoErrorType TangoSupport_getLatestImageBuffer(
-    TangoSupportImageBufferManager* manager, TangoImageBuffer** image_buffer);
+    TangoSupportImageBufferManager* manager, TangoImageBuffer** image_buffer,
+    bool* new_data);
 
 /// @}
 
@@ -231,8 +235,8 @@ TangoErrorType TangoSupport_freePointCloudManager(
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud New point cloud data from the camera callback thread.
 /// @return A TangoErrorType value of <code>TANGO_INVALID</code> if manager
-///   or point_cloud are NULL. Returns <code>TANGO_SUCCESS</code> if update
-///   is successful.
+///   or point_cloud are NULL or if point_cloud size is larger than stored
+///   buffer. Returns <code>TANGO_SUCCESS</code> if update is successful.
 TangoErrorType TangoSupport_updatePointCloud(
     TangoSupportPointCloudManager* manager, const TangoXYZij* point_cloud);
 
@@ -243,10 +247,13 @@ TangoErrorType TangoSupport_updatePointCloud(
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud After the call contains a pointer to the most recent
 ///   depth camera buffer.
+/// @param new_data Bool representing if the point_cloud_manager updated the
+///   front_buffer.
 /// @return A TangoErrorType value of <code>TANGO_INVALID</code> if manager
 ///   is NULL. Returns <code>TANGO_SUCCESS</code> otherwise.
 TangoErrorType TangoSupport_getLatestPointCloud(
-    TangoSupportPointCloudManager* manager, TangoXYZij** latest_point_cloud);
+    TangoSupportPointCloudManager* manager, TangoXYZij** latest_point_cloud,
+    bool* new_data);
 
 /**@} */
 
