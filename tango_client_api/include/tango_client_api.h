@@ -1442,29 +1442,29 @@ TangoErrorType TangoService_Experimental_freeTrajectory(
 
 /// Experimental API only, subject to change.
 /// Loads an area description with the specified unique ID. This allows an
-/// application to load an ADF for relocalization after connecting to the
-/// service. It should only be called after calling TangoService_connect(), and
-/// then only if the connect configuration did not specify an ADF to load, and
-/// did not enable learning mode.
-/// @param uuid The unique identifier for the ADF to load.
+/// application to load an ADF for localization after connecting to the service.
+/// It should only be called after calling TangoService_connect(), and then only
+/// if the connect configuration did not enable learning mode.
+/// @param uuid The unique identifier for the ADF to load. An empty string is
+/// interpretted to mean that all ADFs should be unloaded.
 /// @return Returns <code>TANGO_SUCCESS</code> if the ADF is successfully loaded
-/// for relocalization. Returns <code>TANGO_INVALID</code> if the UUID is
-/// invalid, or an ADF is already being learned or has already been
-/// loaded. Returns <code>TANGO_ERROR</code> if communication fails or if the
-/// service needs to be initialized.
+/// for localization (or if all ADFs were unloaded); <code>TANGO_INVALID</code>
+/// if the UUID is invalid, or if learning mode is enabled;
+/// <code>TANGO_ERROR</code> if communication fails or if the service needs to
+/// be initialized.
 TangoErrorType TangoService_Experimental_loadAreaDescription(
     const TangoUUID uuid);
 
 /// Experimental API only, subject to change.
 /// Loads an area description with the specified file path. This allows an
-/// application to load an ADF for relocalization after connecting to the
-/// service. It should only be called after calling TangoService_connect(), and
-/// then only if the connect configuration did not specify an ADF to load, and
-/// did not enable learning mode.
-/// @param file_path The file path for the ADF to load.
+/// application to load an ADF for localization after connecting to the service.
+/// It should only be called after calling TangoService_connect(), and then only
+/// if the connect configuration did enable learning mode.
+/// @param file_path The file path for the ADF to load. An empty string is
+/// interpretted to mean that all ADFs should be unloaded.
 /// @return Returns <code>TANGO_SUCCESS</code> if the ADF is successfully loaded
-/// for relocalization. Returns <code>TANGO_INVALID</code> if the file path is
-/// invalid, or an ADF is already being learned. Returns
+/// for localization (or if all ADFs were unloaded); <code>TANGO_INVALID</code>
+/// if the file path is invalid or an ADF is already being learned;
 /// <code>TANGO_ERROR</code> if communication fails or if the service needs to
 /// be initialized.
 TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(

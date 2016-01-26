@@ -337,8 +337,10 @@ void PlaneFittingApplication::GLRender(
 void PlaneFittingApplication::DeleteResources() {
   delete video_overlay_;
   delete cube_;
+  delete point_cloud_renderer_;
   video_overlay_ = nullptr;
   cube_ = nullptr;
+  point_cloud_renderer_ = nullptr;
 }
 
 // We assume the Java layer ensures this function is called on the GL thread.
@@ -425,8 +427,9 @@ glm::mat4 PlaneFittingApplication::GetStartServiceTDeviceTransform() {
 }
 
 void PlaneFittingApplication::UpdateCurrentPointData() {
+  bool updated;
   TangoSupport_getLatestPointCloud(point_cloud_manager_,
-                                            &front_cloud_);
+                                            &front_cloud_, &updated);
 }
 
 }  // namespace tango_plane_fitting

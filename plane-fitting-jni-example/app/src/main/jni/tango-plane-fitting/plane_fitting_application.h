@@ -61,7 +61,7 @@ class PlaneFittingApplication {
   // Get current camera position and render.
   void Render();
 
-  // Delete the allocate resources.
+  // Delete the GL resources.
   void DeleteResources();
 
   //
