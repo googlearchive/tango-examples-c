@@ -52,6 +52,7 @@ void DeleteResources() {
   delete grid;
 }
 
+void DeleteGlResources() { grid->DeleteGlResources(); }
 
 bool SetupGraphics(int w, int h) {
   screen_width = w;
@@ -123,6 +124,12 @@ JNIEXPORT void JNICALL
 Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_tangoDisconnect(
     JNIEnv*, jobject) {
   // To be implemented.
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_deleteGlResources(
+    JNIEnv*, jobject) {
+  DeleteGlResources();
 }
 
 JNIEXPORT void JNICALL
