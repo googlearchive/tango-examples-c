@@ -427,9 +427,8 @@ glm::mat4 PlaneFittingApplication::GetStartServiceTDeviceTransform() {
 }
 
 void PlaneFittingApplication::UpdateCurrentPointData() {
-  bool updated;
   TangoSupport_getLatestPointCloud(point_cloud_manager_,
-                                            &front_cloud_, &updated);
+                                            &front_cloud_);
 }
 
 }  // namespace tango_plane_fitting
