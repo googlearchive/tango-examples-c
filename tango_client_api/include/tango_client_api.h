@@ -63,6 +63,7 @@ typedef enum {
   TANGO_COORDINATE_FRAME_CAMERA_COLOR,    ///< Color camera
   TANGO_COORDINATE_FRAME_CAMERA_DEPTH,    ///< Depth camera
   TANGO_COORDINATE_FRAME_CAMERA_FISHEYE,  ///< Fisheye camera
+  TANGO_COORDINATE_FRAME_UUID,            ///< Tango unique id
   TANGO_COORDINATE_FRAME_INVALID,
   TANGO_MAX_COORDINATE_FRAME_TYPE         ///< Maximum allowed
 } TangoCoordinateFrameType;
@@ -151,6 +152,8 @@ typedef enum {
   TANGO_RECORDING_MODE_MOTION_TRACKING = 0,
   /// Contains data required for motion tracking and scene reconstruction.
   TANGO_RECORDING_MODE_SCENE_RECONSTRUCTION = 1,
+  /// Contains data required for motion tracking, as well as fisheye images.
+  TANGO_RECORDING_MODE_MOTION_TRACKING_AND_FISHEYE = 2,
 } TangoRecordingMode_Experimental;
 
 /**@} */
@@ -164,11 +167,55 @@ typedef enum {
 typedef void* TangoConfig;
 
 #define TANGO_UUID_LEN 37
+#define TANGO_COORDINATE_FRAME_ID_BYTE_LEN 16
 
 /// The unique id associated with a single area description. Should
 /// be 36 characters including dashes and a null terminating
 /// character.
 typedef char TangoUUID[TANGO_UUID_LEN];
+
+/// The unique id associated with a frame of interest.
+/// When a new frame of interest is created, the returned id can be used to
+/// reference the same frame of interest in future calls. A caller should not
+/// need to create such an id manually.
+typedef struct TangoCoordinateFrameId {
+  /// Opaque byte representation of the unique id.
+  uint8_t data[TANGO_COORDINATE_FRAME_ID_BYTE_LEN];
+} TangoCoordinateFrameId;
+
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_NONE = {
+    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84 = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_PREVIOUS_DEVICE_POSE = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_DEVICE = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_IMU = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_DISPLAY = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_COLOR = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_DEPTH = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08}};
+const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_FISHEYE = {
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09}};
 
 /// This defines a handle to TangoAreaDescriptionMetadata; key/value pairs
 /// can only be accessed through API calls.
@@ -242,6 +289,25 @@ typedef struct TangoPoseData {
   uint32_t confidence;   ///< Unused. Integer levels are determined by service.
   float accuracy;        ///< Unused. Reserved for metric accuracy.
 } TangoPoseData;
+
+/// The TangoTransformation struct contains an orientation and translation
+/// that can be applied to transform a point.
+typedef struct TangoTransformation {
+  /// Orientation, as a quaternion, of the transformation of the target frame
+  /// with reference to the base frame.
+  /// Specified as (x,y,z,w) where RotationAngle is in radians:
+  /// @code
+  ///   x = RotationAxis.x * sin(RotationAngle / 2)
+  ///   y = RotationAxis.y * sin(RotationAngle / 2)
+  ///   z = RotationAxis.z * sin(RotationAngle / 2)
+  ///   w = cos(RotationAngle / 2)
+  /// @endcode
+  double orientation[4];
+
+  /// Translation, ordered x, y, z, of the transformation of the target frame
+  /// with reference to the base frame.
+  double translation[3];
+} TangoTransformation;
 
 /// The TangoImageBuffer contains information about a byte buffer holding
 /// image data. This data is populated by the service when it returns an image.
@@ -596,7 +662,115 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 ///     timestamp is less than 0, or if the service has not yet begun running
 ///     (TangoService_connect() has not completed).
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
-    TangoCoordinateFramePair frame, TangoPoseData* pose);
+                                          TangoCoordinateFramePair frame,
+                                          TangoPoseData* pose);
+
+/// Get a pose at a given timestamp from the base to the target frame id.
+/// Frames of interest (FOIs) can be used as base and/or target frame id.
+///
+/// If no pose can be returned, the status_code of the returned pose will be
+/// @c TANGO_POSE_INVALID.
+///
+/// @param timestamp Time specified in seconds. If not set to 0.0, getPoseAtTime
+///     retrieves the interpolated pose closest to this timestamp. If set to
+///     0.0, the most recent pose estimate for the target-base pair is returned.
+///     The time of the returned pose is contained in the pose output structure
+///     and may differ from the queried timestamp.
+/// @param base_frame_id The base frame id for which the transformation is
+///     queried.
+/// @param target_frame_id The target frame id for which the transformation is
+///     queried.
+///     Base and target frame ids can be either an existing frame of interest id
+///     in the currently loaded ADF or one of the predefined
+///     TangoCoordinateFrameIds:
+///     @c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
+///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
+///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_IMU. For example, the pose of
+///     an existing FOI with respect to your device can be queried with a @p
+///     base_frame_id of @c TANGO_COORDINATE_FRAME_ID_DEVICE and target_frame_id
+///     of this existing FOI.
+///     Only frames of interest that are available in the currently loaded ADF
+///     will be available. Querying frame of interest ids from different ADFs
+///     will return @c TANGO_INVALID.
+/// @param pose The pose of target with respect to base frame of reference. Must
+///     be allocated by the caller, and is overwritten upon return. Depending on
+///     whether @p base_frame_id is an FOI or a predefined
+///     TangoCoordinateFrameId, the base frame field of @p pose is set to
+///     respectively @c TANGO_COORDINATE_FRAME_UUID or to its equivalent
+///     TangoCoordinateFrameType. The same rule holds for @p target_frame_id.
+/// @return Returns @c TANGO_SUCCESS if a pose was returned successfully. Check
+///     the @c status_code attribute on the returned @p pose to see if it is
+///     valid. Returns @c TANGO_INVALID if the base and target frame are the
+///     same, or if the base or the target frame is not valid, or if the
+///     requested frame pair is not supported, or if timestamp is less than 0,
+///     or if the service has not yet begun running (TangoService_connect()
+///     has not completed).
+TangoErrorType TangoService_Experimental_getPoseAtTime2(
+    double timestamp, TangoCoordinateFrameId base_frame_id,
+    TangoCoordinateFrameId target_frame_id, TangoPoseData* return_pose);
+
+/// Creates a frame of interest (FOI) in the currently loaded ADF. FOIs
+/// will be stored next to this ADF, local FOIs will be stored on the device and
+/// and cloud FOIs will be stored on the cloud server.
+/// @param timestamp Timestamp of the base frame transformation, in seconds. If
+///     not set to 0.0, createFrameOfInterest uses the interpolated
+///     transformation closest to this timestamp to create an FOI. If set to
+///     0.0, the most recent transformation estimate for the base frame is used.
+/// @param base_frame_id The base frame id of @p tango_transformation. It can
+///     be either one of the predefined tango coordinate frame ids
+///     (@c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
+///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
+///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_IMU) or the id of an existing FOI in the
+///     currently loaded ADF. A frame of interest id from a different ADF
+///     will return @c TANGO_INVALID.
+/// @param tango_transformation The transformation of the newly created FOI with
+///     respect to @p base_frame_id.
+/// @param foi_id The id of the newly created FOI.
+/// @return Returns @c TANGO_SUCCESS if an FOI was created successfully. Returns
+///     @c TANGO_INVALID if @p base_frame_id is invalid (format), unknown or if
+///     the transformation of the newly created FOI cannot be resolved using the
+///     given @p timestamp, @p base_frame_id and @p tango_transformation.
+TangoErrorType TangoService_Experimental_createFrameOfInterest(
+    double timestamp, TangoCoordinateFrameId base_frame_id,
+    TangoTransformation tango_transformation, TangoCoordinateFrameId* foi_id);
+
+/// Updates an existing frame of interest (FOI) and saves the updated
+/// FOI to a file.
+/// @param timestamp Timestamp of the base frame transformation, in seconds. If
+///     not set to 0.0, updateFrameOfInterest uses the interpolated
+///     transformation closest to this timestamp to create an FOI. If set to
+///     0.0, the most recent transformation estimate for the base frame is used.
+/// @param base_frame_id The base frame id of @p tango_transformation. It can
+///     be either one of the predefined tango coordinate frame ids
+///     (@c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
+///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
+///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
+///     @c TANGO_COORDINATE_FRAME_ID_IMU) or the id of an existing FOI in the
+///     currently loaded ADF. A frame of interest id from a different ADF
+///     will return @c TANGO_INVALID.
+/// @param tango_transformation The transformation of the newly created FOI with
+///     respect to @p base_frame_id.
+/// @param foi_id The id of the FOI to be updated.
+/// @return Returns @c TANGO_SUCCESS if an FOI was created successfully. Returns
+///     @c TANGO_INVALID if the @p base_frame_id and/or @p foi_id are invalid
+///     (format), unknown or if the transformation of the updated FOI cannot be
+///     resolved using the given @p timestamp, @p base_frame_id and
+///     @p tango_transformation.
+TangoErrorType TangoService_Experimental_updateFrameOfInterest(
+    double timestamp, TangoCoordinateFrameId base_frame_id,
+    TangoTransformation tango_transformation, TangoCoordinateFrameId foi_id);
+
+/// Deletes a frame of interest (FOI) with the given id.
+/// @param foi_id The id of the FOI to be deleted.
+/// @return False if no FOI with the given id exists in the current ADF or if
+/// the FOI cannot be deleted.
+TangoErrorType TangoService_Experimental_deleteFrameOfInterest(
+    TangoCoordinateFrameId foi_id);
 
 /**@} */
 
@@ -1487,6 +1661,7 @@ TangoErrorType TangoService_Experimental_deleteDataset(
 ///     Returns @c TANGO_ERROR if communication failed.
 TangoErrorType TangoService_Experimental_getCurrentDatasetUUID(
     TangoUUID* dataset_uuid);
+
 #ifdef __cplusplus
 }
 #endif

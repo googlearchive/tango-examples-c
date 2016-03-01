@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">C++ Augmented Reality</string>
+    <string name="app_name_long">C++ Augmented Reality Example</string>
+    <string name="menu_name">Native Augmented Reality</string>
+    <string name="service_version">"Tango service version: "</string>
+    <string name="app_version">"App version: "</string>
+    <string name="tango_event">"Tango system event: "</string>
+    <string name="start_wrt_device">"Target->Device, Base->Start: "</string>
+    <string name="status">"Status: "</string>
+    <string name="action_settings">Settings</string>
+    <string name="place_object">Place Marker</string>
+    <string name="first_person">First</string>
+    <string name="third_person">Third</string>
+    <string name="top_down">Top</string>
+    <string name="reset">Reset AR Scene</string>
+    <string name="world">World</string>
+    <string name="cube">Marker</string>
+    <string name="grid">Grid</string>
+    <string name="focal_length">Focal Length</string>
+    <string name="left">Left</string>
+    <string name="right">Right</string>
+    <string name="up">Up</string>
+    <string name="down">Down</string>
+    <string name="near">Near</string>
+    <string name="far">Far</string>
+</resources>
+
