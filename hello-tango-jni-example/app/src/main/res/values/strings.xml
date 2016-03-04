@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_name">Native Hello Tango</string>
-    <string name="menu_name">Project Tango Native Hello Tango</string>
-    <string name="main_page_string">See Logcat for pose update :D</string>
-
-</resources>

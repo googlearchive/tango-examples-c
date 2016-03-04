@@ -29,6 +29,20 @@
 extern "C" {
 #endif
 
+/// @defgroup MiscUtilities Miscellaneous Utility Functions
+/// @brief Functions that do not fit into any other group.
+/// @{
+
+/// @brief Get the version code of the installed TangoCore package.
+/// @param version Filled out with the version of the installed
+/// TangoCore package or 0 if it is not installed.
+/// @return @c TANGO_SUCCESS if the version was able to be successfully found.
+///   @c TANGO_ERROR if some other error happened.
+TangoErrorType TangoSupport_GetTangoVersion(JNIEnv* env, jobject activity,
+                                            int* version);
+
+/// @}
+
 /// @defgroup CallbackHelpers Callback Data Support Functions
 /// @brief Functions for managing data received from callbacks.
 /// @{
@@ -39,7 +53,7 @@ extern "C" {
 /// front). The back buffer is used as the destination for pixels copied from
 /// the callback thread. When the copy is complete the back buffer is swapped
 /// with the swap buffer while holding a lock. Calling
-/// TangoSupport_getLatestImagebuffer holds the lock to exchange the swap
+/// @c TangoSupport_getLatestImagebuffer holds the lock to exchange the swap
 /// buffer with the front buffer (if there is newer data in the swap buffer
 /// than the current front buffer).
 struct TangoSupportImageBufferManager;
@@ -92,8 +106,8 @@ TangoErrorType TangoSupport_setImageBufferCopyRegion(
 ///
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer New image buffer data from the camera callback thread.
-/// @return Returns @c TANGO_SUCCESS on update of the back image
-/// buffer. Returns @c TANGO_INVALID otherwise.
+/// @return Returns @c TANGO_SUCCESS on update of the back image buffer. Returns
+///   @c TANGO_INVALID otherwise.
 TangoErrorType TangoSupport_updateImageBuffer(
     TangoSupportImageBufferManager* manager,
     const TangoImageBuffer* image_buffer);
@@ -109,7 +123,7 @@ TangoErrorType TangoSupport_updateImageBuffer(
 /// @param new_data True if latest_point_cloud points to new data. False
 ///   otherwise.
 /// @return Returns @c TANGO_SUCCESS if params are valid. Returns
-/// @c TANGO_INVALID otherwise.
+///   @c TANGO_INVALID otherwise.
 TangoErrorType TangoSupport_getLatestImageBufferAndNewDataFlag(
     TangoSupportImageBufferManager* manager, TangoImageBuffer** image_buffer,
     bool* new_data);
@@ -122,7 +136,7 @@ TangoErrorType TangoSupport_getLatestImageBufferAndNewDataFlag(
 /// @param image_buffer After the call contains a pointer to the most recent
 ///   camera image buffer.
 /// @return Returns @c TANGO_SUCCESS if params are valid. Returns
-/// @c TANGO_INVALID otherwise.
+///   @c TANGO_INVALID otherwise.
 TangoErrorType TangoSupport_getLatestImageBuffer(
     TangoSupportImageBufferManager* manager, TangoImageBuffer** image_buffer);
 
@@ -245,7 +259,7 @@ TangoErrorType TangoSupport_freePointCloudManager(
     TangoSupportPointCloudManager* manager);
 
 /// @brief Updates the back buffer of the manager. Can be safely called from
-///   the callback thread. Update is skipped if point cloud is empty.
+/// the callback thread. Update is skipped if point cloud is empty.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud New point cloud data from the camera callback thread.
@@ -255,10 +269,9 @@ TangoErrorType TangoSupport_freePointCloudManager(
 TangoErrorType TangoSupport_updatePointCloud(
     TangoSupportPointCloudManager* manager, const TangoXYZij* point_cloud);
 
-/// @brief Check if updated point cloud data is available.
-/// If so, swap new data to the front buffer and set
-/// latest_point_cloud to point to the front buffer. This
-/// should be called from a single computation or render thread.
+/// @brief Check if updated point cloud data is available. If so, swap new data
+/// to the front buffer and set latest_point_cloud to point to the front buffer.
+/// This should be called from a single computation or render thread.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud After the call contains a pointer to the most recent
@@ -268,12 +281,10 @@ TangoErrorType TangoSupport_updatePointCloud(
 TangoErrorType TangoSupport_getLatestPointCloud(
     TangoSupportPointCloudManager* manager, TangoXYZij** latest_point_cloud);
 
-/// @brief Check if updated point cloud data is available.
-/// If so, swap new data to the front buffer and set
-/// latest_point_cloud to point to the front buffer. This
-/// should be called from a single computation or render
-/// thread. Set new_data to true if latest_point_cloud points
-/// to new point cloud.
+/// @brief Check if updated point cloud data is available. If so, swap new data
+/// to the front buffer and set latest_point_cloud to point to the front buffer.
+/// This should be called from a single computation or render thread. Set
+/// @p new_data to true if latest_point_cloud points to new point cloud.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud After the call contains a pointer to the most recent
@@ -286,7 +297,7 @@ TangoErrorType TangoSupport_getLatestPointCloudAndNewDataFlag(
     TangoSupportPointCloudManager* manager, TangoXYZij** latest_point_cloud,
     bool* new_data);
 
-/**@} */
+/// @}
 
 /// @defgroup SceneReconstructionSupport Scene Reconstruction Support Functions
 /// @brief Functions for managing mesh data from scene reconstruction.
@@ -381,30 +392,29 @@ TangoErrorType TangoSupport_calculateRelativePose(
     double target_timestamp, TangoCoordinateFrameType target_frame,
     TangoPoseData* base_frame_T_target_frame);
 
-///// @brief Use the device with respect to start of service or area description
-///// pose to calculate the pose of a selected Tango target coordinate frame
-///// represented in the selected rendering engine world coordinate frame.
-///// NOTE: In order to calculate poses from Tango target coordinate frames
-///// other than DEVICE, the device needs to be initialized, otherwise
-///// TANGO_INVALID will be returned.
-/////
-///// @param convention The targeted rendering engine coordinate convention.
-///// @param target_frame The Tango device coordinate frame we want represented
-/////   in the rendering engine world frame.
-///// @param tango_pose_data A reference to the TangoPoseData going to be
-/////   converted. This must be for the frame pair (base frame:START_SERVICE
-/////   or AREA_DESCRIPTION, target frame: DEVICE).
-///// @param engine_pose Where the resulting pose will be returned.
-///// @return <code>TANGO_SUCCESS</code> on success, <code>TANGO_INVALID</code>
-/////   on invalid input or if the service needs to be initialized, and
-/////   <code>TANGO_ERROR</code> on failure.
+/// @brief Use the device with respect to start of service or area description
+/// pose to calculate the pose of a selected Tango target coordinate frame
+/// represented in the selected rendering engine world coordinate frame.
+/// NOTE: In order to calculate poses from Tango target coordinate frames
+/// other than DEVICE, the device needs to be initialized, otherwise
+/// TANGO_INVALID will be returned.
+///
+/// @param convention The targeted rendering engine coordinate convention.
+/// @param target_frame The Tango device coordinate frame we want represented
+///   in the rendering engine world frame.
+/// @param tango_pose_data A reference to the TangoPoseData going to be
+///   converted. This must be for the frame pair (base frame:START_SERVICE
+///   or AREA_DESCRIPTION, target frame: DEVICE).
+/// @param engine_pose Where the resulting pose will be returned.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input or if
+///   the service needs to be initialized, and @c TANGO_ERROR on failure.
 extern "C" TangoErrorType TangoSupport_getPoseInEngineFrame(
     const TangoCoordinateConventionType convention,
     const TangoCoordinateFrameType target_frame,
     const TangoPoseData& pose_start_service_T_device,
     TangoPoseData* engine_pose);
 
-/// @deprecated Use <code>TangoSupport_getPoseInEngineFrame</code> instead.
+/// @deprecated Use @c TangoSupport_getPoseInEngineFrame instead.
 /// @brief Convert device with respect to start of service pose into camera
 /// with respect to world pose for supported platforms.
 ///
@@ -458,18 +468,18 @@ TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
     int* is_valid_point);
 
 /// @brief The TangoSupportDepthInterpolator contains references to camera
-/// intrinsics
-/// and cached data structures needed to upsample depth data to a camera image.
+/// intrinsics and cached data structures needed to upsample depth data to
+/// a camera image.
 struct TangoSupportDepthInterpolator;
 
 /// @brief Create an object for depth interpolation.
 ///
 /// @param intrinsics The camera intrinsics for the camera to upsample.
 /// @param interpolator A handle to the interpolator object.
-/// @return @TANGO_SUCCESS on successful creation, or @c TANGO_INVALID if
+/// @return @c TANGO_SUCCESS on successful creation, or @c TANGO_INVALID if
 ///   @p intrinsics was null.
 TangoErrorType TangoSupport_createDepthInterpolator(
-    TangoCameraIntrinsics* intrinsics,
+    const TangoCameraIntrinsics* intrinsics,
     TangoSupportDepthInterpolator** interpolator);
 
 /// @brief Free the depth interpolation object.
