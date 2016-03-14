@@ -121,8 +121,8 @@ typedef enum {
 typedef enum {
   TANGO_CALIBRATION_UNKNOWN,
   /// The FOV camera model described in
-  /// <a href="http://scholar.google.com/scholar?cluster=13508836606423559694">
-  /// Straight lines have to be straight</a>.
+  /// <a href="https://scholar.google.com/scholar?cluster=9093137934172132605">
+  /// Parallel tracking and mapping for small AR workspaces</a>.
   TANGO_CALIBRATION_EQUIDISTANT,
   TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
   /// Tsai's K1, K2, K3 model. See
@@ -169,9 +169,9 @@ typedef void* TangoConfig;
 #define TANGO_UUID_LEN 37
 #define TANGO_COORDINATE_FRAME_ID_BYTE_LEN 16
 
-/// The unique id associated with a single area description. Should
-/// be 36 characters including dashes and a null terminating
-/// character.
+/// The unique id associated with a single area description. Should be
+/// 36 characters including dashes, followed by a null terminating character,
+/// for a total of 37 characters.
 typedef char TangoUUID[TANGO_UUID_LEN];
 
 /// The unique id associated with a frame of interest.
@@ -390,15 +390,19 @@ typedef struct TangoXYZij {
 ///
 /// The distorted radial distance rd depends on the distortion model used.
 ///
-/// For @c TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS, rd is a
-/// polynomial that depends on the 3 distortion coefficients k1, k2 and k3:
+/// @c TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS implements
+/// <a href="https://scholar.google.com/scholar?cluster=3512800631607394002">
+/// Tsai's camera model</a>, where  @c rd is a polynomial that depends on the 3
+/// distortion coefficients @c k1, @c k2 and @c k3:
 ///
 /// @code
 /// rd = ru + k1 * ru^3 + k2 * ru^5 + k3 * ru^7
 /// @endcode
 ///
-/// For @c TANGO_CALIBRATION_EQUIDISTANT, rd depends on the single
-/// distortion coefficient w:
+/// @c TANGO_CALIBRATION_EQUIDISTANT implements the
+/// <a href="https://scholar.google.com/scholar?cluster=9093137934172132605">
+/// FOV camera model</a>, where @c rd depends on the single distortion
+/// coefficient @c w:
 ///
 /// @code
 /// rd = 1 / w * arctan(2 * ru * tan(w / 2))
@@ -466,6 +470,21 @@ typedef struct TangoEvent {
   const char* event_value;
 } TangoEvent;
 
+/// The LevelData structure contains information about the current level
+/// according to the current pose of the device.
+typedef struct LevelData {
+  uint32_t version;
+  /// A human readable short name, as it would appear on elevator buttons,
+  /// eg. "5", or "B1
+  char* short_name;
+  /// Level number E3: the number of floors above ground of this level
+  /// multiplied by 1000, eg. -1000, +2000 for whole floors, 8500 for a
+  /// mezzanine on the 8th floor.
+  int32_t level_number_E3;
+  /// An opaque level ID.
+  char* level_id;
+} LevelData;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -523,6 +542,15 @@ char* TangoConfig_toString(TangoConfig config);
 ///     the version check fails, or if the service connection could not be
 ///     initialized.
 TangoErrorType TangoService_initialize(JNIEnv* env, jobject activity);
+
+/// Completes initialization of the TangoService by allowing the client to pass
+/// the native binder object received by binding to TangoService back down
+//  to the underlying C API code.
+/// Must be called before trying to use the C API.
+/// @param iBinder The binder object received after binding to TangoService.
+/// @return Returns @c TANGO_SUCCESS on successfully attaching the binder
+/// to the C API. Returns @c TANGO_ERROR on failure.
+TangoErrorType TangoService_setBinder(JNIEnv* env, jobject iBinder);
 
 /// Creates a TangoConfig object with configuration settings from the service.
 /// This should be used to initialize a Config object for setting the
@@ -1661,6 +1689,15 @@ TangoErrorType TangoService_Experimental_deleteDataset(
 ///     Returns @c TANGO_ERROR if communication failed.
 TangoErrorType TangoService_Experimental_getCurrentDatasetUUID(
     TangoUUID* dataset_uuid);
+
+/// Experimental API only, subject to change.
+/// Returns the last level data available, according to the last available pose.
+/// @param level_data An output parameter for the level data returned.
+/// @return Returns @c TANGO_INVALID  if no level data is available for the
+///     last pose available or if the user could not be localized,
+///     @c TANGO_SUCCESS otherwise.
+TangoErrorType TangoService_Experimental_getLastIndoorLevel(
+    LevelData* level_data);
 
 #ifdef __cplusplus
 }

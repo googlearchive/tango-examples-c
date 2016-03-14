@@ -147,4 +147,17 @@ void MotiongTrackingApp::SetScreenRotation(int screen_rotation) {
   screen_rotation_ = screen_rotation;
 }
 
+// Initialize Tango.
+bool MotiongTrackingApp::InitializeTango(JNIEnv* env, jobject iBinder) {
+  TangoErrorType ret = TangoService_setBinder(env, iBinder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "MotiongTrackingApp: Failed to initialize Tango service with"
+        "error code: %d",
+        ret);
+    return false;
+  }
+  return true;
+}
+
 }  // namespace tango_motion_tracking
