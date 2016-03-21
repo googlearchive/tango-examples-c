@@ -18,6 +18,7 @@ package com.projecttango.experiments.nativemotiontracking;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -25,6 +26,7 @@ import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -33,6 +35,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.projecttango.experiments.nativemotiontracking.TangoJavaHelper.OnNativeTangoServiceReadyListener;
 
 /**
  * The main activity of the application which shows debug information and a
@@ -53,6 +57,8 @@ public class MotionTrackingActivity extends Activity {
   private MotionTrackingRenderer mRenderer;
   private GLSurfaceView mGLView;
   private boolean mIsConnectedService = false;
+  private ServiceConnection mTangoService;
+  private boolean mTangoInitialized = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -83,13 +89,31 @@ public class MotionTrackingActivity extends Activity {
     Display mDisplay = mWindowManager.getDefaultDisplay();
 
     TangoJNINative.setScreenRotation(mDisplay.getOrientation());
+
+    mTangoService = TangoJavaHelper.nativeInitTango(this, new OnNativeTangoServiceReadyListener() {
+          @Override
+          public void onNativeTangoServiceReady(IBinder nativeTangoServiceBinder) {
+            TangoJNINative.initializeTango(nativeTangoServiceBinder);
+            mTangoInitialized = true;
+          }
+        });
   }
 
-  @Override
-  protected void onResume() {
-    super.onResume();
-    mGLView.onResume();
-
+  private void connectToTango() {
+    if (!mTangoInitialized) {
+      new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                  Thread.sleep(100);
+                } catch (InterruptedException e) {
+                  e.printStackTrace();
+                }
+                connectToTango();
+            }
+          }).start();
+      return;
+    }
     // Setup the configuration for the TangoService.
     TangoJNINative.setupConfig();
     
@@ -108,6 +132,13 @@ public class MotionTrackingActivity extends Activity {
   }
 
   @Override
+  protected void onResume() {
+    super.onResume();
+    mGLView.onResume();
+    connectToTango();
+  }
+
+  @Override
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
@@ -119,5 +150,11 @@ public class MotionTrackingActivity extends Activity {
       TangoJNINative.disconnect();
       mIsConnectedService = false;
     }
+  }
+
+  public void onDestroy() {
+    super.onDestroy();
+    TangoJavaHelper.nativeShutdownTango(this, mTangoService);
+    mTangoInitialized = false;
   }
 }

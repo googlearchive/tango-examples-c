@@ -85,6 +85,12 @@ Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setScreenR
     JNIEnv*, jobject, int rotation_index) {
   app.SetScreenRotation(rotation_index);
 }
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initializeTango(
+    JNIEnv* env, jobject, jobject iBinder) {
+  app.InitializeTango(env, iBinder);
+}
 #ifdef __cplusplus
 }
 #endif

@@ -16,6 +16,7 @@
 
 package com.projecttango.experiments.nativemotiontracking;
 
+import android.os.IBinder;
 /**
  * Interfaces between native C++ code and Java code.
  */
@@ -62,4 +63,6 @@ public class TangoJNINative {
   //    see Android documentation for detail:
   //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
   public static native void setScreenRotation(int rotationIndex);
+
+  public static native void initializeTango(IBinder nativeTangoServiceBinder);
 }

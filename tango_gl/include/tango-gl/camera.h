@@ -30,8 +30,8 @@ class Camera : public Transform {
   void SetAspectRatio(const float aspect_ratio);
   void SetFieldOfView(const float fov);
 
-  glm::mat4 GetViewMatrix();
-  glm::mat4 GetProjectionMatrix();
+  glm::mat4 GetViewMatrix() const;
+  glm::mat4 GetProjectionMatrix() const;
 
   /**
    * Create an OpenGL perspective matrix from window size, camera intrinsics,

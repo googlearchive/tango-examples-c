@@ -81,6 +81,9 @@ class MotiongTrackingApp {
   // //NO_LINT
   void SetScreenRotation(int screen_roatation);
 
+  // Initialize Tango. This must be called when starting the app.
+  bool InitializeTango(JNIEnv* env, jobject iBinder);
+
  private:
   // callback_pose_ handles all pose onPoseAvailable callbacks,
   // onPoseAvailable() in this object will be routed to callback_pose_

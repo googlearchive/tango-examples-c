@@ -600,6 +600,25 @@ TangoErrorType TangoSupport_upsampleImageBilateral(
     const TangoPoseData* color_camera_T_point_cloud,
     TangoSupportDepthBuffer* depth_buffer);
 
+/// @brief Finds a similarity transformation (rotation, translation, and
+/// scaling) given two sets of correspondence points. This uses the Umeyama
+/// algorithm (http://www.cis.jhu.edu/software/lddmm-similitude/umeyama.pdf)
+/// which minimizes the mean squared error. The returned transform is stored in
+/// column-major order.
+/// NOTE: If less than three non-collinear points are passed then this will
+/// return one of the many possible transforms that make that correspondence.
+///
+/// @param src_points A 2d array of source points.
+/// @param dest_points A 2d array of destination points.
+/// @param num_points The amount of correspondence points.
+/// @param src_frame_T_dest_frame_matrix An array for output of the
+///   transformation.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_findCorrespondenceSimilarityTransform(
+    double (*src_points)[3], double (*dest_points)[3], int num_points,
+    double src_frame_T_dest_frame_matrix[16]);
+
 /// @}
 
 #ifdef __cplusplus

@@ -26,11 +26,11 @@ Camera::Camera() {
   far_clip_plane_ = 100.0f;
 }
 
-glm::mat4 Camera::GetViewMatrix() {
+glm::mat4 Camera::GetViewMatrix() const {
   return glm::inverse(GetTransformationMatrix());
 }
 
-glm::mat4 Camera::GetProjectionMatrix() {
+glm::mat4 Camera::GetProjectionMatrix() const {
   return glm::perspective(field_of_view_, aspect_ratio_, near_clip_plane_,
                           far_clip_plane_);
 }
