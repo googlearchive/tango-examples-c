@@ -33,74 +33,74 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initialize(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_initialize(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
   return app.Initialize(env, activity, min_tango_version);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_destroyActivity(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_destroyActivity(
     JNIEnv*, jobject) {
   app.ActivityDestroyed();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupConfig(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_setupConfig(
     JNIEnv*, jobject, bool is_area_learningEnabled, bool is_loading_adf) {
   return app.TangoSetupConfig(is_area_learningEnabled, is_loading_adf);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_connect(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_connect(
     JNIEnv*, jobject) {
   return app.TangoConnect();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_connectCallbacks(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   int ret = app.TangoConnectCallbacks();
   return ret;
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_initGlContent(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setupGraphics(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_setupGraphics(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_render(
-    JNIEnv*, jobject) {
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_render(JNIEnv*,
+                                                                      jobject) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_deleteResources(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
   app.DeleteResources();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_isRelocalized(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_isRelocalized(
     JNIEnv*, jobject) {
   return app.IsRelocalized();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setCamera(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {
   tango_gl::GestureCamera::CameraType cam_type =
       static_cast<tango_gl::GestureCamera::CameraType>(camera_index);
@@ -108,7 +108,7 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setCamera(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_onTouchEvent(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_onTouchEvent(
     JNIEnv*, jobject, int touch_count, int event, float x0, float y0, float x1,
     float y1) {
   tango_gl::GestureCamera::TouchEvent touch_event =
@@ -117,19 +117,19 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_onTouchEvent
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getLoadedADFUUIDString(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_getLoadedADFUUIDString(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.GetLoadedAdfString().c_str());
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_saveAdf(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_saveAdf(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.SaveAdf().c_str());
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getAdfMetadataValue(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_getAdfMetadataValue(
     JNIEnv* env, jobject, jstring uuid, jstring key) {
   std::string uuid_str(env->GetStringUTFChars(uuid, nullptr));
   std::string key_str(env->GetStringUTFChars(key, nullptr));
@@ -137,7 +137,7 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getAdfMetada
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setAdfMetadataValue(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_setAdfMetadataValue(
     JNIEnv* env, jobject, jstring uuid, jstring key, jstring value) {
   std::string uuid_str(env->GetStringUTFChars(uuid, nullptr));
   std::string key_str(env->GetStringUTFChars(key, nullptr));
@@ -146,13 +146,13 @@ Java_com_projecttango_experiments_nativearealearning_TangoJNINative_setAdfMetada
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_getAllAdfUuids(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_getAllAdfUuids(
     JNIEnv* env, jobject) {
   return env->NewStringUTF(app.GetAllAdfUuids().c_str());
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativearealearning_TangoJNINative_deleteAdf(
+Java_com_projecttango_examples_cpp_arealearning_TangoJNINative_deleteAdf(
     JNIEnv* env, jobject, jstring uuid) {
   std::string uuid_str(env->GetStringUTFChars(uuid, nullptr));
   return app.DeleteAdf(uuid_str);

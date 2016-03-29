@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.projecttango.experiments.nativeplanefitting"
+    package="com.projecttango.examples.cpp.planefitting"
     android:versionCode="0"
     android:versionName="0">
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
@@ -18,7 +18,7 @@
             android:name="com.projecttango.libtango_device"
             android:required="true" />
         <activity
-            android:name=".MainActivity"
+            android:name="com.projecttango.examples.cpp.planefitting.MainActivity"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -21,7 +21,7 @@ LOCAL_MODULE := libcpp_plane_fitting_example
 LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
 LOCAL_CFLAGS := -std=c++11
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
-                    $(PROJECT_ROOT)/third-party/glm
+                    $(PROJECT_ROOT)/third_party/glm
 LOCAL_SRC_FILES := jni_interface.cc \
                    plane_fitting.cc \
                    plane_fitting_application.cc \

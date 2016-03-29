@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">C++ Hello Motion Tracking</string>
+    <string name="app_name_long">C++ Hello Motion Tracking Example</string>
+    <string name="main_page_string">See Logcat for pose update :D</string>
+
+</resources>

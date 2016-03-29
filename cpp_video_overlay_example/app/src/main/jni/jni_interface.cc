@@ -25,61 +25,61 @@ static tango_video_overlay::VideoOverlayApp app;
 extern "C" {
 #endif
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_checkTangoVersion(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_checkTangoVersion(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
   return app.CheckTangoVersion(env, activity, min_tango_version);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setupConfig(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_setupConfig(
     JNIEnv*, jobject) {
   return app.TangoSetupConfig();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_connect(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_connect(
     JNIEnv*, jobject) {
   return app.TangoConnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_initGlContent(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_render(
-    JNIEnv*, jobject) {
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_render(JNIEnv*,
+                                                                      jobject) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_freeBufferData(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_freeBufferData(
     JNIEnv*, jobject) {
   app.FreeBufferData();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setYUVMethod(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_setYUVMethod(
     JNIEnv*, jobject) {
   app.SetTextureMethod(0);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativevideooverlay_TangoJNINative_setTextureMethod(
+Java_com_projecttango_examples_cpp_videooverlay_TangoJNINative_setTextureMethod(
     JNIEnv*, jobject) {
   app.SetTextureMethod(1);
 }

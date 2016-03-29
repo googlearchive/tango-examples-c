@@ -26,68 +26,68 @@ static tango_motion_tracking::MotiongTrackingApp app;
 extern "C" {
 #endif
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_checkTangoVersion(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_checkTangoVersion(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
   return app.CheckTangoVersion(env, activity, min_tango_version);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setupConfig(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setupConfig(
     JNIEnv*, jobject) {
   return app.TangoSetupConfig();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_connect(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_connect(
     JNIEnv*, jobject) {
   return app.TangoConnect();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_connectCallbacks(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   int ret = app.TangoConnectCallbacks();
   return ret;
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_initGlContent(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_render(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_render(
     JNIEnv*, jobject) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_deleteResources(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
   app.DeleteResources();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_setScreenRotation(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setScreenRotation(
     JNIEnv*, jobject, int rotation_index) {
   app.SetScreenRotation(rotation_index);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativemotiontracking_TangoJNINative_initializeTango(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_initializeTango(
     JNIEnv* env, jobject, jobject iBinder) {
   app.InitializeTango(env, iBinder);
 }

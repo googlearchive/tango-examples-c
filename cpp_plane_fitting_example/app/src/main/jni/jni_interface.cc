@@ -25,55 +25,55 @@ extern "C" {
 #endif
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_initialize(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_initialize(
     JNIEnv* env, jobject /*obj*/, jobject activity, int min_tango_version) {
   return app.Initialize(env, activity, min_tango_version);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_tangoSetupAndConnect(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_tangoSetupAndConnect(
     JNIEnv* /*env*/, jobject /*obj*/) {
   return app.TangoSetupAndConnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_tangoDisconnect(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_tangoDisconnect(
     JNIEnv* /*env*/, jobject /*obj*/) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_initializeGLContent(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_initializeGLContent(
     JNIEnv* /*env*/, jobject /*obj*/) {
   return app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_setRenderDebugPointCloud(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_setRenderDebugPointCloud(
     JNIEnv* /*env*/, jobject /*obj*/, jboolean on) {
   app.SetRenderDebugPointCloud(on);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_setViewPort(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_setViewPort(
     JNIEnv* /*env*/, jobject /*obj*/, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_render(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_render(
     JNIEnv* /*env*/, jobject /*obj*/) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_deleteResources(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_deleteResources(
     JNIEnv* /*env*/, jobject /*obj*/) {
   app.DeleteResources();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeplanefitting_JNIInterface_onTouchEvent(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_onTouchEvent(
     JNIEnv* /*env*/, jobject /*obj*/, jfloat x, jfloat y) {
   app.OnTouchEvent(x, y);
 }

@@ -168,6 +168,8 @@ typedef void* TangoConfig;
 
 #define TANGO_UUID_LEN 37
 #define TANGO_COORDINATE_FRAME_ID_BYTE_LEN 16
+#define TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN 16
+#define TANGO_LEVEL_ID_BYTE_LEN 16
 
 /// The unique id associated with a single area description. Should be
 /// 36 characters including dashes, followed by a null terminating character,
@@ -473,16 +475,17 @@ typedef struct TangoEvent {
 /// The LevelData structure contains information about the current level
 /// according to the current pose of the device.
 typedef struct LevelData {
+  /// Encode the version of the LevelData structure itself.
   uint32_t version;
   /// A human readable short name, as it would appear on elevator buttons,
   /// eg. "5", or "B1
-  char* short_name;
+  char short_name[TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN];
   /// Level number E3: the number of floors above ground of this level
   /// multiplied by 1000, eg. -1000, +2000 for whole floors, 8500 for a
   /// mezzanine on the 8th floor.
   int32_t level_number_E3;
   /// An opaque level ID.
-  char* level_id;
+  char level_id[TANGO_LEVEL_ID_BYTE_LEN];
 } LevelData;
 
 #ifdef __cplusplus
