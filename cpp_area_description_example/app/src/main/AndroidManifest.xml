@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.projecttango.experiments.nativearealearning"
+    package="com.projecttango.examples.cpp.arealearning"
     android:versionCode="0"
     android:versionName="0" >
 
@@ -14,12 +14,12 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <uses-library 
-            android:name="com.projecttango.libtango_device" 
+        <uses-library
+            android:name="com.projecttango.libtango_device"
             android:required="true" />
         <activity
             android:label="@string/app_name_long"
-            android:name="com.projecttango.experiments.nativearealearning.StartActivity"
+            android:name="com.projecttango.examples.cpp.arealearning.StartActivity"
             android:screenOrientation="nosensor">
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.MAIN" />
@@ -28,12 +28,12 @@
         </activity>
         <activity
             android:label="@string/app_name_long"
-            android:name="com.projecttango.experiments.nativearealearning.AreaDescriptionActivity"
+            android:name="com.projecttango.examples.cpp.arealearning.AreaDescriptionActivity"
             android:screenOrientation="nosensor">
         </activity>
         <activity
             android:label="@string/app_name_long"
-            android:name="com.projecttango.experiments.nativearealearning.ADFUUIDListViewActivity"
+            android:name="com.projecttango.examples.cpp.arealearning.ADFUUIDListViewActivity"
             android:screenOrientation="nosensor">
         </activity>
     </application>

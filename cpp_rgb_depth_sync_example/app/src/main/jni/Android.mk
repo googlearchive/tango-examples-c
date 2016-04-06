@@ -26,7 +26,7 @@ LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
                     $(PROJECT_ROOT)/tango_gl/include \
-                    $(PROJECT_ROOT)/third-party/glm/
+                    $(PROJECT_ROOT)/third_party/glm/
 
 LOCAL_SRC_FILES := camera_texture_drawable.cc \
                    color_image.cc \

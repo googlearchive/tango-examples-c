@@ -33,7 +33,7 @@ LOCAL_SRC_FILES := jni_interface.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/video_overlay.cc
 
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
-                    $(PROJECT_ROOT)/third-party/glm
+                    $(PROJECT_ROOT)/third_party/glm
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

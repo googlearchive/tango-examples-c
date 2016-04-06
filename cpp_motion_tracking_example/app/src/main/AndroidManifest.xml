@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.projecttango.experiments.nativemotiontracking"
+    package="com.projecttango.examples.cpp.motiontracking"
     android:versionCode="0"
     android:versionName="0" >
 
     <uses-sdk
         android:minSdkVersion="19"
         android:targetSdkVersion="19" />
-    
+
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
@@ -19,7 +19,7 @@
             android:name="com.projecttango.libtango_device" 
             android:required="true" />
         <activity
-            android:name="com.projecttango.experiments.nativemotiontracking.MotionTrackingActivity"
+            android:name="com.projecttango.examples.cpp.motiontracking.MotionTrackingActivity"
             android:label="@string/app_name_long"
             android:screenOrientation="fullSensor"> 
             <intent-filter android:label="@string/app_name">

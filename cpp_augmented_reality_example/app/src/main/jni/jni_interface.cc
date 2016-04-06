@@ -32,92 +32,92 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_initialize(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_initialize(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
   return app.Initialize(env, activity, min_tango_version);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_setupConfig(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setupConfig(
     JNIEnv*, jobject) {
   return app.TangoSetupConfig();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_connect(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_connect(
     JNIEnv*, jobject) {
   return app.TangoConnect();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_connectCallbacks(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   int ret = app.TangoConnectCallbacks();
   return ret;
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_destroyActivity(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_destroyActivity(
     JNIEnv*, jobject) {
   app.ActivityDestroyed();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_resetMotionTracking(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_resetMotionTracking(
     JNIEnv*, jobject) {
   app.TangoResetMotionTracking();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_initGlContent(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_render(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_render(
     JNIEnv*, jobject) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_deleteResources(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
   app.DeleteResources();
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_getPoseString(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getPoseString(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.GetPoseString().c_str());
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_getEventString(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getEventString(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.GetEventString().c_str());
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_getVersionNumber(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getVersionNumber(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.GetVersionString().c_str());
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_setCamera(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {
   tango_gl::GestureCamera::CameraType cam_type =
       static_cast<tango_gl::GestureCamera::CameraType>(camera_index);
@@ -125,7 +125,7 @@ Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_setCamer
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativeaugmentedreality_TangoJNINative_onTouchEvent(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onTouchEvent(
     JNIEnv*, jobject, int touch_count, int event, float x0, float y0, float x1,
     float y1) {
   tango_gl::GestureCamera::TouchEvent touch_event =

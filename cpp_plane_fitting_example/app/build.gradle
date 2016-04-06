@@ -5,7 +5,6 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "com.projecttango.experiments.nativeplanefitting"
         minSdkVersion 19
         targetSdkVersion 19
     }

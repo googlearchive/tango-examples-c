@@ -26,73 +26,73 @@ static tango_point_cloud::PointCloudApp app;
 extern "C" {
 #endif
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_checkTangoVersion(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_checkTangoVersion(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
   return app.CheckTangoVersion(env, activity, min_tango_version);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_setupConfig(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setupConfig(
     JNIEnv*, jobject) {
   return app.TangoSetupConfig();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_connect(
-    JNIEnv*, jobject) {
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_connect(JNIEnv*,
+                                                                     jobject) {
   return app.TangoConnect();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_connectCallbacks(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_connectCallbacks(
     JNIEnv*, jobject) {
   return app.TangoConnectCallbacks();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
   app.TangoDisconnect();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_initGlContent(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setupGraphic(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_render(
-    JNIEnv*, jobject) {
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_render(JNIEnv*,
+                                                                    jobject) {
   app.Render();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_deleteResources(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_deleteResources(
     JNIEnv*, jobject) {
   app.DeleteResources();
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_getVerticesCount(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_getVerticesCount(
     JNIEnv*, jobject) {
   return app.GetPointCloudVerticesCount();
 }
 
 JNIEXPORT jfloat JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_getAverageZ(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_getAverageZ(
     JNIEnv*, jobject) {
   return app.GetAverageZ();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_setCamera(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {
   tango_gl::GestureCamera::CameraType cam_type =
       static_cast<tango_gl::GestureCamera::CameraType>(camera_index);
@@ -100,7 +100,7 @@ Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_setCamera(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_experiments_nativepointcloud_TangoJNINative_onTouchEvent(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onTouchEvent(
     JNIEnv*, jobject, int touch_count, int event, float x0, float y0, float x1,
     float y1) {
   tango_gl::GestureCamera::TouchEvent touch_event =
