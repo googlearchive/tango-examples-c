@@ -58,6 +58,12 @@ TangoErrorType TangoSupport_GetTangoVersion(JNIEnv* env, jobject activity,
 /// than the current front buffer).
 struct TangoSupportImageBufferManager;
 
+/// Opaque struct, not defined in header.  Internally stores a reference to
+/// TangoService_getPoseAtTime and common extrinsics poses.
+struct TangoSupportContext {
+  int holder;
+};
+
 /// @brief Create an object for maintaining a set of image buffers for a
 /// specified image format and size.
 ///
@@ -370,6 +376,26 @@ typedef enum {
   TANGO_SUPPORT_COORDINATE_CONVENTION_TANGO,
 } TangoCoordinateConventionType;
 
+// Enumeration of support engines. Every engine conversion
+// corresponds to an axis swap from the Tango-native frame
+typedef enum {
+  // Tango native frame, has a different convention
+  // for forward, right, and up
+  // for each reference frame
+  TANGO_SUPPORT_ENGINE_TANGO,
+
+  // OpenGL frame, -Z forward, X right, Y up
+  TANGO_SUPPORT_ENGINE_OPENGL,
+
+  // Unity frame, +Z forward, X, right, Y up
+  TANGO_SUPPORT_ENGINE_UNITY,
+
+  // UnrealEngine frame, X forward, Y right, Z up
+  TANGO_SUPPORT_ENGINE_UNREAL,
+
+  // etc.
+} TangoSupportEngineType;
+
 /// @brief Calculates the relative pose from the target frame at time
 /// target_timestamp to the base frame at time base_timestamp.
 ///
@@ -402,7 +428,7 @@ TangoErrorType TangoSupport_calculateRelativePose(
 /// @param convention The targeted rendering engine coordinate convention.
 /// @param target_frame The Tango device coordinate frame we want represented
 ///   in the rendering engine world frame.
-/// @param tango_pose_data A reference to the TangoPoseData going to be
+/// @param pose_start_service_T_device A reference to the TangoPoseData to be
 ///   converted. This must be for the frame pair (base frame:START_SERVICE
 ///   or AREA_DESCRIPTION, target frame: DEVICE).
 /// @param engine_pose Where the resulting pose will be returned.
@@ -413,6 +439,25 @@ extern "C" TangoErrorType TangoSupport_getPoseInEngineFrame(
     const TangoCoordinateFrameType target_frame,
     const TangoPoseData& pose_start_service_T_device,
     TangoPoseData* engine_pose);
+
+/// @brief Calculate the transform from target frame to base frame
+/// of reference represented in the specified engine coordinate system.
+///
+/// @param ctx Unused at this time.
+/// @param timestamp The time that being queried for the transform.
+/// @param base_frame The Tango device coordinate frame the pose is converting
+///   to.
+/// @param target_frame The Tango device coordinate frame the pose is converting
+///   from.
+/// @param engine The engine being used to render the augmented/virtual reality
+///   data. Can be OpenGl, Unity, or Tango.
+/// @param pose The final pose returned. Maps from target to base.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input,
+///   and @c TANGO_ERROR on failure.
+extern "C" TangoErrorType TangoSupport_getPoseAtTime(
+    TangoSupportContext* ctx, double timestamp,
+    TangoCoordinateFrameType base_frame, TangoCoordinateFrameType target_frame,
+    TangoSupportEngineType engine, TangoPoseData* pose);
 
 /// @deprecated Use @c TangoSupport_getPoseInEngineFrame instead.
 /// @brief Convert device with respect to start of service pose into camera
@@ -608,9 +653,9 @@ TangoErrorType TangoSupport_upsampleImageBilateral(
 /// NOTE: If less than three non-collinear points are passed then this will
 /// return one of the many possible transforms that make that correspondence.
 ///
-/// @param src_points A 2d array of source points.
-/// @param dest_points A 2d array of destination points.
-/// @param num_points The amount of correspondence points.
+/// @param src_points An array of 3D source points.
+/// @param dest_points An array of 3D destination points.
+/// @param num_points Number of correspondence points.
 /// @param src_frame_T_dest_frame_matrix An array for output of the
 ///   transformation.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
@@ -618,6 +663,49 @@ TangoErrorType TangoSupport_upsampleImageBilateral(
 TangoErrorType TangoSupport_findCorrespondenceSimilarityTransform(
     double (*src_points)[3], double (*dest_points)[3], int num_points,
     double src_frame_T_dest_frame_matrix[16]);
+
+/// @}
+
+/// @defgroup EdgeDetectionSupport Edge Detection Support Functions
+/// @brief Functions for detecting edges.
+/// @{
+
+/// @brief A structure to define an edge, including the closest point on the
+/// edge to the input point to the method that returned the edge.
+struct TangoSupportEdge {
+  float end_points[2][3];
+  float closest_point_on_edge[3];
+};
+
+/// @brief Find the list of edges "close" to the user-specified location and
+/// that are on the plane estimated from the input location. The edges are
+/// specified in the depth frame.
+///
+/// @param point_cloud The point cloud. Cannot be NULL and must have sufficient
+///   points to estimate the plane at the location of the input.
+/// @param image_buffer The RGB image buffer. Cannot be NULL.
+/// @param camera_intrinsics The camera intrinsics for the color camera. Cannot
+///   be NULL.
+/// @param uv_coordinates The UV coordinates of the input point. This is
+///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+/// @param edges An array of 3D edges close to the input point and specified in
+///   the depth frame. The edges will lie on the plane estimated at the location
+///   of the input point. The array should be deleted by calling
+///   TangoSupport_freeEdgeList. Cannot be NULL.
+/// @param number_of_edges The number of edges in @p edges. Cannot be NULL.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_findEdgesNearPoint(
+    const TangoXYZij* point_cloud, const TangoImageBuffer* image_buffer,
+    const TangoCameraIntrinsics* camera_intrinsics,
+    const float uv_coordinates[2], TangoSupportEdge** edges,
+    int* number_of_edges);
+
+/// @brief Free memory allocated in call to TangoSupport_findEdgesNearPoint.
+///
+/// @param edges Edge list to free.
+/// @return @c TANGO_SUCCESS on success.
+TangoErrorType TangoSupport_freeEdgeList(TangoSupportEdge** edges);
 
 /// @}
 
