@@ -14,20 +14,20 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
-PROJECT_ROOT_FROM_JNI:= ../../../../..
-#PROJECT_ROOT:= $(call my-dir)/../../../../../..
+PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libcpp_hello_area_description_example
 LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
 LOCAL_CFLAGS    := -std=c++11
+LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
+                    $(PROJECT_ROOT)/third_party/glm/
 LOCAL_SRC_FILES := jni_interface.cc \
                    hello_area_description_app.cc \
                    pose_data.cc
-
 LOCAL_LDLIBS    := -llog -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
 
-#$(call import-add-path, $(PROJECT_ROOT))
+$(call import-add-path, $(PROJECT_ROOT))
 $(call import-module,tango_client_api)
 $(call import-module,tango_support_api)
