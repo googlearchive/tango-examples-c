@@ -664,6 +664,11 @@ TangoErrorType TangoService_connectOnPoseAvailable(
                                          const TangoPoseData* pose),
     ...);
 
+TangoErrorType TangoService_connectOnLevelDataChanged(
+    void (*TangoService_onLevelDataChanged)(void* context,
+                                            const LevelData* level_data),
+    ...);
+
 /// Get a pose at a given timestamp from the base to the target frame.
 ///
 /// All poses returned are marked as @c TANGO_POSE_VALID (in the
@@ -1646,6 +1651,18 @@ TangoErrorType TangoService_Experimental_loadAreaDescription(
 ///     file path is invalid or an ADF is already being learned; @c TANGO_ERROR
 ///     if communication fails or if the service needs to be initialized.
 TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
+    const char* file_path);
+
+/// Experimental API only, subject to change.
+/// Loads a navigation graph with the specified file path. This allows an
+/// application to load a graph for navigation after connecting to the service.
+/// It should only be called after calling TangoService_connect(), and then only
+/// if the connect configuration did not enable learning mode.
+/// @param file_path The file path for the graph to load.
+/// @return Returns @c TANGO_SUCCESS if the graph is successfully loaded for
+///     navigation; @c TANGO_INVALID if the file path is invalid; @c TANGO_ERROR
+///     if communication fails or if the service needs to be initialized.
+TangoErrorType TangoService_Experimental_loadNavigationGraphFromFile(
     const char* file_path);
 
 /// Experimental API only, subject to change.
