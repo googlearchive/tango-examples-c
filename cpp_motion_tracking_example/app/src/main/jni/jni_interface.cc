@@ -43,13 +43,6 @@ Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_connect(
   return app.TangoConnect();
 }
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_connectCallbacks(
-    JNIEnv*, jobject) {
-  int ret = app.TangoConnectCallbacks();
-  return ret;
-}
-
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_disconnect(
     JNIEnv*, jobject) {
@@ -87,9 +80,9 @@ Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setScreenRotati
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_initializeTango(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onTangoServiceConnected(
     JNIEnv* env, jobject, jobject iBinder) {
-  app.InitializeTango(env, iBinder);
+  app.OnTangoServiceConnected(env, iBinder);
 }
 #ifdef __cplusplus
 }

@@ -75,6 +75,16 @@ std::string GetVideoOverlayFragmentShader() {
          "}\n";
 }
 
+std::string GetVideoOverlayTexture2DFragmentShader() {
+  return "precision highp float;\n"
+         "precision highp int;\n"
+         "uniform sampler2D texture;\n"
+         "varying vec2 f_textureCoords;\n"
+         "void main() {\n"
+         "  gl_FragColor = texture2D(texture, f_textureCoords);\n"
+         "}\n";
+}
+
 std::string GetShadedVertexShader() {
   return "attribute vec4 vertex;\n"
          "attribute vec3 normal;\n"

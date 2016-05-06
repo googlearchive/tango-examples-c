@@ -17,10 +17,14 @@
 package com.projecttango.examples.cpp.pointcloud;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,13 +32,15 @@ import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
+
 /**
  * The main activity of the application. This activity shows debug information
  * and a glSurfaceView that renders graphic content.
  */
 public class PointcloudActivity extends Activity implements OnClickListener {
   // The minimum Tango Core version required from this application.
-  private static final int  MIN_TANGO_CORE_VERSION = 6804;
+  private static final int  MIN_TANGO_CORE_VERSION = 9377;
 
   // The package name of Tang Core, used for checking minimum Tango Core version.
   private static final String TANGO_PACKAGE_NAME = "com.projecttango.tango";
@@ -69,6 +75,39 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   // Handles the debug text UI update loop.
   private Handler mHandler = new Handler();
 
+  // Tango Service connection.
+  ServiceConnection mTangoServiceConnection = new ServiceConnection() {
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      TangoJNINative.onTangoServiceConnected(service);
+        
+      // Setup the configuration for the TangoService.
+      TangoJNINative.setupConfig();
+
+      // Connect the onPoseAvailable callback.
+      TangoJNINative.connectCallbacks();
+
+      // Connect to Tango Service (returns true on success).
+      // Starts Motion Tracking and Area Learning.
+      if (!TangoJNINative.connect()) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              // End the activity and let the user know something went wrong.
+              Toast.makeText(PointcloudActivity.this, "Connect Tango Service Error",
+                             Toast.LENGTH_LONG).show();
+              finish();
+              return;
+            }
+          });
+      }
+    }
+
+    public void onServiceDisconnected(ComponentName name) {
+      // Handle this if you need to gracefully shutdown/retry
+      // in the event that Tango itself crashes/gets upgraded while running.
+    }
+  };
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -84,7 +123,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     // Text views for the available points count.
     mPointCount = (TextView) findViewById(R.id.point_count);
 
-    // Text view for average depth distance (in meters). 
+    // Text view for average depth distance (in meters).
     mAverageZ = (TextView) findViewById(R.id.average_depth);
 
     // Buttons for selecting camera view and Set up button click listeners.
@@ -94,7 +133,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
 
     // OpenGL view where all of the graphics are drawn.
     mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
-    
+
     // Configure OpenGL renderer
     mGLView.setEGLContextClientVersion(2);
 
@@ -104,7 +143,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
 
     // Check if the Tango Core is out of date.
     if (!TangoJNINative.checkTangoVersion(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core out of date, please update in Play Store", 
+      Toast.makeText(this, "Tango Core out of date, please update in Play Store",
                      Toast.LENGTH_LONG).show();
       finish();
       return;
@@ -116,21 +155,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     super.onResume();
     mGLView.onResume();
 
-    // Setup the configuration for the TangoService.
-    TangoJNINative.setupConfig();
-    
-    // Connect the onPoseAvailable callback.
-    TangoJNINative.connectCallbacks();
-
-    // Connect to Tango Service (returns true on success).
-    // Starts Motion Tracking and Area Learning.
-    if (TangoJNINative.connect()) {
-      mIsConnectedService = true;
-    } else {
-      // End the activity and let the user know something went wrong.
-      Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
-      finish();
-    }
+    TangoInitializationHelper.bindTangoService(this, mTangoServiceConnection);
 
     // Start the debug text UI update loop.
     mHandler.post(mUpdateUiLoopRunnable);
@@ -143,15 +168,13 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     // Delete all the non-OpenGl resources.
     TangoJNINative.deleteResources();
 
-    // Disconnect from the Tango Service, release all the resources that the app is
-    // holding from the Tango Service.
-    if (mIsConnectedService) {
-      TangoJNINative.disconnect();
-      mIsConnectedService = false;
-    }
-
     // Stop the debug text UI update loop.
     mHandler.removeCallbacksAndMessages(null);
+
+    // Disconnect from Tango Service, release all the resources that the app is
+    // holding from Tango Service.
+    TangoJNINative.disconnect();
+    unbindService(mTangoServiceConnection);
   }
 
   @Override
@@ -181,23 +204,24 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     if (pointCount == 1) {
       float normalizedX = event.getX(0) / mScreenSize.x;
       float normalizedY = event.getY(0) / mScreenSize.y;
-      TangoJNINative.onTouchEvent(1, 
-          event.getActionMasked(), normalizedX, normalizedY, 0.0f, 0.0f);
+      TangoJNINative.onTouchEvent(1, event.getActionMasked(),
+                                  normalizedX, normalizedY, 0.0f, 0.0f);
     }
     if (pointCount == 2) {
       if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
         int index = event.getActionIndex() == 0 ? 1 : 0;
         float normalizedX = event.getX(index) / mScreenSize.x;
         float normalizedY = event.getY(index) / mScreenSize.y;
-        TangoJNINative.onTouchEvent(1, 
-          MotionEvent.ACTION_DOWN, normalizedX, normalizedY, 0.0f, 0.0f);
+        TangoJNINative.onTouchEvent(1, MotionEvent.ACTION_DOWN,
+                                    normalizedX, normalizedY, 0.0f, 0.0f);
       } else {
         float normalizedX0 = event.getX(0) / mScreenSize.x;
         float normalizedY0 = event.getY(0) / mScreenSize.y;
         float normalizedX1 = event.getX(1) / mScreenSize.x;
         float normalizedY1 = event.getY(1) / mScreenSize.y;
         TangoJNINative.onTouchEvent(2, event.getActionMasked(),
-            normalizedX0, normalizedY0, normalizedX1, normalizedY1);
+                                    normalizedX0, normalizedY0,
+                                    normalizedX1, normalizedY1);
       }
     }
     return true;
@@ -205,11 +229,11 @@ public class PointcloudActivity extends Activity implements OnClickListener {
 
   // Debug text UI update loop, updating at 10Hz.
   private Runnable mUpdateUiLoopRunnable = new Runnable() {
-    public void run() {
-      updateUi();
-      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
-    }
-  };
+      public void run() {
+        updateUi();
+        mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+      }
+    };
 
   // Update the debug text UI.
   private void updateUi() {
@@ -218,6 +242,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
       mAverageZ.setText(String.format("%.3f", TangoJNINative.getAverageZ()));
     } catch (Exception e) {
       e.printStackTrace();
+      Log.e(TAG, "Exception updateing UI elements");
     }
   }
 }

@@ -60,16 +60,6 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
 
 }  // namespace
 
-
-bool PointToPointApplication::CheckTangoVersion(JNIEnv* env, jobject activity,
-                                           int min_tango_version) {
-  // Check the installed version of the TangoCore.  If it is too old, then
-  // it will not support the most up to date features.
-  int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  return err == TANGO_SUCCESS && version >= min_tango_version;
-}
-
 void PointToPointApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
   TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
   TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_);
@@ -100,23 +90,34 @@ PointToPointApplication::~PointToPointApplication() {
   image_buffer_manager_ = nullptr;
 }
 
-int PointToPointApplication::TangoInitialize(JNIEnv* env,
-                                             jobject caller_activity) {
-  // The first thing we need to do for any Tango enabled application is to
-  // initialize the service. We will do that here, passing on the JNI
-  // environment and jobject corresponding to the Android activity that is
-  // calling us.
-  int ret = TangoService_initialize(env, caller_activity);
-  if (ret != TANGO_SUCCESS) {
-    return ret;
-  }
+bool PointToPointApplication::CheckTangoVersion(JNIEnv* env, jobject activity,
+                                                int min_tango_version) {
+  // Check the installed version of the TangoCore.  If it is too old, then
+  // it will not support the most up to date features.
+  int version;
+  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  return err == TANGO_SUCCESS && version >= min_tango_version;
+}
 
+void PointToPointApplication::OnTangoServiceConnected(JNIEnv* env,
+                                                      jobject binder) {
+  TangoErrorType ret = TangoService_setBinder(env, binder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "PointToPointApplication: Failed to initialize Tango service with"
+        "error code: %d",
+        ret);
+  }
+}
+
+int PointToPointApplication::TangoSetupAndConnect() {
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
     LOGE("PointToPointApplication: Unable to get tango config");
     return TANGO_ERROR;
   }
 
+  TangoErrorType ret;
   /**
    * The point_cloud_manager_ contains the depth buffer data and allows
    * reading and writing of data in a thread safe way.
@@ -139,22 +140,13 @@ int PointToPointApplication::TangoInitialize(JNIEnv* env,
     }
   }
 
-  return TANGO_SUCCESS;
-}
-
-int PointToPointApplication::TangoSetupAndConnect() {
   // Here, we will configure the service to run in the way we would want. For
   // this application, we will start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   // In addition to motion tracking, however, we want to run with depth so that
   // we can measure things. As such, we are going to set an additional flag
   // "config_enable_depth" to true.
-  if (tango_config_ == nullptr) {
-    return TANGO_ERROR;
-  }
-
-  TangoErrorType ret =
-      TangoConfig_setBool(tango_config_, "config_enable_depth", true);
+  ret = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable depth.");
     return ret;

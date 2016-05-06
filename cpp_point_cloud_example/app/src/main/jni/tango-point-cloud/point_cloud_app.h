@@ -38,8 +38,14 @@ class PointCloudApp {
   ~PointCloudApp();
 
   // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
   bool CheckTangoVersion(JNIEnv* env, jobject caller_activity,
                          int min_tango_version);
+
+  // Called when Tango Service is connected successfully.
+  bool OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Setup the configuration file for the Tango Service.
   int TangoSetupConfig();

@@ -154,6 +154,8 @@ typedef enum {
   TANGO_RECORDING_MODE_SCENE_RECONSTRUCTION = 1,
   /// Contains data required for motion tracking, as well as fisheye images.
   TANGO_RECORDING_MODE_MOTION_TRACKING_AND_FISHEYE = 2,
+  /// Contains motion data, depth, and fisheye and RGB images.
+  TANGO_RECORDING_MODE_ALL = 3
 } TangoRecordingMode_Experimental;
 
 /**@} */
@@ -169,7 +171,7 @@ typedef void* TangoConfig;
 #define TANGO_UUID_LEN 37
 #define TANGO_COORDINATE_FRAME_ID_BYTE_LEN 16
 #define TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN 16
-#define TANGO_LEVEL_ID_BYTE_LEN 16
+#define TANGO_LEVEL_ID_BYTE_MAX_LEN 19
 
 /// The unique id associated with a single area description. Should be
 /// 36 characters including dashes, followed by a null terminating character,
@@ -478,14 +480,14 @@ typedef struct LevelData {
   /// Encode the version of the LevelData structure itself.
   uint32_t version;
   /// A human readable short name, as it would appear on elevator buttons,
-  /// eg. "5", or "B1
+  /// eg. "5", or "B1" (null-terminated).
   char short_name[TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN];
   /// Level number E3: the number of floors above ground of this level
   /// multiplied by 1000, eg. -1000, +2000 for whole floors, 8500 for a
   /// mezzanine on the 8th floor.
   int32_t level_number_E3;
-  /// An opaque level ID.
-  char level_id[TANGO_LEVEL_ID_BYTE_LEN];
+  /// An opaque level ID (null-terminated).
+  char level_id[TANGO_LEVEL_ID_BYTE_MAX_LEN];
 } LevelData;
 
 #ifdef __cplusplus
@@ -1228,9 +1230,8 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         localize against that Area Description. Empty string will disable
 ///         localization. Defaults to empty.</td></tr>
 ///
-/// <tr><td>boolean config_experimental_enable_dataset_recording</td><td>
-///         EXPERIMENTAL Enables recording of a dataset to disk. Note that this
-///         API is subject to change.</td></tr>
+/// <tr><td>boolean config_enable_dataset_recording</td><td>
+///         Enables recording of a dataset to disk.</td></tr>
 ///
 /// <tr><td>boolean config_experimental_enable_scene_reconstruction</td><td>
 ///         EXPERIMENTAL This flag enables the experimental scene reconstruction
@@ -1645,12 +1646,24 @@ TangoErrorType TangoService_Experimental_loadAreaDescription(
 /// It should only be called after calling TangoService_connect(), and then only
 /// if the connect configuration did not enable learning mode.
 /// @param file_path The file path for the ADF to load. If an empty string,
-///     unloads all ADFs and turns off area learning.
+///     unloads all ADFs.
 /// @return Returns @c TANGO_SUCCESS if the ADF is successfully loaded for
 ///     localization (or if all ADFs were unloaded); @c TANGO_INVALID if the
-///     file path is invalid or an ADF is already being learned; @c TANGO_ERROR
-///     if communication fails or if the service needs to be initialized.
+///     file path is invalid or if learning mode is enabled; @c TANGO_ERROR
+///     if communication fails.
 TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
+    const char* file_path);
+
+/// Experimental API only, subject to change.
+/// Unloads an area description with the specified file path. This should only
+/// be called to unload an ADF that was previously loaded using
+/// TangoService_Experimental_loadAreaDescriptionFromFile.
+/// @param file_path The file path of the ADF to unload. If an empty string,
+///     unloads all ADFs and turns off area learning.
+/// @return Returns @c TANGO_SUCCESS if the ADF is unloaded; @c TANGO_INVALID if
+///     the given file path is invalid or does not point to an ADF that was
+///     previously loaded; @c TANGO_ERROR if communication fails.
+TangoErrorType TangoService_Experimental_unloadAreaDescriptionFromFile(
     const char* file_path);
 
 /// Experimental API only, subject to change.

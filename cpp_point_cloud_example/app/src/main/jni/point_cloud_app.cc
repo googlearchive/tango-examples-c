@@ -75,6 +75,18 @@ bool PointCloudApp::CheckTangoVersion(JNIEnv* env, jobject activity,
   return err == TANGO_SUCCESS && version >= min_tango_version;
 }
 
+bool PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
+  TangoErrorType ret = TangoService_setBinder(env, binder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "PointCloudApp: Failed to set Binder Tango service with"
+        "error code: %d",
+        ret);
+    return false;
+  }
+  return true;
+}
+
 int PointCloudApp::TangoSetupConfig() {
   // Here, we'll configure the service to run in the way we'd want. For this
   // application, we'll start from the default configuration

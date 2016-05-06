@@ -27,19 +27,34 @@ static const GLushort kIndices[] = {0, 1, 2, 2, 1, 3};
 static const GLfloat kTextureCoords[] = {0.0, 0.0, 0.0, 1.0,
                                          1.0, 0.0, 1.0, 1.0};
 
-VideoOverlay::VideoOverlay() {
+VideoOverlay::VideoOverlay(GLuint texture_type) : texture_type_(texture_type) {
+  Initialize();
+}
+
+VideoOverlay::VideoOverlay() : texture_type_(GL_TEXTURE_EXTERNAL_OES) {
+  Initialize();
+}
+
+void VideoOverlay::Initialize() {
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-  shader_program_ =
-      util::CreateProgram(shaders::GetVideoOverlayVertexShader().c_str(),
-                          shaders::GetVideoOverlayFragmentShader().c_str());
+  if (texture_type_ == GL_TEXTURE_EXTERNAL_OES) {
+    shader_program_ =
+        util::CreateProgram(shaders::GetVideoOverlayVertexShader().c_str(),
+                            shaders::GetVideoOverlayFragmentShader().c_str());
+  } else {
+    shader_program_ = util::CreateProgram(
+        shaders::GetVideoOverlayVertexShader().c_str(),
+        shaders::GetVideoOverlayTexture2DFragmentShader().c_str());
+  }
+
   if (!shader_program_) {
     LOGE("Could not create program.");
   }
 
   glGenTextures(1, &texture_id_);
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
-  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(texture_type_, texture_id_);
+  glTexParameteri(texture_type_, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(texture_type_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   uniform_texture_ = glGetUniformLocation(shader_program_, "texture");
 
   glGenBuffers(3, vertex_buffers_);
@@ -86,7 +101,7 @@ void VideoOverlay::Render(const glm::mat4& projection_mat,
 
   glUniform1i(uniform_texture_, 0);
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
+  glBindTexture(texture_type_, texture_id_);
 
   glm::mat4 model_mat = GetTransformationMatrix();
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;

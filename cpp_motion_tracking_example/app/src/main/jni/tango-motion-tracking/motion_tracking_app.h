@@ -37,13 +37,13 @@ class MotiongTrackingApp {
   ~MotiongTrackingApp();
 
   // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
   bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
 
   // Setup the configuration file for the Tango Service
   int TangoSetupConfig();
-
-  // Connect the onPoseAvailable callback.
-  int TangoConnectCallbacks();
 
   // Connect to Tango Service.
   // This function will start the Tango Service pipeline, in this case, it will
@@ -53,12 +53,6 @@ class MotiongTrackingApp {
   // Disconnect from Tango Service, release all the resources that the app is
   // holding from Tango Service.
   void TangoDisconnect();
-
-  // Tango service pose callback function for pose data. Called when new
-  // information about device pose is available from the Tango Service.
-  //
-  // @param pose: The current pose returned by the service, caller allocated.
-  void onPoseAvailable(const TangoPoseData* pose);
 
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
   void InitializeGLContent();
@@ -78,22 +72,12 @@ class MotiongTrackingApp {
   //    the index is following Android screen rotation enum.
   //    see Android documentation for detail:
   //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
-  // //NO_LINT
   void SetScreenRotation(int screen_roatation);
 
-  // Initialize Tango. This must be called when starting the app.
-  bool InitializeTango(JNIEnv* env, jobject iBinder);
+  // Call when Tango Service is connected successfully.
+  void OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
 
  private:
-  // callback_pose_ handles all pose onPoseAvailable callbacks,
-  // onPoseAvailable() in this object will be routed to callback_pose_
-  // to handle.
-  TangoPoseData callback_pose_;
-
-  // Mutex for protecting the pose data. The pose data is shared between render
-  // thread and TangoService callback thread.
-  std::mutex pose_mutex_;
-
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement.
   Scene main_scene_;

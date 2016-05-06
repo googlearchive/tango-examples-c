@@ -30,10 +30,10 @@ Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_checkTangoVersion(
   return app.CheckTangoVersion(env, activity, min_tango_version);
 }
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_tangoInitialize(
-    JNIEnv* env, jobject /*obj*/, jobject activity) {
-  return app.TangoInitialize(env, activity);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onTangoServiceConnected(
+    JNIEnv* env, jobject /*obj*/, jobject binder) {
+  app.OnTangoServiceConnected(env, binder);
 }
 
 JNIEXPORT jint JNICALL

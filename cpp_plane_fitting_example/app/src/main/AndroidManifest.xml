@@ -15,7 +15,7 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme">
         <uses-library
-            android:name="com.projecttango.libtango_device"
+            android:name="com.projecttango.libtango_device2"
             android:required="true" />
         <activity
             android:name="com.projecttango.examples.cpp.planefitting.MainActivity"

@@ -14,31 +14,12 @@
  * limitations under the License.
  */
 
-#include <tango-gl/conversions.h>
 #include <tango_support_api.h>
 
+#include <tango-gl/conversions.h>
 #include "tango-motion-tracking/motion_tracking_app.h"
 
-namespace {
-// This function routes onPoseAvailable callbacks to the application object for
-// handling.
-//
-// @param context, context will be a pointer to a MotionTrackingApplication
-//        instance on which to call callbacks.
-// @param pose, pose data to route to onPoseAvailable function.
-void onPoseAvailableRouter(void* context, const TangoPoseData* pose) {
-  tango_motion_tracking::MotiongTrackingApp* app =
-      static_cast<tango_motion_tracking::MotiongTrackingApp*>(context);
-  app->onPoseAvailable(pose);
-}
-}  // namespace
-
 namespace tango_motion_tracking {
-void MotiongTrackingApp::onPoseAvailable(const TangoPoseData* pose) {
-  std::lock_guard<std::mutex> lock(pose_mutex_);
-  callback_pose_ = *pose;
-}
-
 MotiongTrackingApp::MotiongTrackingApp() {}
 
 MotiongTrackingApp::~MotiongTrackingApp() {
@@ -80,26 +61,6 @@ int MotiongTrackingApp::TangoSetupConfig() {
   return ret;
 }
 
-int MotiongTrackingApp::TangoConnectCallbacks() {
-  // Setting up the frame pair for the onPoseAvailable callback.
-  TangoCoordinateFramePair pairs;
-  pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
-
-  // Attach onPoseAvailable callback.
-  // The callback will be called after the service is connected.
-  int ret =
-      TangoService_connectOnPoseAvailable(1, &pairs, onPoseAvailableRouter);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "MotiongTrackingApp: Failed to connect to pose callback with error"
-        "code: %d",
-        ret);
-    return ret;
-  }
-  return ret;
-}
-
 // Connect to Tango Service, service will start running, and
 // pose can be queried.
 bool MotiongTrackingApp::TangoConnect() {
@@ -125,20 +86,35 @@ void MotiongTrackingApp::TangoDisconnect() {
   TangoService_disconnect();
 }
 
-void MotiongTrackingApp::InitializeGLContent() { main_scene_.InitGLContent(); }
+void MotiongTrackingApp::InitializeGLContent() {
+  TangoSupport_initialize(TangoService_getPoseAtTime);
+  main_scene_.InitGLContent();
+}
 
 void MotiongTrackingApp::SetViewPort(int width, int height) {
   main_scene_.SetupViewPort(width, height);
 }
 
 void MotiongTrackingApp::Render() {
-  // Query current pose data.
-  TangoPoseData cur_pose;
-  {
-    std::lock_guard<std::mutex> lock(pose_mutex_);
-    cur_pose = callback_pose_;
+  TangoPoseData pose;
+
+  TangoSupport_getPoseAtTime(
+      0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
+      static_cast<TangoSupportDisplayRotation>(screen_rotation_), &pose);
+
+  if (pose.status_code != TANGO_POSE_VALID) {
+    LOGE("MotiongTrackingApp: Tango pose is not valid.");
+    return;
   }
-  main_scene_.Render(cur_pose, screen_rotation_);
+
+  glm::vec3 position =
+      glm::vec3(pose.translation[0], pose.translation[1], pose.translation[2]);
+
+  glm::quat orientation = glm::quat(pose.orientation[3], pose.orientation[0],
+                                    pose.orientation[1], pose.orientation[2]);
+
+  main_scene_.Render(position, orientation);
 }
 
 void MotiongTrackingApp::DeleteResources() { main_scene_.DeleteResources(); }
@@ -148,16 +124,14 @@ void MotiongTrackingApp::SetScreenRotation(int screen_rotation) {
 }
 
 // Initialize Tango.
-bool MotiongTrackingApp::InitializeTango(JNIEnv* env, jobject iBinder) {
+void MotiongTrackingApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "MotiongTrackingApp: Failed to initialize Tango service with"
         "error code: %d",
         ret);
-    return false;
   }
-  return true;
 }
 
 }  // namespace tango_motion_tracking

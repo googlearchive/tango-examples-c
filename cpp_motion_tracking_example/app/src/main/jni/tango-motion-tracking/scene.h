@@ -47,7 +47,7 @@ class Scene {
   void SetupViewPort(int w, int h);
 
   // Render loop.
-  void Render(const TangoPoseData& cur_pose, int rotation_index);
+  void Render(const glm::vec3& position, const glm::quat& roatation);
 
  private:
   // Camera for rendering the scene.

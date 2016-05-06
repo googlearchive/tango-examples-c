@@ -25,7 +25,6 @@ android {
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn ndkBuild
 }
-
 task ndkBuild(type: Exec) {
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -33,7 +32,8 @@ task ndkBuild(type: Exec) {
     commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
 }
 
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':cpp_example_util')
 }
-

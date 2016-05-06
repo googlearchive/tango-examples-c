@@ -1,0 +1,6 @@
+include ':hello_motion_tracking'
+include ':hello_area_description'
+include ':hello_depth_perception'
+include ':hello_video'
+include ':cpp_example_util'
+project(':cpp_example_util').projectDir = new File('../cpp_example_util/app')

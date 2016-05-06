@@ -37,9 +37,14 @@ class AugmentedRealityApp {
   AugmentedRealityApp();
   ~AugmentedRealityApp();
 
-  // Check that the installed version of the Tango API is up to date
-  // and initialize other data.
-  bool Initialize(JNIEnv* env, jobject caller_activity, int min_tango_version);
+  // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+
+  // Call when Tango Service is connected successfully.
+  bool OnTangoServiceConnected(JNIEnv* env, jobject activity, jobject iBinder);
 
   // When the Android activity is destroyed signal the JNI layer to
   // remove references to the activity. This should be called from the
@@ -181,6 +186,12 @@ class AugmentedRealityApp {
   JavaVM* java_vm_;
   jobject calling_activity_obj_;
   jmethodID on_demand_render_;
+
+  bool is_service_connected_;
+  bool is_texture_id_set_;
+
+  int viewport_width_;
+  int viewport_height_;
 };
 }  // namespace tango_augmented_reality
 

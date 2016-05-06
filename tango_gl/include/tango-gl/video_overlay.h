@@ -22,14 +22,17 @@
 namespace tango_gl {
 class VideoOverlay : public DrawableObject {
  public:
+  explicit VideoOverlay(GLuint texture_type);
   VideoOverlay();
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
   void SetTextureId(GLuint texture_id) { texture_id_ = texture_id; }
+  void Initialize();
 
  private:
   // This id is populated on construction, and is passed to the tango service.
   GLuint texture_id_;
+  GLuint texture_type_;
 
   GLuint attrib_texture_coords_;
   GLuint uniform_texture_;

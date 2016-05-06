@@ -17,50 +17,61 @@
 package com.projecttango.examples.cpp.pointtopoint;
 
 import android.app.Activity;
+import android.os.IBinder;
+import android.util.Log;
+
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
 /**
  * Interfaces between native C++ code and Java code.
  */
 public class JNIInterface {
-    static {
-        System.loadLibrary("cpp_point_to_point_example");
+  static {
+    // This project depends on tango_client_api, so we need to make sure we load
+    // the correct library first.
+    if (TangoInitializationHelper.loadTangoSharedLibrary() ==
+        TangoInitializationHelper.ARCH_ERROR) {
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
     }
+    System.loadLibrary("cpp_point_to_point_example");
+  }
 
-    // Initialize the Tango Service, this function starts the communication
-    // between the application and the Tango Service. The activity object is
-    // used for checking if the API version is outdated.
-    public static native int tangoInitialize(Activity activity);
+  // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  public static native boolean checkTangoVersion(MainActivity activity,
+                                                 int minTangoVersion);
 
-    // Check that the installed version of the Tango API is up to date.
-    public static native boolean checkTangoVersion(MainActivity activity,
-      int minTangoVersion);
+  // Called when Tango Service is connected successfully.
+  public static native void onTangoServiceConnected(IBinder binder);
 
-    // Set up the configuration, callbacks, and connect to the Tango Service.
-    public static native int tangoSetupAndConnect();
+  // Set up the configuration, callbacks, and connect to the Tango Service.
+  public static native int tangoSetupAndConnect();
 
-    // Disconnect from the Tango Service, release all the resources that
-    // the app is holding from the Tango Service.
-    public static native void tangoDisconnect();
+  // Disconnect from the Tango Service, release all the resources that
+  // the app is holding from the Tango Service.
+  public static native void tangoDisconnect();
 
-    // Allocate OpenGL resources for rendering and register the color
-    // camera texture.
-    public static native int initializeGLContent();
+  // Allocate OpenGL resources for rendering and register the color
+  // camera texture.
+  public static native int initializeGLContent();
 
-    // Use bilateral filtering to upsample point cloud.
-    public static native void setUpsampleViaBilateralFiltering(boolean bilateral);
+  // Use bilateral filtering to upsample point cloud.
+  public static native void setUpsampleViaBilateralFiltering(boolean bilateral);
 
-    // Get the distance between the two selected points.
-    public static native String getPointSeparation();
+  // Get the distance between the two selected points.
+  public static native String getPointSeparation();
 
-    // Setup the view port width and height.
-    public static native void setViewPort(int width, int height);
+  // Setup the view port width and height.
+  public static native void setViewPort(int width, int height);
 
-    // Main render loop.
-    public static native void render();
+  // Main render loop.
+  public static native void render();
 
-    // Release resources that are allocated.
-    public static native void deleteResources();
+  // Release resources that are allocated.
+  public static native void deleteResources();
 
-    // Respond to a touch event.
-    public static native void onTouchEvent(float x, float y);
+  // Respond to a touch event.
+  public static native void onTouchEvent(float x, float y);
 }

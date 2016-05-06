@@ -55,7 +55,13 @@ class SynchronizationApplication {
 
   // Check that the installed version of the Tango API is up to date
   // and initialize other data.
-  bool Initialize(JNIEnv* env, jobject activity, int min_tango_version);
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+
+  // Called when Tango Service is connected successfully.
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Setup the configuration file for the Tango Service. .
   bool TangoSetupConfig();
@@ -116,12 +122,6 @@ class SynchronizationApplication {
   // before connect to service. For example, we turn on the depth sensing in
   // this example.
   TangoConfig tango_config_;
-
-  // Extrinsic transformation of color frame wrt device frame.
-  glm::mat4 device_T_color_;
-
-  // Extrinsic transformation of depth frame wrt device frame.
-  glm::mat4 device_T_depth_;
 
   // OpenGL to Start of Service
   glm::mat4 OW_T_SS_;

@@ -64,8 +64,8 @@ PlaneFittingApplication::~PlaneFittingApplication() {
   point_cloud_manager_ = nullptr;
 }
 
-bool PlaneFittingApplication::Initialize(JNIEnv* env, jobject activity,
-                                         int min_tango_version) {
+bool PlaneFittingApplication::CheckTangoVersion(JNIEnv* env, jobject activity,
+                                                int min_tango_version) {
   // Check that we have the minimum required version of Tango.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
@@ -97,6 +97,17 @@ bool PlaneFittingApplication::Initialize(JNIEnv* env, jobject activity,
   }
 
   return true;
+}
+
+void PlaneFittingApplication::OnTangoServiceConnected(JNIEnv* env,
+                                                      jobject binder) {
+  TangoErrorType ret = TangoService_setBinder(env, binder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "PlaneFittingApplication: Failed to bind Tango service with"
+        "error code: %d",
+        ret);
+  }
 }
 
 bool PlaneFittingApplication::TangoSetupAndConnect() {
