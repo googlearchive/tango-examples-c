@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 17
+        targetSdkVersion 19
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+def external_lib_prefix = null
+if (project.hasProperty("Tango.catkin_devel_prefix")) {
+    external_lib_prefix = project.property("Tango.catkin_devel_prefix")
+}

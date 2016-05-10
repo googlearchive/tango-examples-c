@@ -17,23 +17,36 @@
 package com.projecttango.examples.cpp.motiontracking;
 
 import android.os.IBinder;
+import android.util.Log;
+
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
+
 /**
  * Interfaces between native C++ code and Java code.
  */
 public class TangoJNINative {
   static {
+    // This project depends on tango_client_api, so we need to make sure we load
+    // the correct library first.
+    if (TangoInitializationHelper.loadTangoSharedLibrary() ==
+        TangoInitializationHelper.ARCH_ERROR) {
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
+    }
     System.loadLibrary("cpp_motion_tracking_example");
   }
 
   // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //    Tango Core version.
   public static native boolean checkTangoVersion(MotionTrackingActivity activity,
-      int minTangoVersion);
+                                                 int minTangoVersion);
+
+  // Call when Tango Service is connected successfully.
+  public static native void onTangoServiceConnected(IBinder nativeTangoServiceBinder);
 
   // Setup the configuration file of the Tango Service.
   public static native int setupConfig();
-
-  // Connect the onPoseAvailable callback.
-  public static native int connectCallbacks();
 
   // Connect to the Tango Service.
   // This function will start the Tango Service pipeline, in this case, it will
@@ -63,6 +76,4 @@ public class TangoJNINative {
   //    see Android documentation for detail:
   //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
   public static native void setScreenRotation(int rotationIndex);
-
-  public static native void initializeTango(IBinder nativeTangoServiceBinder);
 }

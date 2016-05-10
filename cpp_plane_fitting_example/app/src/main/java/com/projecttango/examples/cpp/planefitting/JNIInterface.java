@@ -17,42 +17,58 @@
 package com.projecttango.examples.cpp.planefitting;
 
 import android.app.Activity;
+import android.os.IBinder;
+import android.util.Log;
+
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
 /**
  * Interfaces between native C++ code and Java code.
  */
 public class JNIInterface {
-    static {
-        System.loadLibrary("cpp_plane_fitting_example");
+  static {
+    // This project depends on tango_client_api, so we need to make sure we load
+    // the correct library first.
+    if (TangoInitializationHelper.loadTangoSharedLibrary() ==
+        TangoInitializationHelper.ARCH_ERROR) {
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
     }
+    System.loadLibrary("cpp_plane_fitting_example");
+  }
 
   // Check that the installed version of the Tango API is up to date
   // and initialize other data.
-    public static native boolean initialize(Activity activity, int minTangoVersion);
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  public static native boolean checkTangoVersion(Activity activity, int minTangoVersion);
 
-    // Set up the configuration, callbacks, and connect to the Tango Service.
-    public static native boolean tangoSetupAndConnect();
+  // Called when Tango Service is connected successfully.
+  public static native boolean onTangoServiceConnected(IBinder binder);
 
-    // Disconnect from the Tango Service, release all the resources that
-    // the app is holding from the Tango Service.
-    public static native void tangoDisconnect();
+  // Set up the configuration, callbacks, and connect to the Tango Service.
+  public static native boolean tangoSetupAndConnect();
 
-    // Allocate OpenGL resources for rendering and register the color
-    // camera texture.
-    public static native boolean initializeGLContent();
+  // Disconnect from the Tango Service, release all the resources that
+  // the app is holding from the Tango Service.
+  public static native void tangoDisconnect();
 
-    // Release non-gl resources that are allocated.
-    public static native void deleteResources();
+  // Allocate OpenGL resources for rendering and register the color
+  // camera texture.
+  public static native boolean initializeGLContent();
 
-    // Display debug colors on point cloud.
-    public static native void setRenderDebugPointCloud(boolean debugRender);
+  // Release non-gl resources that are allocated.
+  public static native void deleteResources();
 
-    // Setup the view port width and height.
-    public static native void setViewPort(int width, int height);
+  // Display debug colors on point cloud.
+  public static native void setRenderDebugPointCloud(boolean debugRender);
 
-    // Main render loop.
-    public static native void render();
+  // Setup the view port width and height.
+  public static native void setViewPort(int width, int height);
 
-    // Respond to a touch event.
-    public static native void onTouchEvent(float x, float y);
+  // Main render loop.
+  public static native void render();
+
+  // Respond to a touch event.
+  public static native void onTouchEvent(float x, float y);
 }

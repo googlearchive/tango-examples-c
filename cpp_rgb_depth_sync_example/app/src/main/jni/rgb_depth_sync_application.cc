@@ -53,11 +53,9 @@ SynchronizationApplication::~SynchronizationApplication() {
   point_cloud_manager_ = nullptr;
 }
 
-bool SynchronizationApplication::Initialize(JNIEnv* env, jobject activity,
-                                            int min_tango_version) {
-  SetDepthAlphaValue(0.0);
-  SetGPUUpsample(false);
-
+bool SynchronizationApplication::CheckTangoVersion(JNIEnv* env,
+                                                   jobject activity,
+                                                   int min_tango_version) {
   // Check that we have the minimum required version of Tango.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
@@ -65,7 +63,21 @@ bool SynchronizationApplication::Initialize(JNIEnv* env, jobject activity,
   return err == TANGO_SUCCESS && version >= min_tango_version;
 }
 
+void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
+                                                         jobject binder) {
+  TangoErrorType ret = TangoService_setBinder(env, binder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "SynchronizationApplication: Failed to set Tango service binder with"
+        "error code: %d",
+        ret);
+  }
+}
+
 bool SynchronizationApplication::TangoSetupConfig() {
+  SetDepthAlphaValue(0.0);
+  SetGPUUpsample(false);
+
   if (tango_config_ != nullptr) {
     return true;
   }
@@ -180,67 +192,6 @@ bool SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
   depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
   main_scene_.SetCameraIntrinsics(color_camera_intrinsics);
 
-  // Pose of device frame wrt imu.
-  TangoPoseData pose_imu_T_device;
-  // Pose of color frame wrt imu.
-  TangoPoseData pose_imu_T_color;
-  // Pose of depth camera wrt imu.
-  TangoPoseData pose_imu_T_depth;
-  TangoCoordinateFramePair frame_pair;
-  glm::vec3 translation;
-  glm::quat rotation;
-
-  // We need to get the extrinsic transform between the color camera and the
-  // imu coordinate frames. This matrix is then used to compute the extrinsic
-  // transform between color camera and device:
-  // color_T_device = color_T_imu * imu_T_device;
-  // Note that the matrix color_T_device is a constant transformation since the
-  // hardware will not change, we use the getPoseAtTime() function to query it
-  // once right after the Tango Service connected and store it for efficiency.
-  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  err = TangoService_getPoseAtTime(0.0, frame_pair, &pose_imu_T_device);
-  if (err != TANGO_SUCCESS) {
-    LOGE(
-        "SynchronizationApplication: Failed to get transform between the IMU "
-        "and"
-        "device frames. Something is wrong with device extrinsics.");
-    return false;
-  }
-  // Converting pose to transformation matrix.
-  glm::mat4 imu_T_device = util::GetMatrixFromPose(&pose_imu_T_device);
-
-  // Get color camera with respect to imu transformation matrix.
-  // This matrix is used to compute the extrinsics between color camera and
-  // device: color_T_device = color_T_imu * imu_T_device;
-  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
-  err = TangoService_getPoseAtTime(0.0, frame_pair, &pose_imu_T_color);
-  if (err != TANGO_SUCCESS) {
-    LOGE(
-        "SynchronizationApplication: Failed to get transform between the IMU "
-        "and"
-        "color camera frames. Something is wrong with device extrinsics.");
-    return false;
-  }
-  // Converting pose to transformation matrix.
-  glm::mat4 imu_T_color = util::GetMatrixFromPose(&pose_imu_T_color);
-
-  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_DEPTH;
-  err = TangoService_getPoseAtTime(0.0, frame_pair, &pose_imu_T_depth);
-  if (err != TANGO_SUCCESS) {
-    LOGE(
-        "SynchronizationApplication: Failed to get transform between the IMU "
-        "and depth camera frames. Something is wrong with device extrinsics.");
-    return false;
-  }
-  // Converting pose to transformation matrix.
-  glm::mat4 imu_T_depth = util::GetMatrixFromPose(&pose_imu_T_depth);
-
-  device_T_color_ = glm::inverse(imu_T_device) * imu_T_color;
-  device_T_depth_ = glm::inverse(imu_T_device) * imu_T_depth;
-
   return true;
 }
 
@@ -276,12 +227,12 @@ void SynchronizationApplication::Render() {
 
   // Querying the depth image's frame transformation based on the depth image's
   // timestamp.
-  TangoPoseData pose_start_service_T_device_t0;
+  TangoPoseData pose_start_service_T_depth_camera_t0;
   TangoCoordinateFramePair depth_frame_pair;
   depth_frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  depth_frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+  depth_frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_DEPTH;
   if (TangoService_getPoseAtTime(depth_timestamp, depth_frame_pair,
-                                 &pose_start_service_T_device_t0) !=
+                                 &pose_start_service_T_depth_camera_t0) !=
       TANGO_SUCCESS) {
     LOGE(
         "SynchronizationApplication: Could not find a valid pose at time %lf"
@@ -291,12 +242,12 @@ void SynchronizationApplication::Render() {
 
   // Querying the color image's frame transformation based on the depth image's
   // timestamp.
-  TangoPoseData pose_start_service_T_device_t1;
+  TangoPoseData pose_color_camera_t1_T_start_service;
   TangoCoordinateFramePair color_frame_pair;
-  color_frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  color_frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
+  color_frame_pair.base = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
+  color_frame_pair.target = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
   if (TangoService_getPoseAtTime(color_timestamp, color_frame_pair,
-                                 &pose_start_service_T_device_t1) !=
+                                 &pose_color_camera_t1_T_start_service) !=
       TANGO_SUCCESS) {
     LOGE(
         "SynchronizationApplication: Could not find a valid pose at time %lf"
@@ -309,29 +260,15 @@ void SynchronizationApplication::Render() {
   //
   // Device frame at timestamp t0 (depth timestamp) with respect to start of
   // service.
-  glm::mat4 start_service_T_device_t0 =
-      util::GetMatrixFromPose(&pose_start_service_T_device_t0);
+  glm::mat4 start_service_T_depth_camera_t0 =
+      util::GetMatrixFromPose(&pose_start_service_T_depth_camera_t0);
   // Device frame at timestamp t1 (color timestamp) with respect to start of
   // service.
-  glm::mat4 start_service_T_device_t1 =
-      util::GetMatrixFromPose(&pose_start_service_T_device_t1);
+  glm::mat4 color_camera_t1_T_start_service =
+      util::GetMatrixFromPose(&pose_color_camera_t1_T_start_service);
 
-  // Transformation of depth frame wrt Device at time stamp t0.
-  // Transformation of depth frame with respect to the device frame at
-  // time stamp t0. This transformation remains constant over time. Here we
-  // assign to a local variable to maintain naming consistency when calculating
-  // the transform: color_image_t1_T_depth_image_t0.
-  glm::mat4 device_t0_T_depth_t0 = device_T_depth_;
-
-  // Transformation of Device Frame wrt Color Image frame at time stamp t1.
-  // Transformation of device frame with respect to the color camera frame at
-  // time stamp t1. This transformation remains constant over time. Here we
-  // assign to a local variable to maintain naming consistency when calculating
-  // the transform: color_image_t1_T_depth_image_t0.
-  glm::mat4 color_t1_T_device_t1 = glm::inverse(device_T_color_);
-
-  if (pose_start_service_T_device_t1.status_code == TANGO_POSE_VALID) {
-    if (pose_start_service_T_device_t0.status_code == TANGO_POSE_VALID) {
+  if (pose_color_camera_t1_T_start_service.status_code == TANGO_POSE_VALID) {
+    if (pose_start_service_T_depth_camera_t0.status_code == TANGO_POSE_VALID) {
       // Note that we are discarding all invalid poses at the moment, another
       // option could be to use the latest pose when the queried pose is
       // invalid.
@@ -339,8 +276,7 @@ void SynchronizationApplication::Render() {
       // The Color Camera frame at timestamp t0 with respect to Depth
       // Camera frame at timestamp t1.
       glm::mat4 color_image_t1_T_depth_image_t0 =
-          color_t1_T_device_t1 * glm::inverse(start_service_T_device_t1) *
-          start_service_T_device_t0 * device_t0_T_depth_t0;
+          color_camera_t1_T_start_service * start_service_T_depth_camera_t0;
 
       if (gpu_upsample_) {
         depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,

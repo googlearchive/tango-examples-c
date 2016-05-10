@@ -64,16 +64,30 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
 }
 
 AugmentedRealityApp::AugmentedRealityApp()
-    : calling_activity_obj_(nullptr), on_demand_render_(nullptr) {}
+    : calling_activity_obj_(nullptr), on_demand_render_(nullptr) {
+  is_service_connected_ = false;
+  is_texture_id_set_ = false;
+}
 
 AugmentedRealityApp::~AugmentedRealityApp() { TangoConfig_free(tango_config_); }
 
-bool AugmentedRealityApp::Initialize(JNIEnv* env, jobject activity,
-                                     int min_tango_version) {
-  // Check that we have the minimum required version of Tango.
+bool AugmentedRealityApp::CheckTangoVersion(JNIEnv* env, jobject activity,
+                                            int min_tango_version) {
+  // Check the installed version of the TangoCore.  If it is too old, then
+  // it will not support the most up to date features.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  if (err != TANGO_SUCCESS || version < min_tango_version) {
+  return err == TANGO_SUCCESS && version >= min_tango_version;
+}
+
+bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env, jobject activity,
+                                                  jobject iBinder) {
+  TangoErrorType ret = TangoService_setBinder(env, iBinder);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "AugmentedRealityApp: Failed to set Tango binder with"
+        "error code: %d",
+        ret);
     return false;
   }
 
@@ -85,6 +99,7 @@ bool AugmentedRealityApp::Initialize(JNIEnv* env, jobject activity,
 
   calling_activity_obj_ = env->NewGlobalRef(activity);
 
+  is_service_connected_ = true;
   return true;
 }
 
@@ -213,84 +228,92 @@ void AugmentedRealityApp::TangoResetMotionTracking() {
 
 void AugmentedRealityApp::InitializeGLContent() {
   main_scene_.InitGLContent();
-
-  // Connect color camera texture. TangoService_connectTextureId expects a valid
-  // texture id from the caller, so we will need to wait until the GL content is
-  // properly allocated.
-  TangoErrorType ret = TangoService_connectTextureId(
-      TANGO_CAMERA_COLOR, main_scene_.GetVideoOverlayTextureId(), this,
-      onTextureAvailableRouter);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "AugmentedRealityApp: Failed to connect the texture id with error"
-        "code: %d",
-        ret);
-  }
 }
 
 void AugmentedRealityApp::SetViewPort(int width, int height) {
-  // Query intrinsics for the color camera from the Tango Service, because we
-  // want to match the virtual render camera's intrinsics to the physical
-  // camera, we will compute the actually projection matrix and the view port
-  // ratio for the render.
-  TangoErrorType ret = TangoService_getCameraIntrinsics(
-      TANGO_CAMERA_COLOR, &color_camera_intrinsics_);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "AugmentedRealityApp: Failed to get camera intrinsics with error"
-        "code: %d",
-        ret);
-  }
-
-  float image_width = static_cast<float>(color_camera_intrinsics_.width);
-  float image_height = static_cast<float>(color_camera_intrinsics_.height);
-  float fx = static_cast<float>(color_camera_intrinsics_.fx);
-  float fy = static_cast<float>(color_camera_intrinsics_.fy);
-  float cx = static_cast<float>(color_camera_intrinsics_.cx);
-  float cy = static_cast<float>(color_camera_intrinsics_.cy);
-
-  float image_plane_ratio = image_height / image_width;
-  float image_plane_distance = 2.0f * fx / image_width;
-
-  glm::mat4 projection_mat_ar =
-      tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-          image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
-          kArCameraFarClippingPlane);
-
-  main_scene_.SetFrustumScale(
-      glm::vec3(1.0f, image_plane_ratio, image_plane_distance));
-  main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
-  main_scene_.SetImagePlaneDistance(image_plane_distance);
-  main_scene_.SetARCameraProjectionMatrix(projection_mat_ar);
-
-  float screen_ratio = static_cast<float>(height) / static_cast<float>(width);
-  // In the following code, we place the view port at (0, 0) from the bottom
-  // left corner of the screen. By placing it at (0,0), the view port may not
-  // be exactly centered on the screen. However, this won't affect AR
-  // visualization as the correct registration of AR objects relies on the
-  // aspect ratio of the screen and video overlay, but not the position of the
-  // view port.
-  //
-  // To place the view port in the center of the screen, please use following
-  // code:
-  //
-  // if (image_plane_ratio < screen_ratio) {
-  //   glViewport(-(h / image_plane_ratio - w) / 2, 0,
-  //              h / image_plane_ratio, h);
-  // } else {
-  //   glViewport(0, -(w * image_plane_ratio - h) / 2, w,
-  //              w * image_plane_ratio);
-  // }
-
-  if (image_plane_ratio < screen_ratio) {
-    glViewport(0, 0, height / image_plane_ratio, height);
-  } else {
-    glViewport(0, 0, width, width * image_plane_ratio);
-  }
-  main_scene_.SetCameraType(tango_gl::GestureCamera::CameraType::kFirstPerson);
+  viewport_width_ = width;
+  viewport_height_ = height;
 }
 
 void AugmentedRealityApp::Render() {
+  if (is_service_connected_ && !is_texture_id_set_) {
+    is_texture_id_set_ = true;
+    // Connect color camera texture. TangoService_connectTextureId expects a
+    // valid texture id from the caller, so we will need to wait until the GL
+    // content is properly allocated.
+    TangoErrorType ret = TangoService_connectTextureId(
+        TANGO_CAMERA_COLOR, main_scene_.GetVideoOverlayTextureId(), this,
+        onTextureAvailableRouter);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "AugmentedRealityApp: Failed to connect the texture id with error"
+          "code: %d",
+          ret);
+    }
+
+    // Query intrinsics for the color camera from the Tango Service, because we
+    // want to match the virtual render camera's intrinsics to the physical
+    // camera, we will compute the actually projection matrix and the view port
+    // ratio for the render.
+    ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
+                                           &color_camera_intrinsics_);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "AugmentedRealityApp: Failed to get camera intrinsics with error"
+          "code: %d",
+          ret);
+    }
+
+    float image_width = static_cast<float>(color_camera_intrinsics_.width);
+    float image_height = static_cast<float>(color_camera_intrinsics_.height);
+    float fx = static_cast<float>(color_camera_intrinsics_.fx);
+    float fy = static_cast<float>(color_camera_intrinsics_.fy);
+    float cx = static_cast<float>(color_camera_intrinsics_.cx);
+    float cy = static_cast<float>(color_camera_intrinsics_.cy);
+
+    float image_plane_ratio = image_height / image_width;
+    float image_plane_distance = 2.0f * fx / image_width;
+
+    glm::mat4 projection_mat_ar =
+        tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+            image_width, image_height, fx, fy, cx, cy,
+            kArCameraNearClippingPlane, kArCameraFarClippingPlane);
+
+    main_scene_.SetFrustumScale(
+        glm::vec3(1.0f, image_plane_ratio, image_plane_distance));
+    main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
+    main_scene_.SetImagePlaneDistance(image_plane_distance);
+    main_scene_.SetARCameraProjectionMatrix(projection_mat_ar);
+
+    float screen_ratio = static_cast<float>(viewport_height_) /
+                         static_cast<float>(viewport_width_);
+    // In the following code, we place the view port at (0, 0) from the bottom
+    // left corner of the screen. By placing it at (0,0), the view port may not
+    // be exactly centered on the screen. However, this won't affect AR
+    // visualization as the correct registration of AR objects relies on the
+    // aspect ratio of the screen and video overlay, but not the position of the
+    // view port.
+    //
+    // To place the view port in the center of the screen, please use following
+    // code:
+    //
+    // if (image_plane_ratio < screen_ratio) {
+    //   glViewport(-(h / image_plane_ratio - w) / 2, 0,
+    //              h / image_plane_ratio, h);
+    // } else {
+    //   glViewport(0, -(w * image_plane_ratio - h) / 2, w,
+    //              w * image_plane_ratio);
+    // }
+
+    if (image_plane_ratio < screen_ratio) {
+      glViewport(0, 0, viewport_height_ / image_plane_ratio, viewport_height_);
+    } else {
+      glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
+    }
+    main_scene_.SetCameraType(
+        tango_gl::GestureCamera::CameraType::kFirstPerson);
+  }
+
   double video_overlay_timestamp;
   TangoErrorType status =
       TangoService_updateTexture(TANGO_CAMERA_COLOR, &video_overlay_timestamp);
@@ -308,7 +331,11 @@ void AugmentedRealityApp::Render() {
   main_scene_.Render(color_camera_pose);
 }
 
-void AugmentedRealityApp::DeleteResources() { main_scene_.DeleteResources(); }
+void AugmentedRealityApp::DeleteResources() {
+  is_service_connected_ = false;
+  is_texture_id_set_ = false;
+  main_scene_.DeleteResources();
+}
 
 std::string AugmentedRealityApp::GetPoseString() {
   std::lock_guard<std::mutex> lock(pose_mutex_);

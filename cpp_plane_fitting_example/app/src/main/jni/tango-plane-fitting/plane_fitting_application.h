@@ -42,7 +42,14 @@ class PlaneFittingApplication {
 
   // Check that the installed version of the Tango API is up to date
   // and initialize other data.
-  bool Initialize(JNIEnv* env, jobject caller_activity, int min_tango_version);
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  bool CheckTangoVersion(JNIEnv* env, jobject caller_activity,
+                         int min_tango_version);
+
+  // Called when Tango Service is connected successfully.
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Setup configuration options for Project Tango service, register
   // for callbacks, and connect to the Project Tango service.

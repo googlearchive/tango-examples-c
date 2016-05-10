@@ -17,12 +17,15 @@
 package com.projecttango.examples.cpp.augmentedreality;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -32,14 +35,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
+
 /**
  * The main activity of the application which shows debug information and a
  * glSurfaceView that renders graphic content.
  */
-public class AugmentedRealityActivity extends Activity implements
-    View.OnClickListener {
+public class AugmentedRealityActivity extends Activity implements View.OnClickListener {
   // The minimum Tango Core version required from this application.
-  private static final int MIN_TANGO_CORE_VERSION = 6804;
+  private static final int MIN_TANGO_CORE_VERSION = 9377;
 
   // Tag for debug logging.
   private static final String TAG = AugmentedRealityActivity.class.getSimpleName();
@@ -69,21 +73,60 @@ public class AugmentedRealityActivity extends Activity implements
   private AugmentedRealityRenderer mRenderer;
   private GLSurfaceView mGLView;
 
-  // A flag to check if the Tango Service is connected. This flag avoids the
-  // program attempting to disconnect from the service while it is not
-  // connected.This is especially important in the onPause() callback for the
-  // activity class.
-  private boolean mIsConnectedService = false;
-
   // Screen size for normalizing the touch input for orbiting the render camera.
   private Point mScreenSize = new Point();
 
   // Handles the debug text UI update loop.
   private Handler mHandler = new Handler();
 
+  // Tango Service connection.
+  ServiceConnection mTangoServiceConnection = new ServiceConnection() {
+      public void onServiceConnected(ComponentName name, IBinder service) {
+        // The following code block does setup and connection to Tango.
+        TangoJNINative.onTangoServiceConnected(AugmentedRealityActivity.this, service);
+
+        // Setup the configuration for the TangoService.
+        TangoJNINative.setupConfig();
+
+        // Connect the onPoseAvailable callback.
+        TangoJNINative.connectCallbacks();
+
+        // Connect to Tango Service (returns true on success).
+        // Starts Motion Tracking and Area Learning.
+        if (TangoJNINative.connect()) {
+          mVersion.setText(TangoJNINative.getVersionNumber());
+        } else {
+          // End the activity and let the user know something went wrong.
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                Toast.makeText(AugmentedRealityActivity.this, "Connect Tango Failed.",
+                               Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+              }
+            });
+        }
+      
+      }
+
+      public void onServiceDisconnected(ComponentName name) {
+        // Handle this if you need to gracefully shutdown/retry
+        // in the event that Tango itself crashes/gets upgraded while running.
+      }
+    };
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    // Check that the installed version of the Tango Core is up to date.
+    if (!TangoJNINative.checkTangoVersion(this, MIN_TANGO_CORE_VERSION)) {
+      Toast.makeText(this, "Tango Core is out of date, please update in Play Store",
+                     Toast.LENGTH_SHORT).show();
+      finish();
+      return;
+    }
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -113,6 +156,7 @@ public class AugmentedRealityActivity extends Activity implements
       mAppVersion.setText(pInfo.versionName);
     } catch (NameNotFoundException e) {
       e.printStackTrace();
+      Log.e(TAG, "Exception getting application version");
     }
 
     // Buttons for selecting camera view and Set up button click listeners
@@ -125,7 +169,7 @@ public class AugmentedRealityActivity extends Activity implements
 
     // OpenGL view where all of the graphics are drawn
     mGLView = (GLSurfaceView) findViewById(R.id.gl_surface_view);
-    
+
     // Configure OpenGL renderer
     mGLView.setEGLContextClientVersion(2);
 
@@ -138,85 +182,62 @@ public class AugmentedRealityActivity extends Activity implements
     // code.
     mRenderer = new AugmentedRealityRenderer();
     mGLView.setRenderer(mRenderer);
-    mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-
-    // Check that the installed version of the Tango Core is up to date.
-    if (!TangoJNINative.initialize(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core out of date, please update in Play Store", 
-                     Toast.LENGTH_LONG).show();
-      finish();
-      return;
-    }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     mGLView.onResume();
-    
-    // Setup the configuration for the TangoService.
-    TangoJNINative.setupConfig();
 
-    // Connect the onPoseAvailable callback.
-    TangoJNINative.connectCallbacks();
-
-    // Connect to Tango Service (returns true on success).
-    // Starts Motion Tracking and Area Learning.
-    if (TangoJNINative.connect()) {
-      mIsConnectedService = true;
-      mVersion.setText(TangoJNINative.getVersionNumber());
-    } else {
-      // End the activity and let the user know something went wrong.
-      Toast.makeText(this, "Connect Tango Service Error", Toast.LENGTH_LONG).show();
-      finish();
-    }
-
+    mGLView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     // Start the debug text UI update loop.
     mHandler.post(mUpdateUiLoopRunnable);
+
+    TangoInitializationHelper.bindTangoService(this, mTangoServiceConnection);
   }
 
   @Override
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    TangoJNINative.deleteResources();
 
-    // Disconnect from Tango Service, release all the resources that the app is
-    // holding from Tango Service.
-    if (mIsConnectedService) {
-      TangoJNINative.disconnect();
-      mIsConnectedService = false;
-    }
+    TangoJNINative.deleteResources();
 
     // Stop the debug text UI update loop.
     mHandler.removeCallbacksAndMessages(null);
+
+    
+    // Disconnect from Tango Service, release all the resources that the app is
+    // holding from Tango Service.
+    TangoJNINative.disconnect();
+    unbindService(mTangoServiceConnection);   
   }
 
   @Override
   protected void onDestroy() {
-      super.onDestroy();
-      TangoJNINative.destroyActivity();
+    super.onDestroy();
+    TangoJNINative.destroyActivity();
   }
 
   @Override
   public void onClick(View v) {
     // Handle button clicks.
     switch (v.getId()) {
-      case R.id.first_person_button:
-        TangoJNINative.setCamera(0);
-        break;
-      case R.id.top_down_button:
-        TangoJNINative.setCamera(2);
-        break;
-      case R.id.third_person_button:
-        TangoJNINative.setCamera(1);
-        break;
-      case R.id.resetmotion:
-        TangoJNINative.resetMotionTracking();
-        break;
-      default:
-        Log.w(TAG, "Unknown button click");
-        return;
+    case R.id.first_person_button:
+      TangoJNINative.setCamera(0);
+      break;
+    case R.id.top_down_button:
+      TangoJNINative.setCamera(2);
+      break;
+    case R.id.third_person_button:
+      TangoJNINative.setCamera(1);
+      break;
+    case R.id.resetmotion:
+      TangoJNINative.resetMotionTracking();
+      break;
+    default:
+      Log.w(TAG, "Unknown button click");
+      return;
     }
   }
 
@@ -230,7 +251,7 @@ public class AugmentedRealityActivity extends Activity implements
       float normalizedX = event.getX(0) / mScreenSize.x;
       float normalizedY = event.getY(0) / mScreenSize.y;
       TangoJNINative.onTouchEvent(1,
-          event.getActionMasked(), normalizedX, normalizedY, 0.0f, 0.0f);
+                                  event.getActionMasked(), normalizedX, normalizedY, 0.0f, 0.0f);
     }
     if (pointCount == 2) {
       if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
@@ -238,33 +259,36 @@ public class AugmentedRealityActivity extends Activity implements
         float normalizedX = event.getX(index) / mScreenSize.x;
         float normalizedY = event.getY(index) / mScreenSize.y;
         TangoJNINative.onTouchEvent(1,
-          MotionEvent.ACTION_DOWN, normalizedX, normalizedY, 0.0f, 0.0f);
+                                    MotionEvent.ACTION_DOWN, normalizedX, normalizedY, 0.0f, 0.0f);
       } else {
         float normalizedX0 = event.getX(0) / mScreenSize.x;
         float normalizedY0 = event.getY(0) / mScreenSize.y;
         float normalizedX1 = event.getX(1) / mScreenSize.x;
         float normalizedY1 = event.getY(1) / mScreenSize.y;
         TangoJNINative.onTouchEvent(2, event.getActionMasked(),
-            normalizedX0, normalizedY0, normalizedX1, normalizedY1);
+                                    normalizedX0, normalizedY0, normalizedX1, normalizedY1);
       }
     }
     return true;
   }
 
-  // Request render on the glSurfaceView. This function is called from the 
+  // Request render on the glSurfaceView. This function is called from the
   // native code, and it is triggered from the onTextureAvailable callback from
   // the Tango Service.
   public void requestRender() {
+    if (mGLView.getRenderMode() != GLSurfaceView.RENDERMODE_CONTINUOUSLY) {
+      mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
     mGLView.requestRender();
   }
 
   // Debug text UI update loop, updating at 10Hz.
   private Runnable mUpdateUiLoopRunnable = new Runnable() {
-    public void run() {
-      updateUi();
-      mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
-    }
-  };
+      public void run() {
+        updateUi();
+        mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
+      }
+    };
 
   // Update the debug text UI.
   private void updateUi() {
@@ -273,6 +297,7 @@ public class AugmentedRealityActivity extends Activity implements
       mPoseData.setText(TangoJNINative.getPoseString());
     } catch (Exception e) {
       e.printStackTrace();
+      Log.e(TAG, "Exception updating UI elements");
     }
   }
 }

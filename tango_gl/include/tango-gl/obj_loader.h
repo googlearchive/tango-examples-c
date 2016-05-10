@@ -35,8 +35,11 @@ namespace obj_loader {
 //  If exported with normals, file should look like
 //  "v 1.00 2.00 3.00
 //   ...
+//   (Any format listed here for 'f' is supported)
 //   f 1//1 2//3 3//4
 //   f 1//1 2//3 3//4 4//6
+//   f 1/1/1 2/2/3 3/4/4
+//   f 1/1/1 2/2/3 3/4/4 4/5/6
 //   ...
 //   vn 1.00 2.00 3.00
 //   ..."

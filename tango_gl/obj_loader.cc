@@ -71,7 +71,6 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
     LOGE("Failed to open file: %s", path);
     return false;
   }
-
   while (1) {
     char lineHeader[128];
     int res = fscanf(file, "%s", lineHeader);
@@ -99,15 +98,29 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
       temp_normals.push_back(normal[1]);
       temp_normals.push_back(normal[2]);
     } else if (strcmp(lineHeader, "f") == 0) {
-      GLushort vertexIndex[4];
-      GLushort normalIndex[4];
-      int matches = fscanf(file, "%hu//%hu %hu//%hu %hu//%hu %hu//%hu\n",
+      unsigned int vertexIndex[4];
+      unsigned int normalIndex[4];
+      unsigned int textureIndex[4];
+      int matches = fscanf(file, "%d//%d %d//%d %d//%d %d//%d\n",
                            &vertexIndex[0], &normalIndex[0], &vertexIndex[1],
                            &normalIndex[1], &vertexIndex[2], &normalIndex[2],
                            &vertexIndex[3], &normalIndex[3]);
-
+      // If the exported obj file includes texture face indices information,
+      // we still support the loading
+      if ((matches != 6) && (matches != 8)) {
+        // to use "%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n" since we already have
+        // one match in the previous scan.
+        matches = fscanf(file, "%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n",
+                         &textureIndex[0], &normalIndex[0], &vertexIndex[1],
+                         &textureIndex[1], &normalIndex[1], &vertexIndex[2],
+                         &textureIndex[2], &normalIndex[2], &vertexIndex[3],
+                         &textureIndex[3], &normalIndex[3]);
+        // Adding one count back to matches to count for the one we already
+        // matched.
+        matches += 1;
+      }
       // .obj file is 1-indexed, so subtract 1 from all indices.
-      if (matches == 6) {
+      if (matches == 6 || matches == 9) {
         // If triangles provided.
         vertexIndices.push_back(vertexIndex[0] - 1);
         vertexIndices.push_back(vertexIndex[1] - 1);
@@ -115,7 +128,7 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
         normalIndices.push_back(normalIndex[0] - 1);
         normalIndices.push_back(normalIndex[1] - 1);
         normalIndices.push_back(normalIndex[2] - 1);
-      } else if (matches == 8) {
+      } else if (matches == 8 || matches == 12) {
         // If quads provided.
         vertexIndices.push_back(vertexIndex[0] - 1);
         vertexIndices.push_back(vertexIndex[1] - 1);
@@ -130,7 +143,10 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
         normalIndices.push_back(normalIndex[2] - 1);
         normalIndices.push_back(normalIndex[3] - 1);
       } else {
-        LOGE("Format of 'f int//int int//int int//int' required for each face");
+        LOGE(
+            "Format of 'f int/int/int int/int/int int/int/int (int/int/int)' "
+            "or 'f int//int int//int int//int (int//int)' required for each "
+            "face");
         return false;
       }
     } else {
@@ -138,7 +154,6 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
       fgets(comments_buffer, 1000, file);
     }
   }
-
   for (unsigned int i = 0; i < vertexIndices.size(); i++) {
     unsigned int vertexIndex = vertexIndices[i];
     unsigned int normalIndex = normalIndices[i];

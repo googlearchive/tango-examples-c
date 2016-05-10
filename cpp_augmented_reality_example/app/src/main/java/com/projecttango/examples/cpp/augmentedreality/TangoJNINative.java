@@ -16,17 +16,35 @@
 
 package com.projecttango.examples.cpp.augmentedreality;
 
+import android.os.IBinder;
+import android.util.Log;
+
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
+
 /**
  * Interfaces between native C++ code and Java code.
  */
 public class TangoJNINative {
   static {
+    // This project depends on tango_client_api, so we need to make sure we load
+    // the correct library first.
+    if (TangoInitializationHelper.loadTangoSharedLibrary() ==
+        TangoInitializationHelper.ARCH_ERROR) {
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
+    }
     System.loadLibrary("cpp_augmented_reality_example");
   }
 
-  // Check that the installed version of the Tango API is up to date
-  // and initialize other data.
-  public static native boolean initialize(AugmentedRealityActivity activity, int minTangoVersion);
+  // Check that the installed version of the Tango API is up to date.
+  //
+  // @return returns true if the application version is compatible with the
+  //         Tango Core version.
+  public static native boolean checkTangoVersion(AugmentedRealityActivity activity,
+      int minTangoVersion);
+
+  // Called when Tango Service is connected successfully.
+  public static native void onTangoServiceConnected(AugmentedRealityActivity activity,
+                                                    IBinder nativeTangoServiceBinder);
 
   // Setup the configuration file of the Tango Service. We are also setting up
   // the auto-recovery option from here.

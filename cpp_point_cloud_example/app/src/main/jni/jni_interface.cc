@@ -31,6 +31,12 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_checkTangoVersion(
   return app.CheckTangoVersion(env, activity, min_tango_version);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onTangoServiceConnected(
+    JNIEnv* env, jobject /*caller_object*/, jobject binder) {
+  return app.OnTangoServiceConnected(env, binder);
+}
+
 JNIEXPORT jint JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setupConfig(
     JNIEnv*, jobject) {

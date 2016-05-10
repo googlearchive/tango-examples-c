@@ -32,9 +32,15 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_initialize(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_checkTangoVersion(
     JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.Initialize(env, activity, min_tango_version);
+  return app.CheckTangoVersion(env, activity, min_tango_version);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onTangoServiceConnected(
+    JNIEnv* env, jobject, jobject activity, jobject iBinder) {
+  return app.OnTangoServiceConnected(env, activity, iBinder);
 }
 
 JNIEXPORT jint JNICALL

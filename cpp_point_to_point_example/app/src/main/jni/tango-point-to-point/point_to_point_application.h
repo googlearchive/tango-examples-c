@@ -43,11 +43,11 @@ class PointToPointApplication {
   PointToPointApplication();
   ~PointToPointApplication();
 
-  // Initialize the Project Tango service.
-  int TangoInitialize(JNIEnv* env, jobject caller_activity);
-
   // Make sure tango core version is up to date
   bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+
+  // Called when Tango Service is connected successfully.
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Setup configuration options for Project Tango service, register
   // for callbacks, and connect to the Project Tango service.

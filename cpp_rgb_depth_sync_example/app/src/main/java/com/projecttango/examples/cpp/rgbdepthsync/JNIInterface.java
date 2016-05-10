@@ -17,36 +17,48 @@
 package com.projecttango.examples.cpp.rgbdepthsync;
 
 import android.app.Activity;
+import android.os.IBinder;
+import android.util.Log;
+
+import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
 /**
  * Interfaces between C and Java.
  */
 public class JNIInterface {
-    static {
-      System.loadLibrary("cpp_rgb_depth_sync_example");
+  static {
+    // This project depends on tango_client_api, so we need to make sure we load
+    // the correct library first.
+    if (TangoInitializationHelper.loadTangoSharedLibrary() ==
+        TangoInitializationHelper.ARCH_ERROR) {
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
     }
+    System.loadLibrary("cpp_rgb_depth_sync_example");
+  }
 
-    public static native boolean initialize(Activity activity, int minTangoVersion);
+  public static native boolean checkTangoVersion(Activity activity, int minTangoVersion);
 
-    public static native boolean tangoSetupConfig();
+  public static native void onTangoServiceConnected(IBinder binder);
 
-    public static native boolean tangoConnectTexture();
+  public static native boolean tangoSetupConfig();
 
-    public static native boolean tangoConnect();
+  public static native boolean tangoConnectTexture();
 
-    public static native boolean tangoConnectCallbacks();
+  public static native boolean tangoConnect();
 
-    public static native boolean tangoSetIntrinsicsAndExtrinsics();
+  public static native boolean tangoConnectCallbacks();
 
-    public static native void tangoDisconnect();
+  public static native boolean tangoSetIntrinsicsAndExtrinsics();
 
-    public static native void initializeGLContent();
+  public static native void tangoDisconnect();
 
-    public static native void setViewPort(int width, int height);
+  public static native void initializeGLContent();
 
-    public static native void render();
+  public static native void setViewPort(int width, int height);
 
-    public static native void setDepthAlphaValue(float alpha);
+  public static native void render();
 
-    public static native void setGPUUpsample(boolean on);
+  public static native void setDepthAlphaValue(float alpha);
+
+  public static native void setGPUUpsample(boolean on);
 }

@@ -25,9 +25,15 @@ extern "C" {
 #endif
 
 JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_planefitting_JNIInterface_initialize(
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_checkTangoVersion(
     JNIEnv* env, jobject /*obj*/, jobject activity, int min_tango_version) {
-  return app.Initialize(env, activity, min_tango_version);
+  return app.CheckTangoVersion(env, activity, min_tango_version);
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_planefitting_JNIInterface_onTangoServiceConnected(
+    JNIEnv* env, jobject /*obj*/, jobject binder) {
+  app.OnTangoServiceConnected(env, binder);
 }
 
 JNIEXPORT jboolean JNICALL
