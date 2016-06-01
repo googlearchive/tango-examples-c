@@ -23,9 +23,8 @@
 
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
+#include <tango_support_api.h>
 
-#include <tango-point-cloud/point_cloud_data.h>
-#include <tango-point-cloud/pose_data.h>
 #include <tango-point-cloud/scene.h>
 
 namespace tango_point_cloud {
@@ -73,12 +72,6 @@ class PointCloudApp {
   //              caller allocated.
   void onPointCloudAvailable(const TangoXYZij* xyz_ij);
 
-  // Tango service pose callback function for pose data. Called when new
-  // information about device pose is available from the Tango Service.
-  //
-  // @param pose: The current pose returned by the service, caller allocated.
-  void onPoseAvailable(const TangoPoseData* pose);
-
   // Allocate OpenGL resources for rendering, mainly for initializing the Scene.
   void InitializeGLContent();
 
@@ -114,39 +107,22 @@ class PointCloudApp {
   void OnTouchEvent(int touch_count, tango_gl::GestureCamera::TouchEvent event,
                     float x0, float y0, float x1, float y1);
 
+  // Set screen rotation index.
+  //
+  // @param screen_roatation: the screen rotation index,
+  //    the index is following Android screen rotation enum.
+  //    see Android documentation for detail:
+  //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
+  void SetScreenRotation(int rotation_index);
+
  private:
-  // Get a pose in matrix format with extrinsics in OpenGl space.
-  //
-  // @param: timstamp, timestamp of the target pose.
-  //
-  // @return: pose in matrix format.
-  glm::mat4 GetPoseMatrixAtTimestamp(double timstamp);
+  // Update the current point data.
+  void UpdateCurrentPointData();
 
-  // Query sensor/camera extrinsic from the Tango Service, the extrinsic is only
-  // available after the service is connected.
-  //
-  // @return: error code.
-  TangoErrorType UpdateExtrinsics();
-
-  // point_cloud_ contains the data of current depth frame, it also
-  // has the render function to render the points. This instance will be passed
-  // to main_scene_ for rendering.
-  //
-  // point_cloud_ is a thread safe object, the data protection is handled
-  // internally inside the PointCloud class.
-  PointCloudData point_cloud_data_;
-
-  // Mutex for protecting the point cloud data. The point cloud data is shared
-  // between render thread and TangoService callback thread.
-  std::mutex point_cloud_mutex_;
-
-  // pose_data_ handles all pose onPoseAvailable callbacks, onPoseAvailable()
-  // in this object will be routed to pose_data_ to handle.
-  PoseData pose_data_;
-
-  // Mutex for protecting the pose data. The pose data is shared between render
-  // thread and TangoService callback thread.
-  std::mutex pose_mutex_;
+  // Point data manager.
+  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoXYZij* front_cloud_;
+  float point_cloud_average_depth_;
 
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement and point cloud.
@@ -156,6 +132,13 @@ class PointCloudApp {
   // before connect to service. For example, we turn on the depth sensing in
   // this example.
   TangoConfig tango_config_;
+
+  // Last valid transforms.
+  glm::mat4 start_service_T_device_;
+  glm::mat4 start_service_opengl_T_depth_tango_;
+
+  // Screen rotation index.
+  int screen_rotation_;
 };
 }  // namespace tango_point_cloud
 

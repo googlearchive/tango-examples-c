@@ -72,8 +72,6 @@ void PointToPointApplication::OnFrameAvailable(const TangoImageBuffer* buffer) {
 
 PointToPointApplication::PointToPointApplication()
     : last_gpu_timestamp_(0.0),
-      opengl_world_T_start_service_(
-          tango_gl::conversions::opengl_world_T_tango_world()),
       tap_number_(0),
       point_modifier_flag_(true),
       point1_(glm::vec3(0.0, 0.0, 0.0)),
@@ -240,6 +238,9 @@ int PointToPointApplication::TangoSetupAndConnect() {
       color_camera_intrinsics_.cx, color_camera_intrinsics_.cy, kNearPlane,
       kFarPlane);
 
+  // Initialize TangoSupport context.
+  TangoSupport_initialize(TangoService_getPoseAtTime);
+
   return ret;
 }
 
@@ -292,32 +293,25 @@ void PointToPointApplication::Render() {
     return;
   }
 
-  // Querying the device frame transformation based on color GPU timestamp.
-  TangoPoseData pose_start_service_T_device_t1;
-  TangoCoordinateFramePair color_gpu_frame_pair;
-  color_gpu_frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  color_gpu_frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  if (TangoService_getPoseAtTime(last_gpu_timestamp_, color_gpu_frame_pair,
-                                 &pose_start_service_T_device_t1) !=
-      TANGO_SUCCESS) {
+  // Querying the GPU color image's frame transformation based its timestamp.
+  TangoMatrixTransformData matrix_transform;
+  TangoSupport_getMatrixTransformAtTime(
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0, &matrix_transform);
+  if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
-        "PointToPointApplication: Could not find a valid pose at time %lf"
-        " for the color camera.",
+        "PointToPointApplication: Could not find a valid matrix transform at "
+        "time %lf for the color camera.",
         last_gpu_timestamp_);
-  }
-
-  if (pose_start_service_T_device_t1.status_code == TANGO_POSE_VALID) {
-    GLRender(pose_start_service_T_device_t1);
   } else {
-    LOGE(
-        "PointToPointApplication: Invalid pose for gpu color image at time: "
-        "%lf",
-        last_gpu_timestamp_);
+    start_service_T_color_camera_ = glm::make_mat4(matrix_transform.matrix);
   }
+  GLRender(start_service_T_color_camera_);
 }
 
 void PointToPointApplication::GLRender(
-    const TangoPoseData& pose_start_service_T_device) {
+    const glm::mat4& start_service_T_color_camera) {
   glEnable(GL_CULL_FACE);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -330,23 +324,10 @@ void PointToPointApplication::GLRender(
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
-  TangoPoseData pose_opengl_world_T_opengl_camera;
-  TangoErrorType ret = TangoSupport_getPoseInEngineFrame(
-      TANGO_SUPPORT_COORDINATE_CONVENTION_OPENGL,
-      TANGO_COORDINATE_FRAME_CAMERA_COLOR, pose_start_service_T_device,
-      &pose_opengl_world_T_opengl_camera);
-  if (ret != TANGO_SUCCESS) {
-    LOGE("PointToPointApplication::%s: error getting color camera pose.",
-         __func__);
-    return;
-  }
-
-  const glm::mat4 opengl_camera_T_opengl_world =
-      glm::inverse(tango_gl::conversions::TransformFromArrays(
-          pose_opengl_world_T_opengl_camera.translation,
-          pose_opengl_world_T_opengl_camera.orientation));
+  const glm::mat4 color_camera_T_start_service =
+      glm::inverse(start_service_T_color_camera);
   if (segment_is_drawable_) {
-    segment_->Render(projection_matrix_ar_, opengl_camera_T_opengl_world);
+    segment_->Render(projection_matrix_ar_, color_camera_T_start_service);
   }
 }
 
@@ -383,28 +364,7 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
     const glm::vec3 depth_position_vec =
         glm::vec3(depth_position[0], depth_position[1], depth_position[2]);
 
-    // Use transformation helper to calculate start_service_T_depth
-    TangoPoseData pose_start_servce_T_device;
-    GetStartServiceTDevicePose(&pose_start_servce_T_device);
-    TangoPoseData pose_start_servce_T_depth;
-    TangoErrorType ret = TangoSupport_getPoseInEngineFrame(
-        TANGO_SUPPORT_COORDINATE_CONVENTION_TANGO,
-        TANGO_COORDINATE_FRAME_CAMERA_DEPTH, pose_start_servce_T_device,
-        &pose_start_servce_T_depth);
-    if (ret != TANGO_SUCCESS) {
-      LOGE("PointToPointApplication::%s: error getting depth camera pose",
-           __func__);
-      return;
-    }
-
-    const glm::mat4 start_service_T_depth =
-        tango_gl::conversions::TransformFromArrays(
-            pose_start_servce_T_depth.translation,
-            pose_start_servce_T_depth.orientation);
-
-    // Apply final transformation from start service to OpenGL world
-    const glm::mat4 opengl_world_T_depth =
-        opengl_world_T_start_service_ * start_service_T_depth;
+    const glm::mat4 opengl_world_T_depth = GetStartServiceTDepthPose();
 
     // Transform to world coordinates
     const glm::vec4 world_position =
@@ -414,13 +374,23 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   }
 }
 
-TangoErrorType PointToPointApplication::GetStartServiceTDevicePose(
-    TangoPoseData* pose) {
-  TangoCoordinateFramePair frame_pair;
-  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-
-  return TangoService_getPoseAtTime(front_cloud_->timestamp, frame_pair, pose);
+glm::mat4 PointToPointApplication::GetStartServiceTDepthPose() {
+  glm::mat4 start_service_opengl_T_depth_tango;
+  TangoMatrixTransformData matrix_transform;
+  TangoSupport_getMatrixTransformAtTime(
+      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
+  if (matrix_transform.status_code != TANGO_POSE_VALID) {
+    LOGE(
+        "PointToPointApplication: Could not find a valid matrix transform at "
+        "time %lf for the color camera.",
+        last_gpu_timestamp_);
+  } else {
+    start_service_opengl_T_depth_tango =
+        glm::make_mat4(matrix_transform.matrix);
+  }
+  return start_service_opengl_T_depth_tango;
 }
 
 bool PointToPointApplication::GetDepthAtPoint(

@@ -24,7 +24,6 @@
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
 
-#include <tango-augmented-reality/pose_data.h>
 #include <tango-augmented-reality/scene.h>
 #include <tango-augmented-reality/tango_event_data.h>
 
@@ -94,8 +93,8 @@ class AugmentedRealityApp {
   // Release all non-OpenGL resources that allocate from the program.
   void DeleteResources();
 
-  // Retrun pose debug string.
-  std::string GetPoseString();
+  // Return transform debug string.
+  std::string GetTransformString();
 
   // Retrun Tango event debug string.
   std::string GetEventString();
@@ -127,29 +126,38 @@ class AugmentedRealityApp {
   void SetJavaVM(JavaVM* java_vm) { java_vm_ = java_vm; }
 
  private:
-  // Get a pose in matrix format with extrinsics in OpenGl space.
-  //
-  // @param: timstamp, timestamp of the target pose.
-  //
-  // @return: pose in matrix format.
-  glm::mat4 GetPoseMatrixAtTimestamp(double timstamp);
-
-  // Query sensor/camera extrinsic from the Tango Service, the extrinsic is only
-  // available after the service is connected.
-  //
-  // @return: error code.
-  TangoErrorType UpdateExtrinsics();
-
   // Request the render function from Java layer.
   void RequestRender();
 
-  // pose_data_ handles all pose onPoseAvailable callbacks, onPoseAvailable()
-  // in this object will be routed to pose_data_ to handle.
-  PoseData pose_data_;
+  // Update current transform and previous transform.
+  //
+  // @param transform: transform data of current frame.
+  // @param timestamp: timestamp of the current transform.
+  void UpdateTransform(const double transform[16], double timestamp);
 
-  // Mutex for protecting the pose data. The pose data is shared between render
-  // thread and TangoService callback thread.
-  std::mutex pose_mutex_;
+  // Format debug string with current and last transforms information.
+  void FormatTransformString();
+
+  // Current position of the Color Camera with respect to Start of Service.
+  glm::mat4 cur_start_service_T_camera_;
+  // prev_start_service_T_camera_, transform_counter_ and transform_string_ are
+  // used for
+  // composing the debug string to display the useful information on screen.
+  glm::mat4 prev_start_service_T_camera_;
+
+  // Debug transform string.
+  std::string transform_string_;
+
+  // Timestamps of the current and last transforms.
+  double cur_timestamp_;
+  double prev_timestamp_;
+
+  // Pose counter for debug purpose.
+  size_t transform_counter_;
+
+  // Mutex for protecting the transform data. The transform data is shared
+  // between render thread and TangoService callback thread.
+  std::mutex transform_mutex_;
 
   // tango_event_data_ handles all Tango event callbacks,
   // onTangoEventAvailable() in this object will be routed to tango_event_data_
@@ -157,8 +165,8 @@ class AugmentedRealityApp {
   TangoEventData tango_event_data_;
 
   // tango_event_data_ is share between the UI thread we start for updating
-  // debug
-  // texts and the TangoService event callback thread. We keep event_mutex_ to
+  // debug texts and the TangoService event callback thread. We keep
+  // event_mutex_ to
   // protect tango_event_data_.
   std::mutex tango_event_mutex_;
 

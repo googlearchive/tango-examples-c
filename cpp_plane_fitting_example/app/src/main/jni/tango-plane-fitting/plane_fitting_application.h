@@ -95,9 +95,14 @@ class PlaneFittingApplication {
   // Update the current point data.
   void UpdateCurrentPointData();
 
-  // return pose for device position with respect to
-  // start of service.
-  glm::mat4 GetStartServiceTDeviceTransform();
+  // Return transform for depth camera in Tango coordinate convention with
+  // respect to
+  // Start of Service in OpenGL coordinate convention. The reason to switch from
+  // one convention to
+  // the other is an optimization that allow us to avoid transforming the depth
+  // points into OpenGL
+  // coordinate frame.
+  glm::mat4 GetStartServiceTDepthTransform();
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
@@ -116,14 +121,6 @@ class PlaneFittingApplication {
   double last_gpu_timestamp_;
 
   // Cached transforms
-  // Pose of color camera with respect to device.
-  glm::mat4 device_T_color_;
-  // Pose of depth camera with respect to device.
-  glm::mat4 device_T_depth_;
-  // Start of service with respect to OpenGL world.
-  glm::mat4 opengl_world_T_start_service_;
-  // OpenGL camera with respect to color camera.
-  glm::mat4 color_camera_T_opengl_camera_;
   // OpenGL projection matrix.
   glm::mat4 projection_matrix_ar_;
 

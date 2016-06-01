@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <sstream>
+#include <string>
 
 #include <tango-gl/conversions.h>
 #include <tango_support_api.h>
@@ -199,14 +201,9 @@ bool AugmentedRealityApp::TangoConnect() {
     return false;
   }
 
-  ret = UpdateExtrinsics();
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "AugmentedRealityApp: Failed to query sensor extrinsic with error "
-        "code: %d",
-        ret);
-    return false;
-  }
+  // Initialize TangoSupport context.
+  TangoSupport_initialize(TangoService_getPoseAtTime);
+
   return true;
 }
 
@@ -318,17 +315,30 @@ void AugmentedRealityApp::Render() {
   TangoErrorType status =
       TangoService_updateTexture(TANGO_CAMERA_COLOR, &video_overlay_timestamp);
 
-  glm::mat4 color_camera_pose =
-      GetPoseMatrixAtTimestamp(video_overlay_timestamp);
-  color_camera_pose =
-      pose_data_.GetExtrinsicsAppliedOpenGLWorldFrame(color_camera_pose);
-  if (status != TANGO_SUCCESS) {
+  if (status == TANGO_SUCCESS) {
+    TangoDoubleMatrixTransformData matrix_transform;
+    status = TangoSupport_getDoubleMatrixTransformAtTime(
+        video_overlay_timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+        TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0, &matrix_transform);
+    if (matrix_transform.status_code == TANGO_POSE_VALID) {
+      {
+        std::lock_guard<std::mutex> lock(transform_mutex_);
+        UpdateTransform(matrix_transform.matrix, video_overlay_timestamp);
+      }
+      main_scene_.Render(cur_start_service_T_camera_);
+    } else {
+      LOGE(
+          "PlaneFittingApplication: Could not find a valid matrix transform at "
+          "time %lf for the color camera.",
+          video_overlay_timestamp);
+    }
+  } else {
     LOGE(
         "AugmentedRealityApp: Failed to update video overlay texture with "
         "error code: %d",
         status);
   }
-  main_scene_.Render(color_camera_pose);
 }
 
 void AugmentedRealityApp::DeleteResources() {
@@ -337,9 +347,9 @@ void AugmentedRealityApp::DeleteResources() {
   main_scene_.DeleteResources();
 }
 
-std::string AugmentedRealityApp::GetPoseString() {
-  std::lock_guard<std::mutex> lock(pose_mutex_);
-  return pose_data_.GetPoseDebugString();
+std::string AugmentedRealityApp::GetTransformString() {
+  std::lock_guard<std::mutex> lock(transform_mutex_);
+  return transform_string_;
 }
 
 std::string AugmentedRealityApp::GetEventString() {
@@ -362,66 +372,6 @@ void AugmentedRealityApp::OnTouchEvent(
   main_scene_.OnTouchEvent(touch_count, event, x0, y0, x1, y1);
 }
 
-glm::mat4 AugmentedRealityApp::GetPoseMatrixAtTimestamp(double timstamp) {
-  TangoPoseData pose_start_service_T_device;
-  TangoCoordinateFramePair frame_pair;
-  frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  TangoErrorType status = TangoService_getPoseAtTime(
-      timstamp, frame_pair, &pose_start_service_T_device);
-  if (status != TANGO_SUCCESS) {
-    LOGE(
-        "AugmentedRealityApp: Failed to get transform between the Start of "
-        "service and device frames at timstamp %lf",
-        timstamp);
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(pose_mutex_);
-    pose_data_.UpdatePose(&pose_start_service_T_device);
-  }
-
-  if (pose_start_service_T_device.status_code != TANGO_POSE_VALID) {
-    return glm::mat4(1.0f);
-  }
-  return pose_data_.GetMatrixFromPose(pose_start_service_T_device);
-}
-
-TangoErrorType AugmentedRealityApp::UpdateExtrinsics() {
-  TangoErrorType ret;
-  TangoPoseData pose_data;
-  TangoCoordinateFramePair frame_pair;
-
-  // TangoService_getPoseAtTime function is used for query device extrinsics
-  // as well. We use timestamp 0.0 and the target frame pair to get the
-  // extrinsics from the sensors.
-  //
-  // Get device with respect to imu transformation matrix.
-  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_DEVICE;
-  ret = TangoService_getPoseAtTime(0.0, frame_pair, &pose_data);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "PointCloudApp: Failed to get transform between the IMU frame and "
-        "device frames");
-    return ret;
-  }
-  pose_data_.SetImuTDevice(pose_data_.GetMatrixFromPose(pose_data));
-
-  // Get color camera with respect to imu transformation matrix.
-  frame_pair.base = TANGO_COORDINATE_FRAME_IMU;
-  frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
-  ret = TangoService_getPoseAtTime(0.0, frame_pair, &pose_data);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "PointCloudApp: Failed to get transform between the color camera frame "
-        "and device frames");
-    return ret;
-  }
-  pose_data_.SetImuTColorCamera(pose_data_.GetMatrixFromPose(pose_data));
-  return ret;
-}
-
 void AugmentedRealityApp::RequestRender() {
   if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {
     LOGE("Can not reference Activity to request render");
@@ -434,4 +384,32 @@ void AugmentedRealityApp::RequestRender() {
   env->CallVoidMethod(calling_activity_obj_, on_demand_render_);
 }
 
+void AugmentedRealityApp::UpdateTransform(const double transform[16],
+                                          double timestamp) {
+  prev_start_service_T_camera_ = cur_start_service_T_camera_;
+  cur_start_service_T_camera_ = glm::make_mat4(transform);
+  // Increase pose counter.
+  ++transform_counter_;
+  prev_timestamp_ = cur_timestamp_;
+  cur_timestamp_ = timestamp;
+  FormatTransformString();
+}
+
+void AugmentedRealityApp::FormatTransformString() {
+  const float* transform =
+      (const float*)glm::value_ptr(cur_start_service_T_camera_);
+  std::stringstream string_stream;
+  string_stream.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  string_stream.precision(3);
+  string_stream << "count: " << transform_counter_
+                << ", delta time (ms): " << (cur_timestamp_ - prev_timestamp_)
+                << std::endl << "position (m): [" << transform[12] << ", "
+                << transform[13] << ", " << transform[14] << "]" << std::endl
+                << "rotation matrix: [" << transform[0] << ", " << transform[1]
+                << ", " << transform[2] << ", " << transform[4] << ", "
+                << transform[5] << ", " << transform[6] << ", " << transform[8]
+                << ", " << transform[9] << ", " << transform[10] << "]";
+  transform_string_ = string_stream.str();
+  string_stream.flush();
+}
 }  // namespace tango_augmented_reality
