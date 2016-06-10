@@ -6,7 +6,7 @@
     <string name="service_version">"Tango service version: "</string>
     <string name="app_version">"App version: "</string>
     <string name="tango_event">"Tango system event: "</string>
-    <string name="start_wrt_device">"Target->Device, Base->Start: "</string>
+    <string name="start_service_opengl_wrt_device">"Target->OpenGL camera, Base->Start of Service: "</string>
     <string name="status">"Status: "</string>
     <string name="action_settings">Settings</string>
     <string name="place_object">Place Marker</string>

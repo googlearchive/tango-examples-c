@@ -38,9 +38,6 @@ const std::string kPointCloudFragmentShader =
     "  gl_FragColor = vec4(v_color);\n"
     "}\n";
 
-const glm::mat4 kOpengGL_T_Depth =
-    glm::mat4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-              -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }  // namespace
 
 namespace tango_point_cloud {
@@ -64,13 +61,12 @@ void PointCloudDrawable::DeleteGlResources() {
 }
 
 void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
-                                glm::mat4 model_mat,
                                 const std::vector<float>& vertices) {
   glUseProgram(shader_program_);
   mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
 
   // Calculate model view projection matrix.
-  glm::mat4 mvp_mat = projection_mat * view_mat * model_mat * kOpengGL_T_Depth;
+  glm::mat4 mvp_mat = projection_mat * view_mat;
   glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_);

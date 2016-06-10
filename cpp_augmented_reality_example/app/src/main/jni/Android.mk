@@ -24,7 +24,6 @@ LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_SRC_FILES := augmented_reality_app.cc \
                    jni_interface.cc \
-                   pose_data.cc \
                    scene.cc \
                    tango_event_data.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/axis.cc \

@@ -89,7 +89,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/start_wrt_device" />
+                android:text="@string/start_service_opengl_wrt_device" />
 
         </LinearLayout>
             <TextView

@@ -105,9 +105,9 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_deleteResourc
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getPoseString(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getTransformString(
     JNIEnv* env, jobject) {
-  return (env)->NewStringUTF(app.GetPoseString().c_str());
+  return (env)->NewStringUTF(app.GetTransformString().c_str());
 }
 
 JNIEXPORT jstring JNICALL

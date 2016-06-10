@@ -113,6 +113,12 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onTouchEvent(
       static_cast<tango_gl::GestureCamera::TouchEvent>(event);
   app.OnTouchEvent(touch_count, touch_event, x0, y0, x1, y1);
 }
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setScreenRotation(
+    JNIEnv*, jobject, int rotation_index) {
+  app.SetScreenRotation(rotation_index);
+}
 #ifdef __cplusplus
 }
 #endif

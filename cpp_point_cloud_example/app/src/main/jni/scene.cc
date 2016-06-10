@@ -57,12 +57,35 @@ void Scene::InitGLContent() {
 }
 
 void Scene::DeleteResources() {
-  delete gesture_camera_;
-  delete axis_;
-  delete frustum_;
-  delete trace_;
-  delete grid_;
-  delete point_cloud_;
+  if (gesture_camera_ != nullptr) {
+    delete gesture_camera_;
+    gesture_camera_ = nullptr;
+  }
+
+  if (frustum_ != nullptr) {
+    delete frustum_;
+    frustum_ = nullptr;
+  }
+
+  if (trace_ != nullptr) {
+    delete trace_;
+    trace_ = nullptr;
+  }
+
+  if (point_cloud_ != nullptr) {
+    delete point_cloud_;
+    point_cloud_ = nullptr;
+  }
+
+  if (axis_ != nullptr) {
+    delete axis_;
+    axis_ = nullptr;
+  }
+
+  if (grid_ != nullptr) {
+    delete grid_;
+    grid_ = nullptr;
+  }
 }
 
 void Scene::SetupViewPort(int w, int h) {
@@ -75,7 +98,6 @@ void Scene::SetupViewPort(int w, int h) {
 }
 
 void Scene::Render(const glm::mat4& cur_pose_transformation,
-                   const glm::mat4& point_cloud_transformation,
                    const std::vector<float>& point_cloud_vertices) {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -115,8 +137,7 @@ void Scene::Render(const glm::mat4& cur_pose_transformation,
                 gesture_camera_->GetViewMatrix());
 
   point_cloud_->Render(gesture_camera_->GetProjectionMatrix(),
-                       gesture_camera_->GetViewMatrix(),
-                       point_cloud_transformation, point_cloud_vertices);
+                       gesture_camera_->GetViewMatrix(), point_cloud_vertices);
 }
 
 void Scene::SetCameraType(tango_gl::GestureCamera::CameraType camera_type) {

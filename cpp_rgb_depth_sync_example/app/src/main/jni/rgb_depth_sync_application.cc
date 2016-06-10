@@ -192,6 +192,8 @@ bool SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
   depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
   main_scene_.SetCameraIntrinsics(color_camera_intrinsics);
 
+  // Initialize TangoSupport context.
+  TangoSupport_initialize(TangoService_getPoseAtTime);
   return true;
 }
 
@@ -225,58 +227,28 @@ void SynchronizationApplication::Render() {
     LOGE("SynchronizationApplication: Failed to get a color image.");
   }
 
-  // Querying the depth image's frame transformation based on the depth image's
-  // timestamp.
-  TangoPoseData pose_start_service_T_depth_camera_t0;
-  TangoCoordinateFramePair depth_frame_pair;
-  depth_frame_pair.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  depth_frame_pair.target = TANGO_COORDINATE_FRAME_CAMERA_DEPTH;
-  if (TangoService_getPoseAtTime(depth_timestamp, depth_frame_pair,
-                                 &pose_start_service_T_depth_camera_t0) !=
-      TANGO_SUCCESS) {
-    LOGE(
-        "SynchronizationApplication: Could not find a valid pose at time %lf"
-        " for the depth camera.",
-        depth_timestamp);
-  }
-
-  // Querying the color image's frame transformation based on the depth image's
-  // timestamp.
-  TangoPoseData pose_color_camera_t1_T_start_service;
-  TangoCoordinateFramePair color_frame_pair;
-  color_frame_pair.base = TANGO_COORDINATE_FRAME_CAMERA_COLOR;
-  color_frame_pair.target = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
-  if (TangoService_getPoseAtTime(color_timestamp, color_frame_pair,
-                                 &pose_color_camera_t1_T_start_service) !=
-      TANGO_SUCCESS) {
-    LOGE(
-        "SynchronizationApplication: Could not find a valid pose at time %lf"
-        " for the color camera.",
-        color_timestamp);
-  }
-
   // In the following code, we define t0 as the depth timestamp and t1 as the
   // color camera timestamp.
-  //
-  // Device frame at timestamp t0 (depth timestamp) with respect to start of
-  // service.
-  glm::mat4 start_service_T_depth_camera_t0 =
-      util::GetMatrixFromPose(&pose_start_service_T_depth_camera_t0);
-  // Device frame at timestamp t1 (color timestamp) with respect to start of
-  // service.
-  glm::mat4 color_camera_t1_T_start_service =
-      util::GetMatrixFromPose(&pose_color_camera_t1_T_start_service);
 
-  if (pose_color_camera_t1_T_start_service.status_code == TANGO_POSE_VALID) {
-    if (pose_start_service_T_depth_camera_t0.status_code == TANGO_POSE_VALID) {
-      // Note that we are discarding all invalid poses at the moment, another
-      // option could be to use the latest pose when the queried pose is
-      // invalid.
+  // Calculate the relative pose from color camera frame at timestamp
+  // color_timestamp t1 and depth
+  // camera frame at depth_timestamp t0.
+  TangoPoseData pose_color_image_t1_T_depth_image_t0;
+  if (TangoSupport_calculateRelativePose(
+          color_timestamp, TANGO_COORDINATE_FRAME_CAMERA_COLOR, depth_timestamp,
+          TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
+          &pose_color_image_t1_T_depth_image_t0) != TANGO_SUCCESS) {
+    LOGE(
+        "SynchronizationApplication: Could not find a valid relative pose at "
+        "time for color and "
+        " depth cameras.");
+    return;
+  }
 
-      // The Color Camera frame at timestamp t0 with respect to Depth
-      // Camera frame at timestamp t1.
-      glm::mat4 color_image_t1_T_depth_image_t0 =
-          color_camera_t1_T_start_service * start_service_T_depth_camera_t0;
+  // The Color Camera frame at timestamp t0 with respect to Depth
+  // Camera frame at timestamp t1.
+  glm::mat4 color_image_t1_T_depth_image_t0 =
+      util::GetMatrixFromPose(&pose_color_image_t1_T_depth_image_t0);
 
       if (gpu_upsample_) {
         depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,
@@ -288,12 +260,6 @@ void SynchronizationApplication::Render() {
       }
       main_scene_.Render(color_image_.GetTextureId(),
                          depth_image_.GetTextureId());
-    } else {
-      LOGE("Invalid pose for ss_t_depth at time: %lf", depth_timestamp);
-    }
-  } else {
-    LOGE("Invalid pose for ss_t_color at time: %lf", color_timestamp);
-  }
 }
 
 void SynchronizationApplication::SetDepthAlphaValue(float alpha) {

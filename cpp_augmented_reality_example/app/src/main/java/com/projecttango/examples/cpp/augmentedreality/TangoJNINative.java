@@ -85,8 +85,8 @@ public class TangoJNINative {
   // Note that this will cause motion tracking to re-initialize.
   public static native void resetMotionTracking();
 
-  // Get the latest pose string from our application for display in our debug UI.
-  public static native String getPoseString();
+  // Get the latest transform string from our application for display in our debug UI.
+  public static native String getTransformString();
 
   // Get the latest event string from our application for display in our debug UI.
   public static native String getEventString();

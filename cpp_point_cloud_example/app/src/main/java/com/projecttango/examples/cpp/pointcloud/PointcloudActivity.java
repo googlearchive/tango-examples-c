@@ -29,6 +29,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -116,6 +117,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     // touch point.
     Display display = getWindowManager().getDefaultDisplay();
     display.getSize(mScreenSize);
+    TangoJNINative.setScreenRotation(display.getOrientation());
 
     // Setting content view of this activity.
     setContentView(R.layout.activity_pointcloud);

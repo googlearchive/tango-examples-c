@@ -27,10 +27,8 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
                     $(PROJECT_ROOT)/third_party/glm/
 
 LOCAL_SRC_FILES := jni_interface.cc \
-                   point_cloud_data.cc \
                    point_cloud_drawable.cc \
                    point_cloud_app.cc \
-                   pose_data.cc \
                    scene.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/axis.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/camera.cc \

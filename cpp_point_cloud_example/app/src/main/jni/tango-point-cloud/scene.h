@@ -33,7 +33,6 @@
 #include <tango-gl/util.h>
 
 #include <tango-point-cloud/point_cloud_drawable.h>
-#include <tango-point-cloud/pose_data.h>
 
 namespace tango_point_cloud {
 
@@ -60,7 +59,6 @@ class Scene {
   // @param: point_cloud_vertices, point cloud's vertices of the current point
   //         frame.
   void Render(const glm::mat4& cur_pose_transformation,
-              const glm::mat4& point_cloud_transformation,
               const std::vector<float>& point_cloud_vertices);
 
   // Set render camera's viewing angle, first person, third person or top down.

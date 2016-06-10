@@ -33,8 +33,6 @@
 #include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
 
-#include <tango-augmented-reality/pose_data.h>
-
 namespace tango_augmented_reality {
 
 // Scene provides OpenGL drawable objects and renders them for visualization.

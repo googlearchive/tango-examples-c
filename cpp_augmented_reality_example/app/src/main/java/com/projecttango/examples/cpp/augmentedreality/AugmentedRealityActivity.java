@@ -294,7 +294,7 @@ public class AugmentedRealityActivity extends Activity implements View.OnClickLi
   private void updateUi() {
     try {
       mEvent.setText(TangoJNINative.getEventString());
-      mPoseData.setText(TangoJNINative.getPoseString());
+      mPoseData.setText(TangoJNINative.getTransformString());
     } catch (Exception e) {
       e.printStackTrace();
       Log.e(TAG, "Exception updating UI elements");

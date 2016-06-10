@@ -99,7 +99,7 @@ class PointToPointApplication {
 
  private:
   // Details of rendering to OpenGL after determining transforms.
-  void GLRender(const TangoPoseData& pose_start_service_T_device);
+  void GLRender(const glm::mat4& opengl_ss_T_color_opengl);
 
   // Get the x,y,z point of the touch location.
   bool GetDepthAtPoint(const float uv[2], float xyz[3],
@@ -108,9 +108,17 @@ class PointToPointApplication {
   // Update the segment based on a new touch position.
   void UpdateSegment(glm::vec4 world_position);
 
-  // return pose for device position with respect to
-  // start of service.
-  TangoErrorType GetStartServiceTDevicePose(TangoPoseData* pose);
+  // Return transform for depth camera in Tango coordinate convention with
+  // respect to
+  // Start of Service in OpenGL coordinate convention. The reason to switch from
+  // one convention to
+  // the other is an optimization that allow us to avoid transforming the depth
+  // points into OpenGL
+  // coordinate frame.
+  glm::mat4 GetStartServiceTDepthPose();
+
+  // Last valid transform from Color Camera to Start of Service.
+  glm::mat4 start_service_T_color_camera_;
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
@@ -125,8 +133,6 @@ class PointToPointApplication {
   double last_gpu_timestamp_;
 
   // Cached transforms
-  // Start of service with respect to OpenGL world.
-  glm::mat4 opengl_world_T_start_service_;
   // OpenGL projection matrix.
   glm::mat4 projection_matrix_ar_;
 

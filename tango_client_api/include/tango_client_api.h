@@ -69,7 +69,7 @@ typedef enum {
 } TangoCoordinateFrameType;
 
 /// @brief Tango Error types.
-/// Errors less then 0 should be dealt with by the program.
+/// Errors less than 0 should be dealt with by the program.
 /// Success is denoted by <code>TANGO_SUCCESS = 0</code>.
 typedef enum {
   /// The user has not given permissions to read and write datasets.
@@ -340,8 +340,8 @@ typedef struct TangoXYZij {
   /// Time of capture of the depth data for this struct (in seconds).
   double timestamp;
 
-  /// The number of points in depth_data_buffer populated successfully
-  /// is variable with each call to the function, and is returned in
+  /// The number of points in depth_data_buffer populated successfully. This
+  /// is variable with each call to the function, and is returned as number of
   /// (x,y,z) triplets populated (e.g. 2 points populated returned means 6
   /// floats, or 6*4 bytes used).
   uint32_t xyz_count;
@@ -396,8 +396,8 @@ typedef struct TangoXYZij {
 ///
 /// @c TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS implements
 /// <a href="https://scholar.google.com/scholar?cluster=3512800631607394002">
-/// Tsai's camera model</a>, where  @c rd is a polynomial that depends on the 3
-/// distortion coefficients @c k1, @c k2 and @c k3:
+/// Tsai's camera model</a>, where  @c rd is a polynomial that depends on the
+/// three distortion coefficients @c k1, @c k2 and @c k3:
 ///
 /// @code
 /// rd = ru + k1 * ru^3 + k2 * ru^5 + k3 * ru^7
@@ -479,11 +479,11 @@ typedef struct TangoEvent {
 typedef struct LevelData {
   /// Encode the version of the LevelData structure itself.
   uint32_t version;
-  /// A human readable short name, as it would appear on elevator buttons,
-  /// eg. "5", or "B1" (null-terminated).
+  /// A human-readable short name, as it would appear on elevator buttons,
+  /// for example "5", or "B1" (null-terminated).
   char short_name[TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN];
   /// Level number E3: the number of floors above ground of this level
-  /// multiplied by 1000, eg. -1000, +2000 for whole floors, 8500 for a
+  /// multiplied by 1000, for example -1000, +2000 for whole floors, 8500 for a
   /// mezzanine on the 8th floor.
   int32_t level_number_E3;
   /// An opaque level ID (null-terminated).
@@ -548,9 +548,9 @@ char* TangoConfig_toString(TangoConfig config);
 ///     initialized.
 TangoErrorType TangoService_initialize(JNIEnv* env, jobject activity);
 
-/// Completes initialization of the TangoService by allowing the client to pass
-/// the native binder object received by binding to TangoService back down
-//  to the underlying C API code.
+/// Completes initialization of TangoService by allowing the client to pass the
+/// native binder object received by binding to TangoService back down to the
+//  underlying C API code.
 /// Must be called before trying to use the C API.
 /// @param iBinder The binder object received after binding to TangoService.
 /// @return Returns @c TANGO_SUCCESS on successfully attaching the binder
@@ -751,7 +751,7 @@ TangoErrorType TangoService_Experimental_getPoseAtTime2(
 
 /// Creates a frame of interest (FOI) in the currently loaded ADF. FOIs
 /// will be stored next to this ADF, local FOIs will be stored on the device and
-/// and cloud FOIs will be stored on the cloud server.
+/// cloud FOIs will be stored on the cloud server.
 /// @param timestamp Timestamp of the base frame transformation, in seconds. If
 ///     not set to 0.0, createFrameOfInterest uses the interpolated
 ///     transformation closest to this timestamp to create an FOI. If set to
@@ -1329,8 +1329,8 @@ TangoErrorType TangoConfig_setString(TangoConfig config, const char* key,
 /// Get a boolean configuration parameter.
 /// @param config The configuration object to get the parameter from. config
 ///     must have been created with TangoConfig_getConfig().
-/// @param key The string key value of the configuration parameter to set.
-/// @param value The value to set the configuration key to.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration key.
 /// @return Returns @c TANGO_SUCCESS on success or @c TANGO_INVALID if the any
 ///     of the arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getBool(TangoConfig config, const char* key,
@@ -1339,8 +1339,8 @@ TangoErrorType TangoConfig_getBool(TangoConfig config, const char* key,
 /// Get a uint32_t configuration parameter.
 /// @param config The configuration object to get the parameter from. @p config
 ///     must have been created with TangoConfig.
-/// @param key The string key value of the configuration parameter to set.
-/// @param value The value to set the configuration key to.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration key.
 /// @return Returns @c TANGO_SUCCESS on success or @c TANGO_INVALID if the any
 ///     of the arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getInt32(TangoConfig config, const char* key,
@@ -1349,8 +1349,8 @@ TangoErrorType TangoConfig_getInt32(TangoConfig config, const char* key,
 /// Get an uint64_t configuration parameter.
 /// @param config The configuration object to get the parameter from. @p config
 ///     must have been created with TangoConfig.
-/// @param key The string key value of the configuration parameter to set.
-/// @param value The value to set the configuration key to.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration key.
 /// @return Returns @c TANGO_SUCCESS on success or @c TANGO_INVALID if the any
 ///     of the arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getInt64(TangoConfig config, const char* key,
@@ -1359,8 +1359,8 @@ TangoErrorType TangoConfig_getInt64(TangoConfig config, const char* key,
 /// Get a double configuration parameter.
 /// @param config The configuration object to get the parameter from. @p config
 ///     must have been created with TangoConfig,
-/// @param key The string key value of the configuration parameter to set.
-/// @param value The value to set the configuration key to.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration key.
 /// @return Returns @c TANGO_SUCCESS on success or @c TANGO_INVALID if the any
 ///     of the arguments is NULL, or if the key could not be found.
 TangoErrorType TangoConfig_getDouble(TangoConfig config, const char* key,
@@ -1369,9 +1369,9 @@ TangoErrorType TangoConfig_getDouble(TangoConfig config, const char* key,
 /// Get a character string configuration parameter.
 /// @param config The configuration object to get the parameter from. @p config
 ///     must have been created with TangoConfig.
-/// @param key The string key value of the configuration parameter to set.
-/// @param value The value to set the configuration key to. This array must be
-///     allocated by the caller.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration
+///     key. This array must be allocated by the caller.
 /// @param size The size in bytes of value, as allocated by the caller. value
 ///     will be written only up to this size in bytes.
 /// @return Returns @c TANGO_SUCCESS on success or @c TANGO_INVALID if the any
