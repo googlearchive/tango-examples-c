@@ -32,18 +32,26 @@ namespace tango_augmented_reality {
 // AugmentedRealityApp handles the application lifecycle and resources.
 class AugmentedRealityApp {
  public:
-  // Constructor and deconstructor.
-  AugmentedRealityApp();
-  ~AugmentedRealityApp();
-
-  // Check that the installed version of the Tango API is up to date.
+  // OnCreate() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In the OnCreate
+  // function, we are only checking the Tango Core's version.
   //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+  // @param env, java environment parameter OnCreate is being called.
+  // @param caller_activity, caller of this function.
+  void OnCreate(JNIEnv* env, jobject caller_activity);
+
+  // OnPause() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In our application,
+  // we disconnect Tango Service and free the Tango configuration
+  // file. It is important to disconnect Tango Service and release
+  // the coresponding resources in the OnPause() callback from
+  // Android, otherwise, this application will hold on to the Tango
+  // resources and other application will not be able to connect to
+  // Tango Service.
+  void OnPause();
 
   // Call when Tango Service is connected successfully.
-  bool OnTangoServiceConnected(JNIEnv* env, jobject activity, jobject iBinder);
+  bool OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
 
   // When the Android activity is destroyed signal the JNI layer to
   // remove references to the activity. This should be called from the
@@ -66,10 +74,6 @@ class AugmentedRealityApp {
   // holding from Tango Service.
   void TangoDisconnect();
 
-  // Explicitly reset motion tracking and restart the pipeline.
-  // Note that this will cause motion tracking to re-initialize.
-  void TangoResetMotionTracking();
-
   // Tango service event callback function for pose data. Called when new events
   // are available from the Tango Service.
   //
@@ -82,7 +86,7 @@ class AugmentedRealityApp {
   void onTextureAvailable(TangoCameraId id);
 
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
-  void InitializeGLContent();
+  void InitializeGLContent(AAssetManager* aasset_manager);
 
   // Setup the view port width and height.
   void SetViewPort(int width, int height);
@@ -101,24 +105,6 @@ class AugmentedRealityApp {
 
   // Retrun Tango Service version string.
   std::string GetVersionString();
-
-  // Set render camera's viewing angle, first person, third person or top down.
-  //
-  // @param: camera_type, camera type includes first person, third person and
-  //         top down
-  void SetCameraType(tango_gl::GestureCamera::CameraType camera_type);
-
-  // Touch event passed from android activity. This function only supports two
-  // touches.
-  //
-  // @param: touch_count, total count for touches.
-  // @param: event, touch event of current touch.
-  // @param: x0, normalized touch location for touch 0 on x axis.
-  // @param: y0, normalized touch location for touch 0 on y axis.
-  // @param: x1, normalized touch location for touch 1 on x axis.
-  // @param: y1, normalized touch location for touch 1 on y axis.
-  void OnTouchEvent(int touch_count, tango_gl::GestureCamera::TouchEvent event,
-                    float x0, float y0, float x1, float y1);
 
   // Cache the Java VM
   //

@@ -38,6 +38,29 @@ std::string GetBasicFragmentShader() {
          "}\n";
 }
 
+std::string GetTexturedVertexShader() {
+  return "precision highp float;\n"
+         "precision highp int;\n"
+         "attribute vec4 vertex;\n"
+         "attribute vec2 uv;\n"
+         "varying vec2 f_textureCoords;\n"
+         "uniform mat4 mvp;\n"
+         "void main() {\n"
+         "  f_textureCoords = uv;\n"
+         "  gl_Position = mvp * vertex;\n"
+         "}\n";
+}
+
+std::string GetTexturedFragmentShader() {
+  return "precision highp float;\n"
+         "precision highp int;\n"
+         "uniform sampler2D texture;\n"
+         "varying vec2 f_textureCoords;\n"
+         "void main() {\n"
+         "  gl_FragColor = texture2D(texture, f_textureCoords);\n"
+         "}\n";
+}
+
 std::string GetColorVertexShader() {
   return "precision mediump float;\n"
          "precision mediump int;\n"

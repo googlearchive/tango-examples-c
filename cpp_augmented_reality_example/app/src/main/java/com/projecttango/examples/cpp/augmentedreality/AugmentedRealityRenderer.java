@@ -16,6 +16,7 @@
 
 package com.projecttango.examples.cpp.augmentedreality;
 
+import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -25,6 +26,13 @@ import javax.microedition.khronos.opengles.GL10;
  * camera frustum, camera axis, and trajectory based on the Tango device's pose.
  */
 public class AugmentedRealityRenderer implements GLSurfaceView.Renderer {
+
+  private AssetManager mAssetManager;
+
+  public AugmentedRealityRenderer(AssetManager assetManager){
+    mAssetManager = assetManager;
+  }
+
   // Render loop of the Gl context.
   public void onDrawFrame(GL10 gl) {
     TangoJNINative.render();
@@ -37,6 +45,6 @@ public class AugmentedRealityRenderer implements GLSurfaceView.Renderer {
 
   // Called when the surface is created or recreated.
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-    TangoJNINative.initGlContent();
+    TangoJNINative.onGlSurfaceCreated(mAssetManager);
   }
 }

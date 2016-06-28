@@ -17,6 +17,7 @@
 #ifndef TANGO_GL_TEXTURE_H_
 #define TANGO_GL_TEXTURE_H_
 
+#include <android/asset_manager.h>
 #include <errno.h>
 #include <png.h>
 
@@ -25,18 +26,16 @@
 namespace tango_gl {
 class Texture {
  public:
-  explicit Texture(const char* file_path);
+  explicit Texture(AAssetManager* mgr, const char* file_path);
   Texture(const Texture& other) = delete;
   Texture& operator=(const Texture&) = delete;
-  ~Texture();
 
-  bool LoadFromPNG(const char* file_path);
+  bool LoadFromPNG(FILE* file);
   GLuint GetTextureID() const;
 
  private:
   png_uint_32 width_, height_;
   int bit_depth_, color_type_;
-  char* byte_data_;
   GLuint texture_id_;
 };
 }  // namespace tango_gl

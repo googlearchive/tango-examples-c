@@ -16,6 +16,9 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
 #include <jni.h>
 #include <tango-augmented-reality/augmented_reality_app.h>
 
@@ -31,41 +34,22 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
   return JNI_VERSION_1_6;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_checkTangoVersion(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.CheckTangoVersion(env, activity, min_tango_version);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onCreate(
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onTangoServiceConnected(
-    JNIEnv* env, jobject, jobject activity, jobject iBinder) {
-  return app.OnTangoServiceConnected(env, activity, iBinder);
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setupConfig(
-    JNIEnv*, jobject) {
-  return app.TangoSetupConfig();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_connect(
-    JNIEnv*, jobject) {
-  return app.TangoConnect();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_connectCallbacks(
-    JNIEnv*, jobject) {
-  int ret = app.TangoConnectCallbacks();
-  return ret;
+    JNIEnv* env, jobject, jobject iBinder) {
+  return app.OnTangoServiceConnected(env, iBinder);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_disconnect(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onPause(
     JNIEnv*, jobject) {
-  app.TangoDisconnect();
+  app.OnPause();
 }
 
 JNIEXPORT void JNICALL
@@ -75,15 +59,10 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_destroyActivi
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_resetMotionTracking(
-    JNIEnv*, jobject) {
-  app.TangoResetMotionTracking();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_initGlContent(
-    JNIEnv*, jobject) {
-  app.InitializeGLContent();
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onGlSurfaceCreated(
+    JNIEnv* env, jobject, jobject j_asset_manager) {
+  AAssetManager* aasset_manager = AAssetManager_fromJava(env, j_asset_manager);
+  app.InitializeGLContent(aasset_manager);
 }
 
 JNIEXPORT void JNICALL
@@ -98,46 +77,6 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_render(
   app.Render();
 }
 
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_deleteResources(
-    JNIEnv*, jobject) {
-  app.DeleteResources();
-}
-
-JNIEXPORT jstring JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getTransformString(
-    JNIEnv* env, jobject) {
-  return (env)->NewStringUTF(app.GetTransformString().c_str());
-}
-
-JNIEXPORT jstring JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getEventString(
-    JNIEnv* env, jobject) {
-  return (env)->NewStringUTF(app.GetEventString().c_str());
-}
-
-JNIEXPORT jstring JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_getVersionNumber(
-    JNIEnv* env, jobject) {
-  return (env)->NewStringUTF(app.GetVersionString().c_str());
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setCamera(
-    JNIEnv*, jobject, int camera_index) {
-  tango_gl::GestureCamera::CameraType cam_type =
-      static_cast<tango_gl::GestureCamera::CameraType>(camera_index);
-  app.SetCameraType(cam_type);
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onTouchEvent(
-    JNIEnv*, jobject, int touch_count, int event, float x0, float y0, float x1,
-    float y1) {
-  tango_gl::GestureCamera::TouchEvent touch_event =
-      static_cast<tango_gl::GestureCamera::TouchEvent>(event);
-  app.OnTouchEvent(touch_count, touch_event, x0, y0, x1, y1);
-}
 #ifdef __cplusplus
 }
 #endif

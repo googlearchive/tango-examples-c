@@ -694,9 +694,9 @@ TangoErrorType TangoService_connectOnLevelDataChanged(
 /// @param pose The pose of target with respect to base frame of reference. Must
 ///     be allocated by the caller, and is overwritten upon return.
 /// @return Returns @c TANGO_SUCCESS if a pose was returned successfully. Check
-///     the @c status_code attribute on the returned @p pose to see if it is
+///     the @c status_code attribute on the returned @c pose to see if it is
 ///     valid. Returns @c TANGO_INVALID if the base and target frame are the
-///     same, or if the base or if the target frame is not valid, or if
+///     same, or if the base or the target frame is not valid, or if
 ///     timestamp is less than 0, or if the service has not yet begun running
 ///     (TangoService_connect() has not completed).
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
@@ -1204,17 +1204,6 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// <tr><td>boolean config_enable_motion_tracking</td><td>
 ///         Enables motion tracking if true. Defaults to true.</td></tr>
 ///
-/// <tr><td>boolean config_experimental_high_accuracy_small_scale_adf</td><td>
-///         EXPERIMENTAL Toggles between high-accuracy-small-scale and
-///         normal-accuracy-large-scale ADFs when learning mode is enabled.
-///         The higher accuracy is only supported in environments the size of a
-///         small home. A Tango device can contain a mixture of ADFs with normal
-///         and with high accuracy. When relocalizing against an ADF, the API
-///         automatically selects the correct algorithms based on the type of
-///         ADF. Note that it is not possible yet to learn additional parts of
-///         an environment into the same high accuracy ADF; all learning has to
-///         happen in one single session.</td></tr>
-///
 /// <tr><td>boolean config_high_rate_pose</td><td>
 ///         This flag enables 100Hz pose updates in callback mode. If disabled,
 ///         pose updates are provided at 33Hz in callback mode. Default value is
@@ -1232,6 +1221,15 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///
 /// <tr><td>boolean config_enable_dataset_recording</td><td>
 ///         Enables recording of a dataset to disk.</td></tr>
+///
+/// <tr><td>boolean config_enable_drift_correction</td><td>
+///         Enables drift-corrected mode. When drift-corrected mode is enabled,
+///         the drift-corrected pose is available through the frame pair with
+///         base frame AREA_DESCRIPTION and target frame DEVICE.
+///         The base frame START_OF_SERVICE, target frame DEVICE frame pair
+///         remains the same as only enabling config_enable_motion_tracking
+///         flag. learning_mode and loading load_area_description cannot be
+///         used if drift correction is enabled</td></tr>
 ///
 /// <tr><td>boolean config_experimental_enable_scene_reconstruction</td><td>
 ///         EXPERIMENTAL This flag enables the experimental scene reconstruction

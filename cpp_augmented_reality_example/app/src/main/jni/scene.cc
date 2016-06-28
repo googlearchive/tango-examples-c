@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
+#include <math.h>
+
 #include <tango-gl/conversions.h>
+#include <tango-gl/tango-gl.h>
+#include <tango-gl/texture.h>
+#include <tango-gl/shaders.h>
+#include <tango-gl/meshes.h>
 
 #include "tango-augmented-reality/scene.h"
 
@@ -25,22 +31,9 @@ namespace {
 // to place a grid roughly on the ground for most users.
 const glm::vec3 kHeightOffset = glm::vec3(0.0f, 0.0f, 0.0f);
 
-// Color of the motion tracking trajectory.
-const tango_gl::Color kTraceColor(0.22f, 0.28f, 0.67f);
-
-// Color of the ground grid.
-const tango_gl::Color kGridColor(0.85f, 0.85f, 0.85f);
-
 // Frustum scale.
 const glm::vec3 kFrustumScale = glm::vec3(0.4f, 0.3f, 0.5f);
 
-// Some property for the AR marker.
-const glm::quat kMarkerRotation = glm::quat(0.0f, 0.0f, 1.0f, 0.0f);
-// The reason we put mark at 0.85f at Y is because the center of the marker
-// object is not at the tip of the mark.
-const glm::vec3 kMarkerPosition = glm::vec3(0.0f, 0.85f, -3.0f);
-const glm::vec3 kMarkerScale = glm::vec3(0.05f, 0.05f, 0.05f);
-const tango_gl::Color kMarkerColor(1.0f, 0.f, 0.f);
 }  // namespace
 
 namespace tango_augmented_reality {
@@ -49,116 +42,126 @@ Scene::Scene() {}
 
 Scene::~Scene() {}
 
-void Scene::InitGLContent() {
+void Scene::InitGLContent(AAssetManager* aasset_manager) {
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+
   // Allocating render camera and drawable object.
   // All of these objects are for visualization purposes.
   video_overlay_ = new tango_gl::VideoOverlay();
-  gesture_camera_ = new tango_gl::GestureCamera();
-  axis_ = new tango_gl::Axis();
-  frustum_ = new tango_gl::Frustum();
-  trace_ = new tango_gl::Trace();
-  grid_ = new tango_gl::Grid();
-  marker_ = new tango_gl::GoalMarker();
+  camera_ = new tango_gl::Camera();
 
-  trace_->SetColor(kTraceColor);
-  grid_->SetColor(kGridColor);
-  grid_->SetPosition(-kHeightOffset);
+  // Init earth mesh and material
+  earth_mesh_ = tango_gl::meshes::MakeSphereMesh(20, 20, 1.0f);
+  earth_material_ = new tango_gl::Material();
+  earth_texture_ = new tango_gl::Texture(aasset_manager, "earth.png");
 
-  marker_->SetPosition(kMarkerPosition);
-  marker_->SetScale(kMarkerScale);
-  marker_->SetRotation(kMarkerRotation);
-  marker_->SetColor(kMarkerColor);
+  earth_material_->SetShader(
+      tango_gl::shaders::GetTexturedVertexShader().c_str(),
+      tango_gl::shaders::GetTexturedFragmentShader().c_str());
+  earth_material_->SetParam("texture", earth_texture_);
 
-  gesture_camera_->SetCameraType(
-      tango_gl::GestureCamera::CameraType::kThirdPerson);
+  // Init moon mesh and material
+  moon_mesh_ = tango_gl::meshes::MakeSphereMesh(10, 10, 0.3f);
+  moon_material_ = new tango_gl::Material();
+  moon_texture_ = new tango_gl::Texture(aasset_manager, "moon.png");
+  moon_material_->SetShader(
+      tango_gl::shaders::GetTexturedVertexShader().c_str(),
+      tango_gl::shaders::GetTexturedFragmentShader().c_str());
+  moon_material_->SetParam("texture", moon_texture_);
+
+  earth_transform_.SetPosition(glm::vec3(0.0f, 0.0f, -5.0f));
+  moon_transform_.SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 void Scene::DeleteResources() {
-  delete gesture_camera_;
+  delete camera_;
   delete video_overlay_;
-  delete axis_;
-  delete frustum_;
-  delete trace_;
-  delete grid_;
-  delete marker_;
+  delete earth_mesh_;
+  delete earth_material_;
+  delete earth_texture_;
+  delete moon_mesh_;
+  delete moon_material_;
+  delete moon_texture_;
 }
 
 void Scene::SetupViewPort(int x, int y, int w, int h) {
   if (h == 0) {
     LOGE("Setup graphic height not valid");
   }
-  gesture_camera_->SetAspectRatio(static_cast<float>(w) /
-                                  static_cast<float>(h));
+  camera_->SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
   glViewport(x, y, w, h);
 }
 
-void Scene::Render(const glm::mat4& cur_pose_transformation) {
-  glEnable(GL_DEPTH_TEST);
+void Scene::SetProjectionMatrix(const glm::mat4& projection_matrix) {
+  camera_->SetProjectionMatrix(projection_matrix);
+}
 
+void Scene::Render(const glm::mat4& cur_pose_transformation) {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  glm::vec3 position =
-      glm::vec3(cur_pose_transformation[3][0], cur_pose_transformation[3][1],
-                cur_pose_transformation[3][2]);
+  // In first person mode, we directly control camera's motion.
+  camera_->SetTransformationMatrix(cur_pose_transformation);
 
-  trace_->UpdateVertexArray(position);
-
-  if (gesture_camera_->GetCameraType() ==
-      tango_gl::GestureCamera::CameraType::kFirstPerson) {
-    // In first person mode, we directly control camera's motion.
-    gesture_camera_->SetTransformationMatrix(cur_pose_transformation);
-
-    // If it's first person view, we will render the video overlay in full
-    // screen, so we passed identity matrix as view and projection matrix.
-    glDisable(GL_DEPTH_TEST);
-    video_overlay_->Render(glm::mat4(1.0f), glm::mat4(1.0f));
-  } else {
-    // In third person or top down more, we follow the camera movement.
-    gesture_camera_->SetAnchorPosition(position);
-
-    frustum_->SetTransformationMatrix(cur_pose_transformation);
-    // Set the frustum scale to 4:3, this doesn't necessarily match the physical
-    // camera's aspect ratio, this is just for visualization purposes.
-    frustum_->SetScale(
-        glm::vec3(1.0f, camera_image_plane_ratio_, image_plane_distance_));
-    frustum_->Render(ar_camera_projection_matrix_,
-                     gesture_camera_->GetViewMatrix());
-
-    axis_->SetTransformationMatrix(cur_pose_transformation);
-    axis_->Render(ar_camera_projection_matrix_,
-                  gesture_camera_->GetViewMatrix());
-
-    trace_->Render(ar_camera_projection_matrix_,
-                   gesture_camera_->GetViewMatrix());
-    video_overlay_->Render(ar_camera_projection_matrix_,
-                           gesture_camera_->GetViewMatrix());
-  }
+  // If it's first person view, we will render the video overlay in full
+  // screen, so we passed identity matrix as view and projection matrix.
+  glDisable(GL_DEPTH_TEST);
+  video_overlay_->Render(glm::mat4(1.0f), glm::mat4(1.0f));
   glEnable(GL_DEPTH_TEST);
-  grid_->Render(ar_camera_projection_matrix_, gesture_camera_->GetViewMatrix());
-  marker_->Render(ar_camera_projection_matrix_,
-                  gesture_camera_->GetViewMatrix());
+
+  tango_gl::Render(*earth_mesh_, *earth_material_, earth_transform_, *camera_);
+  tango_gl::Render(*moon_mesh_, *moon_material_, moon_transform_, *camera_);
 }
 
-void Scene::SetCameraType(tango_gl::GestureCamera::CameraType camera_type) {
-  gesture_camera_->SetCameraType(camera_type);
-  if (camera_type == tango_gl::GestureCamera::CameraType::kFirstPerson) {
-    video_overlay_->SetParent(nullptr);
-    video_overlay_->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-    video_overlay_->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    video_overlay_->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-  } else {
-    video_overlay_->SetScale(glm::vec3(1.0f, camera_image_plane_ratio_, 1.0f));
-    video_overlay_->SetRotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-    video_overlay_->SetPosition(glm::vec3(0.0f, 0.0f, -image_plane_distance_));
-    video_overlay_->SetParent(axis_);
+void Scene::RotateEarthByPose(const TangoPoseData& pose) {
+  RotateYAxisTransform(pose, &earth_transform_, &earth_last_angle_,
+                       &earth_last_pose_timestamp_);
+}
+
+void Scene::RotateMoonByPose(const TangoPoseData& pose) {
+  RotateYAxisTransform(pose, &moon_transform_, &moon_last_angle_,
+                       &moon_last_pose_timestamp_);
+}
+
+void Scene::TranslateMoonByPose(const TangoPoseData& pose) {
+  if (moon_last_translation_pose_ > 0) {
+    // Calculate time difference in seconds
+    double delta_time = pose.timestamp - moon_last_translation_pose_;
+    // Calculate the corresponding angle movement considering
+    // a total rotation time of 6 seconds
+    double delta_angle = delta_time * 2 * M_PI / 6;
+    // Add this angle to the last known angle
+    double angle = moon_last_translation_angle_ + delta_angle;
+    moon_last_translation_angle_ = angle;
+
+    double x = 2.0f * sin(angle);
+    double z = 2.0f * cos(angle);
+
+    moon_transform_.SetPosition(glm::vec3(x, 0.0f, z - 5.0f));
   }
+  moon_last_translation_pose_ = pose.timestamp;
 }
 
-void Scene::OnTouchEvent(int touch_count,
-                         tango_gl::GestureCamera::TouchEvent event, float x0,
-                         float y0, float x1, float y1) {
-  gesture_camera_->OnTouchEvent(touch_count, event, x0, y0, x1, y1);
+void Scene::RotateYAxisTransform(const TangoPoseData& pose,
+                                 tango_gl::Transform* transform,
+                                 double* last_angle, double* last_pose) {
+  if (*last_pose > 0) {
+    // Calculate time difference in seconds
+    double delta_time = pose.timestamp - *last_pose;
+    // Calculate the corresponding angle movement considering
+    // a total rotation time of 6 seconds
+    double delta_angle = delta_time * 2 * M_PI / 6;
+    // Add this angle to the last known angle
+    double angle = *last_angle + delta_angle;
+    *last_angle = angle;
+
+    double w = cos(angle / 2);
+    double y = sin(angle / 2);
+
+    transform->SetRotation(glm::quat(w, 0.0f, y, 0.0f));
+  }
+  *last_pose = pose.timestamp;
 }
 
 }  // namespace tango_augmented_reality

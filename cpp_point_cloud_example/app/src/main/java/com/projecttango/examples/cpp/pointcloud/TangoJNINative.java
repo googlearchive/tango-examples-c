@@ -65,7 +65,7 @@ public class TangoJNINative {
   public static native void deleteResources();
 
   // Allocate OpenGL resources for rendering.
-  public static native void initGlContent();
+  public static native void onGlSurfaceCreated();
 
   // Setup the view port width and height.
   public static native void setupGraphic(int width, int height);

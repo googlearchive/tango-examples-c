@@ -23,6 +23,8 @@
 
 namespace {
 const int kVersionStringLength = 128;
+// The minimum Tango Core version required from this application.
+constexpr int kTangoCoreMinimumVersion = 9377;
 
 // Far clipping plane of the AR camera.
 const float kArCameraNearClippingPlane = 0.1f;
@@ -54,6 +56,7 @@ void onTextureAvailableRouter(void* context, TangoCameraId id) {
 }  // namespace
 
 namespace tango_augmented_reality {
+
 void AugmentedRealityApp::onTangoEventAvailable(const TangoEvent* event) {
   std::lock_guard<std::mutex> lock(tango_event_mutex_);
   tango_event_data_.UpdateTangoEvent(event);
@@ -65,24 +68,28 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
   }
 }
 
-AugmentedRealityApp::AugmentedRealityApp()
-    : calling_activity_obj_(nullptr), on_demand_render_(nullptr) {
-  is_service_connected_ = false;
-  is_texture_id_set_ = false;
-}
-
-AugmentedRealityApp::~AugmentedRealityApp() { TangoConfig_free(tango_config_); }
-
-bool AugmentedRealityApp::CheckTangoVersion(JNIEnv* env, jobject activity,
-                                            int min_tango_version) {
+void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  return err == TANGO_SUCCESS && version >= min_tango_version;
+  if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
+    LOGE("AugmentedRealityApp::OnCreate, Tango Core version is out of date.");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  // We want to be able to trigger rendering on demand in our Java code.
+  // As such, we need to store the activity we'd like to interact with and the
+  // id of the method we'd like to call on that activity.
+  calling_activity_obj_ = env->NewGlobalRef(activity);
+  jclass cls = env->GetObjectClass(activity);
+  on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
+
+  is_service_connected_ = false;
+  is_texture_id_set_ = false;
 }
 
-bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env, jobject activity,
+bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
                                                   jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
@@ -93,15 +100,12 @@ bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env, jobject activity,
     return false;
   }
 
-  // We want to be able to trigger rendering on demand in our Java code.
-  // As such, we need to store the activity we'd like to interact with and the
-  // id of the method we'd like to call on that activity.
-  jclass cls = env->GetObjectClass(activity);
-  on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
-
-  calling_activity_obj_ = env->NewGlobalRef(activity);
+  TangoSetupConfig();
+  TangoConnectCallbacks();
+  TangoConnect();
 
   is_service_connected_ = true;
+
   return true;
 }
 
@@ -207,24 +211,25 @@ bool AugmentedRealityApp::TangoConnect() {
   return true;
 }
 
+void AugmentedRealityApp::OnPause() {
+  TangoDisconnect();
+  DeleteResources();
+}
+
 void AugmentedRealityApp::TangoDisconnect() {
   // When disconnecting from the Tango Service, it is important to make sure to
   // free your configuration object. Note that disconnecting from the service,
   // resets all configuration, and disconnects all callbacks. If an application
   // resumes after disconnecting, it must re-register configuration and
   // callbacks with the service.
+  is_service_connected_ = false;
   TangoConfig_free(tango_config_);
   tango_config_ = nullptr;
   TangoService_disconnect();
 }
 
-void AugmentedRealityApp::TangoResetMotionTracking() {
-  main_scene_.ResetTrajectory();
-  TangoService_resetMotionTracking();
-}
-
-void AugmentedRealityApp::InitializeGLContent() {
-  main_scene_.InitGLContent();
+void AugmentedRealityApp::InitializeGLContent(AAssetManager* aasset_manager) {
+  main_scene_.InitGLContent(aasset_manager);
 }
 
 void AugmentedRealityApp::SetViewPort(int width, int height) {
@@ -269,18 +274,13 @@ void AugmentedRealityApp::Render() {
     float cy = static_cast<float>(color_camera_intrinsics_.cy);
 
     float image_plane_ratio = image_height / image_width;
-    float image_plane_distance = 2.0f * fx / image_width;
 
     glm::mat4 projection_mat_ar =
         tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
             image_width, image_height, fx, fy, cx, cy,
             kArCameraNearClippingPlane, kArCameraFarClippingPlane);
 
-    main_scene_.SetFrustumScale(
-        glm::vec3(1.0f, image_plane_ratio, image_plane_distance));
-    main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
-    main_scene_.SetImagePlaneDistance(image_plane_distance);
-    main_scene_.SetARCameraProjectionMatrix(projection_mat_ar);
+    main_scene_.SetProjectionMatrix(projection_mat_ar);
 
     float screen_ratio = static_cast<float>(viewport_height_) /
                          static_cast<float>(viewport_width_);
@@ -307,8 +307,6 @@ void AugmentedRealityApp::Render() {
     } else {
       glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
     }
-    main_scene_.SetCameraType(
-        tango_gl::GestureCamera::CameraType::kFirstPerson);
   }
 
   double video_overlay_timestamp;
@@ -326,10 +324,28 @@ void AugmentedRealityApp::Render() {
         std::lock_guard<std::mutex> lock(transform_mutex_);
         UpdateTransform(matrix_transform.matrix, video_overlay_timestamp);
       }
+
+      TangoPoseData pose;
+
+      TangoSupport_getPoseAtTime(
+          0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+          TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
+          // TODO(duckmanito) Change this zero with the real orientation
+          static_cast<TangoSupportDisplayRotation>(0), &pose);
+
+      if (pose.status_code != TANGO_POSE_VALID) {
+        LOGE("AugmentedRealityApp: Tango pose is not valid.");
+        return;
+      }
+
+      main_scene_.RotateEarthByPose(pose);
+      main_scene_.RotateMoonByPose(pose);
+      main_scene_.TranslateMoonByPose(pose);
+
       main_scene_.Render(cur_start_service_T_camera_);
     } else {
       LOGE(
-          "PlaneFittingApplication: Could not find a valid matrix transform at "
+          "AugmentedRealityApp: Could not find a valid matrix transform at "
           "time %lf for the color camera.",
           video_overlay_timestamp);
     }
@@ -342,7 +358,6 @@ void AugmentedRealityApp::Render() {
 }
 
 void AugmentedRealityApp::DeleteResources() {
-  is_service_connected_ = false;
   is_texture_id_set_ = false;
   main_scene_.DeleteResources();
 }
@@ -359,17 +374,6 @@ std::string AugmentedRealityApp::GetEventString() {
 
 std::string AugmentedRealityApp::GetVersionString() {
   return tango_core_version_string_.c_str();
-}
-
-void AugmentedRealityApp::SetCameraType(
-    tango_gl::GestureCamera::CameraType camera_type) {
-  main_scene_.SetCameraType(camera_type);
-}
-
-void AugmentedRealityApp::OnTouchEvent(
-    int touch_count, tango_gl::GestureCamera::TouchEvent event, float x0,
-    float y0, float x1, float y1) {
-  main_scene_.OnTouchEvent(touch_count, event, x0, y0, x1, y1);
 }
 
 void AugmentedRealityApp::RequestRender() {

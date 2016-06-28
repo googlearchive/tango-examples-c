@@ -92,6 +92,12 @@ void Render(const StaticMesh& mesh, const Material& material,
                           mesh.colors.data());
   }
 
+  GLint attrib_uv = material.GetAttribUVs();
+  if (attrib_uv != -1 && !mesh.uv.empty()) {
+    glEnableVertexAttribArray(attrib_uv);
+    glVertexAttribPointer(attrib_uv, 2, GL_FLOAT, GL_FALSE, 0, mesh.uv.data());
+  }
+
   glDrawElements(mesh.render_mode, mesh.indices.size(), GL_UNSIGNED_INT,
                  mesh.indices.data());
 
@@ -115,9 +121,8 @@ Material::Material() {
 }
 
 Material::~Material() {
-  if (shader_program_ && shader_program_ != fallback_shader_program_) {
-    glDeleteProgram(shader_program_);
-  }
+  shader_program_ = 0;
+  fallback_shader_program_ = 0;
 }
 
 bool Material::SetShader(const char* vertex_shader, const char* pixel_shader) {
@@ -169,6 +174,7 @@ bool Material::SetShaderInternal(GLuint program) {
   }
   attrib_normals_ = glGetAttribLocation(shader_program_, "normal");
   attrib_colors_ = glGetAttribLocation(shader_program_, "color");
+  attrib_uv_ = glGetAttribLocation(shader_program_, "uv");
 
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
   if (uniform_mvp_mat_ == -1) {
@@ -215,12 +221,36 @@ bool Material::SetParam(const char* uniform_name, const glm::vec4& vals) {
   return true;
 }
 
+bool Material::SetParam(const char* uniform_name, Texture* texture) {
+  if (shader_program_ == fallback_shader_program_) {
+    // The fallback shader ignores all parameters to avoid cluttering
+    // up the log.
+    return true;
+  }
+
+  GLint location = glGetUniformLocation(shader_program_, uniform_name);
+  if (location == -1) {
+    LOGE("%s -- Unable to find parameter %s", __func__, uniform_name);
+    return false;
+  }
+
+  params_texture_[location] = texture;
+  return true;
+}
+
 void Material::BindParams() const {
   for (auto& param : params_float_) {
     glUniform1f(param.first, param.second);
   }
   for (auto& param : params_vec4_) {
     glUniform4fv(param.first, 1, glm::value_ptr(param.second));
+  }
+  int index = 0;
+  for (auto& param : params_texture_) {
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(GL_TEXTURE_2D, param.second->GetTextureID());
+    glUniform1i(param.first, index);
+    index++;
   }
 }
 
