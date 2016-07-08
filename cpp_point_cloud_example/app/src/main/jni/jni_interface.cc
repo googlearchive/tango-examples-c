@@ -62,7 +62,7 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_disconnect(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceCreated(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }

@@ -16,6 +16,9 @@
 
 #define GLM_FORCE_RADIANS
 
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
 #include <jni.h>
 #include <tango-motion-tracking/motion_tracking_app.h>
 #include <tango-motion-tracking/scene.h>
@@ -25,34 +28,30 @@ static tango_motion_tracking::MotiongTrackingApp app;
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_checkTangoVersion(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.CheckTangoVersion(env, activity, min_tango_version);
-}
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setupConfig(
-    JNIEnv*, jobject) {
-  return app.TangoSetupConfig();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_connect(
-    JNIEnv*, jobject) {
-  return app.TangoConnect();
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onCreate(
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_disconnect(
-    JNIEnv*, jobject) {
-  app.TangoDisconnect();
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onTangoServiceConnected(
+    JNIEnv* env, jobject, jobject iBinder) {
+  app.OnTangoServiceConnected(env, iBinder);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_initGlContent(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onPause(
     JNIEnv*, jobject) {
-  app.InitializeGLContent();
+  app.OnPause();
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceCreated(
+    JNIEnv* env, jobject, jobject j_asset_manager) {
+  AAssetManager* aasset_manager = AAssetManager_fromJava(env, j_asset_manager);
+  app.InitializeGLContent(aasset_manager);
 }
 
 JNIEXPORT void JNICALL
@@ -68,22 +67,11 @@ Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_render(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_deleteResources(
-    JNIEnv*, jobject) {
-  app.DeleteResources();
-}
-
-JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setScreenRotation(
     JNIEnv*, jobject, int rotation_index) {
   app.SetScreenRotation(rotation_index);
 }
 
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onTangoServiceConnected(
-    JNIEnv* env, jobject, jobject iBinder) {
-  app.OnTangoServiceConnected(env, iBinder);
-}
 #ifdef __cplusplus
 }
 #endif

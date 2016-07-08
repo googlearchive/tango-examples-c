@@ -24,23 +24,31 @@ Camera::Camera() {
   aspect_ratio_ = 4.0f / 3.0f;
   near_clip_plane_ = 0.1f;
   far_clip_plane_ = 100.0f;
+  UpdateProjectionMatrix();
+}
+
+void Camera::UpdateProjectionMatrix() {
+  projection_matrix_ = glm::perspective(field_of_view_, aspect_ratio_,
+                                        near_clip_plane_, far_clip_plane_);
 }
 
 glm::mat4 Camera::GetViewMatrix() const {
   return glm::inverse(GetTransformationMatrix());
 }
 
-glm::mat4 Camera::GetProjectionMatrix() const {
-  return glm::perspective(field_of_view_, aspect_ratio_, near_clip_plane_,
-                          far_clip_plane_);
-}
+glm::mat4 Camera::GetProjectionMatrix() const { return projection_matrix_; }
 
 void Camera::SetAspectRatio(float aspect_ratio) {
   aspect_ratio_ = aspect_ratio;
+  UpdateProjectionMatrix();
 }
 
 void Camera::SetFieldOfView(float fov) {
   field_of_view_ = fov * DEGREE_2_RADIANS;
+}
+
+void Camera::SetProjectionMatrix(const glm::mat4& projection_matrix) {
+  projection_matrix_ = projection_matrix;
 }
 
 Camera::~Camera() {}

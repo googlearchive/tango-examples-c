@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android/asset_manager.h>
+
+#include <unistd.h>
 #include "tango-gl/texture.h"
 #include "tango-gl/util.h"
 
@@ -23,7 +26,7 @@ static const int kMaxExponentiation = 12;
 static int RoundUpPowerOfTwo(int w) {
   int start = 2;
   for (int i = 0; i <= kMaxExponentiation; ++i) {
-    if (w < start) {
+    if (w <= start) {
       w = start;
       break;
     } else {
@@ -33,20 +36,25 @@ static int RoundUpPowerOfTwo(int w) {
   return w;
 }
 
-Texture::Texture(const char* file_path) {
-  if (!LoadFromPNG(file_path)) {
+Texture::Texture(AAssetManager* mgr, const char* file_path) {
+  AAsset* asset = AAssetManager_open(mgr, file_path, AASSET_MODE_STREAMING);
+  if (asset == NULL) {
+    LOGE("Error opening asset %s", file_path);
+    return;
+  }
+  off_t length;
+  off_t start;
+  int fd = AAsset_openFileDescriptor(asset, &start, &length);
+  lseek(fd, start, SEEK_CUR);
+  FILE* file = fdopen(fd, "rb");
+  if (!LoadFromPNG(file)) {
     LOGE("Texture initialing error");
   }
+  fclose(file);
+  AAsset_close(asset);
 }
 
-bool Texture::LoadFromPNG(const char* file_path) {
-  FILE* file = fopen(file_path, "rb");
-
-  if (file == NULL) {
-    LOGE("fp not loaded: %s", strerror(errno));
-    return false;
-  }
-
+bool Texture::LoadFromPNG(FILE* file) {
   fseek(file, 8, SEEK_CUR);
 
   png_structp png_ptr =
@@ -62,11 +70,11 @@ bool Texture::LoadFromPNG(const char* file_path) {
   width_ = RoundUpPowerOfTwo(width_);
   height_ = RoundUpPowerOfTwo(height_);
   int row = width_ * (color_type_ == PNG_COLOR_TYPE_RGBA ? 4 : 3);
-  byte_data_ = new char[row * height_];
+  char* byte_data = new char[row * height_];
 
   png_bytep* row_pointers = new png_bytep[height_];
   for (uint i = 0; i < height_; ++i) {
-    row_pointers[i] = (png_bytep)(byte_data_ + i * row);
+    row_pointers[i] = (png_bytep)(byte_data + i * row);
   }
   png_read_image(png_ptr, row_pointers);
   png_destroy_read_struct(&png_ptr, &info_ptr, 0);
@@ -80,28 +88,21 @@ bool Texture::LoadFromPNG(const char* file_path) {
   util::CheckGlError("glBindTexture");
   if (color_type_ == PNG_COLOR_TYPE_RGBA) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width_, height_, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, byte_data_);
+                 GL_UNSIGNED_BYTE, byte_data);
   } else {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_, height_, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, byte_data_);
+                 GL_UNSIGNED_BYTE, byte_data);
   }
+
   util::CheckGlError("glTexImage2D");
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  fclose(file);
   delete[] row_pointers;
-  delete[] byte_data_;
+  delete[] byte_data;
 
   return true;
 }
 
 GLuint Texture::GetTextureID() const { return texture_id_; }
-
-Texture::~Texture() {
-  if (byte_data_ != NULL) {
-    delete[] byte_data_;
-  }
-  byte_data_ = NULL;
-}
 
 }  // namespace tango_gl

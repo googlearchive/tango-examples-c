@@ -38,6 +38,6 @@ public class Renderer implements GLSurfaceView.Renderer {
 
   // Called when the surface is created or recreated.
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-    TangoJNINative.initGlContent();
+    TangoJNINative.onGlSurfaceCreated();
   }
 }

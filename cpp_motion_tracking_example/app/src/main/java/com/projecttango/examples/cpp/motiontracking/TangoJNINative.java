@@ -16,6 +16,8 @@
 
 package com.projecttango.examples.cpp.motiontracking;
 
+import android.app.Activity;
+import android.content.res.AssetManager;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -35,45 +37,48 @@ public class TangoJNINative {
     System.loadLibrary("cpp_motion_tracking_example");
   }
 
-  // Check that the installed version of the Tango API is up to date.
-  //
-  // @return returns true if the application version is compatible with the
-  //    Tango Core version.
-  public static native boolean checkTangoVersion(MotionTrackingActivity activity,
-                                                 int minTangoVersion);
+  /**
+   * Interfaces to native OnCreate function.
+   *
+   * @param callerActivity the caller activity of this function.
+   */
+  public static native void onCreate(Activity callerActivity);
 
-  // Call when Tango Service is connected successfully.
+  /**
+   * Called when the Tango service is connected successfully.
+   *
+   * @param nativeTangoServiceBinder The native binder object.
+   */
   public static native void onTangoServiceConnected(IBinder nativeTangoServiceBinder);
 
-  // Setup the configuration file of the Tango Service.
-  public static native int setupConfig();
 
-  // Connect to the Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Motion Tracking.
-  public static native boolean connect();
+  /**
+   * Interfaces to native OnPause function.
+   */
+  public static native void onPause();
 
-  // Disconnect from the Tango Service, release all the resources that the app is
-  // holding from the Tango Service.
-  public static native void disconnect();
+  /**
+   * Allocate OpenGL resources for rendering.
+   */
+  public static native void onGlSurfaceCreated(AssetManager assetManager);
 
-  // Release all resources that are allocated from the program.
-  public static native void deleteResources();
-
-  // Allocate OpenGL resources for rendering.
-  public static native void initGlContent();
-
-  // Setup the view port width and height.
+  /**
+   * Setup the view port width and height.
+   */
   public static native void setupGraphic(int width, int height);
 
-  // Main render loop.
+  /**
+   * Main render loop.
+   */
   public static native void render();
 
-  // Set screen rotation index.
-  //
-  // @param rotationIndex: the screen rotation index,
-  //    the index is following Android screen rotation enum.
-  //    see Android documentation for detail:
-  //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
+  /**
+   * Set screen rotation index.
+   *
+   * @param rotationIndex  The screen rotation index,
+   *   the index is following Android screen rotation enum.
+   *    see Android documentation for detail:
+   *    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
+   */
   public static native void setScreenRotation(int rotationIndex);
 }

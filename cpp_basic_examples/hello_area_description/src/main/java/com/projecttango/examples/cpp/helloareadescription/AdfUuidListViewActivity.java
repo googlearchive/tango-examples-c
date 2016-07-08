@@ -46,7 +46,8 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * - Deleting an ADF owned by the Tango Service.
  */
 public class AdfUuidListViewActivity extends Activity implements SetAdfNameDialog.CallbackListener {
-    private static final String INTENT_CLASS_PACKAGE = "com.projecttango.tango";
+    private static final String INTENT_CLASS_PACKAGE = "com.google.tango";
+    private static final String INTENT_DEPRECATED_CLASS_PACKAGE = "com.projecttango.tango";
     private static final String INTENT_REQUEST_PERMISSION_CLASSNAME =
             "com.google.atap.tango.RequestPermissionActivity";
     private static final String INTENT_IMPORT_EXPORT_CLASSNAME =
@@ -197,6 +198,11 @@ public class AdfUuidListViewActivity extends Activity implements SetAdfNameDialo
         String filepath = mAppSpaceAdfFolder + File.separator + uuid;
         Intent importIntent = new Intent();
         importIntent.setClassName(INTENT_CLASS_PACKAGE, INTENT_IMPORT_EXPORT_CLASSNAME);
+        if (importIntent.resolveActivity(getApplicationContext().getPackageManager()) == null) {
+            importIntent = new Intent();
+            importIntent.setClassName(INTENT_DEPRECATED_CLASS_PACKAGE,
+                                      INTENT_IMPORT_EXPORT_CLASSNAME);
+        }
         importIntent.putExtra(EXTRA_KEY_SOURCE_FILE, filepath);
         startActivityForResult(importIntent, TANGO_INTENT_ACTIVITY_CODE);
     }
@@ -207,6 +213,11 @@ public class AdfUuidListViewActivity extends Activity implements SetAdfNameDialo
     private void exportAdf(String uuid) {
         Intent exportIntent = new Intent();
         exportIntent.setClassName(INTENT_CLASS_PACKAGE, INTENT_IMPORT_EXPORT_CLASSNAME);
+        if (exportIntent.resolveActivity(getApplicationContext().getPackageManager()) == null) {
+            exportIntent = new Intent();
+            exportIntent.setClassName(INTENT_DEPRECATED_CLASS_PACKAGE,
+                    INTENT_IMPORT_EXPORT_CLASSNAME);
+        }
         exportIntent.putExtra(EXTRA_KEY_SOURCE_UUID, uuid);
         exportIntent.putExtra(EXTRA_KEY_DESTINATION_FILE, mAppSpaceAdfFolder);
         startActivityForResult(exportIntent, TANGO_INTENT_ACTIVITY_CODE);

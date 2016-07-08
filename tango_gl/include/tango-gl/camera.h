@@ -29,13 +29,14 @@ class Camera : public Transform {
 
   void SetAspectRatio(const float aspect_ratio);
   void SetFieldOfView(const float fov);
+  void SetProjectionMatrix(const glm::mat4& projection_matrix);
 
   glm::mat4 GetViewMatrix() const;
   glm::mat4 GetProjectionMatrix() const;
 
   /**
    * Create an OpenGL perspective matrix from window size, camera intrinsics,
-   *and clip settings.
+   * and clip settings.
    *
    * @param width  - The width of the camera image.
    * @param height - The height of the camera image.
@@ -56,6 +57,10 @@ class Camera : public Transform {
   float field_of_view_;
   float aspect_ratio_;
   float near_clip_plane_, far_clip_plane_;
+  glm::mat4 projection_matrix_;
+
+  // Update the projection matrix using the current camara parameters.
+  void UpdateProjectionMatrix();
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_CAMERA_H_

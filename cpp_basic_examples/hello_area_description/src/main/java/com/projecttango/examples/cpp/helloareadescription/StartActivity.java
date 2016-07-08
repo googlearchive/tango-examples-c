@@ -32,6 +32,9 @@ public class StartActivity extends Activity {
     public static final String LOAD_ADF =
             "com.projecttango.examples.cpp.helloareadescription.loadadf";
 
+    private static final String INTENT_CLASS_PACKAGE = "com.google.tango";
+    private static final String INTENT_DEPRECATED_CLASS_PACKAGE = "com.projecttango.tango";
+
     // Key string for load/save Area Description Files.
     private static final String AREA_LEARNING_PERMISSION =
             "ADF_LOAD_SAVE_PERMISSION";
@@ -118,6 +121,11 @@ public class StartActivity extends Activity {
     //   https://developers.google.com/project-tango/apis/c/c-user-permissions
     private void getPermission(String permissionType) {
         Intent intent = new Intent();
+        intent.setPackage(INTENT_CLASS_PACKAGE);
+        if (intent.resolveActivity(getApplicationContext().getPackageManager()) == null) {
+            intent = new Intent();
+            intent.setPackage(INTENT_DEPRECATED_CLASS_PACKAGE);
+        }
         intent.setAction(REQUEST_PERMISSION_ACTION);
         intent.putExtra("PERMISSIONTYPE", permissionType);
 

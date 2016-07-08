@@ -19,19 +19,20 @@
 
 #include <jni.h>
 #include <memory>
+#include <math.h>
+
+#include <android/asset_manager.h>
 
 #include <tango_client_api.h>  // NOLINT
-#include <tango-gl/axis.h>
 #include <tango-gl/camera.h>
 #include <tango-gl/color.h>
-#include <tango-gl/gesture_camera.h>
-#include <tango-gl/grid.h>
-#include <tango-gl/frustum.h>
-#include <tango-gl/goal_marker.h>
-#include <tango-gl/trace.h>
 #include <tango-gl/transform.h>
 #include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
+#include <tango-gl/texture.h>
+#include <tango-gl/meshes.h>
+#include <tango-gl/shaders.h>
+#include <tango-gl/tango-gl.h>
 
 namespace tango_augmented_reality {
 
@@ -39,14 +40,11 @@ namespace tango_augmented_reality {
 class Scene {
  public:
   // Constructor and destructor.
-  //
-  // Scene will need a reference to pose_data_ instance to get the device motion
-  // to render the camera frustum.
   Scene();
   ~Scene();
 
   // Allocate OpenGL resources for rendering.
-  void InitGLContent();
+  void InitGLContent(AAssetManager* aasset_manager);
 
   // Release non-OpenGL resources.
   void DeleteResources();
@@ -60,12 +58,6 @@ class Scene {
 
   // Render loop.
   void Render(const glm::mat4& cur_pose_transformation);
-
-  // Set render camera's viewing angle, first person, third person or top down.
-  //
-  // @param: camera_type, camera type includes first person, third person and
-  //         top down
-  void SetCameraType(tango_gl::GestureCamera::CameraType camera_type);
 
   // Get video overlay texture id.
   // @return: texture id of video overlay's texture.
@@ -92,52 +84,30 @@ class Scene {
 
   // Set projection matrix of the AR view (first person view)
   // @param: projection_matrix, the projection matrix.
-  void SetARCameraProjectionMatrix(const glm::mat4& projection_matrix) {
-    ar_camera_projection_matrix_ = projection_matrix;
-  }
+  void SetProjectionMatrix(const glm::mat4& projection_matrix);
 
-  // Set the frustum render drawable object's scale. For the best visialization
-  // result, we set the camera frustum object's scale to the physical camera's
-  // aspect ratio.
-  // @param: scale, frustum's scale.
-  void SetFrustumScale(const glm::vec3& scale) { frustum_->SetScale(scale); }
+  // Change the earth transformation to make it rotate over its Y axis over
+  // timepose
+  void RotateEarthByPose(const TangoPoseData& pose);
 
-  // Clear the Motion Tracking trajactory.
-  void ResetTrajectory() { trace_->ClearVertexArray(); }
+  // Change the moon transformation to make it rotate over its Y axis over
+  // timepose
+  void RotateMoonByPose(const TangoPoseData& pose);
 
-  // Touch event passed from android activity. This function only support two
-  // touches.
-  //
-  // @param: touch_count, total count for touches.
-  // @param: event, touch event of current touch.
-  // @param: x0, normalized touch location for touch 0 on x axis.
-  // @param: y0, normalized touch location for touch 0 on y axis.
-  // @param: x1, normalized touch location for touch 1 on x axis.
-  // @param: y1, normalized touch location for touch 1 on y axis.
-  void OnTouchEvent(int touch_count, tango_gl::GestureCamera::TouchEvent event,
-                    float x0, float y0, float x1, float y1);
+  // Change the moon position to make it rotate around the earth
+  void TranslateMoonByPose(const TangoPoseData& pose);
+
+  // Apply a Y axis rotate transform to object
+  void RotateYAxisTransform(const TangoPoseData& pose,
+                            tango_gl::Transform* transform, double* last_angle,
+                            double* last_pose);
 
  private:
   // Video overlay drawable object to display the camera image.
   tango_gl::VideoOverlay* video_overlay_;
 
   // Camera object that allows user to use touch input to interact with.
-  tango_gl::GestureCamera* gesture_camera_;
-
-  // Device axis (in device frame of reference).
-  tango_gl::Axis* axis_;
-
-  // Device frustum.
-  tango_gl::Frustum* frustum_;
-
-  // Ground grid.
-  tango_gl::Grid* grid_;
-
-  // Trace of pose data.
-  tango_gl::Trace* trace_;
-
-  // A marker placed at (0.0f, 0.0f, -3.0f) location.
-  tango_gl::GoalMarker* marker_;
+  tango_gl::Camera* camera_;
 
   // We use both camera_image_plane_ratio_ and image_plane_distance_ to compute
   // the first person AR camera's frustum, these value is derived from actual
@@ -150,6 +120,30 @@ class Scene {
 
   // The projection matrix for the first person AR camera.
   glm::mat4 ar_camera_projection_matrix_;
+
+  // Meshes
+  tango_gl::StaticMesh* earth_mesh_;
+  tango_gl::StaticMesh* moon_mesh_;
+
+  // Textures
+  tango_gl::Texture* earth_texture_;
+  tango_gl::Texture* moon_texture_;
+
+  // Materials
+  tango_gl::Material* earth_material_;
+  tango_gl::Material* moon_material_;
+
+  // Transforms
+  tango_gl::Transform earth_transform_;
+  tango_gl::Transform moon_transform_;
+
+  // Last pose timestamp received
+  double earth_last_pose_timestamp_;
+  double earth_last_angle_;
+  double moon_last_pose_timestamp_;
+  double moon_last_angle_;
+  double moon_last_translation_angle_;
+  double moon_last_translation_pose_;
 };
 }  // namespace tango_augmented_reality
 

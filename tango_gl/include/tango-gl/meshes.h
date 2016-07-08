@@ -1,5 +1,5 @@
-/*
- * Copyright 2014 Google Inc. All Rights Reserved.
+/**
+ * Copyright 2016 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_GL_SHADERS_H_
-#define TANGO_GL_SHADERS_H_
+#ifndef TANGO_GL_MESHES_H_
+#define TANGO_GL_MESHES_H_
 
 #include <string>
 
+#include "tango-gl/tango-gl.h"
+
 namespace tango_gl {
-namespace shaders {
-std::string GetBasicVertexShader();
-std::string GetBasicFragmentShader();
-std::string GetTexturedVertexShader();
-std::string GetTexturedFragmentShader();
-std::string GetColorVertexShader();
-std::string GetVideoOverlayVertexShader();
-std::string GetVideoOverlayFragmentShader();
-std::string GetVideoOverlayTexture2DFragmentShader();
-std::string GetShadedVertexShader();
-}  // namespace shaders
+namespace meshes {
+tango_gl::StaticMesh* MakeSphereMesh(int rows, int columns, double radius);
+tango_gl::StaticMesh* MakeCubeMesh(double side);
+tango_gl::StaticMesh* MakePlaneMesh(double width, double height);
+tango_gl::StaticMesh* MakePlaneMesh(double width, double height,
+                                    double tiling_factor);
+}  // namespace meshes
 }  // namespace tango_gl
-#endif  // TANGO_GL_SHADERS_H_
+#endif  // TANGO_GL_MESHES_H_

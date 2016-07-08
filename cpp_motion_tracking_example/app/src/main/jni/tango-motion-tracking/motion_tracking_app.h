@@ -17,6 +17,7 @@
 #ifndef TANGO_MOTION_TRACKING_MOTION_TRACKING_APP_H_
 #define TANGO_MOTION_TRACKING_MOTION_TRACKING_APP_H_
 
+#include <android/asset_manager.h>
 #include <jni.h>
 #include <memory>
 #include <mutex>
@@ -36,11 +37,26 @@ class MotiongTrackingApp {
   MotiongTrackingApp();
   ~MotiongTrackingApp();
 
-  // Check that the installed version of the Tango API is up to date.
+  // OnCreate() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In the OnCreate
+  // function, we are only checking the Tango Core's version.
   //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+  // @param env, java environment parameter OnCreate is being called.
+  // @param caller_activity, caller of this function.
+  void OnCreate(JNIEnv* env, jobject caller_activity);
+
+  // OnPause() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In our application,
+  // we disconnect Tango Service and free the Tango configuration
+  // file. It is important to disconnect Tango Service and release
+  // the coresponding resources in the OnPause() callback from
+  // Android, otherwise, this application will hold on to the Tango
+  // resources and other application will not be able to connect to
+  // Tango Service.
+  void OnPause();
+
+  // Call when Tango Service is connected successfully.
+  void OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
 
   // Setup the configuration file for the Tango Service
   int TangoSetupConfig();
@@ -55,7 +71,7 @@ class MotiongTrackingApp {
   void TangoDisconnect();
 
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
-  void InitializeGLContent();
+  void InitializeGLContent(AAssetManager* aasset_manager);
 
   // Setup the view port width and height.
   void SetViewPort(int width, int height);
@@ -74,9 +90,6 @@ class MotiongTrackingApp {
   //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
   void SetScreenRotation(int screen_roatation);
 
-  // Call when Tango Service is connected successfully.
-  void OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
-
  private:
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement.
@@ -89,6 +102,9 @@ class MotiongTrackingApp {
 
   // Screen rotation index.
   int screen_rotation_;
+
+  // Flag indicating when the Tango service can be used.
+  bool is_service_connected_;
 };
 }  // namespace tango_motion_tracking
 

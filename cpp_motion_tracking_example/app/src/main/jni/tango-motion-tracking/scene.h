@@ -20,9 +20,13 @@
 #include <jni.h>
 #include <memory>
 
+#include <android/asset_manager.h>
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/gesture_camera.h>
 #include <tango-gl/grid.h>
+#include <tango-gl/texture.h>
+#include <tango-gl/shaders.h>
+#include <tango-gl/tango-gl.h>
 #include <tango-gl/util.h>
 
 namespace tango_motion_tracking {
@@ -38,7 +42,7 @@ class Scene {
   ~Scene();
 
   // Allocate OpenGL resources for rendering.
-  void InitGLContent();
+  void InitGLContent(AAssetManager* aasset_manager);
 
   // Release OpenGL resources allocated.
   void DeleteResources();
@@ -46,15 +50,31 @@ class Scene {
   // Setup GL view port.
   void SetupViewPort(int w, int h);
 
+  // Rotate the logo cube in proportion of the time elapsed.
+  void RotateCubeByPose(const TangoPoseData& pose);
+
   // Render loop.
-  void Render(const glm::vec3& position, const glm::quat& roatation);
+  void Render(const TangoPoseData& pose);
 
  private:
   // Camera for rendering the scene.
   tango_gl::Camera* camera_;
 
-  // Ground grid.
-  tango_gl::Grid* grid_;
+  // Floor components.
+  tango_gl::StaticMesh* floor_mesh_;
+  tango_gl::Material* floor_material_;
+  tango_gl::Texture* grass_texture_;
+  tango_gl::Transform floor_transform_;
+
+  // Cube components.
+  tango_gl::StaticMesh* cube_mesh_;
+  tango_gl::Material* cube_material_;
+  tango_gl::Texture* logo_texture_;
+  tango_gl::Transform cube_transform_;
+
+  // Last pose timestamp received
+  double last_pose_timestamp_;
+  double last_angle_;
 };
 }  // namespace tango_motion_tracking
 
