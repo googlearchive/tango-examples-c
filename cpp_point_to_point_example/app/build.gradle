@@ -7,13 +7,18 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 19
+        externalNativeBuild {
+            ndkBuild {
+                abiFilters 'armeabi-v7a'
+            }
+        }
     }
 
-    sourceSets.main {
-        jniLibs.srcDir 'src/main/libs'
-        jni.srcDirs = [];
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -25,17 +30,6 @@ android {
         abortOnError false
     }
 }
-
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn ndkBuild
-}
-task ndkBuild(type: Exec) {
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def ndkbuild = properties.getProperty('ndk.dir', null)+"/ndk-build"
-    commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
-}
-
 
 dependencies {
     compile 'com.android.support:support-v4:22.1.1'

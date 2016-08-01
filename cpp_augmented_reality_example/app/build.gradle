@@ -7,11 +7,11 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 19
-    }
-
-    sourceSets.main {
-        jniLibs.srcDir 'src/main/libs'
-        jni.srcDirs = [];
+        externalNativeBuild {
+            ndkBuild {
+                abiFilters 'armeabi-v7a'
+            }
+        }
     }
 
     buildTypes {
@@ -20,18 +20,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
 }
-
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn ndkBuild
-}
-task ndkBuild(type: Exec) {
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def ndkbuild = properties.getProperty('ndk.dir', null)+"/ndk-build"
-    commandLine ndkbuild, '-C', file('src/main/jni').absolutePath
-}
-
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
