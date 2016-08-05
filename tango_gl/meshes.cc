@@ -124,6 +124,7 @@ tango_gl::StaticMesh* MakeSphereMesh(int rows, int columns, double radius) {
 
   // Generate position grid.
   mesh->vertices = std::vector<glm::vec3>(rows * columns);
+  mesh->normals = std::vector<glm::vec3>(rows * columns);
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
       float theta = i * M_PI / (rows - 1);
@@ -133,6 +134,7 @@ tango_gl::StaticMesh* MakeSphereMesh(int rows, int columns, double radius) {
       float z = -(radius * sin(theta) * sin(phi));
       int index = i * columns + j;
       mesh->vertices[index] = glm::vec3(x, y, z);
+      mesh->normals[index] = glm::vec3(x, y, z);
     }
   }
 

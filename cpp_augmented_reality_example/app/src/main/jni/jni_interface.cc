@@ -36,8 +36,9 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onCreate(
-    JNIEnv* env, jobject, jobject activity) {
-  app.OnCreate(env, activity);
+    JNIEnv* env, jobject, jobject activity, int activity_orientation,
+    int sensor_orientation) {
+  app.OnCreate(env, activity, activity_orientation, sensor_orientation);
 }
 
 JNIEXPORT jboolean JNICALL
@@ -53,9 +54,9 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onPause(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_destroyActivity(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onDestroy(
     JNIEnv*, jobject) {
-  app.ActivityDestroyed();
+  app.OnDestroy();
 }
 
 JNIEXPORT void JNICALL
@@ -66,15 +67,21 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onGlSurfaceCr
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_render(
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
   app.Render();
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onConfigurationChanged(
+    JNIEnv*, jobject, int activity_orientation, int sensor_orientation) {
+  app.OnDeviceRotationChanged(activity_orientation, sensor_orientation);
 }
 
 #ifdef __cplusplus

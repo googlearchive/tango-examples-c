@@ -198,8 +198,9 @@ TangoErrorType TangoSupport_copyXYZij(const TangoXYZij* input_point_cloud,
 ///   the color camera used to obtain uv_coordinates.
 /// @param uv_coordinates The UV coordinates for the user selection. This is
 ///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
-/// @param intersection_point The output point in point cloud coordinates the
-///   user selected. Cannot be NULL.
+/// @param intersection_point The intersection of the fitted plane with the user
+///   selected camera-ray, in point cloud coordinates, accounting for distortion
+///   by undistorting the input uv coordinate. Cannot be NULL.
 /// @param plane_model The four parameters a, b, c, d for the general plane
 ///   equation ax + by + cz + d = 0 of the plane fit. The first three
 ///   components are a unit vector. The output is in the coordinate system of
@@ -461,28 +462,6 @@ TangoErrorType TangoSupport_calculateRelativePose(
     double base_timestamp, TangoCoordinateFrameType base_frame,
     double target_timestamp, TangoCoordinateFrameType target_frame,
     TangoPoseData* base_frame_T_target_frame);
-
-/// @brief Use the device with respect to start of service or area description
-/// pose to calculate the pose of a selected Tango target coordinate frame
-/// represented in the selected rendering engine world coordinate frame.
-/// NOTE: In order to calculate poses from Tango target coordinate frames
-/// other than DEVICE, the device needs to be initialized, otherwise
-/// TANGO_INVALID will be returned.
-///
-/// @param convention The targeted rendering engine coordinate convention.
-/// @param target_frame The Tango device coordinate frame we want represented
-///   in the rendering engine world frame.
-/// @param pose_start_service_T_device A reference to the TangoPoseData to be
-///   converted. This must be for the frame pair (base frame:START_SERVICE
-///   or AREA_DESCRIPTION, target frame: DEVICE).
-/// @param engine_pose Where the resulting pose will be returned.
-/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input or if
-///   the service needs to be initialized, and @c TANGO_ERROR on failure.
-TangoErrorType TangoSupport_getPoseInEngineFrame(
-    const TangoCoordinateConventionType convention,
-    const TangoCoordinateFrameType target_frame,
-    const TangoPoseData& pose_start_service_T_device,
-    TangoPoseData* engine_pose);
 
 /// @brief Get a pose at a given timestamp from the base to the target frame
 /// using the specified engine's coordinate system conventions.

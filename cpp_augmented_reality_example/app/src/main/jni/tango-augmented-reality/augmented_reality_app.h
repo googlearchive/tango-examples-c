@@ -38,7 +38,10 @@ class AugmentedRealityApp {
   //
   // @param env, java environment parameter OnCreate is being called.
   // @param caller_activity, caller of this function.
-  void OnCreate(JNIEnv* env, jobject caller_activity);
+  // @param activity_orientation, orienation param for the activity.
+  // @param sensor_orientation, orientation param for the color camera sensor.
+  void OnCreate(JNIEnv* env, jobject caller_activity, int activity_orientation,
+                int sensor_orientation);
 
   // OnPause() callback is called when this Android application's
   // OnCreate function is called from UI thread. In our application,
@@ -56,7 +59,7 @@ class AugmentedRealityApp {
   // When the Android activity is destroyed signal the JNI layer to
   // remove references to the activity. This should be called from the
   // onDestroy() callback of the parent activity lifecycle.
-  void ActivityDestroyed();
+  void OnDestroy();
 
   // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
@@ -111,6 +114,13 @@ class AugmentedRealityApp {
   // @JavaVM java_vm: the Java VM is using from the Java layer.
   void SetJavaVM(JavaVM* java_vm) { java_vm_ = java_vm; }
 
+  // Called when the device orientation changed
+  //
+  // @JavaVM activity_orientation: orientation of current screen.
+  // @JavaVM sensor_orientation: color camera orientation.
+  void OnDeviceRotationChanged(int activity_orientation,
+                               int sensor_orientation);
+
  private:
   // Request the render function from Java layer.
   void RequestRender();
@@ -123,6 +133,8 @@ class AugmentedRealityApp {
 
   // Format debug string with current and last transforms information.
   void FormatTransformString();
+
+  void UpdateViewporAndProjectionMatrix();
 
   // Current position of the Color Camera with respect to Start of Service.
   glm::mat4 cur_start_service_T_camera_;
@@ -186,6 +198,9 @@ class AugmentedRealityApp {
 
   int viewport_width_;
   int viewport_height_;
+
+  int activity_rotation_;
+  int sensor_rotation_;
 };
 }  // namespace tango_augmented_reality
 

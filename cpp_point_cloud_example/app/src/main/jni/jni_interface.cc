@@ -25,10 +25,10 @@ static tango_point_cloud::PointCloudApp app;
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_checkTangoVersion(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.CheckTangoVersion(env, activity, min_tango_version);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onCreate(
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
 }
 
 JNIEXPORT jboolean JNICALL
@@ -37,28 +37,10 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onTangoServiceConne
   return app.OnTangoServiceConnected(env, binder);
 }
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setupConfig(
-    JNIEnv*, jobject) {
-  return app.TangoSetupConfig();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_connect(JNIEnv*,
-                                                                     jobject) {
-  return app.TangoConnect();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_connectCallbacks(
-    JNIEnv*, jobject) {
-  return app.TangoConnectCallbacks();
-}
-
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_disconnect(
-    JNIEnv*, jobject) {
-  app.TangoDisconnect();
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onPause(JNIEnv*,
+                                                                     jobject) {
+  app.OnPause();
 }
 
 JNIEXPORT void JNICALL
@@ -68,21 +50,15 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceCreated(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_render(JNIEnv*,
-                                                                    jobject) {
-  app.Render();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_deleteResources(
+Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
-  app.DeleteResources();
+  app.Render();
 }
 
 JNIEXPORT jint JNICALL

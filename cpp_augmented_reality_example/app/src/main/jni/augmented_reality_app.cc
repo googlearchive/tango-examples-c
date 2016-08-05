@@ -24,11 +24,35 @@
 namespace {
 const int kVersionStringLength = 128;
 // The minimum Tango Core version required from this application.
-constexpr int kTangoCoreMinimumVersion = 9377;
+const int kTangoCoreMinimumVersion = 9377;
 
 // Far clipping plane of the AR camera.
 const float kArCameraNearClippingPlane = 0.1f;
 const float kArCameraFarClippingPlane = 100.0f;
+
+int CombineSensorRotation(int activity_orientation, int sensor_orientation) {
+  int sensor_orientation_n = 0;
+  switch (sensor_orientation) {
+    case 90:
+      sensor_orientation_n = 1;
+      break;
+    case 180:
+      sensor_orientation_n = 2;
+      break;
+    case 270:
+      sensor_orientation_n = 3;
+      break;
+    default:
+      sensor_orientation_n = 0;
+      break;
+  }
+
+  int ret = activity_orientation - sensor_orientation_n;
+  if (ret < 0) {
+    ret += 4;
+  }
+  return (ret % 4);
+}
 
 // This function routes onTangoEvent callbacks to the application object for
 // handling.
@@ -68,7 +92,9 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
   }
 }
 
-void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity) {
+void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
+                                   int activity_orientation,
+                                   int sensor_orientation) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
@@ -87,6 +113,9 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity) {
 
   is_service_connected_ = false;
   is_texture_id_set_ = false;
+
+  activity_rotation_ = activity_orientation;
+  sensor_rotation_ = sensor_orientation;
 }
 
 bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
@@ -109,7 +138,7 @@ bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
   return true;
 }
 
-void AugmentedRealityApp::ActivityDestroyed() {
+void AugmentedRealityApp::OnDestroy() {
   JNIEnv* env;
   java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
   env->DeleteGlobalRef(calling_activity_obj_);
@@ -162,6 +191,20 @@ int AugmentedRealityApp::TangoSetupConfig() {
     return ret;
   }
 
+  // Drift correction allows motion tracking to recover after it loses tracking.
+  //
+  // The drift corrected pose is is available through the frame pair with
+  // base frame AREA_DESCRIPTION and target frame DEVICE.
+  ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
+                            true);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "AugmentedRealityApp: enabling config_enable_drift_correction "
+        "failed with error code: %d",
+        ret);
+    return ret;
+  }
+
   // Get TangoCore version string from service.
   char tango_core_version[kVersionStringLength];
   ret = TangoConfig_getString(tango_config_, "tango_service_library_version",
@@ -179,9 +222,19 @@ int AugmentedRealityApp::TangoSetupConfig() {
 }
 
 int AugmentedRealityApp::TangoConnectCallbacks() {
+  // Connect color camera texture.
+  TangoErrorType ret = TangoService_connectOnTextureAvailable(
+      TANGO_CAMERA_COLOR, this, onTextureAvailableRouter);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "AugmentedRealityApp: Failed to connect texture callback with error"
+        "code: %d",
+        ret);
+  }
+
   // Attach onEventAvailable callback.
   // The callback will be called after the service is connected.
-  int ret = TangoService_connectOnTangoEvent(onTangoEventAvailableRouter);
+  ret = TangoService_connectOnTangoEvent(onTangoEventAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "AugmentedRealityApp: Failed to connect to event callback with error"
@@ -229,36 +282,25 @@ void AugmentedRealityApp::TangoDisconnect() {
 }
 
 void AugmentedRealityApp::InitializeGLContent(AAssetManager* aasset_manager) {
-  main_scene_.InitGLContent(aasset_manager);
+  main_scene_.InitGLContent(aasset_manager, activity_rotation_,
+                            sensor_rotation_);
 }
 
 void AugmentedRealityApp::SetViewPort(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;
+  UpdateViewporAndProjectionMatrix();
 }
 
-void AugmentedRealityApp::Render() {
-  if (is_service_connected_ && !is_texture_id_set_) {
-    is_texture_id_set_ = true;
-    // Connect color camera texture. TangoService_connectTextureId expects a
-    // valid texture id from the caller, so we will need to wait until the GL
-    // content is properly allocated.
-    TangoErrorType ret = TangoService_connectTextureId(
-        TANGO_CAMERA_COLOR, main_scene_.GetVideoOverlayTextureId(), this,
-        onTextureAvailableRouter);
-    if (ret != TANGO_SUCCESS) {
-      LOGE(
-          "AugmentedRealityApp: Failed to connect the texture id with error"
-          "code: %d",
-          ret);
-    }
-
-    // Query intrinsics for the color camera from the Tango Service, because we
-    // want to match the virtual render camera's intrinsics to the physical
-    // camera, we will compute the actually projection matrix and the view port
-    // ratio for the render.
-    ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
-                                           &color_camera_intrinsics_);
+void AugmentedRealityApp::UpdateViewporAndProjectionMatrix() {
+  // Query intrinsics for the color camera from the Tango Service, because we
+  // want to match the virtual render camera's intrinsics to the physical
+  // camera, we will compute the actually projection matrix and the view port
+  // ratio for the render.
+  float image_plane_ratio = 0.0f;
+  if (is_service_connected_) {
+    int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
+                                               &color_camera_intrinsics_);
     if (ret != TANGO_SUCCESS) {
       LOGE(
           "AugmentedRealityApp: Failed to get camera intrinsics with error"
@@ -273,52 +315,84 @@ void AugmentedRealityApp::Render() {
     float cx = static_cast<float>(color_camera_intrinsics_.cx);
     float cy = static_cast<float>(color_camera_intrinsics_.cy);
 
-    float image_plane_ratio = image_height / image_width;
-
-    glm::mat4 projection_mat_ar =
-        tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-            image_width, image_height, fx, fy, cx, cy,
-            kArCameraNearClippingPlane, kArCameraFarClippingPlane);
-
-    main_scene_.SetProjectionMatrix(projection_mat_ar);
-
-    float screen_ratio = static_cast<float>(viewport_height_) /
-                         static_cast<float>(viewport_width_);
-    // In the following code, we place the view port at (0, 0) from the bottom
-    // left corner of the screen. By placing it at (0,0), the view port may not
-    // be exactly centered on the screen. However, this won't affect AR
-    // visualization as the correct registration of AR objects relies on the
-    // aspect ratio of the screen and video overlay, but not the position of the
-    // view port.
-    //
-    // To place the view port in the center of the screen, please use following
-    // code:
-    //
-    // if (image_plane_ratio < screen_ratio) {
-    //   glViewport(-(h / image_plane_ratio - w) / 2, 0,
-    //              h / image_plane_ratio, h);
-    // } else {
-    //   glViewport(0, -(w * image_plane_ratio - h) / 2, w,
-    //              w * image_plane_ratio);
-    // }
-
-    if (image_plane_ratio < screen_ratio) {
-      glViewport(0, 0, viewport_height_ / image_plane_ratio, viewport_height_);
+    glm::mat4 projection_mat_ar;
+    if (viewport_width_ > viewport_height_) {
+      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+          image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
+          kArCameraFarClippingPlane);
+      image_plane_ratio = image_height / image_width;
     } else {
-      glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
+      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+          image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
+          kArCameraFarClippingPlane);
+      image_plane_ratio = image_width / image_height;
     }
+    main_scene_.SetProjectionMatrix(projection_mat_ar);
+  }
+
+  float screen_ratio = static_cast<float>(viewport_height_) /
+                       static_cast<float>(viewport_width_);
+  // In the following code, we place the view port at (0, 0) from the bottom
+  // left corner of the screen. By placing it at (0,0), the view port may not
+  // be exactly centered on the screen. However, this won't affect AR
+  // visualization as the correct registration of AR objects relies on the
+  // aspect ratio of the screen and video overlay, but not the position of the
+  // view port.
+  //
+  // To place the view port in the center of the screen, please use following
+  // code:
+  //
+  // if (image_plane_ratio < screen_ratio) {
+  //   glViewport(-(h / image_plane_ratio - w) / 2, 0,
+  //              h / image_plane_ratio, h);
+  // } else {
+  //   glViewport(0, -(w * image_plane_ratio - h) / 2, w,
+  //              w * image_plane_ratio);
+  // }
+
+  if (image_plane_ratio < screen_ratio) {
+    glViewport(0, 0, viewport_height_ / image_plane_ratio, viewport_height_);
+  } else {
+    glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
+  }
+}
+
+void AugmentedRealityApp::OnDeviceRotationChanged(int activity_orientation,
+                                                  int sensor_orientation) {
+  activity_rotation_ = activity_orientation;
+  sensor_rotation_ = sensor_orientation;
+  main_scene_.SetVideoOverlayOrientation(activity_orientation,
+                                         sensor_orientation);
+}
+
+void AugmentedRealityApp::Render() {
+  if (is_service_connected_ && !is_texture_id_set_) {
+    is_texture_id_set_ = true;
+    UpdateViewporAndProjectionMatrix();
   }
 
   double video_overlay_timestamp;
-  TangoErrorType status =
-      TangoService_updateTexture(TANGO_CAMERA_COLOR, &video_overlay_timestamp);
+  TangoErrorType status = TangoService_updateTextureExternalOes(
+      TANGO_CAMERA_COLOR, main_scene_.GetVideoOverlayTextureId(),
+      &video_overlay_timestamp);
 
   if (status == TANGO_SUCCESS) {
+    // When drift correction mode is enabled in config file, we need to query
+    // the device with respect to Area Description pose in order to use the
+    // drift corrected pose.
+    //
+    // Note that if you don't want to use the drift corrected pose, the
+    // normal device with respect to start of service pose is still available.
+    int combined_orientation =
+        CombineSensorRotation(activity_rotation_, sensor_rotation_);
+
     TangoDoubleMatrixTransformData matrix_transform;
     status = TangoSupport_getDoubleMatrixTransformAtTime(
-        video_overlay_timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        video_overlay_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0, &matrix_transform);
+        TANGO_SUPPORT_ENGINE_OPENGL,
+        static_cast<TangoSupportDisplayRotation>(combined_orientation),
+        &matrix_transform);
     if (matrix_transform.status_code == TANGO_POSE_VALID) {
       {
         std::lock_guard<std::mutex> lock(transform_mutex_);
@@ -326,12 +400,11 @@ void AugmentedRealityApp::Render() {
       }
 
       TangoPoseData pose;
-
       TangoSupport_getPoseAtTime(
-          0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+          0.0, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
           TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
-          // TODO(duckmanito) Change this zero with the real orientation
-          static_cast<TangoSupportDisplayRotation>(0), &pose);
+          static_cast<TangoSupportDisplayRotation>(combined_orientation),
+          &pose);
 
       if (pose.status_code != TANGO_POSE_VALID) {
         LOGE("AugmentedRealityApp: Tango pose is not valid.");
@@ -344,6 +417,11 @@ void AugmentedRealityApp::Render() {
 
       main_scene_.Render(cur_start_service_T_camera_);
     } else {
+      // When the pose status is not valid, it indicates the tracking has
+      // been lost. In this case, we simply stop rendering.
+      //
+      // This is also the place to display UI to suggest the user walk
+      // to recover tracking.
       LOGE(
           "AugmentedRealityApp: Could not find a valid matrix transform at "
           "time %lf for the color camera.",

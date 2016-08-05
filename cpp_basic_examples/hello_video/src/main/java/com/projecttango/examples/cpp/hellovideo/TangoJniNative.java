@@ -42,7 +42,8 @@ public class TangoJniNative {
      *
      * @param callerActivity the caller activity of this function.
      */
-    public static native void onCreate(Activity callerActivity);
+    public static native void onCreate(Activity callerActivity, int activityOrientation,
+                                       int cameraOrientation);
 
     /**
      * Called when the Tango service is connected.
@@ -57,19 +58,19 @@ public class TangoJniNative {
     public static native void onPause();
 
     /**
-     * Delegate {@code GLSurfaceView.onSurfaceCreated} to the native code code.
+     * Delegate {@code GLSurfaceView.onGlSurfaceCreated} to the native code code.
      */
-    public static native void onSurfaceCreated();
+    public static native void onGlSurfaceCreated();
 
     /**
-     * Delegate {@code GLSurfaceView.onSurfaceChanged} to the native code code.
+     * Delegate {@code GLSurfaceView.onGlSurfaceChanged} to the native code code.
      */
-    public static native void onSurfaceChanged(int width, int height);
+    public static native void onGlSurfaceChanged(int width, int height);
 
     /**
-     * Delegate {@code GLSurfaceView.onDrawFrame} to the native code code.
+     * Delegate {@code GLSurfaceView.onGlSurfaceDrawFrame} to the native code code.
      */
-    public static native void onDrawFrame();
+    public static native void onGlSurfaceDrawFrame();
 
     /**
      * Select the RGB camera texture rendering method.

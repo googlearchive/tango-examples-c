@@ -114,6 +114,12 @@ class Material {
   // Get the shader program's Model-View matrix uniform index.
   GLint GetUniformModelViewMatrix() const { return uniform_mv_mat_; }
 
+  // Get the shader program's Model matrix uniform index.
+  GLint GetUniformModelMatrix() const { return uniform_m_mat_; }
+
+  // Get the shader program's Normal matrix uniform index.
+  GLint GetUniformNormalMatrix() const { return uniform_normal_mat_; }
+
  private:
   // Set the shader for this material to the fallback shader.  This
   // will never fail.
@@ -148,6 +154,12 @@ class Material {
 
   // Current shader program's Model-View matrix uniform index.
   GLint uniform_mv_mat_;
+
+  // Current shader program's Model matrix uniform index.
+  GLint uniform_m_mat_;
+
+  // Current shader program's Normal matrix uniform index.
+  GLint uniform_normal_mat_;
 
   // A hash table of float parameters.
   std::unordered_map<GLint, float> params_float_;

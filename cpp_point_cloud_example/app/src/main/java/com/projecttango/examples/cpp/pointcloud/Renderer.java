@@ -28,12 +28,12 @@ import javax.microedition.khronos.opengles.GL10;
 public class Renderer implements GLSurfaceView.Renderer {
   // Render loop of the Gl context.
   public void onDrawFrame(GL10 gl) {
-    TangoJNINative.render();
+    TangoJNINative.onGlSurfaceDrawFrame();
   }
 
   // Called when the surface size changes.
   public void onSurfaceChanged(GL10 gl, int width, int height) {
-    TangoJNINative.setupGraphic(width, height);
+    TangoJNINative.onGlSurfaceChanged(width, height);
   }
 
   // Called when the surface is created or recreated.

@@ -40,16 +40,28 @@ class PlaneFittingApplication {
   PlaneFittingApplication();
   ~PlaneFittingApplication();
 
-  // Check that the installed version of the Tango API is up to date
-  // and initialize other data.
+  // OnCreate() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In the OnCreate
+  // function, we are only checking the Tango Core's version.
   //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  bool CheckTangoVersion(JNIEnv* env, jobject caller_activity,
-                         int min_tango_version);
+  // @param env, java environment parameter OnCreate is being called.
+  // @param caller_activity, caller of this function.
+  // @param activity_orientation, orienation param for the activity.
+  // @param sensor_orientation, orientation param for the color camera sensor.
+  void OnCreate(JNIEnv* env, jobject caller_activity);
+
+  // OnPause() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In our application,
+  // we disconnect Tango Service and free the Tango configuration
+  // file. It is important to disconnect Tango Service and release
+  // the coresponding resources in the OnPause() callback from
+  // Android, otherwise, this application will hold on to the Tango
+  // resources and other application will not be able to connect to
+  // Tango Service.
+  void OnPause();
 
   // Called when Tango Service is connected successfully.
-  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
+  bool OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Setup configuration options for Project Tango service, register
   // for callbacks, and connect to the Project Tango service.
@@ -97,12 +109,12 @@ class PlaneFittingApplication {
 
   // Return transform for depth camera in Tango coordinate convention with
   // respect to
-  // Start of Service in OpenGL coordinate convention. The reason to switch from
+  // Area Description in OpenGL coordinate convention. The reason to switch from
   // one convention to
   // the other is an optimization that allow us to avoid transforming the depth
   // points into OpenGL
   // coordinate frame.
-  glm::mat4 GetStartServiceTDepthTransform();
+  glm::mat4 GetAreaDescriptionTDepthTransform();
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;

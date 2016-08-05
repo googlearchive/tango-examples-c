@@ -45,9 +45,6 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  */
 public class AreaDescriptionActivity extends Activity implements
       SetAdfNameDialog.CallbackListener, SaveAdfTask.SaveAdfListener {
-  // The minimum Tango Core version required from this application.
-  private static final int MIN_TANGO_CORE_VERSION = 9377;
-
   // Tag for debug logging.
   private static final String TAG = AreaDescriptionActivity.class.getSimpleName();
 
@@ -62,8 +59,8 @@ public class AreaDescriptionActivity extends Activity implements
   // Flag that controls whether user wants to run area learning mode.
   private boolean mIsAreaLearningEnabled = false;
 
-  // Flag that controls whether user wants to load the latest ADF file.
-  private boolean mIsLoadingADF = false;
+  // Flag that controls whether user wants to load the latest area description.
+  private boolean mIsLoadingAreaDescription = false;
 
   // Screen size for normalizing the touch input for orbiting the render camera.
   private Point mScreenSize = new Point();
@@ -77,35 +74,15 @@ public class AreaDescriptionActivity extends Activity implements
   // Tango Service connection.
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
-        // The following code block does setup and connection to Tango.
-        if (!TangoJniNative.onTangoServiceConnected(service)) {
-          Log.e(TAG, "Tango Service connection error.");
-        }
-          
-        // Setup the configuration for the TangoService, passing in our setting
-        // for the auto-recovery option.
-        TangoJniNative.setupConfig(mIsAreaLearningEnabled, mIsLoadingADF);
-
-        // Connect the onPoseAvailable callback.
-        TangoJniNative.connectCallbacks();
-
-        // Connect to Tango Service (returns true on success).
-        // Starts Motion Tracking and Area Learning.
-        if (TangoJniNative.connect()) {
-          // Display loaded ADF's UUID.
-          mAdfUuidTextView.setText(TangoJniNative.getLoadedAdfUuidString());
-        } else {
-          runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                // End the activity and let the user know something went wrong.
-                Toast.makeText(AreaDescriptionActivity.this, R.string.tango_cant_initialize,
-                               Toast.LENGTH_LONG).show();
-                finish();
-                return;
-              }
-            });
-        }
+        TangoJniNative.onTangoServiceConnected(service, mIsAreaLearningEnabled,
+                                               mIsLoadingAreaDescription);
+        // Display loaded ADF's UUID.
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            mAdfUuidTextView.setText(TangoJniNative.getLoadedAdfUuidString());
+          }
+        });
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -117,17 +94,9 @@ public class AreaDescriptionActivity extends Activity implements
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     queryDataFromStartActivity();
     setupUiComponents();
-
-    // Check that the installed version of the Tango Core is up to date.
-    if (!TangoJniNative.initialize(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core is out of date, please update in Play Store",
-                     Toast.LENGTH_LONG).show();
-      finish();
-      return;
-    }
+    TangoJniNative.onCreate(this);
   }
 
   @Override
@@ -143,15 +112,16 @@ public class AreaDescriptionActivity extends Activity implements
   @Override
   protected void onPause() {
     super.onPause();
-    TangoJniNative.deleteResources();
-
-    // Disconnect from Tango Service, release all the resources that the app is
-    // holding from Tango Service.
-    TangoJniNative.disconnect();
+    TangoJniNative.onPause();
     unbindService(mTangoServiceConnection);
-
     // Stop the debug text UI update loop.
     mHandler.removeCallbacksAndMessages(null);
+  }
+
+  @Override
+  protected void onDestroy(){
+    super.onDestroy();
+    TangoJniNative.onDestroy();
   }
 
   /**
@@ -232,7 +202,7 @@ public class AreaDescriptionActivity extends Activity implements
     Intent initValueIntent = getIntent();
     mIsAreaLearningEnabled =
       initValueIntent.getBooleanExtra(StartActivity.USE_AREA_LEARNING, false);
-    mIsLoadingADF =
+    mIsLoadingAreaDescription =
       initValueIntent.getBooleanExtra(StartActivity.LOAD_ADF, false);
   }
 

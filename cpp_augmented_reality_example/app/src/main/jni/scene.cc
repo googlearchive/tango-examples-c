@@ -42,13 +42,15 @@ Scene::Scene() {}
 
 Scene::~Scene() {}
 
-void Scene::InitGLContent(AAssetManager* aasset_manager) {
+void Scene::InitGLContent(AAssetManager* aasset_manager,
+                          int activity_orientation, int sensor_orientation) {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
   // Allocating render camera and drawable object.
   // All of these objects are for visualization purposes.
-  video_overlay_ = new tango_gl::VideoOverlay();
+  video_overlay_ =
+      new tango_gl::VideoOverlay(activity_orientation, sensor_orientation);
   camera_ = new tango_gl::Camera();
 
   // Init earth mesh and material
@@ -162,6 +164,12 @@ void Scene::RotateYAxisTransform(const TangoPoseData& pose,
     transform->SetRotation(glm::quat(w, 0.0f, y, 0.0f));
   }
   *last_pose = pose.timestamp;
+}
+
+void Scene::SetVideoOverlayOrientation(int activity_orientation,
+                                       int sensor_orientation) {
+  video_overlay_->SetOrientationFromAndroid(activity_orientation,
+                                            sensor_orientation);
 }
 
 }  // namespace tango_augmented_reality

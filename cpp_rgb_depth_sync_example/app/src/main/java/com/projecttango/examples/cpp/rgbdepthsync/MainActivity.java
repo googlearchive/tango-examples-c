@@ -55,25 +55,6 @@ public class MainActivity extends Activity {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         JNIInterface.onTangoServiceConnected(service);
-        if (!JNIInterface.tangoSetupConfig()) {
-          Log.e(TAG, "Failed to set config.");
-          finish();
-        }
-
-        if (!JNIInterface.tangoConnectCallbacks()) {
-          Log.e(TAG, "Failed to set connect callbacks.");
-          finish();
-        }
-
-        if (!JNIInterface.tangoConnect()) {
-          Log.e(TAG, "Failed to set connect service.");
-          finish();
-        }
-
-        if (!JNIInterface.tangoSetIntrinsicsAndExtrinsics()) {
-          Log.e(TAG, "Failed to set extrinsics and intrinsics.");
-          finish();
-        }
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -151,13 +132,7 @@ public class MainActivity extends Activity {
     mRenderer = new GLSurfaceRenderer(this);
     mGLView.setRenderer(mRenderer);
 
-    // Check that the installed version of the Tango Core is up to date.
-    if (!JNIInterface.checkTangoVersion(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core out of date, please update in Play Store",
-                     Toast.LENGTH_LONG).show();
-      finish();
-      return;
-    }
+    JNIInterface.onCreate(this);
   }
 
   @Override
@@ -173,15 +148,11 @@ public class MainActivity extends Activity {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    JNIInterface.tangoDisconnect();
+    JNIInterface.onPause();
     unbindService(mTangoServiceConnection);
   }
 
   public void surfaceCreated() {
-    JNIInterface.initializeGLContent();
-    if (!JNIInterface.tangoConnectTexture()) {
-      Log.e(TAG, "Failed to connect texture.");
-      finish();
-    }
+    JNIInterface.onGlSurfaceCreated();
   }
 }

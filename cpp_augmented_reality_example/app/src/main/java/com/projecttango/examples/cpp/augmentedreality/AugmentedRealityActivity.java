@@ -19,21 +19,14 @@ package com.projecttango.examples.cpp.augmentedreality;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
 import android.graphics.Point;
+import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.Display;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
@@ -42,6 +35,9 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * glSurfaceView that renders graphic content.
  */
 public class AugmentedRealityActivity extends Activity {
+  // On current Tango devices, camera id 0 is the color camera.
+  private static final int CAMERA_ID = 0;
+
   // GLSurfaceView and its renderer, all of the graphic content is rendered
   // through OpenGL ES 2.0 in the native code.
   private AugmentedRealityRenderer mRenderer;
@@ -69,14 +65,16 @@ public class AugmentedRealityActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    TangoJNINative.onCreate(this);
+    WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+    Display display = windowManager.getDefaultDisplay();
+    display.getSize(mScreenSize);
+    Camera.CameraInfo info = new Camera.CameraInfo();
+    Camera.getCameraInfo(CAMERA_ID, info);
+
+    TangoJNINative.onCreate(this, display.getRotation(), info.orientation);
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-    // Querying screen size, used for computing the normalized touch point.
-    Display display = getWindowManager().getDefaultDisplay();
-    display.getSize(mScreenSize);
 
     // Setting content view of this activity and getting the mIsAutoRecovery
     // flag from StartActivity.
@@ -118,10 +116,23 @@ public class AugmentedRealityActivity extends Activity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    TangoJNINative.destroyActivity();
+    TangoJNINative.onDestroy();
   }
 
-  // Request render on the glSurfaceView. This function is called from the
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+
+    WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+    Display display = windowManager.getDefaultDisplay();
+    display.getSize(mScreenSize);
+    Camera.CameraInfo info = new Camera.CameraInfo();
+    Camera.getCameraInfo(CAMERA_ID, info);
+
+    TangoJNINative.onConfigurationChanged(display.getRotation(), info.orientation);
+  }
+
+  // Request onGlSurfaceDrawFrame on the glSurfaceView. This function is called from the
   // native code, and it is triggered from the onTextureAvailable callback from
   // the Tango Service.
   public void requestRender() {
@@ -130,6 +141,4 @@ public class AugmentedRealityActivity extends Activity {
     }
     mGLView.requestRender();
   }
-
-
 }

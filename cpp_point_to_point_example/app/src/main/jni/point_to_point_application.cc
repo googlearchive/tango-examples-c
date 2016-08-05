@@ -30,6 +30,8 @@ namespace tango_point_to_point {
 namespace {
 
 constexpr float kCubeScale = 0.05f;
+// The minimum Tango Core version required from this application.
+constexpr int kTangoCoreMinimumVersion = 9377;
 
 /**
  * This function will route callbacks to our application object via the context
@@ -88,13 +90,42 @@ PointToPointApplication::~PointToPointApplication() {
   image_buffer_manager_ = nullptr;
 }
 
-bool PointToPointApplication::CheckTangoVersion(JNIEnv* env, jobject activity,
-                                                int min_tango_version) {
+void PointToPointApplication::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  return err == TANGO_SUCCESS && version >= min_tango_version;
+
+  if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
+    LOGE(
+        "PointToPointApplication::OnCreate, Tango Core version is out of "
+        "date.");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
+  if (tango_config_ == nullptr) {
+    LOGE("PointToPointApplication::OnCreate, Unable to get tango config");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  if (point_cloud_manager_ == nullptr) {
+    int32_t max_point_cloud_elements;
+    err = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
+                               &max_point_cloud_elements);
+    if (err != TANGO_SUCCESS) {
+      LOGE(
+          "PointToPointApplication::OnCreate, "
+          "Failed to query maximum number of point cloud elements.");
+      std::exit(EXIT_SUCCESS);
+    }
+
+    err = TangoSupport_createPointCloudManager(max_point_cloud_elements,
+                                               &point_cloud_manager_);
+    if (err != TANGO_SUCCESS) {
+      std::exit(EXIT_SUCCESS);
+    }
+  }
 }
 
 void PointToPointApplication::OnTangoServiceConnected(JNIEnv* env,
@@ -105,54 +136,44 @@ void PointToPointApplication::OnTangoServiceConnected(JNIEnv* env,
         "PointToPointApplication: Failed to initialize Tango service with"
         "error code: %d",
         ret);
+    std::exit(EXIT_SUCCESS);
   }
+
+  TangoSetupAndConnect();
 }
 
 int PointToPointApplication::TangoSetupAndConnect() {
-  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
-  if (tango_config_ == nullptr) {
-    LOGE("PointToPointApplication: Unable to get tango config");
-    return TANGO_ERROR;
-  }
-
-  TangoErrorType ret;
-  /**
-   * The point_cloud_manager_ contains the depth buffer data and allows
-   * reading and writing of data in a thread safe way.
-   */
-  if (point_cloud_manager_ == nullptr) {
-    int32_t max_point_cloud_elements;
-    ret = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
-                               &max_point_cloud_elements);
-    if (ret != TANGO_SUCCESS) {
-      LOGE(
-          "PointToPointApplication: Failed to query maximum number of point"
-          " cloud elements.");
-      return ret;
-    }
-
-    ret = TangoSupport_createPointCloudManager(max_point_cloud_elements,
-                                               &point_cloud_manager_);
-    if (ret != TANGO_SUCCESS) {
-      return ret;
-    }
-  }
-
   // Here, we will configure the service to run in the way we would want. For
   // this application, we will start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   // In addition to motion tracking, however, we want to run with depth so that
   // we can measure things. As such, we are going to set an additional flag
   // "config_enable_depth" to true.
+  if (tango_config_ == nullptr) {
+    return false;
+  }
+
+  TangoErrorType ret;
   ret = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable depth.");
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   ret = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable color camera.");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  // Drift correction allows motion tracking to recover after it loses tracking.
+  //
+  // The drift corrected pose is is available through the frame pair with
+  // base frame AREA_DESCRIPTION and target frame DEVICE.
+  ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
+                            true);
+  if (ret != TANGO_SUCCESS) {
+    LOGE("Fail to enable drift correction mode");
     return ret;
   }
 
@@ -164,14 +185,14 @@ int PointToPointApplication::TangoSetupAndConnect() {
                             "config_enable_low_latency_imu_integration", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable low latency imu integration.");
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Register for depth notification.
   ret = TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to connected to depth callback.");
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Here, we will connect to the TangoService and set up to run. Note that
@@ -180,7 +201,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
   ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to connect to the Tango service.");
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Get the intrinsics for the color camera and pass them on to the depth
@@ -192,6 +213,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
     LOGE(
         "PointToPointApplication: Failed to get the intrinsics for the color"
         "camera.");
+    std::exit(EXIT_SUCCESS);
   }
 
   // Register for image notification.
@@ -199,7 +221,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
                                              OnFrameAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Error connecting color frame %d", ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   /**
@@ -213,7 +235,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
 
     if (ret != TANGO_SUCCESS) {
       LOGE("PointToPointApplication: Failed to create image buffer manager");
-      return ret;
+      std::exit(EXIT_SUCCESS);
     }
   }
 
@@ -227,6 +249,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
                                              &interpolator_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to set up interpolator.");
+    std::exit(EXIT_SUCCESS);
   }
 
   constexpr float kNearPlane = 0.1;
@@ -244,12 +267,16 @@ int PointToPointApplication::TangoSetupAndConnect() {
   return ret;
 }
 
+void PointToPointApplication::OnPause() {
+  TangoDisconnect();
+  DeleteResources();
+}
+
 void PointToPointApplication::TangoDisconnect() { TangoService_disconnect(); }
 
 int PointToPointApplication::InitializeGLContent() {
   video_overlay_ = new tango_gl::VideoOverlay();
   segment_ = new tango_gl::SegmentDrawable();
-
   segment_->SetLineWidth(4.0);
   segment_->SetColor(1.0, 1.0, 1.0);
   tap_number_ = 0;
@@ -294,20 +321,34 @@ void PointToPointApplication::Render() {
   }
 
   // Querying the GPU color image's frame transformation based its timestamp.
+  //
+  // When drift correction mode is enabled in config file, we need to query
+  // the device with respect to Area Description pose in order to use the
+  // drift corrected pose.
+  //
+  // Note that if you don't want to use the drift corrected pose, the
+  // normal device with respect to start of service pose is still available.
   TangoMatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
-      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
+    // When the pose status is not valid, it indicates the tracking has
+    // been lost. In this case, we simply stop rendering.
+    //
+    // This is also the place to display UI to suggest the user walk
+    // to recover tracking.
     LOGE(
         "PointToPointApplication: Could not find a valid matrix transform at "
         "time %lf for the color camera.",
         last_gpu_timestamp_);
+    return;
   } else {
-    start_service_T_color_camera_ = glm::make_mat4(matrix_transform.matrix);
+    const glm::mat4 start_service_T_color_camera =
+        glm::make_mat4(matrix_transform.matrix);
+    GLRender(start_service_T_color_camera);
   }
-  GLRender(start_service_T_color_camera_);
 }
 
 void PointToPointApplication::GLRender(
@@ -354,7 +395,6 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
     return;
   }
   float uv[2] = {x / screen_width_, y / screen_height_};
-
   // use this to calculate position relative to depth camera
   float depth_position[3] = {0.0f, 0.0f, 0.0f};
   // This sets the position relative to the depth camera.
@@ -378,7 +418,7 @@ glm::mat4 PointToPointApplication::GetStartServiceTDepthPose() {
   glm::mat4 start_service_opengl_T_depth_tango;
   TangoMatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
-      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {

@@ -65,12 +65,12 @@ public class TangoJNINative {
   /**
    * Setup the view port width and height.
    */
-  public static native void setupGraphic(int width, int height);
+  public static native void onGlSurfaceChanged(int width, int height);
 
   /**
    * Main render loop.
    */
-  public static native void render();
+  public static native void onGlSurfaceDrawFrame();
 
   /**
    * Set screen rotation index.

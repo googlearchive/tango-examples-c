@@ -25,7 +25,6 @@
 
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
-#include <hello_video/yuv_drawable.h>
 #include <tango-gl/video_overlay.h>
 
 namespace hello_video {
@@ -44,7 +43,10 @@ class HelloVideoApp {
   //
   // @param env, java environment parameter OnCreate is being called.
   // @param caller_activity, caller of this function.
-  void OnCreate(JNIEnv* env, jobject caller_activity);
+  // @param env, orienation param for the activity.
+  // @param caller_activity, orientation param for the color camera sensor.
+  void OnCreate(JNIEnv* env, jobject caller_activity, int activity_rotation,
+                int sensor_rotation);
 
   // Called when the Tango service is connect. We set the binder object to Tango
   // Service in this function.
@@ -88,7 +90,7 @@ class HelloVideoApp {
 
   // video_overlay_ Render the camera video feedback onto the screen.
   tango_gl::VideoOverlay* video_overlay_drawable_;
-  YuvDrawable* yuv_drawable_;
+  tango_gl::VideoOverlay* yuv_drawable_;
 
   TextureMethod current_texture_method_;
 
@@ -107,6 +109,9 @@ class HelloVideoApp {
 
   bool is_service_connected_;
   bool is_texture_id_set_;
+
+  int activity_rotation_;
+  int sensor_rotation_;
 
   void AllocateTexture(GLuint texture_id, int width, int height);
   void RenderYuv();

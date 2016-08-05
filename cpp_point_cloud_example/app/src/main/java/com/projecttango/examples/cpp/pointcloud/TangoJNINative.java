@@ -16,6 +16,7 @@
 
 package com.projecttango.examples.cpp.pointcloud;
 
+import android.app.Activity;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -35,43 +36,33 @@ public class TangoJNINative {
     System.loadLibrary("cpp_point_cloud_example");
   }
 
-  // Check that the installed version of the Tango API is up to date.
-  //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  public static native boolean checkTangoVersion(PointcloudActivity activity,
-                                                 int minTangoVersion);
+  /**
+   * Interfaces to native OnCreate function.
+   *
+   * @param callerActivity the caller activity of this function.
+   */
+  public static native void onCreate(Activity callerActivity);
 
-  // Called when Tango Service is connected successfully.
-  public static native boolean onTangoServiceConnected(IBinder binder);
+  /**
+   * Called when the Tango service is connected successfully.
+   *
+   * @param nativeTangoServiceBinder The native binder object.
+   */
+  public static native void onTangoServiceConnected(IBinder nativeTangoServiceBinder);
 
-  // Setup the configuration file of the Tango Service. We are also setting up
-  // the auto-recovery option from here.
-  public static native int setupConfig();
-
-  // Connect the onPoseAvailable callback.
-  public static native int connectCallbacks();
-
-  // Connect to the Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Motion Tracking and Depth sensing.
-  public static native boolean connect();
-
-  // Disconnect from the Tango Service, release all the resources that the app is
-  // holding from the Tango Service.
-  public static native void disconnect();
-
-  // Release all non OpenGl resources that are allocated from the program.
-  public static native void deleteResources();
+  /**
+   * Interfaces to native OnPause function.
+   */
+  public static native void onPause();
 
   // Allocate OpenGL resources for rendering.
   public static native void onGlSurfaceCreated();
 
   // Setup the view port width and height.
-  public static native void setupGraphic(int width, int height);
+  public static native void onGlSurfaceChanged(int width, int height);
 
   // Main render loop.
-  public static native void render();
+  public static native void onGlSurfaceDrawFrame();
 
   // Set the render camera's viewing angle:
   //   first person, third person, or top down.

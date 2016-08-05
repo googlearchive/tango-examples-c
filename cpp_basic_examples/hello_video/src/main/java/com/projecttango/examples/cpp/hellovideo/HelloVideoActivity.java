@@ -19,10 +19,13 @@ package com.projecttango.examples.cpp.hellovideo;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
+import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ToggleButton;
 
 import com.projecttango.examples.cpp.util.TangoInitializationHelper;
@@ -31,6 +34,8 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * Main activity shows video overlay scene.
  */
 public class HelloVideoActivity extends Activity {
+    private static final int CAMERA_ID = 0;
+
     private GLSurfaceView mSurfaceView;
     private ToggleButton mYuvRenderSwitcher;
 
@@ -53,7 +58,13 @@ public class HelloVideoActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        TangoJniNative.onCreate(this);
+        // Check the current screen rotation and set it to the renderer.
+        WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.getCameraInfo(CAMERA_ID, info);
+
+        TangoJniNative.onCreate(this, display.getRotation(), info.orientation);
 
         // Configure OpenGL renderer
         mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);

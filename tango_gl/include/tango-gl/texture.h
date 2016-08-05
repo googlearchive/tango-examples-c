@@ -27,16 +27,19 @@ namespace tango_gl {
 class Texture {
  public:
   explicit Texture(AAssetManager* mgr, const char* file_path);
+  Texture(GLenum texture_id, GLenum texture_target);
   Texture(const Texture& other) = delete;
   Texture& operator=(const Texture&) = delete;
 
   bool LoadFromPNG(FILE* file);
   GLuint GetTextureID() const;
+  GLenum GetTextureTarget() const;
 
  private:
   png_uint_32 width_, height_;
   int bit_depth_, color_type_;
   GLuint texture_id_;
+  GLenum texture_target_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_TEXTURE_H_

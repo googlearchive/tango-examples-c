@@ -80,27 +80,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName name, IBinder service) {
       TangoJNINative.onTangoServiceConnected(service);
-        
-      // Setup the configuration for the TangoService.
-      TangoJNINative.setupConfig();
-
-      // Connect the onPoseAvailable callback.
-      TangoJNINative.connectCallbacks();
-
-      // Connect to Tango Service (returns true on success).
-      // Starts Motion Tracking and Area Learning.
-      if (!TangoJNINative.connect()) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-              // End the activity and let the user know something went wrong.
-              Toast.makeText(PointcloudActivity.this, "Connect Tango Service Error",
-                             Toast.LENGTH_LONG).show();
-              finish();
-              return;
-            }
-          });
-      }
     }
 
     public void onServiceDisconnected(ComponentName name) {
@@ -143,13 +122,7 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     mRenderer = new Renderer();
     mGLView.setRenderer(mRenderer);
 
-    // Check if the Tango Core is out of date.
-    if (!TangoJNINative.checkTangoVersion(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core out of date, please update in Play Store",
-                     Toast.LENGTH_LONG).show();
-      finish();
-      return;
-    }
+    TangoJNINative.onCreate(this);
   }
 
   @Override
@@ -167,15 +140,10 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    // Delete all the non-OpenGl resources.
-    TangoJNINative.deleteResources();
+    TangoJNINative.onPause();
 
     // Stop the debug text UI update loop.
     mHandler.removeCallbacksAndMessages(null);
-
-    // Disconnect from Tango Service, release all the resources that the app is
-    // holding from Tango Service.
-    TangoJNINative.disconnect();
     unbindService(mTangoServiceConnection);
   }
 

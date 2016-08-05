@@ -31,53 +31,30 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
   return JNI_VERSION_1_6;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_initialize(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.Initialize(env, activity, min_tango_version);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_onCreate(
+    JNIEnv* env, jobject /*obj*/, jobject caller_activity) {
+  app.OnCreate(env, caller_activity);
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_onTangoServiceConnected(
-    JNIEnv* env, jobject, jobject binder) {
-  return app.OnTangoServiceConnected(env, binder);
+    JNIEnv* env, jobject, jobject binder, jboolean is_area_learning_enabled,
+    jboolean is_loading_area_description) {
+  app.OnTangoServiceConnected(env, binder, is_area_learning_enabled,
+                              is_loading_area_description);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_destroyActivity(
+Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_onPause(
     JNIEnv*, jobject) {
-  app.ActivityDestroyed();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_setupConfig(
-    JNIEnv*, jobject, bool is_area_learningEnabled, bool is_loading_adf) {
-  return app.TangoSetupConfig(is_area_learningEnabled, is_loading_adf);
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_connect(
-    JNIEnv*, jobject) {
-  return app.TangoConnect();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_connectCallbacks(
-    JNIEnv*, jobject) {
-  int ret = app.TangoConnectCallbacks();
-  return ret;
+  app.OnPause();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_disconnect(
+Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_onDestroy(
     JNIEnv*, jobject) {
-  app.TangoDisconnect();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_helloareadescription_TangoJniNative_deleteResources(
-    JNIEnv*, jobject) {
-  app.DeleteResources();
+  app.OnDestroy();
 }
 
 JNIEXPORT jboolean JNICALL

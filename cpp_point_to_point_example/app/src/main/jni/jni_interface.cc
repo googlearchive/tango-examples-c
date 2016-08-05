@@ -23,11 +23,16 @@ static tango_point_to_point::PointToPointApplication app;
 #ifdef __cplusplus
 extern "C" {
 #endif
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onCreate(
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
+}
 
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_checkTangoVersion(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.CheckTangoVersion(env, activity, min_tango_version);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onPause(JNIEnv*,
+                                                                     jobject) {
+  app.OnPause();
 }
 
 JNIEXPORT void JNICALL
@@ -37,19 +42,7 @@ Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onTangoServiceConne
 }
 
 JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_tangoSetupAndConnect(
-    JNIEnv* /*env*/, jobject /*obj*/) {
-  return app.TangoSetupAndConnect();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_tangoDisconnect(
-    JNIEnv* /*env*/, jobject /*obj*/) {
-  app.TangoDisconnect();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_initializeGLContent(
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceCreated(
     JNIEnv* /*env*/, jobject /*obj*/) {
   return app.InitializeGLContent();
 }
@@ -67,21 +60,15 @@ Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_getPointSeparation(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_setViewPort(
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceChanged(
     JNIEnv* /*env*/, jobject /*obj*/, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_render(
+Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceDrawFrame(
     JNIEnv* /*env*/, jobject /*obj*/) {
   app.Render();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_deleteResources(
-    JNIEnv* /*env*/, jobject /*obj*/) {
-  app.DeleteResources();
 }
 
 JNIEXPORT void JNICALL

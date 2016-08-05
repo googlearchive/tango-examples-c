@@ -43,8 +43,23 @@ class PointToPointApplication {
   PointToPointApplication();
   ~PointToPointApplication();
 
-  // Make sure tango core version is up to date
-  bool CheckTangoVersion(JNIEnv* env, jobject activity, int min_tango_version);
+  // OnCreate() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In the OnCreate
+  // function, we are only checking the Tango Core's version.
+  //
+  // @param env, java environment parameter OnCreate is being called.
+  // @param caller_activity, caller of this function.
+  void OnCreate(JNIEnv* env, jobject caller_activity);
+
+  // OnPause() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In our application,
+  // we disconnect Tango Service and free the Tango configuration
+  // file. It is important to disconnect Tango Service and release
+  // the coresponding resources in the OnPause() callback from
+  // Android, otherwise, this application will hold on to the Tango
+  // resources and other application will not be able to connect to
+  // Tango Service.
+  void OnPause();
 
   // Called when Tango Service is connected successfully.
   void OnTangoServiceConnected(JNIEnv* env, jobject binder);
@@ -116,9 +131,6 @@ class PointToPointApplication {
   // points into OpenGL
   // coordinate frame.
   glm::mat4 GetStartServiceTDepthPose();
-
-  // Last valid transform from Color Camera to Start of Service.
-  glm::mat4 start_service_T_color_camera_;
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
