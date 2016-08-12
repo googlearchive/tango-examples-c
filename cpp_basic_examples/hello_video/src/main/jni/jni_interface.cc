@@ -26,8 +26,9 @@ extern "C" {
 #endif
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onCreate(
-    JNIEnv* env, jobject, jobject activity) {
-  app.OnCreate(env, activity);
+    JNIEnv* env, jobject, jobject activity, int activity_rotation,
+    int sensor_rotation) {
+  app.OnCreate(env, activity, activity_rotation, sensor_rotation);
 }
 
 JNIEXPORT void JNICALL
@@ -43,19 +44,19 @@ Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onPause(
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onSurfaceCreated(
+Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceCreated(
     JNIEnv*, jobject) {
   app.OnSurfaceCreated();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onSurfaceChanged(
+Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
   app.OnSurfaceChanged(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onDrawFrame(
+Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
   app.OnDrawFrame();
 }

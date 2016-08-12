@@ -36,27 +36,30 @@ public class JNIInterface {
     System.loadLibrary("cpp_rgb_depth_sync_example");
   }
 
-  public static native boolean checkTangoVersion(Activity activity, int minTangoVersion);
+  /**
+   * Interfaces to native OnCreate function.
+   *
+   * @param callerActivity the caller activity of this function.
+   */
+  public static native void onCreate(Activity callerActivity);
 
-  public static native void onTangoServiceConnected(IBinder binder);
+  /**
+   * Called when the Tango service is connected successfully.
+   *
+   * @param nativeTangoServiceBinder The native binder object.
+   */
+  public static native void onTangoServiceConnected(IBinder nativeTangoServiceBinder);
 
-  public static native boolean tangoSetupConfig();
+  /**
+   * Interfaces to native OnPause function.
+   */
+  public static native void onPause();
 
-  public static native boolean tangoConnectTexture();
+  public static native void onGlSurfaceCreated();
 
-  public static native boolean tangoConnect();
+  public static native void onGlSurfaceChanged(int width, int height);
 
-  public static native boolean tangoConnectCallbacks();
-
-  public static native boolean tangoSetIntrinsicsAndExtrinsics();
-
-  public static native void tangoDisconnect();
-
-  public static native void initializeGLContent();
-
-  public static native void setViewPort(int width, int height);
-
-  public static native void render();
+  public static native void onGlSurfaceDrawFrame();
 
   public static native void setDepthAlphaValue(float alpha);
 

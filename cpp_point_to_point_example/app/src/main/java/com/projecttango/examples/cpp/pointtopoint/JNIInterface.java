@@ -36,26 +36,28 @@ public class JNIInterface {
     System.loadLibrary("cpp_point_to_point_example");
   }
 
-  // Check that the installed version of the Tango API is up to date.
-  //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  public static native boolean checkTangoVersion(MainActivity activity,
-                                                 int minTangoVersion);
+  /**
+   * Interfaces to native OnCreate function.
+   *
+   * @param callerActivity the caller activity of this function.
+   */
+  public static native void onCreate(Activity callerActivity);
 
-  // Called when Tango Service is connected successfully.
-  public static native void onTangoServiceConnected(IBinder binder);
+  /**
+   * Called when the Tango service is connected successfully.
+   *
+   * @param nativeTangoServiceBinder The native binder object.
+   */
+  public static native void onTangoServiceConnected(IBinder nativeTangoServiceBinder);
 
-  // Set up the configuration, callbacks, and connect to the Tango Service.
-  public static native int tangoSetupAndConnect();
-
-  // Disconnect from the Tango Service, release all the resources that
-  // the app is holding from the Tango Service.
-  public static native void tangoDisconnect();
+  /**
+   * Interfaces to native OnPause function.
+   */
+  public static native void onPause();
 
   // Allocate OpenGL resources for rendering and register the color
   // camera texture.
-  public static native int initializeGLContent();
+  public static native int onGlSurfaceCreated();
 
   // Use bilateral filtering to upsample point cloud.
   public static native void setUpsampleViaBilateralFiltering(boolean bilateral);
@@ -64,13 +66,10 @@ public class JNIInterface {
   public static native String getPointSeparation();
 
   // Setup the view port width and height.
-  public static native void setViewPort(int width, int height);
+  public static native void onGlSurfaceChanged(int width, int height);
 
   // Main render loop.
-  public static native void render();
-
-  // Release resources that are allocated.
-  public static native void deleteResources();
+  public static native void onGlSurfaceDrawFrame();
 
   // Respond to a touch event.
   public static native void onTouchEvent(float x, float y);

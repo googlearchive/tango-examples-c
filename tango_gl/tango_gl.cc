@@ -70,6 +70,19 @@ void Render(const StaticMesh& mesh, const Material& material,
     glUniformMatrix4fv(uniform_mv_mat, 1, GL_FALSE, glm::value_ptr(mv_mat));
   }
 
+  GLint uniform_m_mat = material.GetUniformModelMatrix();
+  if (uniform_m_mat != -1) {
+    glm::mat4 m_mat = model_mat;
+    glUniformMatrix4fv(uniform_m_mat, 1, GL_FALSE, glm::value_ptr(m_mat));
+  }
+
+  GLint uniform_normal_mat = material.GetUniformNormalMatrix();
+  if (uniform_normal_mat != -1) {
+    glm::mat4 normal_mat = glm::transpose(glm::inverse(view_mat * model_mat));
+    glUniformMatrix4fv(uniform_normal_mat, 1, GL_FALSE,
+                       glm::value_ptr(normal_mat));
+  }
+
   material.BindParams();
 
   // Set up shader attributes.
@@ -184,6 +197,8 @@ bool Material::SetShaderInternal(GLuint program) {
   }
 
   uniform_mv_mat_ = glGetUniformLocation(shader_program_, "mv");
+  uniform_m_mat_ = glGetUniformLocation(shader_program_, "m");
+  uniform_normal_mat_ = glGetUniformLocation(shader_program_, "normal_mat");
   return true;
 }
 
@@ -248,7 +263,8 @@ void Material::BindParams() const {
   int index = 0;
   for (auto& param : params_texture_) {
     glActiveTexture(GL_TEXTURE0 + index);
-    glBindTexture(GL_TEXTURE_2D, param.second->GetTextureID());
+    glBindTexture(param.second->GetTextureTarget(),
+                  param.second->GetTextureID());
     glUniform1i(param.first, index);
     index++;
   }

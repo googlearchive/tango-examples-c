@@ -33,12 +33,12 @@ public class GLSurfaceRenderer implements GLSurfaceView.Renderer {
 
     // Render loop of the GL context.
     public void onDrawFrame(GL10 gl) {
-        JNIInterface.render();
+        JNIInterface.onGlSurfaceDrawFrame();
     }
 
     // Called when the surface size changes.
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        JNIInterface.setViewPort(width, height);
+        JNIInterface.onGlSurfaceChanged(width, height);
     }
 
     // Called when the surface is created or recreated.

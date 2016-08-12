@@ -36,6 +36,11 @@ static int RoundUpPowerOfTwo(int w) {
   return w;
 }
 
+Texture::Texture(GLuint texture_id, GLenum texture_target) {
+  texture_id_ = texture_id;
+  texture_target_ = texture_target;
+}
+
 Texture::Texture(AAssetManager* mgr, const char* file_path) {
   AAsset* asset = AAssetManager_open(mgr, file_path, AASSET_MODE_STREAMING);
   if (asset == NULL) {
@@ -79,6 +84,8 @@ bool Texture::LoadFromPNG(FILE* file) {
   png_read_image(png_ptr, row_pointers);
   png_destroy_read_struct(&png_ptr, &info_ptr, 0);
 
+  texture_target_ = GL_TEXTURE_2D;
+
   glGenTextures(1, &texture_id_);
   glBindTexture(GL_TEXTURE_2D, texture_id_);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -104,5 +111,7 @@ bool Texture::LoadFromPNG(FILE* file) {
 }
 
 GLuint Texture::GetTextureID() const { return texture_id_; }
+
+GLuint Texture::GetTextureTarget() const { return texture_target_; }
 
 }  // namespace tango_gl

@@ -21,6 +21,8 @@
 
 namespace {
 const int kVersionStringLength = 128;
+// The minimum Tango Core version required from this application.
+constexpr int kTangoCoreMinimumVersion = 9377;
 
 // This function routes onXYZijAvailable callbacks to the application object for
 // handling.
@@ -52,24 +54,31 @@ PointCloudApp::~PointCloudApp() {
   }
 }
 
-bool PointCloudApp::CheckTangoVersion(JNIEnv* env, jobject activity,
-                                      int min_tango_version) {
+void PointCloudApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  return err == TANGO_SUCCESS && version >= min_tango_version;
+  if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
+    LOGE("AugmentedRealityApp::OnCreate, Tango Core version is out of date.");
+    std::exit(EXIT_SUCCESS);
+  }
 }
 
-bool PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
-  TangoErrorType ret = TangoService_setBinder(env, binder);
+bool PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
+  TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "PointCloudApp: Failed to set Binder Tango service with"
+        "AugmentedRealityApp: Failed to set Tango binder with"
         "error code: %d",
         ret);
     return false;
   }
+
+  TangoSetupConfig();
+  TangoConnectCallbacks();
+  TangoConnect();
+
   return true;
 }
 
@@ -80,7 +89,7 @@ int PointCloudApp::TangoSetupConfig() {
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
     LOGE("PointCloudApp: Failed to get default config form");
-    return TANGO_ERROR;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Set auto-recovery for motion tracking as requested by the user.
@@ -91,7 +100,7 @@ int PointCloudApp::TangoSetupConfig() {
         "PointCloudApp: config_enable_auto_recovery() failed with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Enable depth.
@@ -101,7 +110,7 @@ int PointCloudApp::TangoSetupConfig() {
         "PointCloudApp: config_enable_depth() failed with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   if (point_cloud_manager_ == nullptr) {
@@ -110,13 +119,13 @@ int PointCloudApp::TangoSetupConfig() {
                                &max_point_cloud_elements);
     if (ret != TANGO_SUCCESS) {
       LOGE("Failed to query maximum number of point cloud elements.");
-      return false;
+      std::exit(EXIT_SUCCESS);
     }
 
     ret = TangoSupport_createPointCloudManager(max_point_cloud_elements,
                                                &point_cloud_manager_);
     if (ret != TANGO_SUCCESS) {
-      return false;
+      std::exit(EXIT_SUCCESS);
     }
   }
 
@@ -132,7 +141,7 @@ int PointCloudApp::TangoConnectCallbacks() {
         "PointCloudApp: Failed to connect to point cloud callback with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   return ret;
@@ -147,13 +156,18 @@ bool PointCloudApp::TangoConnect() {
         "PointCloudApp: Failed to connect to the Tango service with"
         "error code: %d",
         err);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Initialize TangoSupport context.
   TangoSupport_initialize(TangoService_getPoseAtTime);
 
   return true;
+}
+
+void PointCloudApp::OnPause() {
+  TangoDisconnect();
+  DeleteResources();
 }
 
 void PointCloudApp::TangoDisconnect() {

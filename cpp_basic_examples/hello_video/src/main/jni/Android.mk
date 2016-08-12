@@ -24,7 +24,6 @@ LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
 LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_SRC_FILES := jni_interface.cc \
-                   yuv_drawable.cc \
                    hello_video_app.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/drawable_object.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \

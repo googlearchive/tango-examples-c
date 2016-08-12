@@ -17,6 +17,10 @@
 #include <tango_support_api.h>
 
 #include <rgb-depth-sync/rgb_depth_sync_application.h>
+namespace {
+// The minimum Tango Core version required from this application.
+constexpr int kTangoCoreMinimumVersion = 9377;
+}  // namespace
 
 namespace rgb_depth_sync {
 
@@ -53,14 +57,17 @@ SynchronizationApplication::~SynchronizationApplication() {
   point_cloud_manager_ = nullptr;
 }
 
-bool SynchronizationApplication::CheckTangoVersion(JNIEnv* env,
-                                                   jobject activity,
-                                                   int min_tango_version) {
-  // Check that we have the minimum required version of Tango.
+void SynchronizationApplication::OnCreate(JNIEnv* env, jobject activity) {
+  // Check the installed version of the TangoCore.  If it is too old, then
+  // it will not support the most up to date features.
   int version;
   TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-
-  return err == TANGO_SUCCESS && version >= min_tango_version;
+  if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
+    LOGE(
+        "SynchronizationApplication::OnCreate, Tango Core version is out of "
+        "date.");
+    std::exit(EXIT_SUCCESS);
+  }
 }
 
 void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
@@ -71,7 +78,13 @@ void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
         "SynchronizationApplication: Failed to set Tango service binder with"
         "error code: %d",
         ret);
+    std::exit(EXIT_SUCCESS);
   }
+
+  TangoSetupConfig();
+  TangoConnectCallbacks();
+  TangoConnect();
+  TangoSetIntrinsicsAndExtrinsics();
 }
 
 bool SynchronizationApplication::TangoSetupConfig() {
@@ -143,26 +156,28 @@ bool SynchronizationApplication::TangoSetupConfig() {
   return true;
 }
 
-bool SynchronizationApplication::TangoConnectTexture() {
-  // The Tango service allows you to connect an OpenGL texture directly to its
-  // RGB and fisheye cameras. This is the most efficient way of receiving
-  // images from the service because it avoids copies. You get access to the
-  // graphic buffer directly. As we're interested in rendering the color image
-  // in our render loop, we'll be polling for the color image as needed.
-  TangoErrorType err = TangoService_connectTextureId(
-      TANGO_CAMERA_COLOR, color_image_.GetTextureId(), this, nullptr);
-  return err == TANGO_SUCCESS;
-}
-
 bool SynchronizationApplication::TangoConnectCallbacks() {
-  // We're interested in only one callback for this application. We need to be
-  // notified when we receive depth information in order to support measuring
-  // 3D points. For both pose and color camera information, we'll be polling.
-  // The render loop will drive the rate at which we need color images and all
-  // our poses will be driven by timestamps. As such, we'll use GetPoseAtTime.
-  TangoErrorType depth_ret =
+  // We need to be notified when we receive depth information in order
+  // to support measuring 3D points. For both pose and color camera
+  // information, we'll be polling.  The render loop will drive the
+  // rate at which we need color images and all our poses will be
+  // driven by timestamps. As such, we'll use GetPoseAtTime.
+
+  TangoErrorType ret =
       TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
-  return depth_ret == TANGO_SUCCESS;
+  if (ret != TANGO_SUCCESS) {
+    return false;
+  }
+
+  // Connect color camera texture. The callback is ignored because the
+  // color camera is polled.
+  ret = TangoService_connectOnTextureAvailable(TANGO_CAMERA_COLOR, nullptr,
+                                               nullptr);
+  if (ret != TANGO_SUCCESS) {
+    return false;
+  }
+
+  return true;
 }
 
 bool SynchronizationApplication::TangoConnect() {
@@ -197,6 +212,8 @@ bool SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
   return true;
 }
 
+void SynchronizationApplication::OnPause() { TangoDisconnect(); }
+
 void SynchronizationApplication::TangoDisconnect() {
   TangoService_disconnect();
 }
@@ -222,7 +239,8 @@ void SynchronizationApplication::Render() {
   depth_timestamp = render_buffer_->timestamp;
   // We need to make sure that we update the texture associated with the color
   // image.
-  if (TangoService_updateTexture(TANGO_CAMERA_COLOR, &color_timestamp) !=
+  if (TangoService_updateTextureExternalOes(
+          TANGO_CAMERA_COLOR, color_image_.GetTextureId(), &color_timestamp) !=
       TANGO_SUCCESS) {
     LOGE("SynchronizationApplication: Failed to get a color image.");
   }

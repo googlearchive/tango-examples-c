@@ -44,7 +44,8 @@ class Scene {
   ~Scene();
 
   // Allocate OpenGL resources for rendering.
-  void InitGLContent(AAssetManager* aasset_manager);
+  void InitGLContent(AAssetManager* aasset_manager, int activity_orientation,
+                     int sensor_orientation);
 
   // Release non-OpenGL resources.
   void DeleteResources();
@@ -101,6 +102,10 @@ class Scene {
   void RotateYAxisTransform(const TangoPoseData& pose,
                             tango_gl::Transform* transform, double* last_angle,
                             double* last_pose);
+
+  // Set video overlay's orientation based on current device orientation.
+  void SetVideoOverlayOrientation(int activity_orientation,
+                                  int sensor_orientation);
 
  private:
   // Video overlay drawable object to display the camera image.

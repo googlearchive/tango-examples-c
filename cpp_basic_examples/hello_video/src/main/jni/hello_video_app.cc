@@ -39,7 +39,8 @@ inline void Yuv2Rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue, uint8_t* r,
 }  // namespace
 
 namespace hello_video {
-void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity) {
+void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity,
+                             int activity_rotation, int sensor_rotation) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version = 0;
@@ -57,6 +58,8 @@ void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity) {
   is_texture_id_set_ = false;
   video_overlay_drawable_ = NULL;
   yuv_drawable_ = NULL;
+  activity_rotation_ = activity_rotation;
+  sensor_rotation_ = sensor_rotation;
 }
 
 void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
@@ -182,8 +185,10 @@ void HelloVideoApp::OnSurfaceCreated() {
   if (video_overlay_drawable_ != NULL || yuv_drawable_ != NULL) {
     this->DeleteDrawables();
   }
-  video_overlay_drawable_ = new tango_gl::VideoOverlay();
-  yuv_drawable_ = new YuvDrawable();
+  video_overlay_drawable_ = new tango_gl::VideoOverlay(
+      GL_TEXTURE_EXTERNAL_OES, activity_rotation_, sensor_rotation_);
+  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D, activity_rotation_,
+                                             sensor_rotation_);
 }
 
 void HelloVideoApp::OnSurfaceChanged(int width, int height) {

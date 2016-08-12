@@ -25,69 +25,39 @@ static rgb_depth_sync::SynchronizationApplication app;
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_checkTangoVersion(
-    JNIEnv* env, jobject, jobject activity, jint min_tango_version) {
-  return app.CheckTangoVersion(env, activity, min_tango_version);
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onCreate(
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onTangoServiceConnected(
-    JNIEnv* env, jobject, jobject binder) {
-  return app.OnTangoServiceConnected(env, binder);
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoSetupConfig(
-    JNIEnv*, jobject) {
-  return app.TangoSetupConfig();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoConnectTexture(
-    JNIEnv*, jobject) {
-  return app.TangoConnectTexture();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoConnectCallbacks(
-    JNIEnv*, jobject) {
-  return app.TangoConnectCallbacks();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoConnect(
-    JNIEnv*, jobject) {
-  return app.TangoConnect();
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoSetIntrinsicsAndExtrinsics(
-    JNIEnv*, jobject) {
-  return app.TangoSetIntrinsicsAndExtrinsics();
+    JNIEnv* env, jobject, jobject iBinder) {
+  app.OnTangoServiceConnected(env, iBinder);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_tangoDisconnect(
-    JNIEnv*, jobject) {
-  app.TangoDisconnect();
+Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onPause(JNIEnv*,
+                                                                     jobject) {
+  app.OnPause();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_initializeGLContent(
+Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceCreated(
     JNIEnv*, jobject) {
   app.InitializeGLContent();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_setViewPort(
+Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_render(JNIEnv*,
-                                                                    jobject) {
+Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceDrawFrame(
+    JNIEnv*, jobject) {
   app.Render();
 }
 

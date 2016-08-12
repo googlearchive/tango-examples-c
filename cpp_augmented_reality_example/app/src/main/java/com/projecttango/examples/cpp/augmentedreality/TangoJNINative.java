@@ -41,8 +41,11 @@ public class TangoJNINative {
    * Interfaces to native OnCreate function.
    *
    * @param callerActivity the caller activity of this function.
+   * @param activityOrientation orientation of the display.
+   * @param sensorOrientation orientation of color camera.
    */
-  public static native void onCreate(Activity callerActivity);
+  public static native void onCreate(Activity callerActivity, int activityOrientation,
+                                     int sensorOrientation);
 
   /**
    * Called when the Tango service is connected successfully.
@@ -59,7 +62,7 @@ public class TangoJNINative {
   /**
    * Signal that the activity has been destroyed and remove any cached references.
    */
-  public static native void destroyActivity();
+  public static native void onDestroy();
 
   /**
    * Allocate OpenGL resources for rendering.
@@ -69,10 +72,15 @@ public class TangoJNINative {
   /**
    * Setup the view port width and height.
    */
-  public static native void setupGraphic(int width, int height);
+  public static native void onGlSurfaceChanged(int width, int height);
 
   /**
-   * Main render loop.
+   * Main onGlSurfaceDrawFrame loop.
    */
-  public static native void render();
+  public static native void onGlSurfaceDrawFrame();
+
+  /**
+   * Configuration changed callback, called when screen rotates.
+   */
+  public static native void onConfigurationChanged(int activityOrientation, int sensorOrientation);
 }

@@ -40,12 +40,6 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 public class MainActivity extends Activity {
   private static final String TAG = MainActivity.class.getSimpleName();
 
-  // The minimum Tango Core version required from this application.
-  private static final int  MIN_TANGO_CORE_VERSION = 9377;
-
-  // The package name of Tang Core, used for checking minimum Tango Core version.
-  private static final String TANGO_PACKAGE_NAME = "com.projecttango.tango";
-
   // The interval at which we'll update our UI debug text in milliseconds.
   // This is the rate at which we query our native wrapper around the tango
   // service for pose and event information.
@@ -68,14 +62,6 @@ public class MainActivity extends Activity {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         JNIInterface.onTangoServiceConnected(service);
-
-        // Setup the configuration of the Tango Service.
-        int ret = JNIInterface.tangoSetupAndConnect();
-
-        if (ret != 0) {
-          Log.e(TAG, "Failed to set config and connect with code: " + ret);
-          finish();
-        }
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -89,15 +75,9 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-    // Check if the Tango Core is out dated.
-    if (!JNIInterface.checkTangoVersion(this, MIN_TANGO_CORE_VERSION)) {
-      Toast.makeText(this, "Tango Core out dated, please update in Play Store", 
-                     Toast.LENGTH_LONG).show();
-      finish();
-      return;
-    }
+    JNIInterface.onCreate(this);
 
     setContentView(R.layout.activity_main);
 
@@ -113,8 +93,8 @@ public class MainActivity extends Activity {
     if (event.getAction() == MotionEvent.ACTION_DOWN) {
       // Ensure that handling of the touch event is run on the GL thread
       // rather than Android UI thread. This ensures we can modify
-      // rendering state without locking.  This event triggers a plane
-      // fit.
+      // rendering state without locking.  This event triggers a point
+      // placement.
       mGLView.queueEvent(new Runnable() {
           @Override
           public void run() {
@@ -156,6 +136,10 @@ public class MainActivity extends Activity {
   protected void onResume() {
     super.onResume();
     mGLView.onResume();
+
+    // Start the debug text UI update loop.
+    mHandler.post(mUpdateUiLoopRunnable);
+    
     TangoInitializationHelper.bindTangoService(this, mTangoServiceConnection); 
   }
 
@@ -163,16 +147,13 @@ public class MainActivity extends Activity {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    JNIInterface.deleteResources();
-
-    // Disconnect from the Tango Service, release all the resources that
-    // the app is holding from the Tango Service.
-    JNIInterface.tangoDisconnect();
+    JNIInterface.onPause();
     unbindService(mTangoServiceConnection);
+    mHandler.removeCallbacksAndMessages(null);
   }
 
   public void surfaceCreated() {
-    int ret = JNIInterface.initializeGLContent();
+    int ret = JNIInterface.onGlSurfaceCreated();
 
     if (ret != 0) {
       Log.e(TAG, "Failed to connect texture with code: " + ret);

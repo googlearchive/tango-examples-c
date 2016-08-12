@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdlib>
 
 #include <sstream>
 
@@ -21,6 +22,8 @@
 #include "hello_area_description/hello_area_description_app.h"
 
 namespace {
+// The minimum Tango Core version required from this application.
+constexpr int kTangoCoreMinimumVersion = 9377;
 const int kVersionStringLength = 128;
 
 // This function routes onPoseAvailable callbacks to the application object for
@@ -50,37 +53,110 @@ AreaLearningApp::AreaLearningApp()
 
 AreaLearningApp::~AreaLearningApp() { TangoConfig_free(tango_config_); }
 
-bool AreaLearningApp::Initialize(JNIEnv* env, jobject activity,
-                                 int min_tango_version) {
-  // The first thing we need to do for any Tango enabled application is to
-  // check that we have the minimum required version of Tango.
-  int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
-  if (err != TANGO_SUCCESS || version < min_tango_version) {
-    return false;
+void AreaLearningApp::OnCreate(JNIEnv* env, jobject caller_activity) {
+  // Check the installed version of the TangoCore. If it is too old, then
+  // it will not support the most up to date features.
+  int version = 0;
+  TangoErrorType err =
+      TangoSupport_GetTangoVersion(env, caller_activity, &version);
+  if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
+    LOGE(
+        "AreaLearningApp::OnCreate, Tango Core version is out"
+        " of date.");
+    std::exit(EXIT_SUCCESS);
   }
 
-  jclass cls = env->GetObjectClass(activity);
+  jclass cls = env->GetObjectClass(caller_activity);
   on_saving_adf_progress_updated_ =
       env->GetMethodID(cls, "updateSavingAdfProgress", "(I)V");
 
-  calling_activity_obj_ = env->NewGlobalRef(activity);
-  return true;
+  calling_activity_obj_ = env->NewGlobalRef(caller_activity);
 }
 
-bool AreaLearningApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
-  TangoErrorType ret = TangoService_setBinder(env, binder);
-  if (ret != TANGO_SUCCESS) {
+void AreaLearningApp::OnTangoServiceConnected(
+    JNIEnv* env, jobject binder, bool is_area_learning_enabled,
+    bool is_loading_area_description) {
+  // Associate the service binder to the Tango service.
+  if (TangoService_setBinder(env, binder) != TANGO_SUCCESS) {
     LOGE(
-        "AreaLearningApp: Failed to set Tango service binder with"
-        "error code: %d",
-        ret);
-    return false;
+        "AreaLearningApp::OnTangoServiceConnected,"
+        "TangoService_setBinder error");
+    std::exit(EXIT_SUCCESS);
   }
-  return true;
+
+  if (is_area_learning_enabled || is_loading_area_description) {
+    // Here, we'll configure the service to run in the way we'd want. For this
+    // application, we'll start from the default configuration
+    // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
+    tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
+    if (tango_config_ == nullptr) {
+      LOGE("AreaLearningApp: Failed to get default config form");
+      std::exit(EXIT_SUCCESS);
+    }
+
+    int ret = TangoConfig_setBool(tango_config_, "config_enable_learning_mode",
+                                  is_area_learning_enabled);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "AreaLearningApp: config_enable_learning_mode failed with error"
+          "code: %d",
+          ret);
+      std::exit(EXIT_SUCCESS);
+    }
+
+    // If load ADF, load the most recent saved ADF.
+    if (is_loading_area_description) {
+      std::vector<std::string> adf_list;
+      GetAdfUuids(&adf_list);
+      if (!adf_list.empty()) {
+        std::string adf_uuid = adf_list.back();
+        std::ostringstream adf_str_stream;
+        adf_str_stream << "Number of ADFs:" << adf_list.size()
+                       << ", Loaded ADF: " << adf_uuid;
+        loaded_adf_string_ = adf_str_stream.str();
+        ret = TangoConfig_setString(tango_config_,
+                                    "config_load_area_description_UUID",
+                                    adf_uuid.c_str());
+        if (ret != TANGO_SUCCESS) {
+          LOGE("AreaLearningApp: get ADF UUID failed with error code: %d", ret);
+        }
+      }
+    }
+
+    // Setting up the frame pair for the onPoseAvailable callback.
+    TangoCoordinateFramePair pairs[3] = {
+        {TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+         TANGO_COORDINATE_FRAME_DEVICE},
+        {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+         TANGO_COORDINATE_FRAME_DEVICE},
+        {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+         TANGO_COORDINATE_FRAME_START_OF_SERVICE}};
+
+    // Attach onPoseAvailable callback.
+    // The callback will be called after the service is connected.
+    ret = TangoService_connectOnPoseAvailable(3, pairs, onPoseAvailableRouter);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "AreaLearningApp: Failed to connect to pose callback with error"
+          "code: %d",
+          ret);
+      std::exit(EXIT_SUCCESS);
+    }
+
+    // Connect to the Tango Service, the service will start running:
+    // point clouds can be queried and callbacks will be called.
+    ret = TangoService_connect(this, tango_config_);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "AreaLearningApp::OnTangoServiceConnected,"
+          "Failed to connect to the Tango service with error code: %d",
+          ret);
+      std::exit(EXIT_SUCCESS);
+    }
+  }
 }
 
-void AreaLearningApp::ActivityDestroyed() {
+void AreaLearningApp::OnDestroy() {
   JNIEnv* env;
   java_vm_->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
   env->DeleteGlobalRef(calling_activity_obj_);
@@ -88,85 +164,9 @@ void AreaLearningApp::ActivityDestroyed() {
   on_saving_adf_progress_updated_ = nullptr;
 }
 
-int AreaLearningApp::TangoSetupConfig(bool is_area_learning_enabled,
-                                      bool is_loading_adf) {
-  // Here, we'll configure the service to run in the way we'd want. For this
-  // application, we'll start from the default configuration
-  // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
-  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
-  if (tango_config_ == nullptr) {
-    LOGE("AreaLearningApp: Failed to get default config form");
-    return TANGO_ERROR;
-  }
-
-  int ret = TangoConfig_setBool(tango_config_, "config_enable_learning_mode",
-                                is_area_learning_enabled);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "AreaLearningApp: config_enable_learning_mode failed with error"
-        "code: %d",
-        ret);
-    return ret;
-  }
-
-  // If load ADF, load the most recent saved ADF.
-  if (is_loading_adf) {
-    std::vector<std::string> adf_list;
-    GetAdfUuids(&adf_list);
-    if (!adf_list.empty()) {
-      std::string adf_uuid = adf_list.back();
-      std::ostringstream adf_str_stream;
-      adf_str_stream << "Number of ADFs:" << adf_list.size()
-                     << ", Loaded ADF: " << adf_uuid;
-      loaded_adf_string_ = adf_str_stream.str();
-      ret = TangoConfig_setString(
-          tango_config_, "config_load_area_description_UUID", adf_uuid.c_str());
-      if (ret != TANGO_SUCCESS) {
-        LOGE("AreaLearningApp: get ADF UUID failed with error code: %d", ret);
-      }
-    }
-  }
-
-  return ret;
-}
-
-int AreaLearningApp::TangoConnectCallbacks() {
-  // Setting up the frame pair for the onPoseAvailable callback.
-  TangoCoordinateFramePair pairs[3] = {
-      {TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE},
-      {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION, TANGO_COORDINATE_FRAME_DEVICE},
-      {TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-       TANGO_COORDINATE_FRAME_START_OF_SERVICE}};
-
-  // Attach onPoseAvailable callback.
-  // The callback will be called after the service is connected.
-  int ret =
-      TangoService_connectOnPoseAvailable(3, pairs, onPoseAvailableRouter);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "AreaLearningApp: Failed to connect to pose callback with error"
-        "code: %d",
-        ret);
-    return ret;
-  }
-  return ret;
-}
-
-// Connect to Tango Service, service will start running, and
-// pose can be queried.
-bool AreaLearningApp::TangoConnect() {
-  TangoErrorType ret = TangoService_connect(this, tango_config_);
-  bool is_connected = (ret == TANGO_SUCCESS);
-  if (!is_connected) {
-    LOGE(
-        "AreaLearningApp: Failed to connect to the Tango service with"
-        "error code: %d",
-        ret);
-  }
-  return is_connected;
-}
-
-void AreaLearningApp::TangoDisconnect() {
+void AreaLearningApp::OnPause() {
+  // Delete resources.
+  pose_data_.ResetPoseData();
   // When disconnecting from the Tango Service, it is important to make sure to
   // free your configuration object. Note that disconnecting from the service,
   // resets all configuration, and disconnects all callbacks. If an application
@@ -260,8 +260,6 @@ std::string AreaLearningApp::GetAllAdfUuids() {
 void AreaLearningApp::DeleteAdf(std::string uuid) {
   TangoService_deleteAreaDescription(uuid.c_str());
 }
-
-void AreaLearningApp::DeleteResources() { pose_data_.ResetPoseData(); }
 
 bool AreaLearningApp::IsRelocalized() {
   std::lock_guard<std::mutex> lock(pose_mutex_);

@@ -62,7 +62,7 @@ public class AdfUuidListViewActivity extends Activity implements SetAdfNameDialo
     ServiceConnection mTangoServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            TangoJniNative.onTangoServiceConnected(service);
+            TangoJniNative.onTangoServiceConnected(service, false, false);
             updateList();
         }
 
@@ -114,6 +114,7 @@ public class AdfUuidListViewActivity extends Activity implements SetAdfNameDialo
     @Override
     protected void onPause() {
         super.onPause();
+        TangoJniNative.onPause();
         unbindService(mTangoServiceConnection);
     }
 

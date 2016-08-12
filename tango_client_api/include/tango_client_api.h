@@ -143,6 +143,15 @@ typedef enum {
   TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP = 0x11  ///< NV21
 } TangoImageFormatType;
 
+/// @brief Tango depth data formats.
+typedef enum {
+  /// @deprecated. Use @c TANGO_POINTCLOUD_XYZC instead.
+  /// See @link TangoXYZij @endlink.
+  TANGO_POINTCLOUD_XYZIJ = -1,
+  /// See @link TangoPointCloud @endlink.
+  TANGO_POINTCLOUD_XYZC = 0
+} TangoDepthMode;
+
 /// Experimental API only, subject to change.
 /// Dataset recording mode.
 typedef enum {
@@ -330,8 +339,11 @@ typedef struct TangoImageBuffer {
   TangoImageFormatType format;
   /// Pixels in the format of this image buffer.
   uint8_t* data;
+  /// Exposure duration of this image in nanoseconds.
+  int64_t exposure_duration_ns;
 } TangoImageBuffer;
 
+/// @deprecated. Use @c TangoPointCloud instead.
 /// The TangoXYZij struct contains information returned from the depth sensor.
 typedef struct TangoXYZij {
   /// An integer denoting the version of the structure.
@@ -375,6 +387,27 @@ typedef struct TangoXYZij {
   /// TangoImageBuffer is reserved for future use.
   TangoImageBuffer* color_image;
 } TangoXYZij;
+
+typedef struct TangoPointCloud {
+  /// An integer denoting the version of the structure.
+  uint32_t version;
+
+  /// Time of capture of the depth data for this struct (in seconds).
+  double timestamp;
+
+  /// The number of points in depth_data_buffer populated successfully. This
+  /// is variable with each call to the function, and is returned as number of
+  /// (x,y,z,c) points populated.
+  uint32_t num_points;
+
+  /// An array of packed {X, Y, Z, C} values. {X, Y, Z} is a coordinate triplet
+  /// (in meters). C is a confidence value, in the range of [0, 1], where 1
+  /// corresponds to full confidence. +Z points in the direction of the camera's
+  /// optical axis, perpendicular to the plane of the camera. +X points toward
+  /// the user's right, and +Y points toward the bottom of the screen.
+  /// The origin is the focal center of the depth camera.
+  float (*points)[4];
+} TangoPointCloud;
 
 /// The TangoCameraIntrinsics struct contains intrinsic parameters for a camera.
 ///
@@ -816,6 +849,7 @@ TangoErrorType TangoService_Experimental_deleteFrameOfInterest(
 /// @brief Functions for getting depth information from the device.
 /// @{
 
+/// @deprecated. Use TangoService_connectOnPointCloudAvailable instead.
 /// Attach an onXYZijAvailable callback. The callback is called each time new
 /// depth data is available. On the Tango tablet, the depth callback occurs at
 /// 5 Hz.
@@ -830,6 +864,21 @@ TangoErrorType TangoService_Experimental_deleteFrameOfInterest(
 TangoErrorType TangoService_connectOnXYZijAvailable(
     void (*TangoService_onXYZijAvailable)(void* context,
                                           const TangoXYZij* xyz_ij),
+    ...);
+
+/// Attach an onPointCloudAvailable callback. The callback is called each time
+/// new depth data is available.
+///
+/// An optional argument following the callback pointer can be supplied and will
+/// be returned in the callback context parameter if TangoService_connect() was
+/// called with a null context.
+/// @param TangoService_onPointCloudAvailable Function pointer for the callback
+///     function.
+/// @return Returns @c TANGO_ERROR if the callback function pointer is null.
+///     Returns @c TANGO_SUCCESS otherwise.
+TangoErrorType TangoService_connectOnPointCloudAvailable(
+    void (*TangoService_onPointCloudAvailable)(void* context,
+                                               const TangoPointCloud* cloud),
     ...);
 
 /**@} */
@@ -851,10 +900,13 @@ TangoErrorType TangoService_connectOnTangoEvent(
 /**@} Event Notification */
 
 /// @defgroup Camera Tango Service: Camera Interface
-/// @brief Functions for getting input from the device's cameras. Use either
-/// TangoService_connectTextureId() or TangoService_connectOnFrameAvailable()
-/// but not both.
+/// @brief Functions for getting input from the device's cameras. Use
+/// no more than one of TangoService_connectTextureId() or
+/// TangoService_connectOnTextureAvailable().
 /// @{
+
+/// Callback for when a new camera texture is available.
+typedef void (*TangoService_OnTextureAvailable)(void*, TangoCameraId);
 
 /// Connect a Texture ID to a camera; the camera is selected by specifying a
 /// TangoCameraId. Currently only @c TANGO_CAMERA_COLOR and
@@ -873,10 +925,9 @@ TangoErrorType TangoService_connectOnTangoEvent(
 ///     a valid texture in the applicaton.
 /// @return Returns @c TANGO_INVALID if the camera ID is not valid. Otherwise
 ///     returns @c TANGO_ERROR if an internal error occurred.
-TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
-                                             void* context,
-                                             void (*callback)(void*,
-                                                              TangoCameraId));
+TangoErrorType TangoService_connectTextureId(
+    TangoCameraId id, unsigned int tex, void* context,
+    TangoService_OnTextureAvailable callback);
 
 /// Update the texture that has been connected to camera referenced by
 /// TangoCameraId. The texture is updated with the latest image from the
@@ -891,6 +942,44 @@ TangoErrorType TangoService_connectTextureId(TangoCameraId id, unsigned int tex,
 ///     was never associated with the camera. Otherwise returns
 ///     @c TANGO_SUCCESS.
 TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
+
+/// Connect a callback to a camera.
+///
+/// Currently only @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE
+/// are supported. The TangoConfig flag config_enable_color_camera
+/// must be set to true for connectOnTextureAvailable to succeed after
+/// TangoService_connect() is called.
+///
+/// Note: The first scan-line of the color image is reserved for metadata
+/// instead of image pixels.
+/// @param id The ID of the camera to connect this texture to. Only
+///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
+/// @param context The context returned during the onTextureAvailable callback.
+/// @param callback The callback called when a new texture is available.
+/// @return Returns @c TANGO_INVALID if the camera ID is not valid. Otherwise
+///     returns @c TANGO_ERROR if an internal error occurred.
+TangoErrorType TangoService_connectOnTextureAvailable(
+    TangoCameraId id, void* context, TangoService_OnTextureAvailable callback);
+
+/// Update a GL_TEXTURE_EXTERNAL_OES texture to the latest camera
+/// image available.
+///
+/// If timestamp is not NULL, it will be filled with the image
+/// timestamp. The texture passed in must be of type @c
+/// GL_TEXTURE_EXTERNAL_OES.  This is not checked.
+///
+/// @param id The ID of the camera to use for the update. Only @c
+///   TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
+/// @param tex Texture to update.  This texture must be of type @c
+///   GL_TEXTURE_EXTERNAL_OES.
+/// @param timestamp Upon return, if not NULL upon calling, timestamp
+///   contains the timestamp of the image that has been pushed to the
+///   texture.
+/// @return Returns @c TANGO_INVALID if @p id is out of range or if @c
+///   tex is not a texture ID. Otherwise returns @c TANGO_SUCCESS.
+TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
+                                                     unsigned int tex,
+                                                     double* timestamp);
 
 /// Connect a callback to a camera for access to the pixels. This is not
 /// recommended for display but for applications requiring access to the
@@ -1169,6 +1258,10 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         Exposure value for the color camera, in nanoseconds. Default is
 ///         11100000 (11.1 ms). Valid from 0 to 30000000. Only applied if
 ///         config_color_mode_auto is set to false.</td></tr>
+///
+/// <tr><td>int32 config_depth_mode</td><td>
+///         Determines the depth data format provided from the API. See
+///         @link TangoDepthMode @endlink for supported formats.</td></tr>
 ///
 /// <tr><td>boolean config_enable_auto_recovery</td><td>
 ///         Automatically recovers when motion tracking becomes invalid, by

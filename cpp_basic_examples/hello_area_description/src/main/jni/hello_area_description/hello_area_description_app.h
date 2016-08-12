@@ -41,38 +41,41 @@ class AreaLearningApp {
   AreaLearningApp();
   ~AreaLearningApp();
 
-  // Check that the installed version of the Tango API is up to date
-  // and initialize other data.
+  // OnCreate() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In the OnCreate
+  // function, we are only checking the Tango Core's version.
   //
-  // @return returns true if the application version is compatible with the
-  //         Tango Core version.
-  bool Initialize(JNIEnv* env, jobject caller_activity, int min_tango_version);
+  // @param env, java environment parameter OnCreate is being called.
+  // @param caller_activity, caller of this function.
+  void OnCreate(JNIEnv* env, jobject caller_activity);
 
-  // Set Tango Service binder to C API.
-  bool OnTangoServiceConnected(JNIEnv* env, jobject binder);
+  // Called when the Tango service is connect. We set the binder object to Tango
+  // Service in this function.
+  //
+  // @param env, java environment parameter.
+  // @param binder, the native binder object.
+  // @param is_area_learning_enabled, enable/disable the area learning mode.
+  // @param is_loading_area_description, enable/disable loading the most recent
+  // area description.
+  // @param mode, the mode to connect the service in.
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder,
+                               bool is_area_learning_enabled,
+                               bool is_loading_area_description);
+
+  // OnPause() callback is called when this Android application's
+  // OnCreate function is called from UI thread. In our application,
+  // we disconnect Tango Service and free the Tango configuration
+  // file. It is important to disconnect Tango Service and release
+  // the corresponding resources in the OnPause() callback from
+  // Android, otherwise, this application will hold on to the Tango
+  // resources and other application will not be able to connect to
+  // Tango Service.
+  void OnPause();
 
   // When the Android activity is destroyed, signal the JNI layer to remove
   // references to the activity. This should be called from the onDestroy()
   // callback of the parent activity lifecycle.
-  void ActivityDestroyed();
-
-  // Setup the configuration file for the Tango Service. We'll also se whether
-  // we'd like auto-recover enabled.
-  //
-  // @param is_area_learning_enabled: enable/disable the area learning mode.
-  // @param is_loading_adf: load the most recent Adf.
-  int TangoSetupConfig(bool is_area_learning_enabled, bool is_loading_adf);
-
-  // Connect the onPoseAvailable callback.
-  int TangoConnectCallbacks();
-
-  // Connect to Tango Service.
-  // This function will start the Tango Service pipeline.
-  bool TangoConnect();
-
-  // Disconnect from Tango Service, release all the resources that the app is
-  // holding from Tango Service.
-  void TangoDisconnect();
+  void OnDestroy();
 
   // Save current ADF in learning mode. Note that the save function only works
   // when learning mode is on.
@@ -112,9 +115,6 @@ class AreaLearningApp {
   //
   // @param pose: The current pose returned by the service, caller allocated.
   void onPoseAvailable(const TangoPoseData* pose);
-
-  // Reset pose data and release resources that allocate from the program.
-  void DeleteResources();
 
   // Return true if Tango has relocalized to the current ADF at least once.
   bool IsRelocalized();

@@ -22,12 +22,17 @@
 namespace tango_gl {
 class VideoOverlay : public DrawableObject {
  public:
-  explicit VideoOverlay(GLuint texture_type);
   VideoOverlay();
+  explicit VideoOverlay(GLuint texture_type);
+  explicit VideoOverlay(GLuint texture_type, int activity_orientation,
+                        int sensor_orientation);
+  explicit VideoOverlay(int activity_orientation, int sensor_orientation);
+
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
-  void SetTextureId(GLuint texture_id) { texture_id_ = texture_id; }
-  void Initialize();
+  void Initialize(int activity_orientation, int sensor_orientation);
+  void SetOrientationFromAndroid(int activity_orientation,
+                                 int sensor_orientation);
 
  private:
   // This id is populated on construction, and is passed to the tango service.
@@ -36,7 +41,9 @@ class VideoOverlay : public DrawableObject {
 
   GLuint attrib_texture_coords_;
   GLuint uniform_texture_;
-  GLuint vertex_buffers_[3];
+  GLuint vertex_buffers_[2];
+
+  int combined_sensor_orientation_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_VIDEO_OVERLAY_H_

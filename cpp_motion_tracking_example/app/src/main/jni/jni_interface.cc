@@ -55,13 +55,13 @@ Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceCrea
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_setupGraphic(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
   app.SetViewPort(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_render(
+Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
   app.Render();
 }

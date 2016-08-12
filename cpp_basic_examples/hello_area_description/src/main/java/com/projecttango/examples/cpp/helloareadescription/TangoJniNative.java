@@ -16,6 +16,7 @@
 
 package com.projecttango.examples.cpp.helloareadescription;
 
+import android.app.Activity;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -36,51 +37,29 @@ public class TangoJniNative {
   }
 
   /**
-   * Check that the installed version of the Tango Core is up to date
-   * and initialize other data.
+   * Interfaces to native OnCreate function.
+   *
+   * @param callerActivity the caller activity of this function.
    */
-  public static native boolean initialize(AreaDescriptionActivity activity, int minTangoVersion);
+  public static native void onCreate(Activity callerActivity);
+
+  /*
+   * Called when the Tango service is connected.
+   *
+   * @param binder The native binder object.
+   */
+  public static native void onTangoServiceConnected(IBinder binder, boolean isLearningMode,
+                                                    boolean isLoadingAreaDescription);
 
   /**
-   * Set Tango Service binder to C API.
+   * Interfaces to native OnPause function.
    */
-  public static native boolean onTangoServiceConnected(IBinder binder);
+  public static native void onPause();
 
   /**
    * Signal that the activity has been destroyed and remove any references.
    */
-  public static native void destroyActivity();
-
-  /**
-   * Setup the configuration file of the Tango Service. We are also setting up
-   * the auto-recovery option from here.
-   */
-  public static native int setupConfig(boolean isAreaLearningEnabled,
-                                       boolean isLoadingADF);
-
-  /**
-   * Connect the onPoseAvailable callback.
-   */
-  public static native int connectCallbacks();
-
-  /**
-   * Connect to the Tango Service.
-   * Starts the Tango Service pipeline with the requested configuration.
-   *
-   * @return true on success.
-   */
-  public static native boolean connect();
-
-  /**
-   * Disconnect from the Tango Service, release all the resources that the app is
-   * holding from the Tango Service.
-   */
-  public static native void disconnect();
-
-  /**
-   * Reset Pose Data and release resources that are allocated from the native code.
-   */
-  public static native void deleteResources();
+  public static native void onDestroy();
 
   /**
    * Return true if Tango has relocalized to the current ADF at least once.
