@@ -50,7 +50,17 @@ TangoErrorType TangoSupport_GetTangoVersion(JNIEnv* env, jobject activity,
 typedef TangoErrorType (*TangoSupport_GetPoseAtTimeFn)(
     double timestamp, TangoCoordinateFramePair frame, TangoPoseData* pose);
 
-void TangoSupport_initialize(TangoSupport_GetPoseAtTimeFn getPoseAtTime);
+typedef TangoErrorType (*TangoSupport_GetCameraIntrinsicsFn)(
+    TangoCameraId camera_id, TangoCameraIntrinsics* intrinsics);
+
+void TangoSupport_initialize(
+    TangoSupport_GetPoseAtTimeFn getPoseAtTime,
+    TangoSupport_GetCameraIntrinsicsFn getCameraIntrinsics);
+
+inline void TangoSupport_initializeLibrary() {
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
+}
 
 /// The TangoSupportImageBufferManager maintains a set of image buffers to
 /// manage transferring a TangoImageBuffer from the callback thread to a render

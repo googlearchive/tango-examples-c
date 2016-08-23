@@ -114,6 +114,7 @@ typedef enum {
   TANGO_EVENT_IMU,               ///< IMU Event
   TANGO_EVENT_FEATURE_TRACKING,  ///< Feature Tracking Event
   TANGO_EVENT_AREA_LEARNING,     ///< Area Learning Event
+  TANGO_EVENT_CLOUD_ADF,         ///< Event related to cloud ADFs.
 } TangoEventType;
 
 /// Tango Camera Calibration types. See TangoCameraIntrinsics for a detailed

@@ -31,10 +31,10 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onCreate(
   app.OnCreate(env, activity);
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onTangoServiceConnected(
     JNIEnv* env, jobject /*caller_object*/, jobject binder) {
-  return app.OnTangoServiceConnected(env, binder);
+  app.OnTangoServiceConnected(env, binder);
 }
 
 JNIEXPORT void JNICALL
@@ -46,19 +46,19 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onPause(JNIEnv*,
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceCreated(
     JNIEnv*, jobject) {
-  app.InitializeGLContent();
+  app.OnSurfaceCreated();
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
-  app.SetViewPort(width, height);
+  app.OnSurfaceChanged(width, height);
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
-  app.Render();
+  app.OnDrawFrame();
 }
 
 JNIEXPORT jint JNICALL

@@ -26,49 +26,49 @@ static rgb_depth_sync::SynchronizationApplication app;
 extern "C" {
 #endif
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onCreate(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onCreate(
     JNIEnv* env, jobject, jobject activity) {
   app.OnCreate(env, activity);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onTangoServiceConnected(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onTangoServiceConnected(
     JNIEnv* env, jobject, jobject iBinder) {
   app.OnTangoServiceConnected(env, iBinder);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onPause(JNIEnv*,
-                                                                     jobject) {
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onPause(
+    JNIEnv*, jobject) {
   app.OnPause();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceCreated(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onGlSurfaceCreated(
     JNIEnv*, jobject) {
-  app.InitializeGLContent();
+  app.OnSurfaceCreated();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceChanged(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
-  app.SetViewPort(width, height);
+  app.OnSurfaceChanged(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_onGlSurfaceDrawFrame(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
-  app.Render();
+  app.OnDrawFrame();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_setDepthAlphaValue(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_setDepthAlphaValue(
     JNIEnv*, jobject, jfloat alpha) {
   return app.SetDepthAlphaValue(alpha);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_rgbdepthsync_JNIInterface_setGPUUpsample(
+Java_com_projecttango_examples_cpp_rgbdepthsync_TangoJNINative_setGPUUpsample(
     JNIEnv*, jobject, jboolean on) {
   return app.SetGPUUpsample(on);
 }

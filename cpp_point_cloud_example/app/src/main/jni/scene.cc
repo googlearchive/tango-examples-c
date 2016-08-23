@@ -57,35 +57,18 @@ void Scene::InitGLContent() {
 }
 
 void Scene::DeleteResources() {
-  if (gesture_camera_ != nullptr) {
-    delete gesture_camera_;
-    gesture_camera_ = nullptr;
-  }
-
-  if (frustum_ != nullptr) {
-    delete frustum_;
-    frustum_ = nullptr;
-  }
-
-  if (trace_ != nullptr) {
-    delete trace_;
-    trace_ = nullptr;
-  }
-
-  if (point_cloud_ != nullptr) {
-    delete point_cloud_;
-    point_cloud_ = nullptr;
-  }
-
-  if (axis_ != nullptr) {
-    delete axis_;
-    axis_ = nullptr;
-  }
-
-  if (grid_ != nullptr) {
-    delete grid_;
-    grid_ = nullptr;
-  }
+  delete gesture_camera_;
+  gesture_camera_ = nullptr;
+  delete frustum_;
+  frustum_ = nullptr;
+  delete trace_;
+  trace_ = nullptr;
+  delete point_cloud_;
+  point_cloud_ = nullptr;
+  delete axis_;
+  axis_ = nullptr;
+  delete grid_;
+  grid_ = nullptr;
 }
 
 void Scene::SetupViewPort(int w, int h) {

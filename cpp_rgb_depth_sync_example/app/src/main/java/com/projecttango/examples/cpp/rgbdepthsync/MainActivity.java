@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
   // Tango Service connection.
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
-        JNIInterface.onTangoServiceConnected(service);
+        TangoJNINative.onTangoServiceConnected(service);
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress,
                                   boolean fromUser) {
-      JNIInterface.setDepthAlphaValue((float) progress / (float) seekBar.getMax());
+      TangoJNINative.setDepthAlphaValue((float) progress / (float) seekBar.getMax());
     }
 
     @Override
@@ -84,10 +84,10 @@ public class MainActivity extends Activity {
         if (isChecked) {
           float progress = mDepthOverlaySeekbar.getProgress();
           float max = mDepthOverlaySeekbar.getMax();
-          JNIInterface.setDepthAlphaValue(progress / max);
+          TangoJNINative.setDepthAlphaValue(progress / max);
           mDepthOverlaySeekbar.setVisibility(View.VISIBLE);
         } else {
-          JNIInterface.setDepthAlphaValue(0.0f);
+          TangoJNINative.setDepthAlphaValue(0.0f);
           mDepthOverlaySeekbar.setVisibility(View.GONE);
         }
       }
@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
   private class GPUUpsampleListener implements CheckBox.OnCheckedChangeListener {
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-      JNIInterface.setGPUUpsample(isChecked);
+      TangoJNINative.setGPUUpsample(isChecked);
     }
   }
 
@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
     display.getSize(size);
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
     setContentView(R.layout.activity_main);
 
@@ -132,7 +132,7 @@ public class MainActivity extends Activity {
     mRenderer = new GLSurfaceRenderer(this);
     mGLView.setRenderer(mRenderer);
 
-    JNIInterface.onCreate(this);
+    TangoJNINative.onCreate(this);
   }
 
   @Override
@@ -148,11 +148,11 @@ public class MainActivity extends Activity {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    JNIInterface.onPause();
+    TangoJNINative.onPause();
     unbindService(mTangoServiceConnection);
   }
 
   public void surfaceCreated() {
-    JNIInterface.onGlSurfaceCreated();
+    TangoJNINative.onGlSurfaceCreated();
   }
 }

@@ -25,7 +25,7 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 /**
  * Interfaces between native C++ code and Java code.
  */
-public class JNIInterface {
+public class TangoJNINative {
   static {
     // This project depends on tango_client_api, so we need to make sure we load
     // the correct library first.
@@ -57,7 +57,7 @@ public class JNIInterface {
 
   // Allocate OpenGL resources for rendering and register the color
   // camera texture.
-  public static native int onGlSurfaceCreated();
+  public static native void onGlSurfaceCreated();
 
   // Use bilateral filtering to upsample point cloud.
   public static native void setUpsampleViaBilateralFiltering(boolean bilateral);

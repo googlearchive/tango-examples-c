@@ -73,12 +73,19 @@ void Scene::InitGLContent(AAssetManager* aasset_manager) {
 
 void Scene::DeleteResources() {
   delete camera_;
+  camera_ = nullptr;
   delete cube_mesh_;
+  cube_mesh_ = nullptr;
   delete cube_material_;
+  cube_material_ = nullptr;
   delete floor_mesh_;
+  floor_mesh_ = nullptr;
   delete floor_material_;
+  floor_material_ = nullptr;
   delete logo_texture_;
+  logo_texture_ = nullptr;
   delete grass_texture_;
+  grass_texture_ = nullptr;
 }
 
 void Scene::SetupViewPort(int w, int h) {

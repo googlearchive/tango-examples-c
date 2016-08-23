@@ -74,38 +74,15 @@ class SynchronizationApplication {
   // Called when Tango Service is connected successfully.
   void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
-  // Setup the configuration file for the Tango Service. .
-  bool TangoSetupConfig();
-
-  // Associate the texture generated from an Opengl context to which the color
-  // image will be updated to.
-  bool TangoConnectTexture();
-
-  // Sets the callbacks for OnXYZijAvailable
-  bool TangoConnectCallbacks();
-
-  // Connect to Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Depth Sensing callbacks.
-  bool TangoConnect();
-
-  // Queries and sets the camera transforms between different sensors of
-  // Project Tango Device that are required to project Point cloud onto
-  // Image plane.
-  bool TangoSetIntrinsicsAndExtrinsics();
-
-  // Disconnect from Tango Service.
-  void TangoDisconnect();
-
   // Inititalizes all the OpenGL resources required to render a Depth Image on
   // Top of an RGB image.
-  void InitializeGLContent();
+  void OnSurfaceCreated();
 
   // Setup the view port width and height.
-  void SetViewPort(int width, int height);
+  void OnSurfaceChanged(int width, int height);
 
   // Main Render loop.
-  void Render();
+  void OnDrawFrame();
 
   // Set the transparency of Depth Image.
   void SetDepthAlphaValue(float alpha);
@@ -120,6 +97,29 @@ class SynchronizationApplication {
   void OnXYZijAvailable(const TangoXYZij* xyz_ij);
 
  private:
+  // Setup the configuration file for the Tango Service. .
+  void TangoSetupConfig();
+
+  // Associate the texture generated from an Opengl context to which the color
+  // image will be updated to.
+  bool TangoConnectTexture();
+
+  // Sets the callbacks for OnXYZijAvailable
+  void TangoConnectCallbacks();
+
+  // Connect to Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Depth Sensing callbacks.
+  void TangoConnect();
+
+  // Queries and sets the camera transforms between different sensors of
+  // Project Tango Device that are required to project Point cloud onto
+  // Image plane.
+  void TangoSetIntrinsics();
+
+  // Disconnect from Tango Service.
+  void TangoDisconnect();
+
   // RGB image
   ColorImage color_image_;
 

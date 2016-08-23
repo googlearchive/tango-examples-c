@@ -51,19 +51,19 @@ JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceCreated(
     JNIEnv* env, jobject, jobject j_asset_manager) {
   AAssetManager* aasset_manager = AAssetManager_fromJava(env, j_asset_manager);
-  app.InitializeGLContent(aasset_manager);
+  app.OnSurfaceCreated(aasset_manager);
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceChanged(
     JNIEnv*, jobject, jint width, jint height) {
-  app.SetViewPort(width, height);
+  app.OnSurfaceChanged(width, height);
 }
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_motiontracking_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv*, jobject) {
-  app.Render();
+  app.OnDrawFrame();
 }
 
 JNIEXPORT void JNICALL

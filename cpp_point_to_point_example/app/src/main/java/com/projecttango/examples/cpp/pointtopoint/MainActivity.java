@@ -30,7 +30,6 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
@@ -61,7 +60,7 @@ public class MainActivity extends Activity {
   // Tango Service connection.
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
-        JNIInterface.onTangoServiceConnected(service);
+        TangoJNINative.onTangoServiceConnected(service);
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -77,7 +76,7 @@ public class MainActivity extends Activity {
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-    JNIInterface.onCreate(this);
+    TangoJNINative.onCreate(this);
 
     setContentView(R.layout.activity_main);
 
@@ -98,7 +97,7 @@ public class MainActivity extends Activity {
       mGLView.queueEvent(new Runnable() {
           @Override
           public void run() {
-            JNIInterface.onTouchEvent(event.getX(), event.getY());
+            TangoJNINative.onTouchEvent(event.getX(), event.getY());
           }
         });
     }
@@ -124,9 +123,9 @@ public class MainActivity extends Activity {
           // Is the view now checked?
           mBilateralFiltering = ((CheckBox) view).isChecked();
           if (mBilateralFiltering) {
-            JNIInterface.setUpsampleViaBilateralFiltering(true);
+            TangoJNINative.setUpsampleViaBilateralFiltering(true);
           } else {
-            JNIInterface.setUpsampleViaBilateralFiltering(false);
+            TangoJNINative.setUpsampleViaBilateralFiltering(false);
           }
         }
       });
@@ -147,17 +146,13 @@ public class MainActivity extends Activity {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    JNIInterface.onPause();
+    TangoJNINative.onPause();
     unbindService(mTangoServiceConnection);
     mHandler.removeCallbacksAndMessages(null);
   }
 
   public void surfaceCreated() {
-    int ret = JNIInterface.onGlSurfaceCreated();
-
-    if (ret != 0) {
-      Log.e(TAG, "Failed to connect texture with code: " + ret);
-    }
+    TangoJNINative.onGlSurfaceCreated();
   }
 
   // Debug text UI update loop, updating at 10Hz.
@@ -171,7 +166,7 @@ public class MainActivity extends Activity {
   // Update the debug text UI.
   private void updateUi() {
     try {
-      mDistanceMeasure.setText(JNIInterface.getPointSeparation());
+      mDistanceMeasure.setText(TangoJNINative.getPointSeparation());
     } catch (Exception e) {
       e.printStackTrace();
       Log.e(TAG, "Exception updating UI elements");

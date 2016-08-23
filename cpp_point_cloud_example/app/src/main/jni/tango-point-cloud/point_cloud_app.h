@@ -55,22 +55,7 @@ class PointCloudApp {
   void OnPause();
 
   // Called when Tango Service is connected successfully.
-  bool OnTangoServiceConnected(JNIEnv* env, jobject binder);
-
-  // Setup the configuration file for the Tango Service.
-  int TangoSetupConfig();
-
-  // Connect the onPoseAvailable callback.
-  int TangoConnectCallbacks();
-
-  // Connect to Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Motion Tracking and Depth Sensing callbacks.
-  bool TangoConnect();
-
-  // Disconnect from Tango Service, release all the resources that the app is
-  // holding from the Tango Service.
-  void TangoDisconnect();
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Explicitly reset motion tracking and restart the pipeline.
   // Note that this will cause motion tracking to re-initialize.
@@ -84,16 +69,13 @@ class PointCloudApp {
   void onPointCloudAvailable(const TangoXYZij* xyz_ij);
 
   // Allocate OpenGL resources for rendering, mainly for initializing the Scene.
-  void InitializeGLContent();
+  void OnSurfaceCreated();
 
   // Setup the view port width and height.
-  void SetViewPort(int width, int height);
+  void OnSurfaceChanged(int width, int height);
 
   // Main render loop.
-  void Render();
-
-  // Release all non-OpenGL allocated resources.
-  void DeleteResources();
+  void OnDrawFrame();
 
   // Return total point count in the current depth frame.
   int GetPointCloudVerticesCount();
@@ -129,6 +111,24 @@ class PointCloudApp {
  private:
   // Update the current point data.
   void UpdateCurrentPointData();
+
+  // Setup the configuration file for the Tango Service.
+  void TangoSetupConfig();
+
+  // Connect the onPoseAvailable callback.
+  void TangoConnectCallbacks();
+
+  // Connect to Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking and Depth Sensing callbacks.
+  void TangoConnect();
+
+  // Disconnect from Tango Service, release all the resources that the app is
+  // holding from the Tango Service.
+  void TangoDisconnect();
+
+  // Release all non-OpenGL allocated resources.
+  void DeleteResources();
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
