@@ -18,11 +18,19 @@ PROJECT_ROOT:= $(LOCAL_PATH)/..
 include $(CLEAR_VARS)
 LOCAL_MODULE := tango_support_api
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
-ifeq ($(TARGET_ARCH),x86)
-    LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/x86/libtango_support_api.so
-else
-    LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/armeabi-v7a/libtango_support_api.so
+
+ifeq ($(TARGET_ARCH), x86)
+	LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/x86/libtango_support_api.so
 endif
+
+ifeq ($(TARGET_ARCH), arm64)
+	LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/arm64-v8a/libtango_support_api.so
+endif
+
+ifeq ($(TARGET_ARCH), arm)
+	LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/armeabi-v7a/libtango_support_api.so
+endif
+
 include $(PREBUILT_SHARED_LIBRARY)
 
 $(call import-add-path,$(PROJECT_ROOT))
