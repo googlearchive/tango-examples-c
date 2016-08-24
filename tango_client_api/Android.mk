@@ -12,10 +12,16 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := tango_client_api
 
 
-ifeq ($(TARGET_ARCH),x86)
-    LOCAL_EXPORT_LDLIBS := -L$(LOCAL_PATH)/lib/x86 -ltango_client_api
-else
-    LOCAL_EXPORT_LDLIBS := -L$(LOCAL_PATH)/lib/armeabi-v7a -ltango_client_api
+ifeq ($(TARGET_ARCH), x86)
+  LOCAL_EXPORT_LDLIBS := -L$(LOCAL_PATH)/lib/x86 -ltango_client_api
+endif
+
+ifeq ($(TARGET_ARCH), arm64)
+  LOCAL_EXPORT_LDLIBS := -L$(LOCAL_PATH)/lib/arm64-v8a -ltango_client_api
+endif
+
+ifeq ($(TARGET_ARCH), arm)
+  LOCAL_EXPORT_LDLIBS := -L$(LOCAL_PATH)/lib/armeabi-v7a -ltango_client_api
 endif
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
