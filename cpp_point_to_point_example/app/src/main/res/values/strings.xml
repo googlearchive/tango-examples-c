@@ -15,7 +15,7 @@
   limitations under the License.
 -->
 <resources>
-    <string name="app_name">Project Tango Point To Point</string>
+    <string name="app_name">C++ Point To Point</string>
     <string name="drawer_header">Main panel header</string>
     <string name="bilateral">Bilateral Upsample</string>
     <string name="measurement">DISTANCE: </string>

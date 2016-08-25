@@ -54,28 +54,12 @@ class AugmentedRealityApp {
   void OnPause();
 
   // Call when Tango Service is connected successfully.
-  bool OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
+  void OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
 
   // When the Android activity is destroyed signal the JNI layer to
   // remove references to the activity. This should be called from the
   // onDestroy() callback of the parent activity lifecycle.
   void OnDestroy();
-
-  // Setup the configuration file for the Tango Service. We'll also see whether
-  // we'd like auto-recover enabled.
-  int TangoSetupConfig();
-
-  // Connect the onPoseAvailable callback.
-  int TangoConnectCallbacks();
-
-  // Connect to Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Motion Tracking.
-  bool TangoConnect();
-
-  // Disconnect from Tango Service, release all the resources that the app is
-  // holding from Tango Service.
-  void TangoDisconnect();
 
   // Tango service event callback function for pose data. Called when new events
   // are available from the Tango Service.
@@ -89,16 +73,13 @@ class AugmentedRealityApp {
   void onTextureAvailable(TangoCameraId id);
 
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
-  void InitializeGLContent(AAssetManager* aasset_manager);
+  void OnSurfaceCreated(AAssetManager* aasset_manager);
 
   // Setup the view port width and height.
-  void SetViewPort(int width, int height);
+  void OnSurfaceChanged(int width, int height);
 
   // Main render loop.
-  void Render();
-
-  // Release all non-OpenGL resources that allocate from the program.
-  void DeleteResources();
+  void OnDrawFrame();
 
   // Return transform debug string.
   std::string GetTransformString();
@@ -135,6 +116,25 @@ class AugmentedRealityApp {
   void FormatTransformString();
 
   void UpdateViewporAndProjectionMatrix();
+
+  // Setup the configuration file for the Tango Service. We'll also see whether
+  // we'd like auto-recover enabled.
+  void TangoSetupConfig();
+
+  // Connect the OnTextureAvailable and OnTangoEvent callbacks.
+  void TangoConnectCallbacks();
+
+  // Connect to Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking.
+  void TangoConnect();
+
+  // Disconnect from Tango Service, release all the resources that the app is
+  // holding from Tango Service.
+  void TangoDisconnect();
+
+  // Release all non-OpenGL resources that allocate from the program.
+  void DeleteResources();
 
   // Current position of the Color Camera with respect to Start of Service.
   glm::mat4 cur_start_service_T_camera_;

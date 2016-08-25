@@ -65,24 +65,22 @@ void PointCloudApp::OnCreate(JNIEnv* env, jobject activity) {
   }
 }
 
-bool PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
+void PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "AugmentedRealityApp: Failed to set Tango binder with"
         "error code: %d",
         ret);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   TangoSetupConfig();
   TangoConnectCallbacks();
   TangoConnect();
-
-  return true;
 }
 
-int PointCloudApp::TangoSetupConfig() {
+void PointCloudApp::TangoSetupConfig() {
   // Here, we'll configure the service to run in the way we'd want. For this
   // application, we'll start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
@@ -128,11 +126,9 @@ int PointCloudApp::TangoSetupConfig() {
       std::exit(EXIT_SUCCESS);
     }
   }
-
-  return ret;
 }
 
-int PointCloudApp::TangoConnectCallbacks() {
+void PointCloudApp::TangoConnectCallbacks() {
   // Attach the OnXYZijAvailable callback.
   // The callback will be called after the service is connected.
   int ret = TangoService_connectOnXYZijAvailable(onPointCloudAvailableRouter);
@@ -143,13 +139,11 @@ int PointCloudApp::TangoConnectCallbacks() {
         ret);
     std::exit(EXIT_SUCCESS);
   }
-
-  return ret;
 }
 
 // Connect to the Tango Service, the service will start running:
 // poses can be queried and callbacks will be called.
-bool PointCloudApp::TangoConnect() {
+void PointCloudApp::TangoConnect() {
   TangoErrorType err = TangoService_connect(this, tango_config_);
   if (err != TANGO_SUCCESS) {
     LOGE(
@@ -160,9 +154,7 @@ bool PointCloudApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime);
-
-  return true;
+  TangoSupport_initializeLibrary();
 }
 
 void PointCloudApp::OnPause() {
@@ -181,13 +173,13 @@ void PointCloudApp::TangoDisconnect() {
   TangoService_disconnect();
 }
 
-void PointCloudApp::InitializeGLContent() { main_scene_.InitGLContent(); }
+void PointCloudApp::OnSurfaceCreated() { main_scene_.InitGLContent(); }
 
-void PointCloudApp::SetViewPort(int width, int height) {
+void PointCloudApp::OnSurfaceChanged(int width, int height) {
   main_scene_.SetupViewPort(width, height);
 }
 
-void PointCloudApp::Render() {
+void PointCloudApp::OnDrawFrame() {
   // Query the latest pose transformation and point cloud frame transformation.
   // Point cloud data comes in with a specific timestamp, in order to get the
   // closest pose for the point cloud, we will need to use the

@@ -24,55 +24,55 @@ static tango_point_to_point::PointToPointApplication app;
 extern "C" {
 #endif
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onCreate(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onCreate(
     JNIEnv* env, jobject, jobject activity) {
   app.OnCreate(env, activity);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onPause(JNIEnv*,
-                                                                     jobject) {
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onPause(
+    JNIEnv*, jobject) {
   app.OnPause();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onTangoServiceConnected(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onTangoServiceConnected(
     JNIEnv* env, jobject /*obj*/, jobject binder) {
   app.OnTangoServiceConnected(env, binder);
 }
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceCreated(
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onGlSurfaceCreated(
     JNIEnv* /*env*/, jobject /*obj*/) {
-  return app.InitializeGLContent();
+  app.OnSurfaceCreated();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_setUpsampleViaBilateralFiltering(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_setUpsampleViaBilateralFiltering(
     JNIEnv* /*env*/, jobject /*obj*/, jboolean on) {
   app.SetUpsampleViaBilateralFiltering(on);
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_getPointSeparation(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_getPointSeparation(
     JNIEnv* env, jobject) {
   return (env)->NewStringUTF(app.GetPointSeparation().c_str());
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceChanged(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onGlSurfaceChanged(
     JNIEnv* /*env*/, jobject /*obj*/, jint width, jint height) {
-  app.SetViewPort(width, height);
+  app.OnSurfaceChanged(width, height);
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onGlSurfaceDrawFrame(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onGlSurfaceDrawFrame(
     JNIEnv* /*env*/, jobject /*obj*/) {
-  app.Render();
+  app.OnDrawFrame();
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_pointtopoint_JNIInterface_onTouchEvent(
+Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onTouchEvent(
     JNIEnv* /*env*/, jobject /*obj*/, jfloat x, jfloat y) {
   app.OnTouchEvent(x, y);
 }

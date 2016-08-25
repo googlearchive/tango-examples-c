@@ -102,30 +102,6 @@ void PointToPointApplication::OnCreate(JNIEnv* env, jobject activity) {
         "date.");
     std::exit(EXIT_SUCCESS);
   }
-
-  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
-  if (tango_config_ == nullptr) {
-    LOGE("PointToPointApplication::OnCreate, Unable to get tango config");
-    std::exit(EXIT_SUCCESS);
-  }
-
-  if (point_cloud_manager_ == nullptr) {
-    int32_t max_point_cloud_elements;
-    err = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
-                               &max_point_cloud_elements);
-    if (err != TANGO_SUCCESS) {
-      LOGE(
-          "PointToPointApplication::OnCreate, "
-          "Failed to query maximum number of point cloud elements.");
-      std::exit(EXIT_SUCCESS);
-    }
-
-    err = TangoSupport_createPointCloudManager(max_point_cloud_elements,
-                                               &point_cloud_manager_);
-    if (err != TANGO_SUCCESS) {
-      std::exit(EXIT_SUCCESS);
-    }
-  }
 }
 
 void PointToPointApplication::OnTangoServiceConnected(JNIEnv* env,
@@ -139,30 +115,40 @@ void PointToPointApplication::OnTangoServiceConnected(JNIEnv* env,
     std::exit(EXIT_SUCCESS);
   }
 
-  TangoSetupAndConnect();
+  TangoSetupConfig();
+  TangoConnectCallbacks();
+  TangoConnect();
 }
 
-int PointToPointApplication::TangoSetupAndConnect() {
+void PointToPointApplication::TangoSetupConfig() {
   // Here, we will configure the service to run in the way we would want. For
   // this application, we will start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   // In addition to motion tracking, however, we want to run with depth so that
   // we can measure things. As such, we are going to set an additional flag
   // "config_enable_depth" to true.
+  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
-    return false;
+    LOGE(
+        "PointToPointApplication::TangoSetupConfig, "
+        "Unable to get tango config");
+    std::exit(EXIT_SUCCESS);
   }
 
   TangoErrorType ret;
   ret = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable depth.");
+    LOGE(
+        "PointToPointApplication::TangoSetupConfig, "
+        "Failed to enable depth.");
     std::exit(EXIT_SUCCESS);
   }
 
   ret = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable color camera.");
+    LOGE(
+        "PointToPointApplication::TangoSetupConfig, "
+        "Failed to enable color camera.");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -173,8 +159,10 @@ int PointToPointApplication::TangoSetupAndConnect() {
   ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
                             true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Fail to enable drift correction mode");
-    return ret;
+    LOGE(
+        "PointToPointApplication::TangoSetupConfig, "
+        "Fail to enable drift correction mode");
+    std::exit(EXIT_SUCCESS);
   }
 
   // Note that it is super important for AR applications that we enable low
@@ -184,21 +172,46 @@ int PointToPointApplication::TangoSetupAndConnect() {
   ret = TangoConfig_setBool(tango_config_,
                             "config_enable_low_latency_imu_integration", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable low latency imu integration.");
+    LOGE(
+        "PointToPointApplication::TangoSetupConfig, "
+        "Failed to enable low latency imu integration.");
     std::exit(EXIT_SUCCESS);
+  }
+}
+
+void PointToPointApplication::TangoConnectCallbacks() {
+  if (point_cloud_manager_ == nullptr) {
+    int32_t max_point_cloud_elements;
+    TangoErrorType ret = TangoConfig_getInt32(
+        tango_config_, "max_point_cloud_elements", &max_point_cloud_elements);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "PointToPointApplication::TangoConnectCallbacks, "
+          "Failed to query maximum number of point cloud elements.");
+      std::exit(EXIT_SUCCESS);
+    }
+
+    ret = TangoSupport_createPointCloudManager(max_point_cloud_elements,
+                                               &point_cloud_manager_);
+    if (ret != TANGO_SUCCESS) {
+      std::exit(EXIT_SUCCESS);
+    }
   }
 
   // Register for depth notification.
-  ret = TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
+  TangoErrorType ret =
+      TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to connected to depth callback.");
     std::exit(EXIT_SUCCESS);
   }
+}
 
+void PointToPointApplication::TangoConnect() {
   // Here, we will connect to the TangoService and set up to run. Note that
   // we are passing in a pointer to ourselves as the context which will be
   // passed back in our callbacks.
-  ret = TangoService_connect(this, tango_config_);
+  TangoErrorType ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to connect to the Tango service.");
     std::exit(EXIT_SUCCESS);
@@ -239,7 +252,6 @@ int PointToPointApplication::TangoSetupAndConnect() {
     }
   }
 
-
   /**
    * The interpolator_ contains camera intrinsics and references to data buffers
    * allowing for effective upsampling of the depth data to camera image
@@ -262,9 +274,7 @@ int PointToPointApplication::TangoSetupAndConnect() {
       kFarPlane);
 
   // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime);
-
-  return ret;
+  TangoSupport_initializeLibrary();
 }
 
 void PointToPointApplication::OnPause() {
@@ -274,7 +284,7 @@ void PointToPointApplication::OnPause() {
 
 void PointToPointApplication::TangoDisconnect() { TangoService_disconnect(); }
 
-int PointToPointApplication::InitializeGLContent() {
+void PointToPointApplication::OnSurfaceCreated() {
   video_overlay_ = new tango_gl::VideoOverlay();
   segment_ = new tango_gl::SegmentDrawable();
   segment_->SetLineWidth(4.0);
@@ -292,9 +302,8 @@ int PointToPointApplication::InitializeGLContent() {
       TANGO_CAMERA_COLOR, video_overlay_->GetTextureId(), this, nullptr);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to initialize the video overlay");
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
-  return ret;
 }
 
 void PointToPointApplication::SetUpsampleViaBilateralFiltering(bool on) {
@@ -305,14 +314,14 @@ void PointToPointApplication::SetUpsampleViaBilateralFiltering(bool on) {
   algorithm_ = UpsampleAlgorithm::kNearest;
 }
 
-void PointToPointApplication::SetViewPort(int width, int height) {
+void PointToPointApplication::OnSurfaceChanged(int width, int height) {
   screen_width_ = static_cast<GLsizei>(width);
   screen_height_ = static_cast<GLsizei>(height);
 
   glViewport(0, 0, screen_width_, screen_height_);
 }
 
-void PointToPointApplication::Render() {
+void PointToPointApplication::OnDrawFrame() {
   // Update the texture associated with the color image.
   if (TangoService_updateTexture(TANGO_CAMERA_COLOR, &last_gpu_timestamp_) !=
       TANGO_SUCCESS) {

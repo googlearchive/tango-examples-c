@@ -84,15 +84,15 @@ void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
   TangoSetupConfig();
   TangoConnectCallbacks();
   TangoConnect();
-  TangoSetIntrinsicsAndExtrinsics();
+  TangoSetIntrinsics();
 }
 
-bool SynchronizationApplication::TangoSetupConfig() {
+void SynchronizationApplication::TangoSetupConfig() {
   SetDepthAlphaValue(0.0);
   SetGPUUpsample(false);
 
   if (tango_config_ != nullptr) {
-    return true;
+    return;
   }
 
   // Here, we'll configure the service to run in the way we'd want. For this
@@ -100,7 +100,7 @@ bool SynchronizationApplication::TangoSetupConfig() {
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // In addition to motion tracking, however, we want to run with depth so that
@@ -110,7 +110,7 @@ bool SynchronizationApplication::TangoSetupConfig() {
       TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (err != TANGO_SUCCESS) {
     LOGE("Failed to enable depth.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // We also need to enable the color camera in order to get RGB frame
@@ -121,7 +121,7 @@ bool SynchronizationApplication::TangoSetupConfig() {
         "Failed to set 'enable_color_camera' configuration flag with error"
         " code: %d",
         err);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Note that it's super important for AR applications that we enable low
@@ -132,7 +132,7 @@ bool SynchronizationApplication::TangoSetupConfig() {
                             "config_enable_low_latency_imu_integration", true);
   if (err != TANGO_SUCCESS) {
     LOGE("Failed to enable low latency imu integration.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Use the tango_config to set up the PointCloudManager before we connect
@@ -143,20 +143,18 @@ bool SynchronizationApplication::TangoSetupConfig() {
                                &max_point_cloud_elements);
     if (err != TANGO_SUCCESS) {
       LOGE("Failed to query maximum number of point cloud elements.");
-      return false;
+      std::exit(EXIT_SUCCESS);
     }
 
     err = TangoSupport_createPointCloudManager(max_point_cloud_elements,
                                                &point_cloud_manager_);
     if (err != TANGO_SUCCESS) {
-      return false;
+      std::exit(EXIT_SUCCESS);
     }
   }
-
-  return true;
 }
 
-bool SynchronizationApplication::TangoConnectCallbacks() {
+void SynchronizationApplication::TangoConnectCallbacks() {
   // We need to be notified when we receive depth information in order
   // to support measuring 3D points. For both pose and color camera
   // information, we'll be polling.  The render loop will drive the
@@ -166,7 +164,11 @@ bool SynchronizationApplication::TangoConnectCallbacks() {
   TangoErrorType ret =
       TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
   if (ret != TANGO_SUCCESS) {
-    return false;
+    LOGE(
+        "SynchronizationApplication: Failed to connect XYZ callback with "
+        "errorcode: %d",
+        ret);
+    std::exit(EXIT_SUCCESS);
   }
 
   // Connect color camera texture. The callback is ignored because the
@@ -174,24 +176,26 @@ bool SynchronizationApplication::TangoConnectCallbacks() {
   ret = TangoService_connectOnTextureAvailable(TANGO_CAMERA_COLOR, nullptr,
                                                nullptr);
   if (ret != TANGO_SUCCESS) {
-    return false;
+    LOGE(
+        "SynchronizationApplication: Failed to connect texture callback with "
+        "errorcode: %d",
+        ret);
+    std::exit(EXIT_SUCCESS);
   }
-
-  return true;
 }
 
-bool SynchronizationApplication::TangoConnect() {
+void SynchronizationApplication::TangoConnect() {
   // Here, we'll connect to the TangoService and set up to run. Note that we're
   // passing in a pointer to ourselves as the context which will be passed back
   // in our callbacks.
   TangoErrorType ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE("SynchronizationApplication: Failed to connect to the Tango service.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
-  return true;
 }
-bool SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
+
+void SynchronizationApplication::TangoSetIntrinsics() {
   // Get the intrinsics for the color camera and pass them on to the depth
   // image. We need these to know how to project the point cloud into the color
   // camera frame.
@@ -202,14 +206,13 @@ bool SynchronizationApplication::TangoSetIntrinsicsAndExtrinsics() {
     LOGE(
         "SynchronizationApplication: Failed to get the intrinsics for the color"
         "camera.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
   depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
   main_scene_.SetCameraIntrinsics(color_camera_intrinsics);
 
   // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime);
-  return true;
+  TangoSupport_initializeLibrary();
 }
 
 void SynchronizationApplication::OnPause() { TangoDisconnect(); }
@@ -218,19 +221,19 @@ void SynchronizationApplication::TangoDisconnect() {
   TangoService_disconnect();
 }
 
-void SynchronizationApplication::InitializeGLContent() {
+void SynchronizationApplication::OnSurfaceCreated() {
   depth_image_.InitializeGL();
   color_image_.InitializeGL();
   main_scene_.InitializeGL();
 }
 
-void SynchronizationApplication::SetViewPort(int width, int height) {
+void SynchronizationApplication::OnSurfaceChanged(int width, int height) {
   screen_width_ = static_cast<float>(width);
   screen_height_ = static_cast<float>(height);
   main_scene_.SetupViewPort(width, height);
 }
 
-void SynchronizationApplication::Render() {
+void SynchronizationApplication::OnDrawFrame() {
   double color_timestamp = 0.0;
   double depth_timestamp = 0.0;
   bool new_points = false;

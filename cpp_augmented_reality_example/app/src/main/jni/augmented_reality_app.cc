@@ -118,7 +118,7 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   sensor_rotation_ = sensor_orientation;
 }
 
-bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
+void AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
                                                   jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
@@ -126,7 +126,7 @@ bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
         "AugmentedRealityApp: Failed to set Tango binder with"
         "error code: %d",
         ret);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   TangoSetupConfig();
@@ -134,8 +134,6 @@ bool AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
   TangoConnect();
 
   is_service_connected_ = true;
-
-  return true;
 }
 
 void AugmentedRealityApp::OnDestroy() {
@@ -147,14 +145,14 @@ void AugmentedRealityApp::OnDestroy() {
   on_demand_render_ = nullptr;
 }
 
-int AugmentedRealityApp::TangoSetupConfig() {
+void AugmentedRealityApp::TangoSetupConfig() {
   // Here, we'll configure the service to run in the way we'd want. For this
   // application, we'll start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
     LOGE("AugmentedRealityApp: Failed to get default config form");
-    return TANGO_ERROR;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Set auto-recovery for motion tracking as requested by the user.
@@ -165,7 +163,7 @@ int AugmentedRealityApp::TangoSetupConfig() {
         "AugmentedRealityApp: config_enable_auto_recovery() failed with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Enable color camera from config.
@@ -175,7 +173,7 @@ int AugmentedRealityApp::TangoSetupConfig() {
         "AugmentedRealityApp: config_enable_color_camera() failed with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Low latency IMU integration enables aggressive integration of the latest
@@ -188,7 +186,7 @@ int AugmentedRealityApp::TangoSetupConfig() {
         "AugmentedRealityApp: config_enable_low_latency_imu_integration() "
         "failed with error code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
@@ -202,7 +200,7 @@ int AugmentedRealityApp::TangoSetupConfig() {
         "AugmentedRealityApp: enabling config_enable_drift_correction "
         "failed with error code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Get TangoCore version string from service.
@@ -214,14 +212,12 @@ int AugmentedRealityApp::TangoSetupConfig() {
         "AugmentedRealityApp: get tango core version failed with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
   tango_core_version_string_ = tango_core_version;
-
-  return ret;
 }
 
-int AugmentedRealityApp::TangoConnectCallbacks() {
+void AugmentedRealityApp::TangoConnectCallbacks() {
   // Connect color camera texture.
   TangoErrorType ret = TangoService_connectOnTextureAvailable(
       TANGO_CAMERA_COLOR, this, onTextureAvailableRouter);
@@ -230,6 +226,7 @@ int AugmentedRealityApp::TangoConnectCallbacks() {
         "AugmentedRealityApp: Failed to connect texture callback with error"
         "code: %d",
         ret);
+    std::exit(EXIT_SUCCESS);
   }
 
   // Attach onEventAvailable callback.
@@ -240,28 +237,24 @@ int AugmentedRealityApp::TangoConnectCallbacks() {
         "AugmentedRealityApp: Failed to connect to event callback with error"
         "code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
-
-  return ret;
 }
 
 // Connect to Tango Service, service will start running, and
 // pose can be queried.
-bool AugmentedRealityApp::TangoConnect() {
+void AugmentedRealityApp::TangoConnect() {
   TangoErrorType ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "AugmentedRealityApp: Failed to connect to the Tango service with"
         "error code: %d",
         ret);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime);
-
-  return true;
+  TangoSupport_initializeLibrary();
 }
 
 void AugmentedRealityApp::OnPause() {
@@ -281,12 +274,12 @@ void AugmentedRealityApp::TangoDisconnect() {
   TangoService_disconnect();
 }
 
-void AugmentedRealityApp::InitializeGLContent(AAssetManager* aasset_manager) {
+void AugmentedRealityApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
   main_scene_.InitGLContent(aasset_manager, activity_rotation_,
                             sensor_rotation_);
 }
 
-void AugmentedRealityApp::SetViewPort(int width, int height) {
+void AugmentedRealityApp::OnSurfaceChanged(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;
   UpdateViewporAndProjectionMatrix();
@@ -365,7 +358,7 @@ void AugmentedRealityApp::OnDeviceRotationChanged(int activity_orientation,
                                          sensor_orientation);
 }
 
-void AugmentedRealityApp::Render() {
+void AugmentedRealityApp::OnDrawFrame() {
   if (is_service_connected_ && !is_texture_id_set_) {
     is_texture_id_set_ = true;
     UpdateViewporAndProjectionMatrix();

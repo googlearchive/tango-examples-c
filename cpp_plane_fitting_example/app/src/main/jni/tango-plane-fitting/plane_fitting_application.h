@@ -61,29 +61,19 @@ class PlaneFittingApplication {
   void OnPause();
 
   // Called when Tango Service is connected successfully.
-  bool OnTangoServiceConnected(JNIEnv* env, jobject binder);
-
-  // Setup configuration options for Project Tango service, register
-  // for callbacks, and connect to the Project Tango service.
-  bool TangoSetupAndConnect();
-
-  // Disconnect from the Project Tango service.
-  void TangoDisconnect();
+  void OnTangoServiceConnected(JNIEnv* env, jobject binder);
 
   // Create OpenGL state and connect to the color camera texture.
-  bool InitializeGLContent();
+  void OnSurfaceCreated();
 
   // Configure whether to display depth data for debugging.
   void SetRenderDebugPointCloud(bool on);
 
   // Configure the viewport of the GL view.
-  void SetViewPort(int width, int height);
+  void OnSurfaceChanged(int width, int height);
 
   // Get current camera position and render.
-  void Render();
-
-  // Delete the GL resources.
-  void DeleteResources();
+  void OnDrawFrame();
 
   //
   // Callback for point clouds that come in from the Tango service.
@@ -106,6 +96,24 @@ class PlaneFittingApplication {
 
   // Update the current point data.
   void UpdateCurrentPointData();
+
+  // Setup the configuration file for the Tango Service. We'll also see whether
+  // we'd like auto-recover enabled.
+  void TangoSetupConfig();
+
+  // Connect the OnXYZijAvailable and OnTextureAvailable callbacks.
+  void TangoConnectCallbacks();
+
+  // Connect to Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking.
+  void TangoConnect();
+
+  // Disconnect from the Project Tango service.
+  void TangoDisconnect();
+
+  // Delete the GL resources.
+  void DeleteResources();
 
   // Return transform for depth camera in Tango coordinate convention with
   // respect to

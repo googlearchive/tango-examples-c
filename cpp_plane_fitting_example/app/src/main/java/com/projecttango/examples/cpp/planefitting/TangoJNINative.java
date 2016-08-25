@@ -26,13 +26,13 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 /**
  * Interfaces between native C++ code and Java code.
  */
-public class TangoJniNative {
+public class TangoJNINative {
   static {
     // This project depends on tango_client_api, so we need to make sure we load
     // the correct library first.
     if (TangoInitializationHelper.loadTangoSharedLibrary() ==
         TangoInitializationHelper.ARCH_ERROR) {
-      Log.e("TangoJniNative", "ERROR! Unable to load libtango_client_api.so!");
+      Log.e("TangoJNINative", "ERROR! Unable to load libtango_client_api.so!");
     }
     System.loadLibrary("cpp_plane_fitting_example");
   }

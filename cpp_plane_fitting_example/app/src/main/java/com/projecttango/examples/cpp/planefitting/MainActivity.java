@@ -22,15 +22,11 @@ import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Point;
-import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,7 +34,6 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -68,7 +63,7 @@ public class MainActivity extends Activity {
   // Tango Service connection.
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
-        TangoJniNative.onTangoServiceConnected(service);
+        TangoJNINative.onTangoServiceConnected(service);
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -89,7 +84,7 @@ public class MainActivity extends Activity {
   // Update settings of the app depending on the settings last saved.
   private void updatePreferences(SharedPreferences prefs, String key) {
     if (key.equals(getString(R.string.key_debug_point_cloud))) {
-      TangoJniNative.setRenderDebugPointCloud(prefs.getBoolean(key, false));
+      TangoJNINative.setRenderDebugPointCloud(prefs.getBoolean(key, false));
     } else {
       Log.w(TAG, "Unknown preference: " + key);
     }
@@ -98,7 +93,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    TangoJniNative.onCreate(this);
+    TangoJNINative.onCreate(this);
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -122,7 +117,7 @@ public class MainActivity extends Activity {
       mGLView.queueEvent(new Runnable() {
           @Override
           public void run() {
-            TangoJniNative.onTouchEvent(event.getX(), event.getY());
+            TangoJNINative.onTouchEvent(event.getX(), event.getY());
           }
         });
     }
@@ -184,12 +179,12 @@ public class MainActivity extends Activity {
   protected void onPause() {
     super.onPause();
     mGLView.onPause();
-    TangoJniNative.onPause();
+    TangoJNINative.onPause();
     unbindService(mTangoServiceConnection);
   }
 
   public void surfaceCreated() {
-    TangoJniNative.onGlSurfaceCreated();
+    TangoJNINative.onGlSurfaceCreated();
     // Update the last saved settings after the surface is created.
     Map<String, ?> allKeys = mPreferences.getAll();
     Iterator i = allKeys.entrySet().iterator();

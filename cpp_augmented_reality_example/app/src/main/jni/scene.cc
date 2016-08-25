@@ -78,13 +78,21 @@ void Scene::InitGLContent(AAssetManager* aasset_manager,
 
 void Scene::DeleteResources() {
   delete camera_;
+  camera_ = nullptr;
   delete video_overlay_;
+  video_overlay_ = nullptr;
   delete earth_mesh_;
+  earth_mesh_ = nullptr;
   delete earth_material_;
+  earth_material_ = nullptr;
   delete earth_texture_;
+  earth_texture_ = nullptr;
   delete moon_mesh_;
+  moon_mesh_ = nullptr;
   delete moon_material_;
+  moon_material_ = nullptr;
   delete moon_texture_;
+  moon_texture_ = nullptr;
 }
 
 void Scene::SetupViewPort(int x, int y, int w, int h) {

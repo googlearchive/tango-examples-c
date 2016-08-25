@@ -100,20 +100,20 @@ void PlaneFittingApplication::OnCreate(JNIEnv* env, jobject activity) {
   }
 }
 
-bool PlaneFittingApplication::OnTangoServiceConnected(JNIEnv* env,
+void PlaneFittingApplication::OnTangoServiceConnected(JNIEnv* env,
                                                       jobject binder) {
   TangoErrorType ret = TangoService_setBinder(env, binder);
   if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "PlaneFittingApplication: Failed to bind Tango service with"
-        "error code: %d",
-        ret);
-    return false;
+    LOGE("PlaneFittingApplication: TangoService_setBinder error");
+    std::exit(EXIT_SUCCESS);
   }
-  return TangoSetupAndConnect();
+
+  TangoSetupConfig();
+  TangoConnectCallbacks();
+  TangoConnect();
 }
 
-bool PlaneFittingApplication::TangoSetupAndConnect() {
+void PlaneFittingApplication::TangoSetupConfig() {
   // Here, we will configure the service to run in the way we would want. For
   // this application, we will start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
@@ -121,20 +121,20 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
   // we can measure things. As such, we are going to set an additional flag
   // "config_enable_depth" to true.
   if (tango_config_ == nullptr) {
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   TangoErrorType ret =
       TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable depth.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   ret = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable color camera.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Note that it is super important for AR applications that we enable low
@@ -145,7 +145,7 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
                             "config_enable_low_latency_imu_integration", true);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to enable low latency imu integration.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
@@ -159,14 +159,17 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
         "PlaneFittingApplication: enabling config_enable_drift_correction "
         "failed with error code: %d",
         ret);
-    return ret;
+    std::exit(EXIT_SUCCESS);
   }
+}
 
+void PlaneFittingApplication::TangoConnectCallbacks() {
   // Register for depth notification.
-  ret = TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
+  TangoErrorType ret =
+      TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to connected to depth callback.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // The Tango service allows you to connect an OpenGL texture directly to its
@@ -181,16 +184,18 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
         "PlaneFittingApplication: Failed to connect texture callback with"
         "error code: %d",
         ret);
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
+}
 
+void PlaneFittingApplication::TangoConnect() {
   // Here, we will connect to the TangoService and set up to run. Note that
   // we are passing in a pointer to ourselves as the context which will be
   // passed back in our callbacks.
-  ret = TangoService_connect(this, tango_config_);
+  TangoErrorType ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PlaneFittingApplication: Failed to connect to the Tango service.");
-    return false;
+    std::exit(EXIT_SUCCESS);
   }
 
   // Get the intrinsics for the color camera and pass them on to the depth
@@ -202,6 +207,7 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
     LOGE(
         "PlaneFittingApplication: Failed to get the intrinsics for the color"
         "camera.");
+    std::exit(EXIT_SUCCESS);
   }
 
   constexpr float kNearPlane = 0.1;
@@ -214,9 +220,7 @@ bool PlaneFittingApplication::TangoSetupAndConnect() {
       kFarPlane);
 
   // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime);
-
-  return true;
+  TangoSupport_initializeLibrary();
 }
 
 void PlaneFittingApplication::OnPause() {
@@ -226,28 +230,26 @@ void PlaneFittingApplication::OnPause() {
 
 void PlaneFittingApplication::TangoDisconnect() { TangoService_disconnect(); }
 
-bool PlaneFittingApplication::InitializeGLContent() {
+void PlaneFittingApplication::OnSurfaceCreated() {
   video_overlay_ = new tango_gl::VideoOverlay();
   point_cloud_renderer_ = new PointCloudRenderer();
   cube_ = new tango_gl::Cube();
   cube_->SetScale(glm::vec3(kCubeScale, kCubeScale, kCubeScale));
   cube_->SetColor(0.7f, 0.7f, 0.7f);
-
-  return true;
 }
 
 void PlaneFittingApplication::SetRenderDebugPointCloud(bool on) {
   point_cloud_renderer_->SetRenderDebugColors(on);
 }
 
-void PlaneFittingApplication::SetViewPort(int width, int height) {
+void PlaneFittingApplication::OnSurfaceChanged(int width, int height) {
   screen_width_ = static_cast<float>(width);
   screen_height_ = static_cast<float>(height);
 
   glViewport(0, 0, screen_width_, screen_height_);
 }
 
-void PlaneFittingApplication::Render() {
+void PlaneFittingApplication::OnDrawFrame() {
   // We need to make sure that we update the texture associated with the color
   // image.
   if (TangoService_updateTextureExternalOes(

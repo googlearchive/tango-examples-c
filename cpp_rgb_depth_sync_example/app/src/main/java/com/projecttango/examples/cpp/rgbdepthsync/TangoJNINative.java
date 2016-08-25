@@ -25,7 +25,7 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 /**
  * Interfaces between C and Java.
  */
-public class JNIInterface {
+public class TangoJNINative {
   static {
     // This project depends on tango_client_api, so we need to make sure we load
     // the correct library first.

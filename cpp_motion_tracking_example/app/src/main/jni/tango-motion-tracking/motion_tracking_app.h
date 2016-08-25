@@ -58,29 +58,14 @@ class MotiongTrackingApp {
   // Call when Tango Service is connected successfully.
   void OnTangoServiceConnected(JNIEnv* env, jobject iBinder);
 
-  // Setup the configuration file for the Tango Service
-  int TangoSetupConfig();
-
-  // Connect to Tango Service.
-  // This function will start the Tango Service pipeline, in this case, it will
-  // start Motion Tracking.
-  bool TangoConnect();
-
-  // Disconnect from Tango Service, release all the resources that the app is
-  // holding from Tango Service.
-  void TangoDisconnect();
-
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
-  void InitializeGLContent(AAssetManager* aasset_manager);
+  void OnSurfaceCreated(AAssetManager* aasset_manager);
 
   // Setup the view port width and height.
-  void SetViewPort(int width, int height);
+  void OnSurfaceChanged(int width, int height);
 
   // Main render loop.
-  void Render();
-
-  // Release all resources that allocate from the program.
-  void DeleteResources();
+  void OnDrawFrame();
 
   // Set screen rotation index.
   //
@@ -91,6 +76,21 @@ class MotiongTrackingApp {
   void SetScreenRotation(int screen_roatation);
 
  private:
+  // Setup the configuration file for the Tango Service
+  void TangoSetupConfig();
+
+  // Connect to Tango Service.
+  // This function will start the Tango Service pipeline, in this case, it will
+  // start Motion Tracking.
+  void TangoConnect();
+
+  // Disconnect from Tango Service, release all the resources that the app is
+  // holding from Tango Service.
+  void TangoDisconnect();
+
+  // Release all resources that allocate from the program.
+  void DeleteResources();
+
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement.
   Scene main_scene_;
