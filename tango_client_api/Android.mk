@@ -25,6 +25,6 @@ ifeq ($(TARGET_ARCH), arm)
 endif
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/libtango_client_stub.a
+LOCAL_SRC_FILES := lib/libtango_client_stub.a
 
 include $(PREBUILT_STATIC_LIBRARY)
