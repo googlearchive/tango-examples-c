@@ -83,18 +83,18 @@ void PointCloudRenderer::DeleteGLResources() {
 
 void PointCloudRenderer::Render(const glm::mat4& projection_T_depth,
                                 const glm::mat4& opengl_T_depth,
-                                const TangoXYZij* point_cloud) {
+                                const TangoPointCloud* point_cloud) {
   if (!debug_colors_) {
     return;
   }
 
   glUseProgram(shader_program_);
 
-  const size_t number_of_vertices = point_cloud->xyz_count;
+  const size_t number_of_vertices = point_cloud->num_points;
 
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * number_of_vertices,
-               point_cloud->xyz[0], GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 4 * number_of_vertices,
+               point_cloud->points[0], GL_STATIC_DRAW);
 
   const glm::mat4 depth_T_opengl = glm::inverse(opengl_T_depth);
 
@@ -113,7 +113,7 @@ void PointCloudRenderer::Render(const glm::mat4& projection_T_depth,
   glUniform1f(plane_distance_handle_, kDistanceScale * plane_distance_);
 
   glEnableVertexAttribArray(vertices_handle_);
-  glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glVertexAttribPointer(vertices_handle_, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
 
   glDrawArrays(GL_POINTS, 0, number_of_vertices);
 

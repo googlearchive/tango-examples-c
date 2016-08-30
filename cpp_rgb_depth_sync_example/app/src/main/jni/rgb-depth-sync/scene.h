@@ -37,6 +37,9 @@ class Scene {
   // Setup GL view port.
   void SetupViewPort(int w, int h);
 
+  // Clear the render on screen.
+  void ClearRender();
+
   // Renders the scene onto the camera image using the provided depth texture.
   void Render(GLuint, GLuint);
 

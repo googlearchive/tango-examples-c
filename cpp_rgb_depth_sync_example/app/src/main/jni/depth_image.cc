@@ -138,7 +138,7 @@ bool DepthImage::CreateOrBindCPUTexture() {
 
 void DepthImage::RenderDepthToTexture(
     const glm::mat4& color_t1_T_depth_t0,
-    const TangoXYZij* render_point_cloud_buffer, bool new_points) {
+    const TangoPointCloud* render_point_cloud_buffer, bool new_points) {
   new_points = this->CreateOrBindGPUTexture() || new_points;
 
   glViewport(0, 0, rgb_camera_intrinsics_.width, rgb_camera_intrinsics_.height);
@@ -154,8 +154,8 @@ void DepthImage::RenderDepthToTexture(
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_handle_);
   if (new_points) {
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(GLfloat) * render_point_cloud_buffer->xyz_count * 3,
-                 render_point_cloud_buffer->xyz, GL_STATIC_DRAW);
+                 sizeof(GLfloat) * render_point_cloud_buffer->num_points * 4,
+                 render_point_cloud_buffer->points, GL_STATIC_DRAW);
   }
   tango_gl::util::CheckGlError("DepthImage Buffer");
 
@@ -172,9 +172,9 @@ void DepthImage::RenderDepthToTexture(
   glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 
   glEnableVertexAttribArray(vertices_handle_);
-  glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glVertexAttribPointer(vertices_handle_, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-  glDrawArrays(GL_POINTS, 0, render_point_cloud_buffer->xyz_count);
+  glDrawArrays(GL_POINTS, 0, render_point_cloud_buffer->num_points);
   glDisableVertexAttribArray(vertices_handle_);
 
   tango_gl::util::CheckGlError("DepthImage Draw");
@@ -200,7 +200,7 @@ void DepthImage::RenderDepthToTexture(
 // timestamp t0 with respect the rgb camera's frame on timestamp t1.
 void DepthImage::UpdateAndUpsampleDepth(
     const glm::mat4& color_t1_T_depth_t0,
-    const TangoXYZij* render_point_cloud_buffer) {
+    const TangoPointCloud* render_point_cloud_buffer) {
   int depth_image_width = rgb_camera_intrinsics_.width;
   int depth_image_height = rgb_camera_intrinsics_.height;
   int depth_image_size = depth_image_width * depth_image_height;
@@ -211,11 +211,11 @@ void DepthImage::UpdateAndUpsampleDepth(
   std::fill(grayscale_display_buffer_.begin(), grayscale_display_buffer_.end(),
             0);
 
-  int point_cloud_size = render_point_cloud_buffer->xyz_count;
+  int point_cloud_size = render_point_cloud_buffer->num_points;
   for (int i = 0; i < point_cloud_size; ++i) {
-    float x = render_point_cloud_buffer->xyz[i][0];
-    float y = render_point_cloud_buffer->xyz[i][1];
-    float z = render_point_cloud_buffer->xyz[i][2];
+    float x = render_point_cloud_buffer->points[i][0];
+    float y = render_point_cloud_buffer->points[i][1];
+    float z = render_point_cloud_buffer->points[i][2];
 
     // depth_t0_point is the point in depth camera frame on timestamp t0.
     // (depth image timestamp).

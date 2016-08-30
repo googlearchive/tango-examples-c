@@ -38,11 +38,12 @@ constexpr float kCubeScale = 0.05f;
  *
  * @param context Will be a pointer to a PlaneFittingApplication instance on
  * which to call callbacks.
- * @param xyz_ij The point cloud to pass on.
+ * @param point_cloud The point cloud to pass on.
  */
-void OnXYZijAvailableRouter(void* context, const TangoXYZij* xyz_ij) {
+void OnPointCloudAvailableRouter(void* context,
+                                 const TangoPointCloud* point_cloud) {
   PlaneFittingApplication* app = static_cast<PlaneFittingApplication*>(context);
-  app->OnXYZijAvailable(xyz_ij);
+  app->OnPointCloudAvailable(point_cloud);
 }
 
 // This function does nothing. TangoService_connectOnTextureAvailable
@@ -51,8 +52,9 @@ void onTextureAvailableRouter(void*, TangoCameraId) { return; }
 
 }  // end namespace
 
-void PlaneFittingApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
-  TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
+void PlaneFittingApplication::OnPointCloudAvailable(
+    const TangoPointCloud* point_cloud) {
+  TangoSupport_updatePointCloud(point_cloud_manager_, point_cloud);
 }
 
 PlaneFittingApplication::PlaneFittingApplication()
@@ -78,6 +80,12 @@ void PlaneFittingApplication::OnCreate(JNIEnv* env, jobject activity) {
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
     LOGE("PlaneFittingApplication::OnCreate, Unable to get tango config");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  if (TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                           TANGO_POINTCLOUD_XYZC) != TANGO_SUCCESS) {
+    LOGE("TangoConfig_setInt32(\"config_depth_mode\", %d): Failed\n", 0);
     std::exit(EXIT_SUCCESS);
   }
 
@@ -166,7 +174,7 @@ void PlaneFittingApplication::TangoSetupConfig() {
 void PlaneFittingApplication::TangoConnectCallbacks() {
   // Register for depth notification.
   TangoErrorType ret =
-      TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
+      TangoService_connectOnPointCloudAvailable(OnPointCloudAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to connected to depth callback.");
     std::exit(EXIT_SUCCESS);
@@ -335,10 +343,9 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
 
   glm::dvec3 double_depth_position;
   glm::dvec4 double_depth_plane_equation;
-  if (TangoSupport_fitPlaneModelNearClick(
-          front_cloud_, &color_camera_intrinsics_,
-          &pose_color_camera_t0_T_depth_camera_t1, glm::value_ptr(uv),
-          glm::value_ptr(double_depth_position),
+  if (TangoSupport_fitPlaneModelNearPoint(
+          front_cloud_, &pose_color_camera_t0_T_depth_camera_t1,
+          glm::value_ptr(uv), glm::value_ptr(double_depth_position),
           glm::value_ptr(double_depth_plane_equation)) != TANGO_SUCCESS) {
     return;  // Assume error has already been reported.
   }

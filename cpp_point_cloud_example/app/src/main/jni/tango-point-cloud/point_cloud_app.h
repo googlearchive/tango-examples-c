@@ -66,7 +66,7 @@ class PointCloudApp {
   //
   // @param pose: The current point cloud returned by the service,
   //              caller allocated.
-  void onPointCloudAvailable(const TangoXYZij* xyz_ij);
+  void onPointCloudAvailable(const TangoPointCloud* point_cloud);
 
   // Allocate OpenGL resources for rendering, mainly for initializing the Scene.
   void OnSurfaceCreated();
@@ -132,7 +132,7 @@ class PointCloudApp {
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  TangoXYZij* front_cloud_;
+  TangoPointCloud* front_cloud_;
   float point_cloud_average_depth_;
 
   // main_scene_ includes all drawable object for visualizing Tango device's
@@ -150,6 +150,8 @@ class PointCloudApp {
 
   // Screen rotation index.
   int screen_rotation_;
+
+  bool is_service_connected_;
 };
 }  // namespace tango_point_cloud
 

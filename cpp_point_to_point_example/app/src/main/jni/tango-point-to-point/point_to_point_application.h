@@ -82,9 +82,9 @@ class PointToPointApplication {
   //
   // Callback for point clouds that come in from the Tango service.
   //
-  // @param xyz_ij The point cloud returned by the service.
+  // @param point_cloud The point cloud returned by the service.
   //
-  void OnXYZijAvailable(const TangoXYZij* xyz_ij);
+  void OnPointCloudAvailable(const TangoPointCloud* point_cloud);
 
   //
   // Callback for image buffers that come in from the Tango service.
@@ -158,7 +158,7 @@ class PointToPointApplication {
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  TangoXYZij* front_cloud_;
+  TangoPointCloud* front_cloud_;
 
   // Image data manager.
   TangoSupportImageBufferManager* image_buffer_manager_;

@@ -24,34 +24,30 @@ namespace {
 // The minimum Tango Core version required from this application.
 constexpr int kTangoCoreMinimumVersion = 9377;
 
-// This function logs XYZij data from onXYZijAvailable callbacks.
+// This function logs point cloud data from OnPointCloudAvailable callbacks.
 //
 // @param context, this will be a pointer to a HelloDepthPerceptionApp
 //        instance on which to call callbacks. This parameter is hidden
 //        since it is not used.
-// @param *point_cloud, XYZij data to log.
-void onPointCloudAvailable(void* /*context*/, const TangoXYZij* point_cloud) {
+// @param *point_cloud, point cloud data to log.
+void OnPointCloudAvailable(void* /*context*/,
+                           const TangoPointCloud* point_cloud) {
   // Number of points in the point cloud.
-  int point_cloud_size;
   float average_depth;
 
   // Calculate the average depth.
-  point_cloud_size = point_cloud->xyz_count;
   average_depth = 0;
-  // Each xyz point has 3 coordinates.
-  size_t iteration_size = point_cloud_size * 3;
-  size_t vertices_count = 0;
-  for (size_t i = 2; i < iteration_size; i += 3) {
-    average_depth += point_cloud->xyz[0][i];
-    vertices_count++;
+  // Each xyzc point has 4 coordinates.
+  for (size_t i = 0; i < point_cloud->num_points; ++i) {
+    average_depth += point_cloud->points[i][2];
   }
-  if (vertices_count) {
-    average_depth /= vertices_count;
+  if (point_cloud->num_points) {
+    average_depth /= point_cloud->num_points;
   }
 
   // Log the number of points and average depth.
   LOGI("HelloDepthPerceptionApp: Point count: %d. Average depth (m): %.3f",
-       point_cloud_size, average_depth);
+       point_cloud->num_points, average_depth);
 }
 }  // anonymous namespace
 
@@ -103,10 +99,21 @@ void HelloDepthPerceptionApp::OnTangoServiceConnected(JNIEnv* env,
     std::exit(EXIT_SUCCESS);
   }
 
-  // Attach the OnXYZijAvailable callback to the onPointCloudAvailable
+  // Need to specify the depth_mode as XYZC.
+  err = TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                             TANGO_POINTCLOUD_XYZC);
+  if (err != TANGO_SUCCESS) {
+    LOGE(
+        "Failed to set 'depth_mode' configuration flag with error"
+        " code: %d",
+        err);
+    std::exit(EXIT_SUCCESS);
+  }
+
+  // Attach the OnPointCloudAvailable callback to the OnPointCloudAvailable
   // function defined above. The callback will be called every time a new
   // point cloud is acquired, after the service is connected.
-  err = TangoService_connectOnXYZijAvailable(onPointCloudAvailable);
+  err = TangoService_connectOnPointCloudAvailable(OnPointCloudAvailable);
   if (err != TANGO_SUCCESS) {
     LOGE(
         "HelloDepthPerceptionApp::OnTangoServiceConnected,"

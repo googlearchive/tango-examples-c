@@ -24,25 +24,27 @@ const int kVersionStringLength = 128;
 // The minimum Tango Core version required from this application.
 constexpr int kTangoCoreMinimumVersion = 9377;
 
-// This function routes onXYZijAvailable callbacks to the application object for
-// handling.
+// This function routes onPointCloudAvailable callbacks to the application
+// object for handling.
 //
 // @param context, context will be a pointer to a PointCloudApp
 //        instance on which to call callbacks.
 // @param pose, pose data to route to onPoseAvailable function.
-void onPointCloudAvailableRouter(void* context, const TangoXYZij* xyz_ij) {
+void onPointCloudAvailableRouter(void* context,
+                                 const TangoPointCloud* point_cloud) {
   tango_point_cloud::PointCloudApp* app =
       static_cast<tango_point_cloud::PointCloudApp*>(context);
-  app->onPointCloudAvailable(xyz_ij);
+  app->onPointCloudAvailable(point_cloud);
 }
 }  // namespace
 
 namespace tango_point_cloud {
-void PointCloudApp::onPointCloudAvailable(const TangoXYZij* xyz_ij) {
-  TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
+void PointCloudApp::onPointCloudAvailable(const TangoPointCloud* point_cloud) {
+  TangoSupport_updatePointCloud(point_cloud_manager_, point_cloud);
 }
 
-PointCloudApp::PointCloudApp() {}
+PointCloudApp::PointCloudApp()
+    : screen_rotation_(0), is_service_connected_(false) {}
 
 PointCloudApp::~PointCloudApp() {
   if (tango_config_ != nullptr) {
@@ -69,7 +71,7 @@ void PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "AugmentedRealityApp: Failed to set Tango binder with"
+        "PointCloudApp: Failed to set Tango binder with"
         "error code: %d",
         ret);
     std::exit(EXIT_SUCCESS);
@@ -111,6 +113,17 @@ void PointCloudApp::TangoSetupConfig() {
     std::exit(EXIT_SUCCESS);
   }
 
+  // Need to specify the depth_mode as XYZC.
+  ret = TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                             TANGO_POINTCLOUD_XYZC);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "PointCloudApp: 'config_depth_mode' configuration flag with error"
+        " code: %d",
+        ret);
+    std::exit(EXIT_SUCCESS);
+  }
+
   if (point_cloud_manager_ == nullptr) {
     int32_t max_point_cloud_elements;
     ret = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
@@ -129,9 +142,10 @@ void PointCloudApp::TangoSetupConfig() {
 }
 
 void PointCloudApp::TangoConnectCallbacks() {
-  // Attach the OnXYZijAvailable callback.
+  // Attach the OnPointCloudAvailable callback.
   // The callback will be called after the service is connected.
-  int ret = TangoService_connectOnXYZijAvailable(onPointCloudAvailableRouter);
+  int ret =
+      TangoService_connectOnPointCloudAvailable(onPointCloudAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "PointCloudApp: Failed to connect to point cloud callback with error"
@@ -153,6 +167,8 @@ void PointCloudApp::TangoConnect() {
     std::exit(EXIT_SUCCESS);
   }
 
+  is_service_connected_ = true;
+
   // Initialize TangoSupport context.
   TangoSupport_initializeLibrary();
 }
@@ -171,6 +187,7 @@ void PointCloudApp::TangoDisconnect() {
   TangoConfig_free(tango_config_);
   tango_config_ = nullptr;
   TangoService_disconnect();
+  is_service_connected_ = false;
 }
 
 void PointCloudApp::OnSurfaceCreated() { main_scene_.InitGLContent(); }
@@ -180,6 +197,12 @@ void PointCloudApp::OnSurfaceChanged(int width, int height) {
 }
 
 void PointCloudApp::OnDrawFrame() {
+  main_scene_.ClearRender();
+
+  if (!is_service_connected_) {
+    return;
+  }
+
   // Query the latest pose transformation and point cloud frame transformation.
   // Point cloud data comes in with a specific timestamp, in order to get the
   // closest pose for the point cloud, we will need to use the
@@ -203,18 +226,16 @@ void PointCloudApp::OnDrawFrame() {
         "PointCloudExample: Could not find a valid matrix transform at "
         "time %lf for the device.",
         0.0);
+    return;
   }
 
   // Compute the average depth value.
   float average_depth_ = 0.0f;
-  size_t iteration_size = front_cloud_->xyz_count;
-  size_t vertices_count = 0;
-  for (size_t i = 0; i < iteration_size; i++) {
-    average_depth_ += front_cloud_->xyz[i][2];
-    vertices_count++;
+  for (size_t i = 0; i < front_cloud_->num_points; i++) {
+    average_depth_ += front_cloud_->points[i][2];
   }
-  if (vertices_count) {
-    average_depth_ /= vertices_count;
+  if (front_cloud_->num_points) {
+    average_depth_ /= front_cloud_->num_points;
   }
   point_cloud_average_depth_ = average_depth_;
 
@@ -228,21 +249,22 @@ void PointCloudApp::OnDrawFrame() {
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_opengl_T_depth_tango_ =
         glm::make_mat4(matrix_transform.matrix);
-    TangoXYZij ow_point_cloud;
-    ow_point_cloud.xyz = new float[front_cloud_->xyz_count][3];
-    ow_point_cloud.xyz_count = front_cloud_->xyz_count;
+    TangoPointCloud ow_point_cloud;
+    ow_point_cloud.points = new float[front_cloud_->num_points][4];
+    ow_point_cloud.num_points = front_cloud_->num_points;
     // Transform point cloud to OpenGL world
     TangoSupport_doubleTransformPointCloud(matrix_transform.matrix,
                                            front_cloud_, &ow_point_cloud);
-    size_t point_cloud_size = front_cloud_->xyz_count * 3;
-    vertices.resize(point_cloud_size);
-    std::copy(ow_point_cloud.xyz[0], ow_point_cloud.xyz[0] + point_cloud_size,
+    vertices.resize(front_cloud_->num_points * 4);
+    std::copy(&ow_point_cloud.points[0][0],
+              &ow_point_cloud.points[ow_point_cloud.num_points][0],
               vertices.begin());
   } else {
     LOGE(
         "PointCloudExample: Could not find a valid matrix transform at "
         "time %lf for the depth camera.",
         front_cloud_->timestamp);
+    return;
   }
 
   main_scene_.Render(start_service_T_device_, vertices);
@@ -252,7 +274,7 @@ void PointCloudApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 int PointCloudApp::GetPointCloudVerticesCount() {
   if (front_cloud_ != nullptr) {
-    return front_cloud_->xyz_count;
+    return front_cloud_->num_points;
   }
   return 0;
 }
