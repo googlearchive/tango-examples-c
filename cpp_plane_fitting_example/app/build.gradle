@@ -38,6 +38,7 @@ task ndkBuild(type: Exec) {
 
 
 dependencies {
+    compile 'com.android.support:support-v4:22.1.1'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':cpp_example_util')
 }
