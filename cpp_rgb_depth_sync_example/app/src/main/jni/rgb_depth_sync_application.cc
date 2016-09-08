@@ -28,16 +28,18 @@ namespace rgb_depth_sync {
 // parameter.
 // @param context Will be a pointer to a SynchronizationApplication instance  on
 // which to call callbacks.
-// @param xyz_ij The point cloud to pass on.
-void OnXYZijAvailableRouter(void* context, const TangoXYZij* xyz_ij) {
+// @param point_cloud The point cloud to pass on.
+void OnPointCloudAvailableRouter(void* context,
+                                 const TangoPointCloud* point_cloud) {
   SynchronizationApplication* app =
       static_cast<SynchronizationApplication*>(context);
-  app->OnXYZijAvailable(xyz_ij);
+  app->OnPointCloudAvailable(point_cloud);
 }
 
-void SynchronizationApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
+void SynchronizationApplication::OnPointCloudAvailable(
+    const TangoPointCloud* point_cloud) {
   // We'll just update the point cloud associated with our depth image.
-  TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
+  TangoSupport_updatePointCloud(point_cloud_manager_, point_cloud);
 }
 
 SynchronizationApplication::SynchronizationApplication()
@@ -47,7 +49,8 @@ SynchronizationApplication::SynchronizationApplication()
       // We'll store the fixed transform between the opengl frame convention.
       // (Y-up, X-right) and tango frame convention. (Z-up, X-right).
       OW_T_SS_(tango_gl::conversions::opengl_world_T_tango_world()),
-      gpu_upsample_(false) {}
+      gpu_upsample_(false),
+      is_service_connected_(false) {}
 
 SynchronizationApplication::~SynchronizationApplication() {
   if (tango_config_) {
@@ -113,6 +116,17 @@ void SynchronizationApplication::TangoSetupConfig() {
     std::exit(EXIT_SUCCESS);
   }
 
+  // Need to specify the depth_mode as XYZC.
+  err = TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                             TANGO_POINTCLOUD_XYZC);
+  if (err != TANGO_SUCCESS) {
+    LOGE(
+        "Failed to set 'depth_mode' configuration flag with error"
+        " code: %d",
+        err);
+    std::exit(EXIT_SUCCESS);
+  }
+
   // We also need to enable the color camera in order to get RGB frame
   // callbacks.
   err = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
@@ -155,18 +169,17 @@ void SynchronizationApplication::TangoSetupConfig() {
 }
 
 void SynchronizationApplication::TangoConnectCallbacks() {
-  // We need to be notified when we receive depth information in order
-  // to support measuring 3D points. For both pose and color camera
-  // information, we'll be polling.  The render loop will drive the
-  // rate at which we need color images and all our poses will be
-  // driven by timestamps. As such, we'll use GetPoseAtTime.
-
+  // We're interested in only one callback for this application. We need to be
+  // notified when we receive depth information in order to support measuring
+  // 3D points. For both pose and color camera information, we'll be polling.
+  // The render loop will drive the rate at which we need color images and all
+  // our poses will be driven by timestamps. As such, we'll use GetPoseAtTime.
   TangoErrorType ret =
-      TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
+      TangoService_connectOnPointCloudAvailable(OnPointCloudAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "SynchronizationApplication: Failed to connect XYZ callback with "
-        "errorcode: %d",
+        "SynchronizationApplication: Failed to connect point cloud callback "
+        "with errorcode: %d",
         ret);
     std::exit(EXIT_SUCCESS);
   }
@@ -193,6 +206,7 @@ void SynchronizationApplication::TangoConnect() {
     LOGE("SynchronizationApplication: Failed to connect to the Tango service.");
     std::exit(EXIT_SUCCESS);
   }
+  is_service_connected_ = true;
 }
 
 void SynchronizationApplication::TangoSetIntrinsics() {
@@ -219,6 +233,7 @@ void SynchronizationApplication::OnPause() { TangoDisconnect(); }
 
 void SynchronizationApplication::TangoDisconnect() {
   TangoService_disconnect();
+  is_service_connected_ = false;
 }
 
 void SynchronizationApplication::OnSurfaceCreated() {
@@ -234,6 +249,12 @@ void SynchronizationApplication::OnSurfaceChanged(int width, int height) {
 }
 
 void SynchronizationApplication::OnDrawFrame() {
+  main_scene_.ClearRender();
+
+  if (!is_service_connected_) {
+    return;
+  }
+
   double color_timestamp = 0.0;
   double depth_timestamp = 0.0;
   bool new_points = false;
@@ -246,6 +267,7 @@ void SynchronizationApplication::OnDrawFrame() {
           TANGO_CAMERA_COLOR, color_image_.GetTextureId(), &color_timestamp) !=
       TANGO_SUCCESS) {
     LOGE("SynchronizationApplication: Failed to get a color image.");
+    return;
   }
 
   // In the following code, we define t0 as the depth timestamp and t1 as the
@@ -271,16 +293,14 @@ void SynchronizationApplication::OnDrawFrame() {
   glm::mat4 color_image_t1_T_depth_image_t0 =
       util::GetMatrixFromPose(&pose_color_image_t1_T_depth_image_t0);
 
-      if (gpu_upsample_) {
-        depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,
-                                          render_buffer_,
-                                          new_points);
-      } else {
-        depth_image_.UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
-                                            render_buffer_);
-      }
-      main_scene_.Render(color_image_.GetTextureId(),
-                         depth_image_.GetTextureId());
+  if (gpu_upsample_) {
+    depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,
+                                      render_buffer_, new_points);
+  } else {
+    depth_image_.UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
+                                        render_buffer_);
+  }
+  main_scene_.Render(color_image_.GetTextureId(), depth_image_.GetTextureId());
 }
 
 void SynchronizationApplication::SetDepthAlphaValue(float alpha) {

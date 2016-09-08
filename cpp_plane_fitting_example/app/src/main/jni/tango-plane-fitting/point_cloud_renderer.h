@@ -43,7 +43,7 @@ class PointCloudRenderer {
   // @param point_cloud Depth data gathered by a PointCloudManager.
   void Render(const glm::mat4& projection_T_depth,
               const glm::mat4& start_service_T_depth,
-              const TangoXYZij* point_cloud);
+              const TangoPointCloud* point_cloud);
 
   // Render depth points with debugging colors.
   void SetRenderDebugColors(bool on) { debug_colors_ = on; }

@@ -39,11 +39,12 @@ constexpr int kTangoCoreMinimumVersion = 9377;
  *
  * @param context Will be a pointer to a PointToPointApplication instance on
  * which to call callbacks.
- * @param xyz_ij The point cloud to pass on.
+ * @param point_cloud The point cloud to pass on.
  */
-void OnXYZijAvailableRouter(void* context, const TangoXYZij* xyz_ij) {
+void OnPointCloudAvailableRouter(void* context,
+                                 const TangoPointCloud* point_cloud) {
   PointToPointApplication* app = static_cast<PointToPointApplication*>(context);
-  app->OnXYZijAvailable(xyz_ij);
+  app->OnPointCloudAvailable(point_cloud);
 }
 
 /**
@@ -62,8 +63,9 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
 
 }  // namespace
 
-void PointToPointApplication::OnXYZijAvailable(const TangoXYZij* xyz_ij) {
-  TangoSupport_updatePointCloud(point_cloud_manager_, xyz_ij);
+void PointToPointApplication::OnPointCloudAvailable(
+    const TangoPointCloud* point_cloud) {
+  TangoSupport_updatePointCloud(point_cloud_manager_, point_cloud);
   TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_);
 }
 
@@ -144,6 +146,17 @@ void PointToPointApplication::TangoSetupConfig() {
     std::exit(EXIT_SUCCESS);
   }
 
+  // Need to specify the depth_mode as XYZC.
+  ret = TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                             TANGO_POINTCLOUD_XYZC);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "Failed to set 'depth_mode' configuration flag with error"
+        " code: %d",
+        ret);
+    std::exit(EXIT_SUCCESS);
+  }
+
   ret = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
   if (ret != TANGO_SUCCESS) {
     LOGE(
@@ -200,7 +213,7 @@ void PointToPointApplication::TangoConnectCallbacks() {
 
   // Register for depth notification.
   TangoErrorType ret =
-      TangoService_connectOnXYZijAvailable(OnXYZijAvailableRouter);
+      TangoService_connectOnPointCloudAvailable(OnPointCloudAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE("Failed to connected to depth callback.");
     std::exit(EXIT_SUCCESS);
@@ -257,8 +270,7 @@ void PointToPointApplication::TangoConnect() {
    * allowing for effective upsampling of the depth data to camera image
    * resolution.
    */
-  ret = TangoSupport_createDepthInterpolator(&color_camera_intrinsics_,
-                                             &interpolator_);
+  ret = TangoSupport_createDepthInterpolator(&interpolator_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to set up interpolator.");
     std::exit(EXIT_SUCCESS);
@@ -448,8 +460,7 @@ bool PointToPointApplication::GetDepthAtPoint(
   int is_valid_point = 0;
   if (algorithm_ == UpsampleAlgorithm::kNearest) {
     TangoSupport_getDepthAtPointNearestNeighbor(
-        front_cloud_, &color_camera_intrinsics_, &color_camera_T_point_cloud,
-        uv, xyz, &is_valid_point);
+        front_cloud_, &color_camera_T_point_cloud, uv, xyz, &is_valid_point);
     return is_valid_point;
   }
   TangoSupport_getDepthAtPointBilateral(

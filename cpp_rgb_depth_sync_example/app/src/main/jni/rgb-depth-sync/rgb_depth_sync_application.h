@@ -92,9 +92,9 @@ class SynchronizationApplication {
 
   // Callback for point clouds that come in from the Tango service.
   //
-  // @param xyz_ij The point cloud returned by the service.
+  // @param point_cloud The point cloud returned by the service.
   //
-  void OnXYZijAvailable(const TangoXYZij* xyz_ij);
+  void OnPointCloudAvailable(const TangoPointCloud* point_cloud);
 
  private:
   // Setup the configuration file for the Tango Service. .
@@ -143,11 +143,13 @@ class SynchronizationApplication {
   // writing of the point cloud data.
   TangoSupportPointCloudManager* point_cloud_manager_;
 
-  // This TangoXYZij* points to the most recently produced
+  // This TangoPointCloud* points to the most recently produced
   // point cloud data which should be rendered.
-  TangoXYZij* render_buffer_;
+  TangoPointCloud* render_buffer_;
 
   bool gpu_upsample_;
+
+  bool is_service_connected_;
 };
 }  // namespace rgb_depth_sync
 

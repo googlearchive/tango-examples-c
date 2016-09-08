@@ -52,6 +52,9 @@ class Scene {
   // Setup GL view port.
   void SetupViewPort(int w, int h);
 
+  // Clear the render on screen.
+  void ClearRender();
+
   // Render loop.
   // @param: cur_pose_transformation, latest pose's transformation.
   // @param: point_cloud_transformation, pose transformation at point cloud

@@ -47,7 +47,7 @@ class DepthImage {
   // @param render_point_cloud_buffer: This contains the latest point cloud data
   // that gets projected on to the image plane and fills up the depth_map_buffer
   void UpdateAndUpsampleDepth(const glm::mat4& color_t1_T_depth_t0,
-                              const TangoXYZij* render_point_cloud_buffer);
+                              const TangoPointCloud* render_point_cloud_buffer);
 
   // Update the depth texture by direct rendering.
   // @param  color_t1_T_depth_t0: The transformation between the color camera
@@ -64,7 +64,7 @@ class DepthImage {
   // @param new_points Indicates if the point data has been updated and needs to
   // be uploaded to the GPU.
   void RenderDepthToTexture(const glm::mat4& color_t1_T_depth_t0,
-                            const TangoXYZij* render_point_cloud_buffer,
+                            const TangoPointCloud* render_point_cloud_buffer,
                             bool new_points);
 
   // Returns the depth texture id.

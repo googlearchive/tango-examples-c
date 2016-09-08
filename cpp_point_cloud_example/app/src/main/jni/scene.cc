@@ -80,6 +80,11 @@ void Scene::SetupViewPort(int w, int h) {
   glViewport(0, 0, w, h);
 }
 
+void Scene::ClearRender() {
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
 void Scene::Render(const glm::mat4& cur_pose_transformation,
                    const std::vector<float>& point_cloud_vertices) {
   glEnable(GL_DEPTH_TEST);
