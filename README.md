@@ -49,8 +49,6 @@ different use cases of Tango technology:
    sensor.
  * **cpp_rgb_depth_sync_example** - Synchronize the depth
    sensor 3D information with the color camera information.
- * **cpp_video_stabilization_experiment** - Stabilize the video by
-   smoothing the pose and correcting for gravity.
 
 The **cpp_example_util** project contains some common utility code that
 is used for many samples.
