@@ -14,8 +14,8 @@
 #ifndef TANGO_CLIENT_API_H_
 #define TANGO_CLIENT_API_H_
 
-#include <jni.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /// @file tango_client_api.h
@@ -146,7 +146,8 @@ typedef enum {
 
 /// @brief Tango depth data formats.
 typedef enum {
-  /// @deprecated. Use @c TANGO_POINTCLOUD_XYZC instead.
+  /// @deprecated Use @c TANGO_POINTCLOUD_XYZC instead.
+  ///
   /// See @link TangoXYZij @endlink.
   TANGO_POINTCLOUD_XYZIJ = -1,
   /// See @link TangoPointCloud @endlink.
@@ -344,7 +345,8 @@ typedef struct TangoImageBuffer {
   int64_t exposure_duration_ns;
 } TangoImageBuffer;
 
-/// @deprecated. Use @c TangoPointCloud instead.
+/// @deprecated Use @c TangoPointCloud instead.
+///
 /// The TangoXYZij struct contains information returned from the depth sensor.
 typedef struct TangoXYZij {
   /// An integer denoting the version of the structure.
@@ -389,6 +391,7 @@ typedef struct TangoXYZij {
   TangoImageBuffer* color_image;
 } TangoXYZij;
 
+/// TangoPointCloud contains information returned from the depth sensor.
 typedef struct TangoPointCloud {
   /// An integer denoting the version of the structure.
   uint32_t version;
@@ -554,11 +557,12 @@ char* TangoConfig_toString(TangoConfig config);
 /// @{
 
 /// @deprecated This function is implicitly called when needed.
+///
 /// Initialize the Tango Service. To succeed, the calling
 /// application must have camera permissions enabled. The initialization is
 /// invalidated if the service is stopped or faults while a client is running.
-/// TangoService_initialize() uses two parameters, the JNI context, env, and the
-/// native activity object, activity, to check the version that the version of
+/// TangoService_initialize() uses two parameters, the JNI context, @p env, and
+/// the native activity object, @p activity, to check that the version of
 /// Tango Service installed on the device meets the minimum number required by
 /// the client library. The parameters @p env and @p activity may be retrieved
 /// in a native activity for example by:
@@ -571,25 +575,38 @@ char* TangoConfig_toString(TangoConfig config);
 ///   TangoService_initialize(env, activity);
 /// }
 /// @endcode
-/// @param env A pointer to the JNI Context of the native activity.
+/// @param jni_env A pointer to the JNI Context of the native activity.  This
+/// must be of type JNIEnv*, and implicit type conversion should do the right
+/// thing without requiring a cast.
+///
 /// @param activity The native activity object handle of the calling native
-///     activity.
-/// @return Returns @c TANGO_SUCCESS if a the Tango Service version is found to
+///     activity.  This should be of type jobject, and implicit type conversion
+///     should do the right thing without requiring a cast.
+///
+/// @return Returns @c TANGO_SUCCESS if the Tango Service version is found to
 ///     be compatible with this client's library version and the service was
 ///     initialized successfully. Returns @c TANGO_INVALID if either the @p env
 ///     and/or @p activity parameter is set to null. Returns @c TANGO_ERROR if
 ///     the version check fails, or if the service connection could not be
 ///     initialized.
-TangoErrorType TangoService_initialize(JNIEnv* env, jobject activity);
+TangoErrorType TangoService_initialize(void* jni_env, void* activity);
 
 /// Completes initialization of TangoService by allowing the client to pass the
 /// native binder object received by binding to TangoService back down to the
 //  underlying C API code.
 /// Must be called before trying to use the C API.
+///
+/// @param jni_env A pointer to the JNI Context of the native activity. This
+/// must be of type JNIEnv*, and implicit type conversion should do the right
+/// thing without requiring a cast.
+///
 /// @param iBinder The binder object received after binding to TangoService.
+/// This should be of type jobject, and implicit type conversion should do the
+/// right thing without requiring a cast.
+///
 /// @return Returns @c TANGO_SUCCESS on successfully attaching the binder
 /// to the C API. Returns @c TANGO_ERROR on failure.
-TangoErrorType TangoService_setBinder(JNIEnv* env, jobject iBinder);
+TangoErrorType TangoService_setBinder(void* jni_env, void* iBinder);
 
 /// Creates a TangoConfig object with configuration settings from the service.
 /// This should be used to initialize a Config object for setting the
@@ -850,7 +867,8 @@ TangoErrorType TangoService_Experimental_deleteFrameOfInterest(
 /// @brief Functions for getting depth information from the device.
 /// @{
 
-/// @deprecated. Use TangoService_connectOnPointCloudAvailable instead.
+/// @deprecated Use TangoService_connectOnPointCloudAvailable instead.
+///
 /// Attach an onXYZijAvailable callback. The callback is called each time new
 /// depth data is available. On the Tango tablet, the depth callback occurs at
 /// 5 Hz.
@@ -917,7 +935,7 @@ typedef void (*TangoService_OnTextureAvailable)(void*, TangoCameraId);
 /// config_enable_color_camera must be set to true for connectTextureId
 /// to succeed after TangoService_connect() is called.
 ///
-/// Note: The first scan-line of the color image is reserved for metadata
+/// Note: The first scanline of the color image is reserved for metadata
 /// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
@@ -951,7 +969,7 @@ TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 /// must be set to true for connectOnTextureAvailable to succeed after
 /// TangoService_connect() is called.
 ///
-/// Note: The first scan-line of the color image is reserved for metadata
+/// Note: The first scanline of the color image is reserved for metadata
 /// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
@@ -985,7 +1003,7 @@ TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
 /// Connect a callback to a camera for access to the pixels. This is not
 /// recommended for display but for applications requiring access to the
 /// @c HAL_PIXEL_FORMAT_YV12 pixel data. The camera is selected via
-/// TangoCameraId. Currently only @c TANGO_CAMERA_COLOR and
+/// @p TangoCameraId. Currently only @c TANGO_CAMERA_COLOR and
 /// @c TANGO_CAMERA_FISHEYE are supported. The @c onFrameAvailable callback will
 /// be called when a new frame is available from the camera.
 /// The TangoConfig flag @p config_enable_color_camera (see @link
@@ -993,7 +1011,7 @@ TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
 /// TangoService_connectOnFrameAvailable() to succeed after
 /// TangoService_connect() is called.
 ///
-/// Note: The first scan-line of the color image is reserved for metadata
+/// Note: The first scanline of the color image is reserved for metadata
 /// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
@@ -1008,7 +1026,7 @@ TangoErrorType TangoService_connectOnFrameAvailable(
 /// Disconnect a camera. The camera is selected via TangoCameraId.
 /// Currently only @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are
 /// supported.
-/// This call will disconnect callbacks that have been registered with
+/// This call disconnects callbacks that have been registered with
 /// TangoService_connectTextureId() or TangoService_connectOnFrameAvailable().
 TangoErrorType TangoService_disconnectCamera(TangoCameraId id);
 
@@ -1489,7 +1507,7 @@ TangoErrorType TangoConfig_getString(TangoConfig config, const char* key,
 /// texture_Cb and texture_Cr will be 2x2 downsampled versions of the same.
 /// See YV12 and NV21 formats for details.
 ///
-/// Note: The first scan-line of the color image is reserved for metadata
+/// Note: The first scanline of the color image is reserved for metadata
 /// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.

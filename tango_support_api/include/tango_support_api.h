@@ -15,6 +15,7 @@
 #ifndef TANGO_SUPPORT_API_H_
 #define TANGO_SUPPORT_API_H_
 
+#include <jni.h>
 #include <tango_client_api.h>
 
 #include <stdint.h>
@@ -905,6 +906,51 @@ TangoErrorType TangoSupport_freeEdgeList(TangoSupportEdge** edges);
 
 /// @}
 
+/// @defgroup CornerDetectionSupport Corner Detection Support Functions
+/// @brief Functions for detecting corners
+/// @{
+
+/// @brief A structure to define a corner, including the corner point, and
+/// indices to edges that are associated to the corner. The edges are input
+/// parameters to TangoSupport_detectCorners() routine.
+struct TangoSupportCorner {
+  float corner_point[3];
+  float distance_to_poi;
+  int* edges;
+  int edge_count;
+};
+
+/// @brief A structure that stores a list of corners. After calling
+/// TangoSupport_detectCorners() with a TangoSupportCornerList object, the
+/// object needs to be released by calling TangoSupport_freeCornerList()
+/// function.
+struct TangoSupportCornerList {
+  TangoSupportCorner* corners;
+  int corner_count;
+};
+
+/// @brief Detect corners among a list of edges.
+///
+/// @param point_of_interest The user-specified location.
+/// @param edges A list of edges, usually returned by
+/// TangoSupport_findEdgesNearPoint() routine.
+/// @param number_of_edges The number of edges in point_of_interest list.
+/// @param corner_list The structure to hold result corners. The structure
+/// should be deleted by calling TangoSupport_freeCornerList. Cannot be NULL.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_detectCorners(const float point_of_interest[3],
+                                          const TangoSupportEdge** edges,
+                                          const int number_of_edges,
+                                          TangoSupportCornerList* corner_list);
+
+/// @brief Free memory allocated in TangoSupport_detectCorners.
+///
+/// @param Corner list to free.
+/// @return @c TANGO_SUCCESS on success.
+TangoErrorType TangoSupport_freeCornerList(TangoSupportCornerList* corner_list);
+
+/// @}
 #ifdef __cplusplus
 }
 #endif
