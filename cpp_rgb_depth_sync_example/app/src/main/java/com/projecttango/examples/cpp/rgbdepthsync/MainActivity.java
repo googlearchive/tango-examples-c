@@ -20,6 +20,8 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.graphics.Point;
+import android.hardware.Camera;
+import android.hardware.display.DisplayManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -43,6 +45,9 @@ public class MainActivity extends Activity {
   // The minimum Tango Core version required from this application.
   private static final int MIN_TANGO_CORE_VERSION = 9377;
 
+  // For all current Tango devices, color camera is in the camera id 0.
+  private static final int COLOR_CAMERA_ID = 0;
+
   private GLSurfaceRenderer mRenderer;
   private GLSurfaceView mGLView;
 
@@ -55,6 +60,7 @@ public class MainActivity extends Activity {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         TangoJNINative.onTangoServiceConnected(service);
+        setAndroidOrientation();
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -109,6 +115,26 @@ public class MainActivity extends Activity {
     Point size = new Point();
     display.getSize(size);
 
+    DisplayManager displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+    if (displayManager != null) {
+      displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+        @Override
+        public void onDisplayAdded(int displayId) {
+
+        }
+
+        @Override
+        public void onDisplayChanged(int displayId) {
+          synchronized (this) {
+            setAndroidOrientation();
+          }
+        }
+
+        @Override
+        public void onDisplayRemoved(int displayId) {}
+      }, null);
+    }
+
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -154,5 +180,16 @@ public class MainActivity extends Activity {
 
   public void surfaceCreated() {
     TangoJNINative.onGlSurfaceCreated();
+  }
+
+  // Pass device's camera sensor rotation and display rotation to native layer.
+  // These two parameter are important for Tango to render video overlay and
+  // virtual objects in the correct device orientation.
+  private void setAndroidOrientation() {
+    Display display = getWindowManager().getDefaultDisplay();
+    Camera.CameraInfo colorCameraInfo = new Camera.CameraInfo();
+    Camera.getCameraInfo(COLOR_CAMERA_ID, colorCameraInfo);
+
+    TangoJNINative.onDisplayChanged(display.getRotation(), colorCameraInfo.orientation);
   }
 }

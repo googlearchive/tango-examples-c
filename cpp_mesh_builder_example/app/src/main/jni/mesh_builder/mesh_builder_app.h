@@ -190,7 +190,16 @@ class MeshBuilderApp {
 
   // Updated indices from the 3D Reconstruction library. The grids for
   // each of these needs to be re-extracted.
-  std::vector<GridIndex> updated_indices_;
+  //
+  // This data is protected by binder_mutex_.
+  std::vector<GridIndex> updated_indices_binder_thread_;
+
+  // Updated indices from the 3D Reconstruction library. The grids for
+  // each of these nedes to be re-extracted.
+  //
+  // This data is not protected by a mutex, it is only accessed from the GL
+  // thread.
+  std::vector<GridIndex> updated_indices_gl_thread_;
 
   // Meshes from the 3D Reconstruction library.
   std::unordered_map<GridIndex, std::shared_ptr<SingleDynamicMesh>,

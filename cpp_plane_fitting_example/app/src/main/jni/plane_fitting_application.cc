@@ -76,36 +76,6 @@ void PlaneFittingApplication::OnCreate(JNIEnv* env, jobject activity) {
         "date.");
     std::exit(EXIT_SUCCESS);
   }
-
-  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
-  if (tango_config_ == nullptr) {
-    LOGE("PlaneFittingApplication::OnCreate, Unable to get tango config");
-    std::exit(EXIT_SUCCESS);
-  }
-
-  if (TangoConfig_setInt32(tango_config_, "config_depth_mode",
-                           TANGO_POINTCLOUD_XYZC) != TANGO_SUCCESS) {
-    LOGE("TangoConfig_setInt32(\"config_depth_mode\", %d): Failed\n", 0);
-    std::exit(EXIT_SUCCESS);
-  }
-
-  if (point_cloud_manager_ == nullptr) {
-    int32_t max_point_cloud_elements;
-    err = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
-                               &max_point_cloud_elements);
-    if (err != TANGO_SUCCESS) {
-      LOGE(
-          "PlaneFittingApplication::OnCreate, "
-          "Failed to query maximum number of point cloud elements.");
-      std::exit(EXIT_SUCCESS);
-    }
-
-    err = TangoSupport_createPointCloudManager(max_point_cloud_elements,
-                                               &point_cloud_manager_);
-    if (err != TANGO_SUCCESS) {
-      std::exit(EXIT_SUCCESS);
-    }
-  }
 }
 
 void PlaneFittingApplication::OnTangoServiceConnected(JNIEnv* env,
@@ -128,20 +98,33 @@ void PlaneFittingApplication::TangoSetupConfig() {
   // In addition to motion tracking, however, we want to run with depth so that
   // we can measure things. As such, we are going to set an additional flag
   // "config_enable_depth" to true.
+  tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
+    LOGE(
+        "PlaneFittingApplication::TangoSetupConfig, Unable to get tango "
+        "config");
     std::exit(EXIT_SUCCESS);
   }
 
   TangoErrorType ret =
       TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable depth.");
+    LOGE("PlaneFittingApplication::TangoSetupConfig, Failed to enable depth.");
+    std::exit(EXIT_SUCCESS);
+  }
+
+  ret = TangoConfig_setInt32(tango_config_, "config_depth_mode",
+                             TANGO_POINTCLOUD_XYZC);
+  if (ret != TANGO_SUCCESS) {
+    LOGE("PlaneFittingApplication::TangoSetupConfig, Failed to configure to "
+         "XYZC.");
     std::exit(EXIT_SUCCESS);
   }
 
   ret = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable color camera.");
+    LOGE("PlaneFittingApplication::TangoSetupConfig, Failed to enable color "
+         "camera.");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -152,7 +135,8 @@ void PlaneFittingApplication::TangoSetupConfig() {
   ret = TangoConfig_setBool(tango_config_,
                             "config_enable_low_latency_imu_integration", true);
   if (ret != TANGO_SUCCESS) {
-    LOGE("Failed to enable low latency imu integration.");
+    LOGE("PlaneFittingApplication::TangoSetupConfig, Failed to enable low "
+         "latency imu integration.");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -164,10 +148,31 @@ void PlaneFittingApplication::TangoSetupConfig() {
                             true);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "PlaneFittingApplication: enabling config_enable_drift_correction "
-        "failed with error code: %d",
+        "PlaneFittingApplication::TangoSetupConfig, enabling "
+        "config_enable_drift_correction failed with error code: %d",
         ret);
     std::exit(EXIT_SUCCESS);
+  }
+
+  if (point_cloud_manager_ == nullptr) {
+    int32_t max_point_cloud_elements;
+    ret = TangoConfig_getInt32(tango_config_, "max_point_cloud_elements",
+                               &max_point_cloud_elements);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "PlaneFittingApplication::TangoSetupConfig, Failed to query maximum "
+          "number of point cloud elements.");
+      std::exit(EXIT_SUCCESS);
+    }
+
+    ret = TangoSupport_createPointCloudManager(max_point_cloud_elements,
+                                               &point_cloud_manager_);
+    if (ret != TANGO_SUCCESS) {
+      LOGE(
+          "PlaneFittingApplication::TangoSetupConfig, Failed to create a "
+          "point cloud manager.");
+      std::exit(EXIT_SUCCESS);
+    }
   }
 }
 
@@ -258,6 +263,12 @@ void PlaneFittingApplication::OnSurfaceChanged(int width, int height) {
 }
 
 void PlaneFittingApplication::OnDrawFrame() {
+  // If tracking is lost, further down in this method Scene::Render
+  // will not be called. Prevent flickering that would otherwise
+  // happen by rendering solid black as a fallback.
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
   // We need to make sure that we update the texture associated with the color
   // image.
   if (TangoService_updateTextureExternalOes(

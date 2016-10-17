@@ -81,6 +81,11 @@ void Scene::SetProjectionMatrix(const glm::mat4& projection_matrix) {
   camera_.SetProjectionMatrix(projection_matrix);
 }
 
+void Scene::Clear() {
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
 void Scene::Render() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);

@@ -337,62 +337,6 @@ TangoErrorType TangoSupport_getLatestPointCloudAndNewDataFlag(
 
 /// @}
 
-/// @defgroup SceneReconstructionSupport Scene Reconstruction Support Functions
-/// @brief Functions for managing mesh data from scene reconstruction.
-/// @{
-
-/// @brief Initializes an empty mesh. No new memory is allocated.
-///
-/// @param mesh A pointer to the mesh to be initialized. Cannot be NULL.
-/// @return @c TANGO_SUCCESS on successful initialization; @c TANGO_INVALID if
-///   @p mesh is NULL.
-TangoErrorType TangoSupport_initializeEmptyMesh(TangoMesh_Experimental* mesh);
-
-/// @brief Deletes a mesh. Memory will be deallocated.
-///
-/// @param mesh A pointer to the mesh to be deleted. Cannot be NULL.
-/// @return Returns @c TANGO_SUCCESS on successful free.
-TangoErrorType TangoSupport_freeMesh(TangoMesh_Experimental* mesh);
-
-/// @brief Creates a mesh, allocating memory for vertices, faces, and
-/// (optionally) normals and colors.
-///
-/// @param num_vertices The number of mesh vertices to be allocated.
-/// @param num_faces The number of mesh faces to be allocated.
-/// @param has_normals If true, will allocate space for per-vertex mesh normals.
-/// @param has_colors If true, will allocate space for per-vertex mesh colors.
-/// @param mesh A pointer to the mesh to be created. Cannot be NULL.
-/// @return @c TANGO_SUCCESS on successful allocation, @c TANGO_INVALID if
-///   @p mesh is NULL.
-TangoErrorType TangoSupport_createMesh(uint32_t num_vertices,
-                                       uint32_t num_faces, bool has_normals,
-                                       bool has_colors,
-                                       TangoMesh_Experimental* mesh);
-
-/// @brief Performs a deep copy between two meshes. Memory will be allocated
-/// for the output mesh.
-///
-/// @param input_mesh The mesh to be copied. Cannot be NULL.
-/// @param output_mesh The output mesh. Cannot be NULL.
-/// @return @c TANGO_SUCCESS on successful copy, @c TANGO_INVALID if input_mesh
-///   or output_mesh is NULL.
-TangoErrorType TangoSupport_copyMesh(const TangoMesh_Experimental* input_mesh,
-                                     TangoMesh_Experimental* output_mesh);
-
-/// @brief Creates a simplified mesh with a fewer number of faces, given a
-/// source mesh. Memory will be allocated for the output mesh.
-///
-/// @param input_mesh The input mesh. Cannot be NULL.
-/// @param target_num_faces The target number of faces in the output mesh.
-/// @param output_mesh The output mesh. Cannot be NULL.
-/// @return @c TANGO_SUCCESS on successful copy, @c TANGO_INVALID if
-///   @p input_mesh or @p output_mesh is NULL.
-TangoErrorType TangoSupport_createSimplifiedMesh(
-    const TangoMesh_Experimental* input_mesh, const uint32_t target_num_faces,
-    TangoMesh_Experimental* output_mesh);
-
-/// @}
-
 /// @defgroup TransformationSupport Transformation Support
 /// @brief Functions for supporting easy transformation between different
 /// frames.

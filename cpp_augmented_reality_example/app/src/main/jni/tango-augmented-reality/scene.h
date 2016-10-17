@@ -44,8 +44,8 @@ class Scene {
   ~Scene();
 
   // Allocate OpenGL resources for rendering.
-  void InitGLContent(AAssetManager* aasset_manager, int activity_orientation,
-                     int sensor_orientation);
+  void InitGLContent(AAssetManager* aasset_manager, int activity_rotation,
+                     int sensor_rotation);
 
   // Release non-OpenGL resources.
   void DeleteResources();
@@ -56,6 +56,9 @@ class Scene {
   // @param: w, width of the screen.
   // @param: h, height of the screen.
   void SetupViewPort(int x, int y, int w, int h);
+
+  // Clear the screen to a solid color.
+  void Clear();
 
   // Render loop.
   void Render(const glm::mat4& cur_pose_transformation);
@@ -104,8 +107,7 @@ class Scene {
                             double* last_pose);
 
   // Set video overlay's orientation based on current device orientation.
-  void SetVideoOverlayOrientation(int activity_orientation,
-                                  int sensor_orientation);
+  void SetVideoOverlayRotation(int display_rotation, int color_camera_rotation);
 
  private:
   // Video overlay drawable object to display the camera image.

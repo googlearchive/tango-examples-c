@@ -22,15 +22,15 @@
 namespace tango_motion_tracking {
 // The minimum Tango Core version required from this application.
 constexpr int kTangoCoreMinimumVersion = 9377;
-MotiongTrackingApp::MotiongTrackingApp() {}
+MotionTrackingApp::MotionTrackingApp() {}
 
-MotiongTrackingApp::~MotiongTrackingApp() {
+MotionTrackingApp::~MotionTrackingApp() {
   if (tango_config_ != nullptr) {
     TangoConfig_free(tango_config_);
   }
 }
 
-void MotiongTrackingApp::OnCreate(JNIEnv* env, jobject activity) {
+void MotionTrackingApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
@@ -44,11 +44,11 @@ void MotiongTrackingApp::OnCreate(JNIEnv* env, jobject activity) {
 }
 
 // Initialize Tango.
-void MotiongTrackingApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
+void MotionTrackingApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   TangoErrorType ret = TangoService_setBinder(env, iBinder);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "MotiongTrackingApp: OnTangoServiceConnected, TangoService_setBinder "
+        "MotionTrackingApp: OnTangoServiceConnected, TangoService_setBinder "
         "error");
     std::exit(EXIT_SUCCESS);
   }
@@ -59,13 +59,13 @@ void MotiongTrackingApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   is_service_connected_ = true;
 }
 
-void MotiongTrackingApp::TangoSetupConfig() {
+void MotionTrackingApp::TangoSetupConfig() {
   // Here, we'll configure the service to run in the way we'd want. For this
   // application, we'll start from the default configuration
   // (TANGO_CONFIG_DEFAULT). This enables basic motion tracking capabilities.
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (tango_config_ == nullptr) {
-    LOGE("MotiongTrackingApp: Failed to get default config form");
+    LOGE("MotionTrackingApp: Failed to get default config form");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -74,7 +74,7 @@ void MotiongTrackingApp::TangoSetupConfig() {
       TangoConfig_setBool(tango_config_, "config_enable_auto_recovery", true);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "MotiongTrackingApp: config_enable_auto_recovery() failed with error"
+        "MotionTrackingApp: config_enable_auto_recovery() failed with error"
         "code: %d",
         ret);
     std::exit(EXIT_SUCCESS);
@@ -83,23 +83,23 @@ void MotiongTrackingApp::TangoSetupConfig() {
 
 // Connect to Tango Service, service will start running, and
 // pose can be queried.
-void MotiongTrackingApp::TangoConnect() {
+void MotionTrackingApp::TangoConnect() {
   TangoErrorType ret = TangoService_connect(this, tango_config_);
   if (ret != TANGO_SUCCESS) {
     LOGE(
-        "MotiongTrackingApp: Failed to connect to the Tango service with"
+        "MotionTrackingApp: Failed to connect to the Tango service with"
         "error code: %d",
         ret);
     std::exit(EXIT_SUCCESS);
   }
 }
 
-void MotiongTrackingApp::OnPause() {
+void MotionTrackingApp::OnPause() {
   TangoDisconnect();
   DeleteResources();
 }
 
-void MotiongTrackingApp::TangoDisconnect() {
+void MotionTrackingApp::TangoDisconnect() {
   // When disconnecting from the Tango Service, it is important to make sure to
   // free your configuration object. Note that disconnecting from the service,
   // resets all configuration, and disconnects all callbacks. If an application
@@ -111,16 +111,16 @@ void MotiongTrackingApp::TangoDisconnect() {
   TangoService_disconnect();
 }
 
-void MotiongTrackingApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
+void MotionTrackingApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
   TangoSupport_initializeLibrary();
   main_scene_.InitGLContent(aasset_manager);
 }
 
-void MotiongTrackingApp::OnSurfaceChanged(int width, int height) {
+void MotionTrackingApp::OnSurfaceChanged(int width, int height) {
   main_scene_.SetupViewPort(width, height);
 }
 
-void MotiongTrackingApp::OnDrawFrame() {
+void MotionTrackingApp::OnDrawFrame() {
   if (!is_service_connected_) {
     return;
   }
@@ -133,7 +133,7 @@ void MotiongTrackingApp::OnDrawFrame() {
       static_cast<TangoSupportDisplayRotation>(screen_rotation_), &pose);
 
   if (pose.status_code != TANGO_POSE_VALID) {
-    LOGE("MotiongTrackingApp: Tango pose is not valid.");
+    LOGE("MotionTrackingApp: Tango pose is not valid.");
     return;
   }
 
@@ -143,9 +143,9 @@ void MotiongTrackingApp::OnDrawFrame() {
   main_scene_.Render(pose);
 }
 
-void MotiongTrackingApp::DeleteResources() { main_scene_.DeleteResources(); }
+void MotionTrackingApp::DeleteResources() { main_scene_.DeleteResources(); }
 
-void MotiongTrackingApp::SetScreenRotation(int screen_rotation) {
+void MotionTrackingApp::SetScreenRotation(int screen_rotation) {
   screen_rotation_ = screen_rotation;
 }
 

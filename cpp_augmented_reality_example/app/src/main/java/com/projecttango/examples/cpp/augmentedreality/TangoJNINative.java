@@ -82,5 +82,6 @@ public class TangoJNINative {
   /**
    * Configuration changed callback, called when screen rotates.
    */
-  public static native void onConfigurationChanged(int activityOrientation, int sensorOrientation);
+  public static native void onConfigurationChanged(int displayOrientation,
+                                                   int colorCameraOrientation);
 }

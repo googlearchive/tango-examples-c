@@ -30,12 +30,12 @@
 
 namespace tango_motion_tracking {
 
-// MotiongTrackingApp handles the application lifecycle and resources.
-class MotiongTrackingApp {
+// MotionTrackingApp handles the application lifecycle and resources.
+class MotionTrackingApp {
  public:
   // Constructor and deconstructor.
-  MotiongTrackingApp();
-  ~MotiongTrackingApp();
+  MotionTrackingApp();
+  ~MotionTrackingApp();
 
   // OnCreate() callback is called when this Android application's
   // OnCreate function is called from UI thread. In the OnCreate
@@ -46,12 +46,12 @@ class MotiongTrackingApp {
   void OnCreate(JNIEnv* env, jobject caller_activity);
 
   // OnPause() callback is called when this Android application's
-  // OnCreate function is called from UI thread. In our application,
+  // OnPause function is called from UI thread. In our application,
   // we disconnect Tango Service and free the Tango configuration
   // file. It is important to disconnect Tango Service and release
-  // the coresponding resources in the OnPause() callback from
+  // the corresponding resources in the OnPause() callback from
   // Android, otherwise, this application will hold on to the Tango
-  // resources and other application will not be able to connect to
+  // resources and other applications will not be able to connect to
   // Tango Service.
   void OnPause();
 
@@ -61,7 +61,7 @@ class MotiongTrackingApp {
   // Allocate OpenGL resources for rendering, mainly initializing the Scene.
   void OnSurfaceCreated(AAssetManager* aasset_manager);
 
-  // Setup the view port width and height.
+  // Set up the viewport width and height.
   void OnSurfaceChanged(int width, int height);
 
   // Main render loop.

@@ -73,7 +73,8 @@ void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(),
                vertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(vertices_handle_);
-  glVertexAttribPointer(vertices_handle_, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE,
+                        4 * sizeof(float), nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDrawArrays(GL_POINTS, 0, vertices.size() / 4);

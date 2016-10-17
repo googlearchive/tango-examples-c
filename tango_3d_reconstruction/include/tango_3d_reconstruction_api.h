@@ -450,6 +450,11 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 /// <tr><td>int32_t update_method</td><td>
 ///         Update method to be used when caling @c Tango3DR_update. See
 ///         @c Tango3DR_UpdateMethod. </td></tr>
+///
+/// <tr><td>boolean use_floorplan</td><td>
+///         When true, extract a 2D floor plan instead of a full 3D mesh.
+/// </td></tr>
+///
 /// </table>
 ///
 /// The supported configuration parameters that can be set for
@@ -654,6 +659,17 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 /// - Finally, when completely finished, call Tango3DR_destroy to
 ///   clean up the reconstruction server.
 ///
+/// During the lifetime of a reconstruction server, the following runtime
+/// parameters can be changed using Tango3DR_setRuntimeBool:
+///
+/// <table>
+/// <tr><td>boolean use_floorplan</td><td>
+///         When true, extract a 2D floor plan instead of a full 3D mesh.
+/// </td></tr>
+/// </table>
+///
+
+///
 /// @{
 
 
@@ -674,6 +690,26 @@ Tango3DR_Context Tango3DR_create(const Tango3DR_ConfigH context_config);
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
 ///     the server.  Returns @c TANGO_3DR_INVALID if context is NULL.
 Tango3DR_Status Tango3DR_destroy(Tango3DR_Context context);
+
+/// Set a boolean runtime parameter.
+/// @param context Handle to a previously created server.
+/// @param key The string key value of the configuration parameter to set.
+/// @param value The value to set the configuration key to.
+/// @return @c TANGO_3DR_SUCCESS on success or @c
+///     TANGO_3DR_INVALID if @p context or key is NULL, or key is not
+///     found or could not be set.
+Tango3DR_Status Tango3DR_setRuntimeBool(Tango3DR_Context context,
+                                        const char* key, bool value);
+
+/// Get a boolean runtime parameter.
+/// @param context Handle to a previously created server.
+/// @param key The string key value of the configuration parameter to get.
+/// @param value Upon success, set to the value for the configuration key.
+/// @return @c TANGO_3DR_SUCCESS on success or @c
+///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
+///     the key could not be found.
+Tango3DR_Status Tango3DR_getRuntimeBool(Tango3DR_Context context,
+                                        const char* key, bool* value);
 
 /// Clear all voxels from a running server.
 ///

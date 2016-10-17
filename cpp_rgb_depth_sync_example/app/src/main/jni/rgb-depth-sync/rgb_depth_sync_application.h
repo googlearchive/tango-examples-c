@@ -90,6 +90,18 @@ class SynchronizationApplication {
   // Set whether to use GPU or CPU upsampling
   void SetGPUUpsample(bool on);
 
+  // Callback for display change event, we use this function to detect display
+  // orientation change.
+  //
+  // @param display_rotation, the rotation index of the display. Same as the
+  // Android display enum value, see here:
+  // https://developer.android.com/reference/android/view/Display.html#getRotation()
+  // @param color_camera_rotation, the rotation index of color camera
+  // orientation.
+  // Same as the Android sensor rotation enum value, see here:
+  // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
+  void OnDisplayChanged(int display_rotation, int color_camera_rotation);
+
   // Callback for point clouds that come in from the Tango service.
   //
   // @param point_cloud The point cloud returned by the service.
@@ -117,9 +129,6 @@ class SynchronizationApplication {
   // Image plane.
   void TangoSetIntrinsics();
 
-  // Disconnect from Tango Service.
-  void TangoDisconnect();
-
   // RGB image
   ColorImage color_image_;
 
@@ -134,22 +143,16 @@ class SynchronizationApplication {
   // this example.
   TangoConfig tango_config_;
 
-  // OpenGL to Start of Service
-  glm::mat4 OW_T_SS_;
-  float screen_width_;
-  float screen_height_;
-
   // The point_cloud_manager allows for thread safe reading and
   // writing of the point cloud data.
   TangoSupportPointCloudManager* point_cloud_manager_;
 
-  // This TangoPointCloud* points to the most recently produced
-  // point cloud data which should be rendered.
-  TangoPointCloud* render_buffer_;
-
   bool gpu_upsample_;
 
   bool is_service_connected_;
+  bool is_gl_initialized_;
+
+  TangoSupportDisplayRotation color_camera_to_display_rotation_;
 };
 }  // namespace rgb_depth_sync
 

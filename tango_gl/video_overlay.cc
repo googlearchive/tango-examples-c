@@ -19,71 +19,50 @@
 #include "tango-gl/shaders.h"
 
 namespace {
-int CombineSensorRotation(int activity_orientation, int sensor_orientation) {
-  int sensor_orientation_n = 0;
-  switch (sensor_orientation) {
-    case 90:
-      sensor_orientation_n = 1;
-      break;
-    case 180:
-      sensor_orientation_n = 2;
-      break;
-    case 270:
-      sensor_orientation_n = 3;
-      break;
-    default:
-      sensor_orientation_n = 0;
-      break;
-  }
-
-  int ret = activity_orientation - sensor_orientation_n;
-  if (ret < 0) {
-    ret += 4;
-  }
-  return (ret % 4);
-}
-
 const GLfloat kVertices[] = {-1.0, 1.0, 0.0, -1.0, -1.0, 0.0,
                              1.0,  1.0, 0.0, 1.0,  -1.0, 0.0};
 
 const GLushort kIndices[] = {0, 1, 2, 2, 1, 3};
-
-const GLfloat kTextureCoords0[] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
-const GLfloat kTextureCoords90[] = {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0};
-const GLfloat kTextureCoords180[] = {1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-const GLfloat kTextureCoords270[] = {0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0};
 }  // annonymous namespace
 
 namespace tango_gl {
 
-VideoOverlay::VideoOverlay(GLuint texture_type) : texture_type_(texture_type) {
-  Initialize(0, 0);
+VideoOverlay::VideoOverlay()
+    : texture_type_(GL_TEXTURE_EXTERNAL_OES),
+      camera_to_display_rotation_(TangoSupportDisplayRotation::ROTATION_0),
+      u_offset_(0.0f),
+      v_offset_(0.0f) {
+  Initialize();
 }
 
-VideoOverlay::VideoOverlay(GLuint texture_type, int activity_orientation,
-                           int sensor_orientation)
-    : texture_type_(texture_type) {
-  Initialize(activity_orientation, sensor_orientation);
+VideoOverlay::VideoOverlay(GLuint texture_type)
+    : texture_type_(texture_type),
+      camera_to_display_rotation_(TangoSupportDisplayRotation::ROTATION_0),
+      u_offset_(0.0f),
+      v_offset_(0.0f) {
+  Initialize();
 }
 
-VideoOverlay::VideoOverlay(int activity_orientation, int sensor_orientation)
-    : texture_type_(GL_TEXTURE_EXTERNAL_OES) {
-  Initialize(activity_orientation, sensor_orientation);
+VideoOverlay::VideoOverlay(
+    TangoSupportDisplayRotation camera_to_display_rotation)
+    : texture_type_(GL_TEXTURE_EXTERNAL_OES),
+      camera_to_display_rotation_(camera_to_display_rotation),
+      u_offset_(0.0f),
+      v_offset_(0.0f) {
+  Initialize();
 }
 
-VideoOverlay::VideoOverlay() : texture_type_(GL_TEXTURE_EXTERNAL_OES) {
-  Initialize(0, 0);
+VideoOverlay::VideoOverlay(
+    GLuint texture_type, TangoSupportDisplayRotation camera_to_display_rotation)
+    : texture_type_(texture_type),
+      camera_to_display_rotation_(camera_to_display_rotation),
+      u_offset_(0.0f),
+      v_offset_(0.0f) {
+  Initialize();
 }
 
-void VideoOverlay::SetOrientationFromAndroid(int activity_orientation,
-                                             int sensor_orientation) {
-  combined_sensor_orientation_ =
-      CombineSensorRotation(activity_orientation, sensor_orientation);
-}
-
-void VideoOverlay::Initialize(int activity_orientation,
-                              int sensor_orientation) {
-  SetOrientationFromAndroid(activity_orientation, sensor_orientation);
+void VideoOverlay::Initialize() {
+  SetColorToDisplayRotation(camera_to_display_rotation_);
 
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
   if (texture_type_ == GL_TEXTURE_EXTERNAL_OES) {
@@ -133,6 +112,67 @@ void VideoOverlay::Initialize(int activity_orientation,
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
 
+void VideoOverlay::SetColorToDisplayRotation(
+    TangoSupportDisplayRotation rotation) {
+  camera_to_display_rotation_ = rotation;
+  switch (camera_to_display_rotation_) {
+    case TangoSupportDisplayRotation::ROTATION_90:
+      texture_coords_ = {1.0f - u_offset_, 0.0f + v_offset_,
+                         0.0f + u_offset_, 0.0f + v_offset_,
+                         1.0f - u_offset_, 1.0f - v_offset_,
+                         0.0f + u_offset_, 1.0f - v_offset_};
+      break;
+    case TangoSupportDisplayRotation::ROTATION_180:
+      texture_coords_ = {1.0f - u_offset_, 1.0f - v_offset_,
+                         1.0f - u_offset_, 0.0f + v_offset_,
+                         0.0f + u_offset_, 1.0f - v_offset_,
+                         0.0f + u_offset_, 0.0f + v_offset_};
+      break;
+    case TangoSupportDisplayRotation::ROTATION_270:
+      texture_coords_ = {0.0f + u_offset_, 1.0f - v_offset_,
+                         1.0f - u_offset_, 1.0f - v_offset_,
+                         0.0f + u_offset_, 0.0f + v_offset_,
+                         1.0f - u_offset_, 0.0f + v_offset_};
+      break;
+    default:
+      texture_coords_ = {0.0f + u_offset_, 0.0f + v_offset_,
+                         0.0f + u_offset_, 1.0f - v_offset_,
+                         1.0f - u_offset_, 0.0f + v_offset_,
+                         1.0f - u_offset_, 1.0f - v_offset_};
+      break;
+  }
+}
+
+void VideoOverlay::SetTextureOffset(float screen_width, float screen_height,
+                                    float image_width, float image_height) {
+  if ((screen_width / screen_height > 1.0f) !=
+      (image_width / image_height > 1.0f)) {
+    // if image ratio and screen ratio don't comply to each other, we always
+    // aligned things to screen ratio.
+    float tmp = image_width;
+    image_width = image_height;
+    image_height = tmp;
+  }
+
+  float screen_ratio = screen_width / screen_height;
+  float image_ratio = image_width / image_height;
+  float zoom_factor = 1.0f;
+
+  if (image_ratio > screen_ratio) {
+    zoom_factor = screen_height / image_height;
+  } else {
+    zoom_factor = screen_width / image_width;
+  }
+
+  float render_width = image_width * zoom_factor;
+  float render_height = image_height * zoom_factor;
+
+  u_offset_ = ((render_width - screen_width) / 2.0f) / render_width;
+  v_offset_ = ((render_height - screen_height) / 2.0f) / render_height;
+
+  SetColorToDisplayRotation(camera_to_display_rotation_);
+}
+
 void VideoOverlay::Render(const glm::mat4& projection_mat,
                           const glm::mat4& view_mat) const {
   glUseProgram(shader_program_);
@@ -152,24 +192,8 @@ void VideoOverlay::Render(const glm::mat4& projection_mat,
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glEnableVertexAttribArray(attrib_texture_coords_);
-  switch (combined_sensor_orientation_) {
-    case 1:
-      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                            kTextureCoords90);
-      break;
-    case 2:
-      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                            kTextureCoords180);
-      break;
-    case 3:
-      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                            kTextureCoords270);
-      break;
-    default:
-      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                            kTextureCoords0);
-      break;
-  }
+  glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
+                        texture_coords_.data());
 
   // Bind element array buffer.
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertex_buffers_[1]);
