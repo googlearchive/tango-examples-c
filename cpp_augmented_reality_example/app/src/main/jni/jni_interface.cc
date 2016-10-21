@@ -36,9 +36,9 @@ jint JNI_OnLoad(JavaVM* vm, void*) {
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onCreate(
-    JNIEnv* env, jobject, jobject activity, int activity_orientation,
-    int sensor_orientation) {
-  app.OnCreate(env, activity, activity_orientation, sensor_orientation);
+    JNIEnv* env, jobject, jobject activity, int display_orientation,
+    int color_camera_orientation) {
+  app.OnCreate(env, activity, display_orientation, color_camera_orientation);
 }
 
 JNIEXPORT void JNICALL
@@ -80,8 +80,8 @@ Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onGlSurfaceDr
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_augmentedreality_TangoJNINative_onConfigurationChanged(
-    JNIEnv*, jobject, int activity_orientation, int sensor_orientation) {
-  app.OnDeviceRotationChanged(activity_orientation, sensor_orientation);
+    JNIEnv*, jobject, int display_orientation, int color_camera_orientation) {
+  app.OnDeviceRotationChanged(display_orientation, color_camera_orientation);
 }
 
 #ifdef __cplusplus

@@ -46,11 +46,11 @@ SynchronizationApplication::SynchronizationApplication()
     : color_image_(),
       depth_image_(),
       main_scene_(),
-      // We'll store the fixed transform between the opengl frame convention.
-      // (Y-up, X-right) and tango frame convention. (Z-up, X-right).
-      OW_T_SS_(tango_gl::conversions::opengl_world_T_tango_world()),
       gpu_upsample_(false),
-      is_service_connected_(false) {}
+      is_service_connected_(false),
+      is_gl_initialized_(false),
+      color_camera_to_display_rotation_(
+          TangoSupportDisplayRotation::ROTATION_0) {}
 
 SynchronizationApplication::~SynchronizationApplication() {
   if (tango_config_) {
@@ -84,10 +84,15 @@ void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
     std::exit(EXIT_SUCCESS);
   }
 
+  // Initialize TangoSupport context.
+  TangoSupport_initializeLibrary();
+
   TangoSetupConfig();
   TangoConnectCallbacks();
   TangoConnect();
   TangoSetIntrinsics();
+
+  is_service_connected_ = true;
 }
 
 void SynchronizationApplication::TangoSetupConfig() {
@@ -206,7 +211,6 @@ void SynchronizationApplication::TangoConnect() {
     LOGE("SynchronizationApplication: Failed to connect to the Tango service.");
     std::exit(EXIT_SUCCESS);
   }
-  is_service_connected_ = true;
 }
 
 void SynchronizationApplication::TangoSetIntrinsics() {
@@ -222,45 +226,45 @@ void SynchronizationApplication::TangoSetIntrinsics() {
         "camera.");
     std::exit(EXIT_SUCCESS);
   }
-  depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
-  main_scene_.SetCameraIntrinsics(color_camera_intrinsics);
 
-  // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  depth_image_.SetCameraIntrinsics(color_camera_intrinsics);
 }
 
-void SynchronizationApplication::OnPause() { TangoDisconnect(); }
-
-void SynchronizationApplication::TangoDisconnect() {
-  TangoService_disconnect();
+void SynchronizationApplication::OnPause() {
+  is_gl_initialized_ = false;
   is_service_connected_ = false;
+  TangoService_disconnect();
 }
 
 void SynchronizationApplication::OnSurfaceCreated() {
   depth_image_.InitializeGL();
   color_image_.InitializeGL();
   main_scene_.InitializeGL();
+  is_gl_initialized_ = true;
 }
 
 void SynchronizationApplication::OnSurfaceChanged(int width, int height) {
-  screen_width_ = static_cast<float>(width);
-  screen_height_ = static_cast<float>(height);
   main_scene_.SetupViewPort(width, height);
 }
 
 void SynchronizationApplication::OnDrawFrame() {
-  main_scene_.ClearRender();
+  // If tracking is lost, further down in this method Scene::Render
+  // will not be called. Prevent flickering that would otherwise
+  // happen by rendering solid black as a fallback.
+  main_scene_.Clear();
 
-  if (!is_service_connected_) {
+  if (!is_service_connected_ || !is_gl_initialized_) {
     return;
   }
 
   double color_timestamp = 0.0;
   double depth_timestamp = 0.0;
   bool new_points = false;
-  TangoSupport_getLatestPointCloudAndNewDataFlag(point_cloud_manager_,
-                                                 &render_buffer_, &new_points);
-  depth_timestamp = render_buffer_->timestamp;
+  TangoPointCloud* pointcloud_buffer;
+
+  TangoSupport_getLatestPointCloudAndNewDataFlag(
+      point_cloud_manager_, &pointcloud_buffer, &new_points);
+  depth_timestamp = pointcloud_buffer->timestamp;
   // We need to make sure that we update the texture associated with the color
   // image.
   if (TangoService_updateTextureExternalOes(
@@ -295,12 +299,13 @@ void SynchronizationApplication::OnDrawFrame() {
 
   if (gpu_upsample_) {
     depth_image_.RenderDepthToTexture(color_image_t1_T_depth_image_t0,
-                                      render_buffer_, new_points);
+                                      pointcloud_buffer, new_points);
   } else {
     depth_image_.UpdateAndUpsampleDepth(color_image_t1_T_depth_image_t0,
-                                        render_buffer_);
+                                        pointcloud_buffer);
   }
-  main_scene_.Render(color_image_.GetTextureId(), depth_image_.GetTextureId());
+  main_scene_.Render(color_image_.GetTextureId(), depth_image_.GetTextureId(),
+                     color_camera_to_display_rotation_);
 }
 
 void SynchronizationApplication::SetDepthAlphaValue(float alpha) {
@@ -308,5 +313,12 @@ void SynchronizationApplication::SetDepthAlphaValue(float alpha) {
 }
 
 void SynchronizationApplication::SetGPUUpsample(bool on) { gpu_upsample_ = on; }
+
+void SynchronizationApplication::OnDisplayChanged(int display_rotation,
+                                                  int color_camera_rotation) {
+  color_camera_to_display_rotation_ =
+      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
+          display_rotation, color_camera_rotation);
+}
 
 }  // namespace rgb_depth_sync

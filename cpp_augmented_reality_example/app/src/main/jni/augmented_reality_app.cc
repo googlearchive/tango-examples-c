@@ -30,30 +30,6 @@ const int kTangoCoreMinimumVersion = 9377;
 const float kArCameraNearClippingPlane = 0.1f;
 const float kArCameraFarClippingPlane = 100.0f;
 
-int CombineSensorRotation(int activity_orientation, int sensor_orientation) {
-  int sensor_orientation_n = 0;
-  switch (sensor_orientation) {
-    case 90:
-      sensor_orientation_n = 1;
-      break;
-    case 180:
-      sensor_orientation_n = 2;
-      break;
-    case 270:
-      sensor_orientation_n = 3;
-      break;
-    default:
-      sensor_orientation_n = 0;
-      break;
-  }
-
-  int ret = activity_orientation - sensor_orientation_n;
-  if (ret < 0) {
-    ret += 4;
-  }
-  return (ret % 4);
-}
-
 // This function routes onTangoEvent callbacks to the application object for
 // handling.
 //
@@ -93,8 +69,8 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
 }
 
 void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
-                                   int activity_orientation,
-                                   int sensor_orientation) {
+                                   int display_rotation,
+                                   int color_camera_rotation) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
@@ -114,8 +90,8 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   is_service_connected_ = false;
   is_texture_id_set_ = false;
 
-  activity_rotation_ = activity_orientation;
-  sensor_rotation_ = sensor_orientation;
+  display_rotation_ = display_rotation;
+  color_camera_rotation_ = color_camera_rotation;
 }
 
 void AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
@@ -275,8 +251,8 @@ void AugmentedRealityApp::TangoDisconnect() {
 }
 
 void AugmentedRealityApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
-  main_scene_.InitGLContent(aasset_manager, activity_rotation_,
-                            sensor_rotation_);
+  main_scene_.InitGLContent(aasset_manager, display_rotation_,
+                            color_camera_rotation_);
 }
 
 void AugmentedRealityApp::OnSurfaceChanged(int width, int height) {
@@ -350,15 +326,19 @@ void AugmentedRealityApp::UpdateViewporAndProjectionMatrix() {
   }
 }
 
-void AugmentedRealityApp::OnDeviceRotationChanged(int activity_orientation,
-                                                  int sensor_orientation) {
-  activity_rotation_ = activity_orientation;
-  sensor_rotation_ = sensor_orientation;
-  main_scene_.SetVideoOverlayOrientation(activity_orientation,
-                                         sensor_orientation);
+void AugmentedRealityApp::OnDeviceRotationChanged(int display_rotation,
+                                                  int color_camera_rotation) {
+  display_rotation_ = display_rotation;
+  color_camera_rotation_ = color_camera_rotation;
+  main_scene_.SetVideoOverlayRotation(display_rotation, color_camera_rotation);
 }
 
 void AugmentedRealityApp::OnDrawFrame() {
+  // If tracking is lost, further down in this method Scene::Render
+  // will not be called. Prevent flickering that would otherwise
+  // happen by rendering solid white as a fallback.
+  main_scene_.Clear();
+
   if (is_service_connected_ && !is_texture_id_set_) {
     is_texture_id_set_ = true;
     UpdateViewporAndProjectionMatrix();
@@ -376,15 +356,16 @@ void AugmentedRealityApp::OnDrawFrame() {
     //
     // Note that if you don't want to use the drift corrected pose, the
     // normal device with respect to start of service pose is still available.
-    int combined_orientation =
-        CombineSensorRotation(activity_rotation_, sensor_rotation_);
+    int color_camera_to_display =
+        tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
+            display_rotation_, color_camera_rotation_);
 
     TangoDoubleMatrixTransformData matrix_transform;
     status = TangoSupport_getDoubleMatrixTransformAtTime(
         video_overlay_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
         TANGO_SUPPORT_ENGINE_OPENGL,
-        static_cast<TangoSupportDisplayRotation>(combined_orientation),
+        static_cast<TangoSupportDisplayRotation>(color_camera_to_display),
         &matrix_transform);
     if (matrix_transform.status_code == TANGO_POSE_VALID) {
       {
@@ -396,7 +377,7 @@ void AugmentedRealityApp::OnDrawFrame() {
       TangoSupport_getPoseAtTime(
           0.0, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
           TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
-          static_cast<TangoSupportDisplayRotation>(combined_orientation),
+          static_cast<TangoSupportDisplayRotation>(color_camera_to_display),
           &pose);
 
       if (pose.status_code != TANGO_POSE_VALID) {

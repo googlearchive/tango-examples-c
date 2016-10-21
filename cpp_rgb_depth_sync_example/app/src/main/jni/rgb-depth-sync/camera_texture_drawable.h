@@ -17,6 +17,7 @@
 #ifndef RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
 #define RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
 
+#include <tango_support_api.h>
 #include <tango-gl/util.h>
 #include "rgb-depth-sync/shader.h"
 
@@ -29,7 +30,7 @@ class CameraTextureDrawable {
   CameraTextureDrawable();
   ~CameraTextureDrawable();
   // Render the color texture on screen.
-  void RenderImage();
+  void RenderImage(TangoSupportDisplayRotation camera_to_display_rotation);
 
   // Call this function when the GL context has been reinitialized
   void InitializeGL();
@@ -65,8 +66,9 @@ class CameraTextureDrawable {
   GLuint attrib_vertices_;
 
   GLuint shader_program_;
-  // Vertex, indices and texture buffers.
-  GLuint render_buffers_[3];
+
+  // Vertex and indices buffers.
+  GLuint render_buffers_[2];
 };
 }  // namespace rgb_depth_sync
 

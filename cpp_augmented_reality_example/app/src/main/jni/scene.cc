@@ -42,15 +42,18 @@ Scene::Scene() {}
 
 Scene::~Scene() {}
 
-void Scene::InitGLContent(AAssetManager* aasset_manager,
-                          int activity_orientation, int sensor_orientation) {
+void Scene::InitGLContent(AAssetManager* aasset_manager, int display_rotation,
+                          int color_camera_rotation) {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
+  TangoSupportDisplayRotation color_to_display_rotation =
+      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
+          display_rotation, color_camera_rotation);
+
   // Allocating render camera and drawable object.
   // All of these objects are for visualization purposes.
-  video_overlay_ =
-      new tango_gl::VideoOverlay(activity_orientation, sensor_orientation);
+  video_overlay_ = new tango_gl::VideoOverlay(color_to_display_rotation);
   camera_ = new tango_gl::Camera();
 
   // Init earth mesh and material
@@ -105,6 +108,11 @@ void Scene::SetupViewPort(int x, int y, int w, int h) {
 
 void Scene::SetProjectionMatrix(const glm::mat4& projection_matrix) {
   camera_->SetProjectionMatrix(projection_matrix);
+}
+
+void Scene::Clear() {
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void Scene::Render(const glm::mat4& cur_pose_transformation) {
@@ -174,10 +182,12 @@ void Scene::RotateYAxisTransform(const TangoPoseData& pose,
   *last_pose = pose.timestamp;
 }
 
-void Scene::SetVideoOverlayOrientation(int activity_orientation,
-                                       int sensor_orientation) {
-  video_overlay_->SetOrientationFromAndroid(activity_orientation,
-                                            sensor_orientation);
+void Scene::SetVideoOverlayRotation(int display_rotation,
+                                    int color_camera_rotation) {
+  TangoSupportDisplayRotation color_to_display_rotation =
+      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
+          display_rotation, color_camera_rotation);
+  video_overlay_->SetColorToDisplayRotation(color_to_display_rotation);
 }
 
 }  // namespace tango_augmented_reality

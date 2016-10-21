@@ -60,6 +60,9 @@ class Scene {
   // @param: h, height of the screen.
   void SetupViewPort(int x, int y, int w, int h);
 
+  // Clear the render on screen.
+  void Clear();
+
   // Render loop.
   void Render();
 

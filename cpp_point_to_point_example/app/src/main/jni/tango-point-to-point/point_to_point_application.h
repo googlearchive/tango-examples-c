@@ -17,10 +17,12 @@
 #ifndef TANGO_POINT_TO_POINT_POINT_TO_POINT_APPLICATION_H_
 #define TANGO_POINT_TO_POINT_POINT_TO_POINT_APPLICATION_H_
 
+#include <atomic>
 #include <jni.h>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include <tango_client_api.h>
 #include <tango_support_api.h>
@@ -102,13 +104,22 @@ class PointToPointApplication {
   // @param y The requested y coordinate in screen space of the window.
   void OnTouchEvent(float x, float y);
 
+  //
+  // Callback for display change event, we use this function to detect display
+  // orientation change.
+  //
+  // @param display_rotation, the rotation index of the display. Same as the
+  // Android display enum value, see here:
+  // https://developer.android.com/reference/android/view/Display.html#getRotation()
+  // @param color_camera_rotation, the rotation index of color camera
+  // orientation.
+  // Same as the Android sensor rotation enum value, see here:
+  // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
+  void OnDisplayChanged(int display_rotation, int color_camera_rotation);
+
  private:
   // Details of rendering to OpenGL after determining transforms.
   void GLRender(const glm::mat4& opengl_ss_T_color_opengl);
-
-  // Get the x,y,z point of the touch location.
-  bool GetDepthAtPoint(const float uv[2], float xyz[3],
-                       const TangoPoseData& color_camera_T_point_cloud);
 
   // Update the segment based on a new touch position.
   void UpdateSegment(glm::vec4 world_position);
@@ -138,7 +149,9 @@ class PointToPointApplication {
   // the other is an optimization that allow us to avoid transforming the depth
   // points into OpenGL
   // coordinate frame.
-  glm::mat4 GetStartServiceTDepthPose();
+  glm::mat4 GetStartServiceTColorPose(const double& image_time);
+
+  void SetViewportAndProjection();
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
@@ -147,8 +160,8 @@ class PointToPointApplication {
   tango_gl::VideoOverlay* video_overlay_;
 
   // The dimensions of the render window.
-  GLsizei screen_width_;
-  GLsizei screen_height_;
+  float screen_width_;
+  float screen_height_;
 
   double last_gpu_timestamp_;
 
@@ -158,11 +171,9 @@ class PointToPointApplication {
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  TangoPointCloud* front_cloud_;
 
   // Image data manager.
   TangoSupportImageBufferManager* image_buffer_manager_;
-  TangoImageBuffer* image_buffer_;
 
   // The depth interpolator class.
   TangoSupportDepthInterpolator* interpolator_;
@@ -190,6 +201,14 @@ class PointToPointApplication {
 
   // Are both points defined?
   bool segment_is_drawable_;
+
+  std::atomic<bool> is_service_connected_;
+  std::atomic<bool> is_gl_initialized_;
+
+  // Both of these orientation is used for handling display rotation in portrait
+  // or landscape.
+  TangoSupportDisplayRotation display_rotation_;
+  TangoSupportDisplayRotation color_camera_to_display_rotation_;
 };
 
 }  // namespace tango_point_to_point

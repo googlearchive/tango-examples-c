@@ -185,10 +185,15 @@ void HelloVideoApp::OnSurfaceCreated() {
   if (video_overlay_drawable_ != NULL || yuv_drawable_ != NULL) {
     this->DeleteDrawables();
   }
+
+  TangoSupportDisplayRotation color_camera_to_display_rotation =
+      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
+          activity_rotation_, sensor_rotation_);
+
   video_overlay_drawable_ = new tango_gl::VideoOverlay(
-      GL_TEXTURE_EXTERNAL_OES, activity_rotation_, sensor_rotation_);
-  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D, activity_rotation_,
-                                             sensor_rotation_);
+      GL_TEXTURE_EXTERNAL_OES, color_camera_to_display_rotation);
+  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D,
+                                             color_camera_to_display_rotation);
 }
 
 void HelloVideoApp::OnSurfaceChanged(int width, int height) {

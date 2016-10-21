@@ -176,10 +176,10 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
 
   // It's more important to be responsive than to handle all indexes.
   // Replace the current list if we have fallen behind in processing.
-  updated_indices_.resize(t3dr_updated->num_indices);
+  updated_indices_binder_thread_.resize(t3dr_updated->num_indices);
   std::copy(&t3dr_updated->indices[0][0],
             &t3dr_updated->indices[t3dr_updated->num_indices][0],
-            reinterpret_cast<uint32_t*>(updated_indices_.data()));
+            reinterpret_cast<uint32_t*>(updated_indices_binder_thread_.data()));
 
   Tango3DR_GridIndexArray_destroy(t3dr_updated);
   point_cloud_available_ = false;
@@ -425,6 +425,15 @@ void MeshBuilderApp::OnSurfaceChanged(int width, int height) {
 }
 
 void MeshBuilderApp::OnDrawFrame() {
+  // Get the most up to date data from the binder thread. It's more
+  // important to be responsive than to handle all indexes.  Replace
+  // the current list if we have fallen behind in processing.
+  {
+    std::lock_guard<std::mutex> lock(binder_mutex_);
+    swap(updated_indices_binder_thread_, updated_indices_gl_thread_);
+    updated_indices_binder_thread_.clear();
+  }
+
   // Get the last device transform to start of service frame in OpenGL
   // convention.
   TangoMatrixTransformData matrix_transform;
@@ -443,8 +452,8 @@ void MeshBuilderApp::OnDrawFrame() {
   std::vector<GridIndex> needs_resize;
   auto start_time = std::chrono::high_resolution_clock::now();
   unsigned int it;
-  for (it = 0; it < updated_indices_.size(); ++it) {
-    auto updated_index = updated_indices_[it];
+  for (it = 0; it < updated_indices_gl_thread_.size(); ++it) {
+    auto updated_index = updated_indices_gl_thread_[it];
 
     std::shared_ptr<SingleDynamicMesh>& dynamic_mesh = meshes_[updated_index];
     if (dynamic_mesh == nullptr) {
@@ -529,12 +538,12 @@ void MeshBuilderApp::OnDrawFrame() {
   }
 
   // Any leftover grid indices also need to get processed next frame.
-  while (it < updated_indices_.size()) {
-    needs_resize.push_back(updated_indices_[it]);
+  while (it < updated_indices_gl_thread_.size()) {
+    needs_resize.push_back(updated_indices_gl_thread_[it]);
     ++it;
   }
 
-  swap(needs_resize, updated_indices_);
+  swap(needs_resize, updated_indices_gl_thread_);
 
   main_scene_.camera_->SetTransformationMatrix(start_service_T_device_);
   main_scene_.Render();

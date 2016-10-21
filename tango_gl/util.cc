@@ -16,6 +16,27 @@
 
 #include "tango-gl/util.h"
 
+namespace {
+int NormalizedColorCameraRotation(int camera_rotation) {
+  int camera_n = 0;
+  switch (camera_rotation) {
+    case 90:
+      camera_n = 1;
+      break;
+    case 180:
+      camera_n = 2;
+      break;
+    case 270:
+      camera_n = 3;
+      break;
+    default:
+      camera_n = 0;
+      break;
+  }
+  return camera_n;
+}
+}  // annonymous namespace
+
 namespace tango_gl {
 
 void util::CheckGlError(const char* operation) {
@@ -214,4 +235,41 @@ glm::vec3 util::ApplyTransform(const glm::mat4& mat, const glm::vec3& vec) {
   return glm::vec3(mat * glm::vec4(vec, 1.0f));
 }
 
+TangoSupportDisplayRotation util::GetAndroidRotationFromColorCameraToDisplay(
+    int display_rotation, int color_camera_rotation) {
+  TangoSupportDisplayRotation r =
+      static_cast<TangoSupportDisplayRotation>(display_rotation);
+  return util::GetAndroidRotationFromColorCameraToDisplay(
+      r, color_camera_rotation);
+}
+
+TangoSupportDisplayRotation util::GetAndroidRotationFromColorCameraToDisplay(
+    TangoSupportDisplayRotation display_rotation, int color_camera_rotation) {
+  int color_camera_n = NormalizedColorCameraRotation(color_camera_rotation);
+
+  int ret = static_cast<int>(display_rotation) - color_camera_n;
+  if (ret < 0) {
+    ret += 4;
+  }
+  return static_cast<TangoSupportDisplayRotation>(ret % 4);
+}
+
+glm::vec2 util::GetColorCameraUVFromDisplay(
+    const glm::vec2& uv,
+    TangoSupportDisplayRotation color_to_display_rotation) {
+  switch (color_to_display_rotation) {
+    case TangoSupportDisplayRotation::ROTATION_90:
+    return glm::vec2(1.0f - uv.y, uv.x);
+    break;
+    case TangoSupportDisplayRotation::ROTATION_180:
+    return glm::vec2(1.0f - uv.x, 1.0f - uv.y);
+    break;
+    case TangoSupportDisplayRotation::ROTATION_270:
+    return glm::vec2(uv.y, 1.0f - uv.x);
+    break;
+  default:
+    return glm::vec2(uv.x, uv.y);
+    break;
+}
+}
 }  // namespace tango_gl

@@ -23,7 +23,7 @@
 #include <tango-motion-tracking/motion_tracking_app.h>
 #include <tango-motion-tracking/scene.h>
 
-static tango_motion_tracking::MotiongTrackingApp app;
+static tango_motion_tracking::MotionTrackingApp app;
 
 #ifdef __cplusplus
 extern "C" {

@@ -17,6 +17,9 @@
 #ifndef TANGO_GL_VIDEO_OVERLAY_H_
 #define TANGO_GL_VIDEO_OVERLAY_H_
 
+#include <array>
+#include <tango_support_api.h>
+
 #include "tango-gl/drawable_object.h"
 
 namespace tango_gl {
@@ -24,15 +27,17 @@ class VideoOverlay : public DrawableObject {
  public:
   VideoOverlay();
   explicit VideoOverlay(GLuint texture_type);
-  explicit VideoOverlay(GLuint texture_type, int activity_orientation,
-                        int sensor_orientation);
-  explicit VideoOverlay(int activity_orientation, int sensor_orientation);
+  explicit VideoOverlay(TangoSupportDisplayRotation camera_to_display_rotation);
+  explicit VideoOverlay(GLuint texture_type,
+                        TangoSupportDisplayRotation camera_to_display_rotation);
+  void Initialize();
 
+  void SetColorToDisplayRotation(TangoSupportDisplayRotation rotation);
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
-  void Initialize(int activity_orientation, int sensor_orientation);
-  void SetOrientationFromAndroid(int activity_orientation,
-                                 int sensor_orientation);
+
+  void SetTextureOffset(float screen_width, float screen_height,
+                        float image_width, float image_height);
 
  private:
   // This id is populated on construction, and is passed to the tango service.
@@ -43,7 +48,10 @@ class VideoOverlay : public DrawableObject {
   GLuint uniform_texture_;
   GLuint vertex_buffers_[2];
 
-  int combined_sensor_orientation_;
+  std::array<GLfloat, 8> texture_coords_;
+  TangoSupportDisplayRotation camera_to_display_rotation_;
+  float u_offset_;
+  float v_offset_;
 };
 }  // namespace tango_gl
 #endif  // TANGO_GL_VIDEO_OVERLAY_H_

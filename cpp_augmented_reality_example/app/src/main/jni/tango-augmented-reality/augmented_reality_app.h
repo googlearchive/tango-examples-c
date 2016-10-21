@@ -38,10 +38,11 @@ class AugmentedRealityApp {
   //
   // @param env, java environment parameter OnCreate is being called.
   // @param caller_activity, caller of this function.
-  // @param activity_orientation, orienation param for the activity.
-  // @param sensor_orientation, orientation param for the color camera sensor.
-  void OnCreate(JNIEnv* env, jobject caller_activity, int activity_orientation,
-                int sensor_orientation);
+  // @param display_rotation, orienation param for the current display.
+  // @param color_camera_rotation, orientation param for the color camera
+  // sensor.
+  void OnCreate(JNIEnv* env, jobject caller_activity, int display_rotation,
+                int color_camera_rotation);
 
   // OnPause() callback is called when this Android application's
   // OnCreate function is called from UI thread. In our application,
@@ -97,10 +98,9 @@ class AugmentedRealityApp {
 
   // Called when the device orientation changed
   //
-  // @JavaVM activity_orientation: orientation of current screen.
-  // @JavaVM sensor_orientation: color camera orientation.
-  void OnDeviceRotationChanged(int activity_orientation,
-                               int sensor_orientation);
+  // @JavaVM display_rotation: orientation of current display.
+  // @JavaVM color_camera_rotation: color camera orientation.
+  void OnDeviceRotationChanged(int display_rotation, int color_camera_rotation);
 
  private:
   // Request the render function from Java layer.
@@ -199,8 +199,8 @@ class AugmentedRealityApp {
   int viewport_width_;
   int viewport_height_;
 
-  int activity_rotation_;
-  int sensor_rotation_;
+  int display_rotation_;
+  int color_camera_rotation_;
 };
 }  // namespace tango_augmented_reality
 

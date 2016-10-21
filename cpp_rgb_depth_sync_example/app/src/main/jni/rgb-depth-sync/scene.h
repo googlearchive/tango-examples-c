@@ -17,6 +17,7 @@
 #ifndef RGB_DEPTH_SYNC_SCENE_H_
 #define RGB_DEPTH_SYNC_SCENE_H_
 
+#include <tango_support_api.h>
 #include <tango-gl/camera.h>
 #include <tango-gl/grid.h>
 #include <tango-gl/util.h>
@@ -38,10 +39,11 @@ class Scene {
   void SetupViewPort(int w, int h);
 
   // Clear the render on screen.
-  void ClearRender();
+  void Clear();
 
   // Renders the scene onto the camera image using the provided depth texture.
-  void Render(GLuint, GLuint);
+  void Render(GLuint color_texture_id, GLuint depth_texture_id,
+              TangoSupportDisplayRotation camera_to_display_rotation);
 
   // Recreate GL structures because of context creation.
   void InitializeGL();
@@ -49,22 +51,9 @@ class Scene {
   // Set the depth texture's alpha blending value. The range is [0.0, 1.0].
   void SetDepthAlphaValue(float alpha);
 
-  // Set the camera intrinsics to use for this scene.
-  void SetCameraIntrinsics(const TangoCameraIntrinsics& cc_intrinsics);
-
  private:
-  GLint viewport_x_;
-  GLint viewport_y_;
   GLsizei viewport_width_;
   GLsizei viewport_height_;
-
-  float image_plane_ratio_;
-
-  // The Tango world with respect to the OpenGL world matrix.
-  glm::mat4 OW_T_W_;
-
-  // The OpenGL camera with respect to the color camera matrix.
-  glm::mat4 CC_T_OC_;
 
   CameraTextureDrawable camera_texture_drawable_;
 };

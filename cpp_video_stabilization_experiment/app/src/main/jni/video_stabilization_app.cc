@@ -274,6 +274,11 @@ void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
 }
 
 void VideoStabilizationApp::Render() {
+  // If tracking is lost, further down in this method Scene::Render
+  // will not be called. Prevent flickering that would otherwise
+  // happen by rendering solid black as a fallback.
+  main_scene_.Clear();
+
   if (is_service_connected_ && !is_texture_id_set_) {
     is_texture_id_set_ = true;
     UpdateViewportAndProjectionMatrix();

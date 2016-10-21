@@ -22,7 +22,11 @@ const GLfloat kVertices[] = {-1.0, 1.0, 0.0, -1.0, -1.0, 0.0,
 
 const GLushort kIndices[] = {0, 1, 2, 2, 1, 3};
 
-const GLfloat kTextureCoords[] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
+const GLfloat kTextureCoords0[] = {0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0};
+const GLfloat kTextureCoords90[] = {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0};
+const GLfloat kTextureCoords180[] = {1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+const GLfloat kTextureCoords270[] = {0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0};
+
 }  // namespace
 
 namespace rgb_depth_sync {
@@ -39,7 +43,7 @@ void CameraTextureDrawable::InitializeGL() {
     LOGE("Could not create shader program for CameraImageDrawable.");
   }
 
-  glGenBuffers(3, render_buffers_);
+  glGenBuffers(2, render_buffers_);
   // Allocate vertices buffer.
   glBindBuffer(GL_ARRAY_BUFFER, render_buffers_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * 4, kVertices,
@@ -52,12 +56,6 @@ void CameraTextureDrawable::InitializeGL() {
                GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-  // Allocate texture coordinates buufer.
-  glBindBuffer(GL_ARRAY_BUFFER, render_buffers_[2]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 2 * 4, kTextureCoords,
-               GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
   // Assign the vertices attribute data.
   attrib_vertices_ = glGetAttribLocation(shader_program_, "vertex");
   glBindBuffer(GL_ARRAY_BUFFER, render_buffers_[0]);
@@ -68,18 +66,14 @@ void CameraTextureDrawable::InitializeGL() {
   // Assign the texture coordinates attribute data.
   attrib_texture_coords_ =
       glGetAttribLocation(shader_program_, "textureCoords");
-  glBindBuffer(GL_ARRAY_BUFFER, render_buffers_[2]);
-  glEnableVertexAttribArray(attrib_texture_coords_);
-  glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                        nullptr);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   color_texture_handle_ = glGetUniformLocation(shader_program_, "colorTexture");
   depth_texture_handle_ = glGetUniformLocation(shader_program_, "depthTexture");
   blend_alpha_handle_ = glGetUniformLocation(shader_program_, "blendAlpha");
 }
 
-void CameraTextureDrawable::RenderImage() {
+void CameraTextureDrawable::RenderImage(
+    TangoSupportDisplayRotation camera_to_display_rotation) {
   if (shader_program_ == 0) {
     InitializeGL();
   }
@@ -110,12 +104,25 @@ void CameraTextureDrawable::RenderImage() {
   glVertexAttribPointer(attrib_vertices_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // Bind texture coordinates buffer.
-  glBindBuffer(GL_ARRAY_BUFFER, render_buffers_[2]);
   glEnableVertexAttribArray(attrib_texture_coords_);
-  glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
-                        nullptr);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  switch (camera_to_display_rotation) {
+    case TangoSupportDisplayRotation::ROTATION_90:
+      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
+                            kTextureCoords90);
+      break;
+    case TangoSupportDisplayRotation::ROTATION_180:
+      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
+                            kTextureCoords180);
+      break;
+    case TangoSupportDisplayRotation::ROTATION_270:
+      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
+                            kTextureCoords270);
+      break;
+    default:
+      glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
+                            kTextureCoords0);
+      break;
+  }
 
   // Bind element array buffer.
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_buffers_[1]);
