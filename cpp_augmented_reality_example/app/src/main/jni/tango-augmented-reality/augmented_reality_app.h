@@ -115,7 +115,7 @@ class AugmentedRealityApp {
   // Format debug string with current and last transforms information.
   void FormatTransformString();
 
-  void UpdateViewporAndProjectionMatrix();
+  void UpdateViewportAndProjectionMatrix();
 
   // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
@@ -194,7 +194,6 @@ class AugmentedRealityApp {
   jmethodID on_demand_render_;
 
   bool is_service_connected_;
-  bool is_texture_id_set_;
 
   int viewport_width_;
   int viewport_height_;

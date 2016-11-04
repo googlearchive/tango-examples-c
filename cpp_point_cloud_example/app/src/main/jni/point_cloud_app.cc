@@ -44,7 +44,9 @@ void PointCloudApp::onPointCloudAvailable(const TangoPointCloud* point_cloud) {
 }
 
 PointCloudApp::PointCloudApp()
-    : screen_rotation_(0), is_service_connected_(false) {}
+    : screen_rotation_(0),
+      is_service_connected_(false),
+      is_gl_initialized_(false) {}
 
 PointCloudApp::~PointCloudApp() {
   if (tango_config_ != nullptr) {
@@ -80,6 +82,7 @@ void PointCloudApp::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
   TangoSetupConfig();
   TangoConnectCallbacks();
   TangoConnect();
+  is_service_connected_ = true;
 }
 
 void PointCloudApp::TangoSetupConfig() {
@@ -167,8 +170,6 @@ void PointCloudApp::TangoConnect() {
     std::exit(EXIT_SUCCESS);
   }
 
-  is_service_connected_ = true;
-
   // Initialize TangoSupport context.
   TangoSupport_initializeLibrary();
 }
@@ -194,12 +195,13 @@ void PointCloudApp::OnSurfaceCreated() { main_scene_.InitGLContent(); }
 
 void PointCloudApp::OnSurfaceChanged(int width, int height) {
   main_scene_.SetupViewPort(width, height);
+  is_gl_initialized_ = true;
 }
 
 void PointCloudApp::OnDrawFrame() {
   main_scene_.ClearRender();
 
-  if (!is_service_connected_) {
+  if (!is_service_connected_ || !is_gl_initialized_) {
     return;
   }
 
@@ -209,7 +211,11 @@ void PointCloudApp::OnDrawFrame() {
   // TangoService_getMatrixTransformAtTime() to query a transform at timestamp.
 
   // Get the last point cloud data.
-  UpdateCurrentPointData();
+  TangoPointCloud* point_cloud = nullptr;
+  TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud);
+  if (point_cloud == nullptr) {
+    return;
+  }
 
   // Get the last device transform to start of service frame in OpenGL
   // convention.
@@ -231,39 +237,41 @@ void PointCloudApp::OnDrawFrame() {
 
   // Compute the average depth value.
   float average_depth_ = 0.0f;
-  for (size_t i = 0; i < front_cloud_->num_points; i++) {
-    average_depth_ += front_cloud_->points[i][2];
+  for (size_t i = 0; i < point_cloud->num_points; i++) {
+    average_depth_ += point_cloud->points[i][2];
   }
-  if (front_cloud_->num_points) {
-    average_depth_ /= front_cloud_->num_points;
+  if (point_cloud->num_points) {
+    average_depth_ /= point_cloud->num_points;
   }
   point_cloud_average_depth_ = average_depth_;
+  point_cloud_count_ = point_cloud->num_points;
 
   std::vector<float> vertices;
   // Get depth camera transform to start of service frame in OpenGL convention
   // at the point cloud timestamp.
   TangoSupport_getDoubleMatrixTransformAtTime(
-      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_opengl_T_depth_tango_ =
         glm::make_mat4(matrix_transform.matrix);
     TangoPointCloud ow_point_cloud;
-    ow_point_cloud.points = new float[front_cloud_->num_points][4];
-    ow_point_cloud.num_points = front_cloud_->num_points;
+    ow_point_cloud.points = new float[point_cloud->num_points][4];
+    ow_point_cloud.num_points = point_cloud->num_points;
     // Transform point cloud to OpenGL world
-    TangoSupport_doubleTransformPointCloud(matrix_transform.matrix,
-                                           front_cloud_, &ow_point_cloud);
-    vertices.resize(front_cloud_->num_points * 4);
+    TangoSupport_doubleTransformPointCloud(matrix_transform.matrix, point_cloud,
+                                           &ow_point_cloud);
+    vertices.resize(point_cloud->num_points * 4);
     std::copy(&ow_point_cloud.points[0][0],
               &ow_point_cloud.points[ow_point_cloud.num_points][0],
               vertices.begin());
+    delete[] ow_point_cloud.points;
   } else {
     LOGE(
         "PointCloudExample: Could not find a valid matrix transform at "
         "time %lf for the depth camera.",
-        front_cloud_->timestamp);
+        point_cloud->timestamp);
     return;
   }
 
@@ -272,12 +280,7 @@ void PointCloudApp::OnDrawFrame() {
 
 void PointCloudApp::DeleteResources() { main_scene_.DeleteResources(); }
 
-int PointCloudApp::GetPointCloudVerticesCount() {
-  if (front_cloud_ != nullptr) {
-    return front_cloud_->num_points;
-  }
-  return 0;
-}
+int PointCloudApp::GetPointCloudVerticesCount() { return point_cloud_count_; }
 
 float PointCloudApp::GetAverageZ() { return point_cloud_average_depth_; }
 
@@ -289,11 +292,10 @@ void PointCloudApp::SetCameraType(
 void PointCloudApp::OnTouchEvent(int touch_count,
                                  tango_gl::GestureCamera::TouchEvent event,
                                  float x0, float y0, float x1, float y1) {
+  if (!is_service_connected_ || !is_gl_initialized_) {
+    return;
+  }
   main_scene_.OnTouchEvent(touch_count, event, x0, y0, x1, y1);
-}
-
-void PointCloudApp::UpdateCurrentPointData() {
-  TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_);
 }
 
 void PointCloudApp::SetScreenRotation(int screen_rotation) {

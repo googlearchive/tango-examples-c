@@ -69,7 +69,6 @@ void VideoStabilizationApp::OnCreate(JNIEnv* env, jobject activity) {
   on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
 
   is_service_connected_ = false;
-  is_texture_id_set_ = false;
 }
 
 bool VideoStabilizationApp::OnTangoServiceConnected(JNIEnv* env,
@@ -88,6 +87,8 @@ bool VideoStabilizationApp::OnTangoServiceConnected(JNIEnv* env,
   TangoConnect();
 
   is_service_connected_ = true;
+
+  UpdateViewportAndProjectionMatrix();
 
   return true;
 }
@@ -180,7 +181,11 @@ void VideoStabilizationApp::TangoConnectCallbacks() {
 }
 
 void VideoStabilizationApp::OnPause() {
-  TangoDisconnect();
+  if (is_service_connected_) {
+    TangoDisconnect();
+    is_service_connected_ = false;
+  }
+
   DeleteResources();
 }
 
@@ -190,7 +195,6 @@ void VideoStabilizationApp::TangoDisconnect() {
   // resets all configuration, and disconnects all callbacks. If an application
   // resumes after disconnecting, it must re-register configuration and
   // callbacks with the service.
-  is_service_connected_ = false;
   TangoConfig_free(tango_config_);
   tango_config_ = nullptr;
   TangoService_disconnect();
@@ -198,6 +202,8 @@ void VideoStabilizationApp::TangoDisconnect() {
 
 void VideoStabilizationApp::InitializeGLContent() {
   main_scene_.InitGLContent();
+
+  UpdateViewportAndProjectionMatrix();
 }
 
 void VideoStabilizationApp::SetViewPort(int width, int height) {
@@ -206,45 +212,48 @@ void VideoStabilizationApp::SetViewPort(int width, int height) {
 }
 
 void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
+  if (!is_service_connected_) {
+    return;
+  }
+
   // Query intrinsics for the color camera from the Tango Service, because we
   // want to match the virtual render camera's intrinsics to the physical
   // camera, we will compute the actually projection matrix and the view port
   // ratio for the render.
   float image_plane_ratio = 0.0f;
-  if (is_service_connected_) {
-    int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
-                                               &color_camera_intrinsics_);
-    if (ret != TANGO_SUCCESS) {
-      LOGE(
-          "VideoStabilizationApp: Failed to get camera intrinsics with error"
-          "code: %d",
-          ret);
-    }
-
-    float image_width = static_cast<float>(color_camera_intrinsics_.width);
-    float image_height = static_cast<float>(color_camera_intrinsics_.height);
-    float fx = static_cast<float>(color_camera_intrinsics_.fx);
-    float fy = static_cast<float>(color_camera_intrinsics_.fy);
-    float cx = static_cast<float>(color_camera_intrinsics_.cx);
-    float cy = static_cast<float>(color_camera_intrinsics_.cy);
-    float image_plane_distance = 2.0f * fx / image_width;
-
-    glm::mat4 projection_mat_ar;
-    if (viewport_width_ > viewport_height_) {
-      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-          image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
-          kArCameraFarClippingPlane);
-      image_plane_ratio = image_height / image_width;
-    } else {
-      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-          image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
-          kArCameraFarClippingPlane);
-      image_plane_ratio = image_width / image_height;
-    }
-    main_scene_.SetProjectionMatrix(projection_mat_ar);
-    main_scene_.SetImagePlaneDistance(image_plane_distance);
-    main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
+  int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
+                                             &color_camera_intrinsics_);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "VideoStabilizationApp: Failed to get camera intrinsics with error"
+        "code: %d",
+        ret);
+    return;
   }
+
+  float image_width = static_cast<float>(color_camera_intrinsics_.width);
+  float image_height = static_cast<float>(color_camera_intrinsics_.height);
+  float fx = static_cast<float>(color_camera_intrinsics_.fx);
+  float fy = static_cast<float>(color_camera_intrinsics_.fy);
+  float cx = static_cast<float>(color_camera_intrinsics_.cx);
+  float cy = static_cast<float>(color_camera_intrinsics_.cy);
+  float image_plane_distance = 2.0f * fx / image_width;
+
+  glm::mat4 projection_mat_ar;
+  if (viewport_width_ > viewport_height_) {
+    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+        image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
+        kArCameraFarClippingPlane);
+    image_plane_ratio = image_height / image_width;
+  } else {
+    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+        image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
+        kArCameraFarClippingPlane);
+    image_plane_ratio = image_width / image_height;
+  }
+  main_scene_.SetProjectionMatrix(projection_mat_ar);
+  main_scene_.SetImagePlaneDistance(image_plane_distance);
+  main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
 
   float screen_ratio = static_cast<float>(viewport_height_) /
                        static_cast<float>(viewport_width_);
@@ -267,9 +276,11 @@ void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
   // }
 
   if (image_plane_ratio < screen_ratio) {
-    glViewport(0, 0, viewport_height_ / image_plane_ratio, viewport_height_);
+    main_scene_.SetupViewport(viewport_height_ / image_plane_ratio,
+                              viewport_height_);
   } else {
-    glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
+    main_scene_.SetupViewport(viewport_width_,
+                              viewport_width_ * image_plane_ratio);
   }
 }
 
@@ -279,9 +290,8 @@ void VideoStabilizationApp::Render() {
   // happen by rendering solid black as a fallback.
   main_scene_.Clear();
 
-  if (is_service_connected_ && !is_texture_id_set_) {
-    is_texture_id_set_ = true;
-    UpdateViewportAndProjectionMatrix();
+  if (!is_service_connected_) {
+    return;
   }
 
   TangoErrorType status = TangoService_updateTextureExternalOes(
@@ -312,10 +322,7 @@ void VideoStabilizationApp::Render() {
   }
 }
 
-void VideoStabilizationApp::DeleteResources() {
-  is_texture_id_set_ = false;
-  main_scene_.DeleteResources();
-}
+void VideoStabilizationApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 void VideoStabilizationApp::RequestRender() {
   if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {

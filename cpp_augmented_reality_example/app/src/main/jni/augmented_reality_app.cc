@@ -88,7 +88,6 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
 
   is_service_connected_ = false;
-  is_texture_id_set_ = false;
 
   display_rotation_ = display_rotation;
   color_camera_rotation_ = color_camera_rotation;
@@ -110,6 +109,7 @@ void AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
   TangoConnect();
 
   is_service_connected_ = true;
+  UpdateViewportAndProjectionMatrix();
 }
 
 void AugmentedRealityApp::OnDestroy() {
@@ -253,51 +253,56 @@ void AugmentedRealityApp::TangoDisconnect() {
 void AugmentedRealityApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
   main_scene_.InitGLContent(aasset_manager, display_rotation_,
                             color_camera_rotation_);
+  UpdateViewportAndProjectionMatrix();
 }
 
 void AugmentedRealityApp::OnSurfaceChanged(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;
-  UpdateViewporAndProjectionMatrix();
+
+  UpdateViewportAndProjectionMatrix();
 }
 
-void AugmentedRealityApp::UpdateViewporAndProjectionMatrix() {
+void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
+  if (!is_service_connected_) {
+    return;
+  }
   // Query intrinsics for the color camera from the Tango Service, because we
   // want to match the virtual render camera's intrinsics to the physical
   // camera, we will compute the actually projection matrix and the view port
   // ratio for the render.
   float image_plane_ratio = 0.0f;
-  if (is_service_connected_) {
-    int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
-                                               &color_camera_intrinsics_);
-    if (ret != TANGO_SUCCESS) {
-      LOGE(
-          "AugmentedRealityApp: Failed to get camera intrinsics with error"
-          "code: %d",
-          ret);
-    }
 
-    float image_width = static_cast<float>(color_camera_intrinsics_.width);
-    float image_height = static_cast<float>(color_camera_intrinsics_.height);
-    float fx = static_cast<float>(color_camera_intrinsics_.fx);
-    float fy = static_cast<float>(color_camera_intrinsics_.fy);
-    float cx = static_cast<float>(color_camera_intrinsics_.cx);
-    float cy = static_cast<float>(color_camera_intrinsics_.cy);
-
-    glm::mat4 projection_mat_ar;
-    if (viewport_width_ > viewport_height_) {
-      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-          image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
-          kArCameraFarClippingPlane);
-      image_plane_ratio = image_height / image_width;
-    } else {
-      projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-          image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
-          kArCameraFarClippingPlane);
-      image_plane_ratio = image_width / image_height;
-    }
-    main_scene_.SetProjectionMatrix(projection_mat_ar);
+  int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
+                                             &color_camera_intrinsics_);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "AugmentedRealityApp: Failed to get camera intrinsics with error"
+        "code: %d",
+        ret);
+    return;
   }
+
+  float image_width = static_cast<float>(color_camera_intrinsics_.width);
+  float image_height = static_cast<float>(color_camera_intrinsics_.height);
+  float fx = static_cast<float>(color_camera_intrinsics_.fx);
+  float fy = static_cast<float>(color_camera_intrinsics_.fy);
+  float cx = static_cast<float>(color_camera_intrinsics_.cx);
+  float cy = static_cast<float>(color_camera_intrinsics_.cy);
+
+  glm::mat4 projection_mat_ar;
+  if (viewport_width_ > viewport_height_) {
+    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+        image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
+        kArCameraFarClippingPlane);
+    image_plane_ratio = image_height / image_width;
+  } else {
+    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+        image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
+        kArCameraFarClippingPlane);
+    image_plane_ratio = image_width / image_height;
+  }
+  main_scene_.SetProjectionMatrix(projection_mat_ar);
 
   float screen_ratio = static_cast<float>(viewport_height_) /
                        static_cast<float>(viewport_width_);
@@ -320,9 +325,11 @@ void AugmentedRealityApp::UpdateViewporAndProjectionMatrix() {
   // }
 
   if (image_plane_ratio < screen_ratio) {
-    glViewport(0, 0, viewport_height_ / image_plane_ratio, viewport_height_);
+    main_scene_.SetupViewport(viewport_height_ / image_plane_ratio,
+                              viewport_height_);
   } else {
-    glViewport(0, 0, viewport_width_, viewport_width_ * image_plane_ratio);
+    main_scene_.SetupViewport(viewport_width_,
+                              viewport_width_ * image_plane_ratio);
   }
 }
 
@@ -338,11 +345,6 @@ void AugmentedRealityApp::OnDrawFrame() {
   // will not be called. Prevent flickering that would otherwise
   // happen by rendering solid white as a fallback.
   main_scene_.Clear();
-
-  if (is_service_connected_ && !is_texture_id_set_) {
-    is_texture_id_set_ = true;
-    UpdateViewporAndProjectionMatrix();
-  }
 
   double video_overlay_timestamp;
   TangoErrorType status = TangoService_updateTextureExternalOes(
@@ -409,10 +411,7 @@ void AugmentedRealityApp::OnDrawFrame() {
   }
 }
 
-void AugmentedRealityApp::DeleteResources() {
-  is_texture_id_set_ = false;
-  main_scene_.DeleteResources();
-}
+void AugmentedRealityApp::DeleteResources() { main_scene_.DeleteResources(); }
 
 std::string AugmentedRealityApp::GetTransformString() {
   std::lock_guard<std::mutex> lock(transform_mutex_);

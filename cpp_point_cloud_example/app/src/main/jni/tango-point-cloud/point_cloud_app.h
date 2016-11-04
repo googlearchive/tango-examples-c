@@ -17,6 +17,7 @@
 #ifndef TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
 #define TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
 
+#include <atomic>
 #include <jni.h>
 #include <memory>
 #include <string>
@@ -109,9 +110,6 @@ class PointCloudApp {
   void SetScreenRotation(int rotation_index);
 
  private:
-  // Update the current point data.
-  void UpdateCurrentPointData();
-
   // Setup the configuration file for the Tango Service.
   void TangoSetupConfig();
 
@@ -132,8 +130,8 @@ class PointCloudApp {
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  TangoPointCloud* front_cloud_;
   float point_cloud_average_depth_;
+  int point_cloud_count_;
 
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement and point cloud.
@@ -151,7 +149,8 @@ class PointCloudApp {
   // Screen rotation index.
   int screen_rotation_;
 
-  bool is_service_connected_;
+  std::atomic<bool> is_service_connected_;
+  std::atomic<bool> is_gl_initialized_;
 };
 }  // namespace tango_point_cloud
 

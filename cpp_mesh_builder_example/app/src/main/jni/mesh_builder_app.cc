@@ -508,6 +508,7 @@ void MeshBuilderApp::OnDrawFrame() {
         /* colors */ reinterpret_cast<Tango3DR_Color*>(
             dynamic_mesh->mesh.colors.data()),
         /* texture_coords */ nullptr,
+        /*texture_ids */ nullptr,
         /* textures */ nullptr};
 
     Tango3DR_Status err = Tango3DR_extractPreallocatedMeshSegment(

@@ -54,11 +54,9 @@ class Scene {
   void DeleteResources();
 
   // Setup GL view port.
-  // @param: x, left of the screen.
-  // @param: y, bottom of the screen.
   // @param: w, width of the screen.
   // @param: h, height of the screen.
-  void SetupViewPort(int x, int y, int w, int h);
+  void SetupViewport(int w, int h);
 
   // Clear the render on screen.
   void Clear();
@@ -141,6 +139,12 @@ class Scene {
   // frame.
   std::vector<tango_gl::VideoOverlay*> video_overlay_buffer_;
   int oldest_video_overlay_buffer_index_ = 0;
+
+  // Check if resources is allocated.
+  bool is_content_initialized_ = false;
+
+  int viewport_width_;
+  int viewport_height_;
 };
 }  // namespace tango_video_stabilization
 

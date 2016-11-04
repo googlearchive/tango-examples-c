@@ -61,20 +61,28 @@ void Scene::InitGLContent() {
   for (unsigned i = 0; i < video_overlay_buffer_.size(); ++i) {
     video_overlay_buffer_[i] = new tango_gl::VideoOverlay();
   }
+
+  is_content_initialized_ = true;
 }
 
 void Scene::DeleteResources() {
-  for (unsigned i = 0; i < video_overlay_buffer_.size(); ++i) {
-    delete video_overlay_buffer_[i];
+  if (is_content_initialized_) {
+    for (unsigned i = 0; i < video_overlay_buffer_.size(); ++i) {
+      delete video_overlay_buffer_[i];
+    }
+
+    is_content_initialized_ = false;
   }
 }
 
-void Scene::SetupViewPort(int x, int y, int w, int h) {
-  if (h == 0) {
+void Scene::SetupViewport(int w, int h) {
+  if (h <= 0 || w <= 0) {
     LOGE("Setup graphic height not valid");
+    return;
   }
-  camera_.SetAspectRatio(static_cast<float>(w) / static_cast<float>(h));
-  glViewport(x, y, w, h);
+
+  viewport_width_ = w;
+  viewport_height_ = h;
 }
 
 void Scene::SetProjectionMatrix(const glm::mat4& projection_matrix) {
@@ -82,11 +90,13 @@ void Scene::SetProjectionMatrix(const glm::mat4& projection_matrix) {
 }
 
 void Scene::Clear() {
+  glViewport(0, 0, viewport_width_, viewport_height_);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void Scene::Render() {
+  glViewport(0, 0, viewport_width_, viewport_height_);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
