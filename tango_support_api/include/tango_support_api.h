@@ -228,7 +228,8 @@ TangoErrorType TangoSupport_copyPointCloud(
 /// @param color_camera_T_point_cloud The pose of the point cloud relative to
 ///   the color camera used to obtain uv_coordinates.
 /// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
+///   pixel coordinates by dividing by the width or height. Cannot be NULL.
 /// @param intersection_point The intersection of the fitted plane with the user
 ///   selected camera-ray, in point cloud coordinates, accounting for distortion
 ///   by undistorting the input uv coordinate. Cannot be NULL.
@@ -510,7 +511,7 @@ TangoErrorType TangoSupport_getDoubleMatrixTransformAtTime(
 /// @param matrix_transform The matrix the point is multiplied by.
 /// @param point The original point.
 /// @param out The ouput point.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_doubleTransformPoint(
     const double matrix_transform[16], const double point[3], double out[3]);
 
@@ -524,7 +525,7 @@ TangoErrorType TangoSupport_doubleTransformPoint(
 /// @param quaternion The original pose's rotation component.
 /// @param out_position The final pose's translation component.
 /// @param out_quaternion The final pose's rotation component.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_doubleTransformPose(
     const double matrix_transform[16], const double position[3],
     const double quaternion[4], double out_position[3],
@@ -540,7 +541,7 @@ TangoErrorType TangoSupport_doubleTransformPose(
 /// @param matrix_transform The matrix all the points are transformed by.
 /// @param point_cloud The original point cloud.
 /// @param out The point cloud after translation.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_doubleTransformPointCloud(
     const double matrix_transform[16], const TangoPointCloud* point_cloud,
     TangoPointCloud* out);
@@ -552,7 +553,7 @@ TangoErrorType TangoSupport_doubleTransformPointCloud(
 /// @param matrix_transform The matrix the point is multiplied by.
 /// @param point The original point.
 /// @param out The ouput point.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_transformPoint(const float matrix_transform[16],
                                            const float point[3], float out[3]);
 
@@ -566,7 +567,7 @@ TangoErrorType TangoSupport_transformPoint(const float matrix_transform[16],
 /// @param quaternion The original pose's rotation component.
 /// @param out_position The final pose's translation component.
 /// @param out_quaternion The final pose's rotation component.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_transformPose(const float matrix_transform[16],
                                           const float position[3],
                                           const float quaternion[4],
@@ -582,7 +583,7 @@ TangoErrorType TangoSupport_transformPose(const float matrix_transform[16],
 /// @param matrix_transform The matrix all the points are transformed by.
 /// @param point_cloud The original point cloud.
 /// @param out The point cloud after translation.
-/// @return c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
+/// @return @c TANGO_INVALID on invalid input; @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_transformPointCloud(
     const float matrix_transform[16], const TangoPointCloud* point_cloud,
     TangoPointCloud* out);
@@ -640,7 +641,8 @@ TangoErrorType TangoSupport_DistortedPixelToCameraRay(
 /// @param color_camera_T_point_cloud The pose of the point cloud relative to
 ///   the color camera used to obtain uv_coordinates.
 /// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
+///   pixel coordinates by dividing by the width or height. Cannot be NULL.
 /// @param color_camera_point The point (x, y, z), where (x, y) is the
 ///   back-projection of the UV coordinates to the color camera space and z is
 //    the z coordinate of the point in the point cloud nearest to the user
@@ -691,7 +693,8 @@ TangoErrorType TangoSupport_freeDepthInterpolator(
 /// @param color_camera_T_point_cloud The pose of the point cloud relative to
 ///   the color camera used to obtain uv_coordinates.
 /// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
+///   pixel coordinates by dividing by the width or height. Cannot be NULL.
 /// @param color_camera_point The point (x, y, z), where (x, y) is the
 ///   back-projection of the UV coordinates to the color camera space and z is
 ///   the bilateral interpolation of the z coordinate of the point. If there is
@@ -828,8 +831,9 @@ struct TangoSupportEdge {
 /// @param point_cloud The point cloud. Cannot be NULL and must have sufficient
 ///   points to estimate the plane at the location of the input.
 /// @param image_buffer The RGB image buffer. Cannot be NULL.
-/// @param uv_coordinates The UV coordinates of the input point. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0). Cannot be NULL.
+/// @param uv_coordinates The UV coordinates for the user selection. This is
+///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
+///   pixel coordinates by dividing by the width or height. Cannot be NULL.
 /// @param edges An array of 3D edges close to the input point and specified in
 ///   the depth frame. The edges will lie on the plane estimated at the location
 ///   of the input point. The array should be deleted by calling
@@ -847,6 +851,109 @@ TangoErrorType TangoSupport_findEdgesNearPoint(
 /// @param edges Edge list to free.
 /// @return @c TANGO_SUCCESS on success.
 TangoErrorType TangoSupport_freeEdgeList(TangoSupportEdge** edges);
+
+/// @}
+
+/// @defgroup VolumeSupport Volume Measurement Support Functions
+/// @brief Functions for measuring volumes.
+/// @{
+
+/// struct for storing a Tango volume object
+struct TangoSupportVolume;
+
+/// @brief Create a volume measurement object.
+/// @return Pointer to a volume measurement object.
+TangoSupportVolume* TangoSupport_createVolume();
+
+/// @brief Delete a volume measurement created by TangoSupport_createVolume().
+/// @param volume Pointer to the volume object to be destroyed.
+void TangoSupport_deleteVolume(TangoSupportVolume** volume);
+
+/// @brief Add the reference plane for the volume measurement. The reference
+/// plane is a surface the volume object is on. This routine must be called
+/// before calling TangoSupport_addSeedPointToVolume() or
+/// TangoSupport_addPointCloudToVolume() methods.
+///
+/// NOTE: This function expects a transformation from the input frame to the
+/// output frame. The output frame has to be a right-hand 3D world frame and
+/// the same output frame should be used throughout the calls to "this"
+/// volume measurement.
+///
+/// @param volume Pointer to the volume measurement object.
+/// @param plane_model Plane model specified in the input frame.
+/// @param translation Translation component of the transformation from the
+///   input frame to the output frame.
+/// @param orientation Rotation component (as a quaternion) of the
+///   transformation from the input frame to the output frame.
+/// @return @c TANGO_SUCCESS on success and @c TANGO_INVALID on invalid input.
+TangoErrorType TangoSupport_addReferencePlaneToVolume(
+    TangoSupportVolume* volume, const double plane_model[4],
+    const double translation[3], const double orientation[4]);
+
+/// @brief Add a seed point to the volume measurement. Seed points are used as
+/// starting locations when searching point clouds for volume object boundaries.
+/// A seed point by itself is also used to define the volume boundary. The
+/// reference plane of the volume must be specified by
+/// TangoSupport_addReferencePlaneToVolume() method before calling this routine.
+///
+/// NOTE: This function expects a transformation from the input frame to the
+/// output frame. The output frame has to be a right-hand 3D world frame and
+/// the same output frame should be used throughout the calls to "this"
+/// volume measurement.
+///
+/// @param volume Pointer to the volume measurement object.
+/// @param seed_point The seed point specified in the input frame.
+/// @param translation Translation component of the transformation from the
+///   input frame to the output frame.
+/// @param orientation Rotation component (as a quaternion) of the
+///   transformation from the input frame to the output frame.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_addSeedPointToVolume(TangoSupportVolume* volume,
+                                                 const float seed_point[3],
+                                                 const double translation[3],
+                                                 const double orientation[4]);
+
+/// @brief Add a point cloud to the volume measurement. Point clouds are used to
+/// grow the volume from input seed points to the boundary of the object. This
+/// routine should be called after at least one call to
+/// TangoSupport_addSeedPointCloudToVolume() method.
+///
+/// NOTE: This function expects a transformation from the input frame to the
+/// output frame. The output frame has to be a right-hand 3D world frame and
+/// the same output frame should be used throughout the calls to "this"
+/// volume measurement.
+///
+/// @param volume Pointer to the volume measurement object.
+/// @param point_cloud Point cloud specified in the input frame.
+/// @param translation Translation component of the transformation from the
+///   input frame to the output frame.
+/// @param orientation Rotation component (as a quaternion) of the
+///   transformation from the input frame to the output frame.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_addPointCloudToVolume(
+    TangoSupportVolume* volume, const TangoPointCloud* point_cloud,
+    const double translation[3], const double orientation[4]);
+
+/// @brief Get the current volume measurement information, including both the
+/// volume size and the 8 corner points of the volume.
+///
+/// NOTE: The volume_points are in the output frame specified by previous call
+/// of TangoSupport_addReferencePlaneToVolume(),
+/// TangoSupport_addSeedPointToVolume() and TangoSupport_addPointCloudToVolume()
+/// methods. It is important that the output frame specified in those routines
+/// is consistent.
+///
+/// @param volume Pointer to the volume measurement object.
+/// @param volume_size The size of the volume, in mm^3.
+/// @param volume_point Array of points defining the oriented bounding-box of
+///   the detected volume in the output frame.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
+///   @c TANGO_ERROR on failure.
+TangoErrorType TangoSupport_getVolumeOutput(TangoSupportVolume* volume,
+                                            float* volume_size,
+                                            float volume_points[8][3]);
 
 /// @}
 
@@ -877,10 +984,10 @@ struct TangoSupportCornerList {
 ///
 /// @param point_of_interest The user-specified location.
 /// @param edges A list of edges, usually returned by
-/// TangoSupport_findEdgesNearPoint() routine.
+///   TangoSupport_findEdgesNearPoint() routine.
 /// @param number_of_edges The number of edges in point_of_interest list.
 /// @param corner_list The structure to hold result corners. The structure
-/// should be deleted by calling TangoSupport_freeCornerList. Cannot be NULL.
+///   should be deleted by calling TangoSupport_freeCornerList. Cannot be NULL.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
 ///   @c TANGO_ERROR on failure.
 TangoErrorType TangoSupport_detectCorners(const float point_of_interest[3],

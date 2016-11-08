@@ -58,7 +58,10 @@ void PlaneFittingApplication::OnPointCloudAvailable(
 }
 
 PlaneFittingApplication::PlaneFittingApplication()
-    : point_cloud_debug_render_(false), last_gpu_timestamp_(0.0) {}
+    : point_cloud_debug_render_(false),
+      last_gpu_timestamp_(0.0),
+      is_service_connected_(false),
+      is_gl_initialized_(false) {}
 
 PlaneFittingApplication::~PlaneFittingApplication() {
   TangoConfig_free(tango_config_);
@@ -89,6 +92,7 @@ void PlaneFittingApplication::OnTangoServiceConnected(JNIEnv* env,
   TangoSetupConfig();
   TangoConnectCallbacks();
   TangoConnect();
+  is_service_connected_ = true;
 }
 
 void PlaneFittingApplication::TangoSetupConfig() {
@@ -237,6 +241,8 @@ void PlaneFittingApplication::TangoConnect() {
 }
 
 void PlaneFittingApplication::OnPause() {
+  is_service_connected_ = false;
+  is_gl_initialized_ = false;
   TangoDisconnect();
   DeleteResources();
 }
@@ -249,6 +255,8 @@ void PlaneFittingApplication::OnSurfaceCreated() {
   cube_ = new tango_gl::Cube();
   cube_->SetScale(glm::vec3(kCubeScale, kCubeScale, kCubeScale));
   cube_->SetColor(0.7f, 0.7f, 0.7f);
+
+  is_gl_initialized_ = true;
 }
 
 void PlaneFittingApplication::SetRenderDebugPointCloud(bool on) {
@@ -268,6 +276,10 @@ void PlaneFittingApplication::OnDrawFrame() {
   // happen by rendering solid black as a fallback.
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  if (!is_gl_initialized_ || !is_service_connected_) {
+    return;
+  }
 
   // We need to make sure that we update the texture associated with the color
   // image.
@@ -313,15 +325,20 @@ void PlaneFittingApplication::GLRender(
   glEnable(GL_BLEND);
   video_overlay_->Render(glm::mat4(1.0), glm::mat4(1.0));
   glEnable(GL_DEPTH_TEST);
-  UpdateCurrentPointData();
-  const glm::mat4 area_description_opengl_T_depth_t1_tango =
-      GetAreaDescriptionTDepthTransform();
-  const glm::mat4 projection_T_depth = projection_matrix_ar_ *
-                                       color_camera_T_area_description *
-                                       area_description_opengl_T_depth_t1_tango;
-  point_cloud_renderer_->Render(projection_T_depth,
-                                area_description_opengl_T_depth_t1_tango,
-                                front_cloud_);
+
+  TangoPointCloud* point_cloud = nullptr;
+  TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud);
+  if (point_cloud != nullptr) {
+    const glm::mat4 area_description_opengl_T_depth_t1_tango =
+        GetAreaDescriptionTDepthTransform(point_cloud->timestamp);
+    const glm::mat4 projection_T_depth =
+        projection_matrix_ar_ * color_camera_T_area_description *
+        area_description_opengl_T_depth_t1_tango;
+    point_cloud_renderer_->Render(projection_T_depth,
+                                  area_description_opengl_T_depth_t1_tango,
+                                  point_cloud);
+  }
+
   glDisable(GL_BLEND);
 
   cube_->Render(projection_matrix_ar_, color_camera_T_area_description);
@@ -338,13 +355,24 @@ void PlaneFittingApplication::DeleteResources() {
 
 // We assume the Java layer ensures this function is called on the GL thread.
 void PlaneFittingApplication::OnTouchEvent(float x, float y) {
+  if (!is_gl_initialized_ || !is_service_connected_) {
+    return;
+  }
+
+  // Get the latest point cloud
+  TangoPointCloud* point_cloud = nullptr;
+  TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud);
+  if (point_cloud == nullptr) {
+    return;
+  }
+
   /// Calculate the conversion from the latest depth camera position to the
   /// position of the most recent color camera image. This corrects for screen
   /// lag between the two systems.
   TangoPoseData pose_color_camera_t0_T_depth_camera_t1;
   int ret = TangoSupport_calculateRelativePose(
       last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
-      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
+      point_cloud->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
       &pose_color_camera_t0_T_depth_camera_t1);
   if (ret != TANGO_SUCCESS) {
     LOGE("%s: could not calculate relative pose", __func__);
@@ -355,7 +383,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   glm::dvec3 double_depth_position;
   glm::dvec4 double_depth_plane_equation;
   if (TangoSupport_fitPlaneModelNearPoint(
-          front_cloud_, &pose_color_camera_t0_T_depth_camera_t1,
+          point_cloud, &pose_color_camera_t0_T_depth_camera_t1,
           glm::value_ptr(uv), glm::value_ptr(double_depth_position),
           glm::value_ptr(double_depth_plane_equation)) != TANGO_SUCCESS) {
     return;  // Assume error has already been reported.
@@ -367,7 +395,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
       static_cast<glm::vec4>(double_depth_plane_equation);
 
   const glm::mat4 area_description_opengl_T_depth_tango =
-      GetAreaDescriptionTDepthTransform();
+      GetAreaDescriptionTDepthTransform(point_cloud->timestamp);
 
   // Transform to Area Description coordinates
   const glm::vec4 area_description_position =
@@ -404,7 +432,8 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
                      plane_normal * kCubeScale);
 }
 
-glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform() {
+glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform(
+    double timestamp) {
   glm::mat4 area_description_opengl_T_depth_tango;
   TangoMatrixTransformData matrix_transform;
 
@@ -415,7 +444,7 @@ glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform() {
   // Note that if you don't want to use the drift corrected pose, the
   // normal device with respect to start of service pose is still available.
   TangoSupport_getMatrixTransformAtTime(
-      front_cloud_->timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
@@ -433,10 +462,6 @@ glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform() {
         glm::make_mat4(matrix_transform.matrix);
   }
   return area_description_opengl_T_depth_tango;
-}
-
-void PlaneFittingApplication::UpdateCurrentPointData() {
-  TangoSupport_getLatestPointCloud(point_cloud_manager_, &front_cloud_);
 }
 
 }  // namespace tango_plane_fitting

@@ -55,18 +55,22 @@ typedef enum {
 
 /// Tango 3DR Camera Calibration types.
 typedef enum {
-  TANGO_3DR_CALIBRATION_UNKNOWN,
+  TANGO_3DR_CALIBRATION_UNKNOWN = 0,
   /// The FOV camera model described in
   /// <a href="http://scholar.google.com/scholar?cluster=13508836606423559694">
   /// Straight lines have to be straight</a>.
-  TANGO_3DR_CALIBRATION_EQUIDISTANT,
-  TANGO_3DR_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
-  /// Tsai's K1, K2, K3 model. See
-  /// <a href="http://scholar.google.com/scholar?cluster=3512800631607394002">A
-  /// versatile camera calibration technique for high-accuracy 3D machine
-  /// vision metrology using off-the-shelf TV cameras and lenses</a>.
-  TANGO_3DR_CALIBRATION_POLYNOMIAL_3_PARAMETERS,
-  TANGO_3DR_CALIBRATION_POLYNOMIAL_5_PARAMETERS,
+  TANGO_3DR_CALIBRATION_EQUIDISTANT = 1,
+  /// Brown's distortion model, with the parameter vector representing
+  /// distortion as [k1, k2].
+  /// <a
+  /// href="http://en.wikipedia.org/wiki/Distortion_%28optics%28#Software_correction">
+  TANGO_3DR_CALIBRATION_POLYNOMIAL_2_PARAMETERS = 2,
+  /// Brown's distortion model, with the parameter vector representing the
+  /// distortion as [k1, k2, k3].
+  TANGO_3DR_CALIBRATION_POLYNOMIAL_3_PARAMETERS = 3,
+  /// Brown's distortion model, with the parameter vector representing the
+  /// distortion as [k1, k2, p1, p2, k3].
+  TANGO_3DR_CALIBRATION_POLYNOMIAL_5_PARAMETERS = 4,
 } Tango3DR_TangoCalibrationType;
 
 /// @brief Tango 3DR configuration enumerations
@@ -287,6 +291,9 @@ typedef struct Tango3DR_Mesh {
   /// Texture coordinate buffer stored in UV order.
   Tango3DR_TexCoord* texture_coords;
 
+  /// Mapping of faces to texture images. -1 means no texture assigned.
+  int32_t* texture_ids;
+
   /// Array of texture images.
   Tango3DR_ImageBuffer* textures;
 } Tango3DR_Mesh;
@@ -326,8 +333,9 @@ Tango3DR_Status Tango3DR_PointCloud_destroy(Tango3DR_PointCloud* cloud);
 Tango3DR_Mesh* Tango3DR_Mesh_create(
     const uint32_t vertices_capacity, const uint32_t faces_capacity,
     const bool allocate_normals, const bool allocate_colors,
-    const bool allocate_tex_coords, const uint32_t textures_capacity,
-    const uint32_t textures_width, const uint32_t textures_height);
+    const bool allocate_tex_coords, const bool allocate_tex_ids,
+    const uint32_t textures_capacity, const uint32_t textures_width,
+    const uint32_t textures_height);
 
 /// Destroy a previously created mesh.
 ///
@@ -473,7 +481,14 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 ///         The bevel size in pixels.  Defaults to 3.0.</td></tr>
 ///
 /// <tr><td>double min_resolution</td><td>
-///         The minimum resolution in meters/pixels.  Defaults to 0.0.</td></tr>
+///         The minimum resolution in meters/pixels.  Defaults to 0.0.
+///         This parameter may be overridden by max_num_textures if in
+///         conflict.</td></tr>
+///
+/// <tr><td>int32 max_num_textures</td><td>
+///         The maximum number of texture images to generate.  Defaults to 0
+///         (unlimited).  This parameter overrides min_resolution if in
+///         conflict. </td></tr>
 ///
 /// <tr><td>int32 downsample</td><td>
 ///         Use only every n-th color image.  Defaults to 1.</td></tr>

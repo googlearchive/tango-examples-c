@@ -51,11 +51,9 @@ class Scene {
   void DeleteResources();
 
   // Setup GL view port.
-  // @param: x, left of the screen.
-  // @param: y, bottom of the screen.
   // @param: w, width of the screen.
   // @param: h, height of the screen.
-  void SetupViewPort(int x, int y, int w, int h);
+  void SetupViewport(int w, int h);
 
   // Clear the screen to a solid color.
   void Clear();
@@ -151,6 +149,12 @@ class Scene {
   double moon_last_angle_;
   double moon_last_translation_angle_;
   double moon_last_translation_pose_;
+
+  // Check if resources is allocated.
+  bool is_content_initialized_ = false;
+
+  int viewport_width_;
+  int viewport_height_;
 };
 }  // namespace tango_augmented_reality
 

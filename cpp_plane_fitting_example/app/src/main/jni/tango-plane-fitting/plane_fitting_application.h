@@ -19,6 +19,7 @@
 
 #include <jni.h>
 
+#include <atomic>
 #include <tango_client_api.h>
 #include <tango-gl/cube.h>
 #include <tango-gl/util.h>
@@ -122,7 +123,7 @@ class PlaneFittingApplication {
   // the other is an optimization that allow us to avoid transforming the depth
   // points into OpenGL
   // coordinate frame.
-  glm::mat4 GetAreaDescriptionTDepthTransform();
+  glm::mat4 GetAreaDescriptionTDepthTransform(double timestamp);
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
@@ -144,9 +145,11 @@ class PlaneFittingApplication {
   // OpenGL projection matrix.
   glm::mat4 projection_matrix_ar_;
 
+  std::atomic<bool> is_service_connected_;
+  std::atomic<bool> is_gl_initialized_;
+
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  TangoPointCloud* front_cloud_;
 };
 
 }  // namespace tango_plane_fitting
