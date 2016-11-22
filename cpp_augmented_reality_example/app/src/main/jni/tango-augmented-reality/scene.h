@@ -89,20 +89,19 @@ class Scene {
   void SetProjectionMatrix(const glm::mat4& projection_matrix);
 
   // Change the earth transformation to make it rotate over its Y axis over
-  // timepose
-  void RotateEarthByPose(const TangoPoseData& pose);
+  // time
+  void RotateEarthForTimestamp(double timestamp);
 
   // Change the moon transformation to make it rotate over its Y axis over
-  // timepose
-  void RotateMoonByPose(const TangoPoseData& pose);
+  // time
+  void RotateMoonForTimestamp(double timestamp);
 
-  // Change the moon position to make it rotate around the earth
-  void TranslateMoonByPose(const TangoPoseData& pose);
+  // Change the moon position to make it rotate around the earth over time
+  void TranslateMoonForTimestamp(double timestamp);
 
   // Apply a Y axis rotate transform to object
-  void RotateYAxisTransform(const TangoPoseData& pose,
-                            tango_gl::Transform* transform, double* last_angle,
-                            double* last_pose);
+  void RotateYAxisForTimestamp(double timestamp, tango_gl::Transform* transform,
+                               double* last_angle, double* last_timestamp);
 
   // Set video overlay's orientation based on current device orientation.
   void SetVideoOverlayRotation(int display_rotation, int color_camera_rotation);
@@ -143,12 +142,12 @@ class Scene {
   tango_gl::Transform moon_transform_;
 
   // Last pose timestamp received
-  double earth_last_pose_timestamp_;
+  double earth_last_timestamp_;
   double earth_last_angle_;
-  double moon_last_pose_timestamp_;
+  double moon_last_timestamp_;
   double moon_last_angle_;
   double moon_last_translation_angle_;
-  double moon_last_translation_pose_;
+  double moon_last_translation_timestamp_;
 
   // Check if resources is allocated.
   bool is_content_initialized_ = false;

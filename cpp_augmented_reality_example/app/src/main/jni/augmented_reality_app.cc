@@ -88,6 +88,7 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
 
   is_service_connected_ = false;
+  is_gl_initialized_ = false;
 
   display_rotation_ = display_rotation;
   color_camera_rotation_ = color_camera_rotation;
@@ -253,6 +254,7 @@ void AugmentedRealityApp::TangoDisconnect() {
 void AugmentedRealityApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
   main_scene_.InitGLContent(aasset_manager, display_rotation_,
                             color_camera_rotation_);
+  is_gl_initialized_ = true;
   UpdateViewportAndProjectionMatrix();
 }
 
@@ -264,7 +266,7 @@ void AugmentedRealityApp::OnSurfaceChanged(int width, int height) {
 }
 
 void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
-  if (!is_service_connected_) {
+  if (!is_service_connected_ || !is_gl_initialized_) {
     return;
   }
   // Query intrinsics for the color camera from the Tango Service, because we
@@ -375,21 +377,9 @@ void AugmentedRealityApp::OnDrawFrame() {
         UpdateTransform(matrix_transform.matrix, video_overlay_timestamp);
       }
 
-      TangoPoseData pose;
-      TangoSupport_getPoseAtTime(
-          0.0, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-          TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
-          static_cast<TangoSupportDisplayRotation>(color_camera_to_display),
-          &pose);
-
-      if (pose.status_code != TANGO_POSE_VALID) {
-        LOGE("AugmentedRealityApp: Tango pose is not valid.");
-        return;
-      }
-
-      main_scene_.RotateEarthByPose(pose);
-      main_scene_.RotateMoonByPose(pose);
-      main_scene_.TranslateMoonByPose(pose);
+      main_scene_.RotateEarthForTimestamp(video_overlay_timestamp);
+      main_scene_.RotateMoonForTimestamp(video_overlay_timestamp);
+      main_scene_.TranslateMoonForTimestamp(video_overlay_timestamp);
 
       main_scene_.Render(cur_start_service_T_camera_);
     } else {
@@ -411,7 +401,10 @@ void AugmentedRealityApp::OnDrawFrame() {
   }
 }
 
-void AugmentedRealityApp::DeleteResources() { main_scene_.DeleteResources(); }
+void AugmentedRealityApp::DeleteResources() {
+  main_scene_.DeleteResources();
+  is_gl_initialized_ = false;
+}
 
 std::string AugmentedRealityApp::GetTransformString() {
   std::lock_guard<std::mutex> lock(transform_mutex_);

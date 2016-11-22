@@ -306,6 +306,13 @@ typedef struct Tango3DR_Mesh {
 /// @return A freshly allocated Tango3DR_PointCloud.
 Tango3DR_PointCloud* Tango3DR_PointCloud_create(const uint32_t num_points);
 
+/// Initialize an empty point cloud.
+///
+/// @param cloud Pointer to point cloud.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the struct.
+///     Returns @c TANGO_3DR_INVALID if mesh is NULL.
+Tango3DR_Status Tango3DR_PointCloud_createEmpty(Tango3DR_PointCloud* cloud);
+
 /// Destroy a previously created point cloud.
 ///
 /// @param cloud Pointer to a previously created cloud.
@@ -313,6 +320,21 @@ Tango3DR_PointCloud* Tango3DR_PointCloud_create(const uint32_t num_points);
 ///     the point cloud.  Returns @c TANGO_3DR_INVALID if cloud is
 ///     NULL.
 Tango3DR_Status Tango3DR_PointCloud_destroy(Tango3DR_PointCloud* cloud);
+
+/// Initialize an empty calibration struct.
+///
+/// @param calibration Pointer to camera calibration.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the struct.
+///     Returns @c TANGO_3DR_INVALID if calibration is NULL.
+Tango3DR_Status Tango3DR_CameraCalibration_createEmpty(
+    Tango3DR_CameraCalibration* calibration);
+
+/// Initialize an empty image buffer.
+///
+/// @param image Pointer to image buffer.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the buffer.
+///     Returns @c TANGO_3DR_INVALID if image is NULL.
+Tango3DR_Status Tango3DR_ImageBuffer_createEmpty(Tango3DR_ImageBuffer* image);
 
 /// Create a mesh.
 ///
@@ -336,6 +358,13 @@ Tango3DR_Mesh* Tango3DR_Mesh_create(
     const bool allocate_tex_coords, const bool allocate_tex_ids,
     const uint32_t textures_capacity, const uint32_t textures_width,
     const uint32_t textures_height);
+
+/// Initialize an empty mesh struct.
+///
+/// @param mesh Pre-allocated mesh struct.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the mesh.
+///     Returns @c TANGO_3DR_INVALID if mesh is NULL.
+Tango3DR_Status Tango3DR_Mesh_createEmpty(Tango3DR_Mesh* mesh);
 
 /// Destroy a previously created mesh.
 ///
@@ -683,7 +712,6 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 /// </td></tr>
 /// </table>
 ///
-
 ///
 /// @{
 

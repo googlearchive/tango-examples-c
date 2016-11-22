@@ -69,6 +69,7 @@ void VideoStabilizationApp::OnCreate(JNIEnv* env, jobject activity) {
   on_demand_render_ = env->GetMethodID(cls, "requestRender", "()V");
 
   is_service_connected_ = false;
+  is_gl_initialized_ = false;
 }
 
 bool VideoStabilizationApp::OnTangoServiceConnected(JNIEnv* env,
@@ -202,17 +203,18 @@ void VideoStabilizationApp::TangoDisconnect() {
 
 void VideoStabilizationApp::InitializeGLContent() {
   main_scene_.InitGLContent();
-
+  is_gl_initialized_ = true;
   UpdateViewportAndProjectionMatrix();
 }
 
 void VideoStabilizationApp::SetViewPort(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;
+  UpdateViewportAndProjectionMatrix();
 }
 
 void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
-  if (!is_service_connected_) {
+  if (!is_service_connected_ || !is_gl_initialized_) {
     return;
   }
 
@@ -322,7 +324,10 @@ void VideoStabilizationApp::Render() {
   }
 }
 
-void VideoStabilizationApp::DeleteResources() { main_scene_.DeleteResources(); }
+void VideoStabilizationApp::DeleteResources() {
+  main_scene_.DeleteResources();
+  is_gl_initialized_ = false;
+}
 
 void VideoStabilizationApp::RequestRender() {
   if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {
