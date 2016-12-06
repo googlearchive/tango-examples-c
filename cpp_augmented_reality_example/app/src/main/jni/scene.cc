@@ -143,20 +143,20 @@ void Scene::Render(const glm::mat4& cur_pose_transformation) {
   tango_gl::Render(*moon_mesh_, *moon_material_, moon_transform_, *camera_);
 }
 
-void Scene::RotateEarthByPose(const TangoPoseData& pose) {
-  RotateYAxisTransform(pose, &earth_transform_, &earth_last_angle_,
-                       &earth_last_pose_timestamp_);
+void Scene::RotateEarthForTimestamp(double timestamp) {
+  RotateYAxisForTimestamp(timestamp, &earth_transform_, &earth_last_angle_,
+                          &earth_last_timestamp_);
 }
 
-void Scene::RotateMoonByPose(const TangoPoseData& pose) {
-  RotateYAxisTransform(pose, &moon_transform_, &moon_last_angle_,
-                       &moon_last_pose_timestamp_);
+void Scene::RotateMoonForTimestamp(double timestamp) {
+  RotateYAxisForTimestamp(timestamp, &moon_transform_, &moon_last_angle_,
+                          &moon_last_timestamp_);
 }
 
-void Scene::TranslateMoonByPose(const TangoPoseData& pose) {
-  if (moon_last_translation_pose_ > 0) {
+void Scene::TranslateMoonForTimestamp(double timestamp) {
+  if (moon_last_translation_timestamp_ > 0) {
     // Calculate time difference in seconds
-    double delta_time = pose.timestamp - moon_last_translation_pose_;
+    double delta_time = timestamp - moon_last_translation_timestamp_;
     // Calculate the corresponding angle movement considering
     // a total rotation time of 6 seconds
     double delta_angle = delta_time * 2 * M_PI / 6;
@@ -169,15 +169,16 @@ void Scene::TranslateMoonByPose(const TangoPoseData& pose) {
 
     moon_transform_.SetPosition(glm::vec3(x, 0.0f, z - 5.0f));
   }
-  moon_last_translation_pose_ = pose.timestamp;
+  moon_last_translation_timestamp_ = timestamp;
 }
 
-void Scene::RotateYAxisTransform(const TangoPoseData& pose,
-                                 tango_gl::Transform* transform,
-                                 double* last_angle, double* last_pose) {
-  if (*last_pose > 0) {
+void Scene::RotateYAxisForTimestamp(double timestamp,
+                                    tango_gl::Transform* transform,
+                                    double* last_angle,
+                                    double* last_timestamp) {
+  if (*last_timestamp > 0) {
     // Calculate time difference in seconds
-    double delta_time = pose.timestamp - *last_pose;
+    double delta_time = timestamp - *last_timestamp;
     // Calculate the corresponding angle movement considering
     // a total rotation time of 6 seconds
     double delta_angle = delta_time * 2 * M_PI / 6;
@@ -190,7 +191,7 @@ void Scene::RotateYAxisTransform(const TangoPoseData& pose,
 
     transform->SetRotation(glm::quat(w, 0.0f, y, 0.0f));
   }
-  *last_pose = pose.timestamp;
+  *last_timestamp = timestamp;
 }
 
 void Scene::SetVideoOverlayRotation(int display_rotation,

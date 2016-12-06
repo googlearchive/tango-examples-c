@@ -194,6 +194,7 @@ class AugmentedRealityApp {
   jmethodID on_demand_render_;
 
   bool is_service_connected_;
+  bool is_gl_initialized_;
 
   int viewport_width_;
   int viewport_height_;

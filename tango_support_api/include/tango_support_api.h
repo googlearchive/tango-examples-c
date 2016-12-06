@@ -645,20 +645,17 @@ TangoErrorType TangoSupport_DistortedPixelToCameraRay(
 ///   pixel coordinates by dividing by the width or height. Cannot be NULL.
 /// @param color_camera_point The point (x, y, z), where (x, y) is the
 ///   back-projection of the UV coordinates to the color camera space and z is
-//    the z coordinate of the point in the point cloud nearest to the user
-//    selection after projection onto the image plane. If there is not a point
-//    cloud point close to the user selection after projection onto the image
-//    plane, then the point will be set to (0.0, 0.0, 0.0) and is_valid_point
-///   will be set to 0.
-/// @param is_valid_point A flag valued 1 if there is a point cloud point close
-///   to the user selection after projection onto the image plane and valued 0
-///   otherwise.
-/// @return @c TANGO_SUCCESS on success or @c TANGO_INVALID on invalid input.
+///   the z coordinate of the point in the point cloud nearest to the user
+///   selection after projection onto the image plane. If there is not a point
+///   cloud point close to the user selection after projection onto the image
+///   plane, then the point will be set to (0.0, 0.0, 0.0) and @c TANGO_ERROR
+///   will be returned.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_ERROR if a valid point is not
+///   found, or @c TANGO_INVALID on invalid input.
 TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
     const TangoPointCloud* point_cloud,
     const TangoPoseData* color_camera_T_point_cloud,
-    const float uv_coordinates[2], float color_camera_point[3],
-    int* is_valid_point);
+    const float uv_coordinates[2], float color_camera_point[3]);
 
 /// @brief The TangoSupportDepthInterpolator contains references to camera
 /// intrinsics and cached data structures needed to upsample depth data to
@@ -700,18 +697,14 @@ TangoErrorType TangoSupport_freeDepthInterpolator(
 ///   the bilateral interpolation of the z coordinate of the point. If there is
 ///   not a point cloud point close to the user selection after projection onto
 ///   the image plane, then the point will be set to (0.0, 0.0, 0.0) and
-///   is_valid_point will be set to 0.
-/// @param is_valid_point A flag valued 1 if there is a point cloud point close
-///   to the user selection after projection onto the image plane and valued 0
-///   otherwise.
-/// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
-///   @c TANGO_ERROR on failure.
+///   @c TANGO_ERROR will be returned.
+/// @return @c TANGO_SUCCESS on success, @c TANGO_ERROR if a valid point is not
+///   found, or @c TANGO_INVALID on invalid input.
 TangoErrorType TangoSupport_getDepthAtPointBilateral(
     const TangoSupportDepthInterpolator* interpolator,
     const TangoPointCloud* point_cloud, const TangoImageBuffer* image_buffer,
     const TangoPoseData* color_camera_T_point_cloud,
-    const float uv_coordinates[2], float color_camera_point[3],
-    int* is_valid_point);
+    const float uv_coordinates[2], float color_camera_point[3]);
 
 /// @brief A structure to hold depth values for image upsampling. The units of
 /// the depth are the same as for @c TangoPointCloud.
@@ -767,9 +760,9 @@ TangoErrorType TangoSupport_upsampleImageNearestNeighbor(
 
 /// @brief Upsamples the depth data to the resolution of the color image. This
 /// uses the resolution specified by the intrinsics used to construct the
-/// interpolator. This function fills depth around using a bilateral filtering
-/// approach. The resolution of the intrinsics provided to the interpolator and
-/// the the resolution of the output depth_buffer must match.
+/// interpolator. This function fills depth around each sample using a bilateral
+/// filtering approach. The resolution of the intrinsics provided to the
+/// interpolator and the resolution of the output depth_buffer must match.
 ///
 /// @param interpolator A handle to the interpolator object. The intrinsics of
 ///   this interpolator object must match those of the image_buffer. Cannot be
