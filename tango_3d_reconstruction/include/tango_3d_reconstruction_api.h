@@ -359,6 +359,29 @@ Tango3DR_Mesh* Tango3DR_Mesh_create(
     const uint32_t textures_capacity, const uint32_t textures_width,
     const uint32_t textures_height);
 
+/// Load a mesh from a .obj file.
+///
+/// @param path Path to the .obj mesh.
+/// @param mesh On successful return, this will be filled
+///     with a pointer to a freshly allocated Tango3DR_Mesh. After
+///     use, free this by calling Tango3DR_Mesh_destroy().
+/// @return @c TANGO_3DR_SUCCESS on successfully loading a mesh, 3D
+///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
+///     valid, TANGO_3DR_ERROR if using loading failed.
+Tango3DR_Status Tango3DR_Mesh_loadFromObj(const char* const path,
+                                          Tango3DR_Mesh** mesh);
+
+/// Save a mesh to an .obj file.
+///
+/// @param mesh Mesh to be written.
+/// @param path On successful return, this file will contain the mesh in OBJ
+///     format.
+/// @return @c TANGO_3DR_SUCCESS on successfully saving a mesh, 3D
+///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
+///     valid, TANGO_3DR_ERROR if using saving failed.
+Tango3DR_Status Tango3DR_Mesh_saveToObj(const Tango3DR_Mesh* mesh,
+                                        const char* const path);
+
 /// Initialize an empty mesh struct.
 ///
 /// @param mesh Pre-allocated mesh struct.

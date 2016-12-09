@@ -125,12 +125,14 @@ typedef enum {
   /// <a href="https://scholar.google.com/scholar?cluster=9093137934172132605">
   /// Parallel tracking and mapping for small AR workspaces</a>.
   TANGO_CALIBRATION_EQUIDISTANT,
+  /// Brown's distortion model, with the parameter vector representing the
+  /// distortion as [k1, k2].
   TANGO_CALIBRATION_POLYNOMIAL_2_PARAMETERS,
-  /// Tsai's K1, K2, K3 model. See
-  /// <a href="http://scholar.google.com/scholar?cluster=3512800631607394002">A
-  /// versatile camera calibration technique for high-accuracy 3D machine
-  /// vision metrology using off-the-shelf TV cameras and lenses</a>.
+  /// Brown's distortion model, with the parameter vector representing the
+  /// distortion as [k1, k2, k3].
   TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS,
+  /// Brown's distortion model, with the parameter vector representing the
+  /// distortion as [k1, k2, p1, p2, k3].
   TANGO_CALIBRATION_POLYNOMIAL_5_PARAMETERS,
 } TangoCalibrationType;
 
@@ -433,7 +435,7 @@ typedef struct TangoPointCloud {
 ///
 /// @c TANGO_CALIBRATION_POLYNOMIAL_3_PARAMETERS implements
 /// <a href="https://scholar.google.com/scholar?cluster=3512800631607394002">
-/// Tsai's camera model</a>, where  @c rd is a polynomial that depends on the
+/// Brown's camera model</a>, where  @c rd is a polynomial that depends on the
 /// three distortion coefficients @c k1, @c k2 and @c k3:
 ///
 /// @code

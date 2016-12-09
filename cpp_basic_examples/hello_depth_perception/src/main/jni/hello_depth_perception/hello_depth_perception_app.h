@@ -18,6 +18,7 @@
 #define HELLO_DEPTH_PERCEPTION_HELLO_DEPTH_PERCEPTION_APP_H_
 
 #include <android/log.h>
+#include <jni.h>
 
 #include "tango_client_api.h"   // NOLINT
 #include "tango_support_api.h"  // NOLINT

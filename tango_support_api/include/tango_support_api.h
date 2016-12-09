@@ -15,16 +15,15 @@
 #ifndef TANGO_SUPPORT_API_H_
 #define TANGO_SUPPORT_API_H_
 
-#include <jni.h>
 #include <tango_client_api.h>
 
 #include <stdint.h>
 
 /// @file tango_support_api.h
 /// @brief File containing the Project Tango Support C API. The Project Tango
-/// Support C API provides helper functions useful to external developers for
-/// manipulating Project Tango data. The Project Tango Support C API is
-/// experimental and subject to change.
+///   Support C API provides helper functions useful to external developers for
+///   manipulating Project Tango data. The Project Tango Support C API is
+///   experimental and subject to change.
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,11 +34,17 @@ extern "C" {
 /// @{
 
 /// @brief Get the version code of the installed TangoCore package.
+/// @param jni_env A pointer to the JNI Context of the native activity. This
+///   must be of type JNIEnv*, and implicit type conversion should do the right
+///   thing without requiring a cast.
+/// @param activity The native activity object handle of the calling native
+///   activity.  This should be of type jobject, and implicit type conversion
+///   should do the right thing without requiring a cast.
 /// @param version Filled out with the version of the installed
-/// TangoCore package or 0 if it is not installed.
+///   TangoCore package or 0 if it is not installed.
 /// @return @c TANGO_SUCCESS if the version was able to be successfully found.
 ///   @c TANGO_ERROR if some other error happened.
-TangoErrorType TangoSupport_GetTangoVersion(JNIEnv* env, jobject activity,
+TangoErrorType TangoSupport_GetTangoVersion(void* jni_env, void* activity,
                                             int* version);
 
 /// @brief Typedef for getPostAtTime function signature; required by the
@@ -48,16 +53,16 @@ typedef TangoErrorType (*TangoSupport_GetPoseAtTimeFn)(
     double timestamp, TangoCoordinateFramePair frame, TangoPoseData* pose);
 
 /// @brief Typedef for getCameraIntrinsics function signature; required by the
-/// @c TangoSupport_initialize method.
+///   @c TangoSupport_initialize method.
 typedef TangoErrorType (*TangoSupport_GetCameraIntrinsicsFn)(
     TangoCameraId camera_id, TangoCameraIntrinsics* intrinsics);
 
 /// @brief Initialize the support library with any function pointers or values
-/// that are required for functionality provided by the library. This version
-/// requires providing each of the necessary initialization parameters and
-/// only needs to be used if specialized parameters are necessary. Generally
-/// either this version or @c TangoSupport_initializeLibrary should be called
-/// during application initialization, but not both.
+///   that are required for functionality provided by the library. This version
+///   requires providing each of the necessary initialization parameters and
+///   only needs to be used if specialized parameters are necessary. Generally
+///   either this version or @c TangoSupport_initializeLibrary should be called
+///   during application initialization, but not both.
 ///
 /// @param getPoseAtTime The function to call to retrieve device pose
 ///   information. In practice this is TangoService_getPoseAtTime, except
@@ -70,9 +75,9 @@ void TangoSupport_initialize(
     TangoSupport_GetCameraIntrinsicsFn getCameraIntrinsics);
 
 /// @brief Initialize the support library with any function pointers or values
-/// that are required for functionality provided by the library. Generally
-/// either this version or @c TangoSupport_initialize should be called
-/// during application initialization, but not both.
+///   that are required for functionality provided by the library. Generally
+///   either this version or @c TangoSupport_initialize should be called
+///   during application initialization, but not both.
 inline void TangoSupport_initializeLibrary() {
   TangoSupport_initialize(TangoService_getPoseAtTime,
                           TangoService_getCameraIntrinsics);
@@ -96,7 +101,7 @@ inline void TangoSupport_initializeLibrary() {
 struct TangoSupportImageBufferManager;
 
 /// @brief Create an object for maintaining a set of image buffers for a
-/// specified image format and size.
+///   specified image format and size.
 ///
 /// @param format The format of the color camera image.
 /// @param width The width in pixels of the color images.
@@ -117,7 +122,7 @@ TangoErrorType TangoSupport_freeImageBufferManager(
     TangoSupportImageBufferManager* manager);
 
 /// @brief Limit copying of the incoming image to a specific range of
-/// scan lines.
+///   scan lines.
 ///
 /// This is an optimization when only a portion of the image is
 /// required. For the @p begin_line and @p end_line parameters, the
@@ -139,7 +144,7 @@ TangoErrorType TangoSupport_setImageBufferCopyRegion(
     uint32_t end_line);
 
 /// @brief Updates the back buffer of the manager with new data from the
-/// callback. This should be called from the image callback thread.
+///   callback. This should be called from the image callback thread.
 ///
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer New image buffer data from the camera callback thread.
@@ -150,9 +155,9 @@ TangoErrorType TangoSupport_updateImageBuffer(
     const TangoImageBuffer* image_buffer);
 
 /// @brief Check if updated color image data is available. If so, swap new data
-/// to the front buffer and set image_buffer to point to the front buffer. This
-/// should be called from a single computation or render thread. Set new_data
-/// to true when image_buffer points to new data.
+///   to the front buffer and set image_buffer to point to the front buffer.
+///   This should be called from a single computation or render thread. Set
+///   new_data to true when image_buffer points to new data.
 ///
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer After the call contains a pointer to the most recent
@@ -166,8 +171,8 @@ TangoErrorType TangoSupport_getLatestImageBufferAndNewDataFlag(
     bool* new_data);
 
 /// @brief Check if updated color image data is available. If so, swap new data
-/// to the front buffer and set image_buffer to point to the front buffer. This
-/// should be called from a single computation or render thread.
+///   to the front buffer and set image_buffer to point to the front buffer.
+//    This should be called from a single computation or render thread.
 ///
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer After the call contains a pointer to the most recent
@@ -184,8 +189,8 @@ TangoErrorType TangoSupport_getLatestImageBuffer(
 /// @{
 
 /// @brief Initializes an empty point cloud with a buffer large enough to store
-/// the specific maximum point cloud size. The logical number of vertices
-/// (xyz_count) is initialized to zero.
+///   the specific maximum point cloud size. The logical number of vertices
+///   (xyz_count) is initialized to zero.
 ///
 /// @param max_point_cloud_size The maximum number of vertices in the point
 ///   cloud. This value should typically be retrieved from TangoConfig
@@ -206,7 +211,7 @@ TangoErrorType TangoSupport_createPointCloud(uint32_t max_point_cloud_size,
 TangoErrorType TangoSupport_freePointCloud(TangoPointCloud* point_cloud);
 
 /// @brief Performs a deep copy between two point clouds. The point clouds must
-/// have been initialized with the same maximum size.
+///   have been initialized with the same maximum size.
 ///
 /// @param input_point_cloud The point cloud to be copied. Cannot be NULL.
 /// @param output_point_cloud The output point cloud. Cannot be NULL.
@@ -217,11 +222,11 @@ TangoErrorType TangoSupport_copyPointCloud(
     TangoPointCloud* output_point_cloud);
 
 /// @brief Fits a plane to a point cloud near a user-specified location. This
-/// occurs in two passes. First, all points are projected to the image plane
-/// and only points near the user selection are kept. Then a plane is fit to
-/// the subset using RANSAC. After the RANSAC fit, all inliers from the original
-/// input point cloud are used to refine the plane model. The output is in the
-/// coordinate system of the input point cloud.
+///   occurs in two passes. First, all points are projected to the image plane
+///   and only points near the user selection are kept. Then a plane is fit to
+///   the subset using RANSAC. After the RANSAC fit, all inliers from the
+///   original input point cloud are used to refine the plane model. The output
+///   is in the coordinate system of the input point cloud.
 ///
 /// @param point_cloud The input point cloud. Cannot be NULL and must have at
 ///   least three points.
@@ -245,28 +250,6 @@ TangoErrorType TangoSupport_fitPlaneModelNearPoint(
     const float uv_coordinates[2], double intersection_point[3],
     double plane_model[4]);
 
-/// @brief Calculates the relative pose from the target frame at time
-/// target_timestamp to the base frame at time base_timestamp.
-///
-/// @param base_timestamp The timestamp for base frame position. Must be
-///   non-negative. If set to 0.0, the most recent pose estimate is used.
-/// @param base_frame the coordinate frame type of target frame. Must be
-///   TANGO_COORDINATE_FRAME_CAMERA_*.
-/// @param target_timestamp The timestamp for target frame position. Must be
-///   non-negative. If set to 0.0, the most recent pose estimate is used.
-/// @param target_frame The coordinate frame type of base frame. Must be
-///   TANGO_COORDINATE_FRAME_CAMERA_*.
-/// @param base_frame_T_target_frame A TangoPoseData object with the calculated
-///   orientation and translation. The output represents the transform from
-///   target frame to base frame.
-/// @return A TangoErrorType value of @c TANGO_SUCCESS on successful
-///   calculation, @c TANGO_INVALID if inputs are not supported, or
-///   @c TANGO_ERROR if an internal transform cannot be calculated.
-TangoErrorType TangoSupport_calculateRelativePose(
-    double base_timestamp, TangoCoordinateFrameType base_frame,
-    double target_timestamp, TangoCoordinateFrameType target_frame,
-    TangoPoseData* base_frame_T_target_frame);
-
 /// The TangoSupportPointCloudManager maintains a set of point clouds to
 /// manage transferring a TangoPointCloud from the callback thread to a render
 /// or computation thread. This holds three buffers internally (back, swap,
@@ -278,11 +261,10 @@ TangoErrorType TangoSupport_calculateRelativePose(
 struct TangoSupportPointCloudManager;
 
 /// @brief Create an object for maintaining a set of point clouds for a
-/// specified size.
+///   specified size.
 ///
 /// @param max_points Maximum number of points in TangoPointCloud. Get value
-/// from
-///   config.
+///   from config.
 /// @param manager A handle to the manager object.
 /// @return @c TANGO_SUCCESS on successful creation, @c TANGO_INVALID if
 ///   @p max_points <= 0.
@@ -297,7 +279,7 @@ TangoErrorType TangoSupport_freePointCloudManager(
     TangoSupportPointCloudManager* manager);
 
 /// @brief Updates the back buffer of the manager. Can be safely called from
-/// the callback thread. Update is skipped if point cloud is empty.
+///   the callback thread. Update is skipped if point cloud is empty.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud New point cloud data from the camera callback thread.
@@ -308,8 +290,8 @@ TangoErrorType TangoSupport_updatePointCloud(
     TangoSupportPointCloudManager* manager, const TangoPointCloud* point_cloud);
 
 /// @brief Check if updated point cloud data is available. If so, swap new data
-/// to the front buffer and set latest_point_cloud to point to the front buffer.
-/// This should be called from a single computation or render thread.
+///   to the front buffer and set latest_point_cloud to point to the front
+///   buffer. This should be called from a single computation or render thread.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud After the call contains a pointer to the most recent
@@ -321,9 +303,9 @@ TangoErrorType TangoSupport_getLatestPointCloud(
     TangoPointCloud** latest_point_cloud);
 
 /// @brief Check if updated point cloud data is available. If so, swap new data
-/// to the front buffer and set latest_point_cloud to point to the front buffer.
-/// This should be called from a single computation or render thread. Set
-/// @p new_data to true if latest_point_cloud points to new point cloud.
+///   to the front buffer and set latest_point_cloud to point to the front
+///   buffer. This should be called from a single computation or render thread.
+///   Set @p new_data to true if latest_point_cloud points to new point cloud.
 ///
 /// @param manager A handle to the point cloud manager.
 /// @param point_cloud After the call contains a pointer to the most recent
@@ -340,7 +322,7 @@ TangoErrorType TangoSupport_getLatestPointCloudAndNewDataFlag(
 
 /// @defgroup TransformationSupport Transformation Support
 /// @brief Functions for supporting easy transformation between different
-/// frames.
+///   frames.
 /// @{
 
 /// @brief Coordinate conventions supported by the Tango Support API.
@@ -419,7 +401,7 @@ typedef enum {
 } TangoSupportDisplayRotation;
 
 /// @brief Calculates the relative pose from the target frame at time
-/// target_timestamp to the base frame at time base_timestamp.
+///   target_timestamp to the base frame at time base_timestamp.
 ///
 /// @param base_timestamp The timestamp for base frame position. Must be
 ///   non-negative. If set to 0.0, the most recent pose estimate is used.
@@ -432,16 +414,16 @@ typedef enum {
 /// @param base_frame_T_target_frame A TangoPoseData object with the calculated
 ///   orientation and translation. The output represents the transform from
 ///   target frame to base frame.
-/// @return @c TANGO_SUCCESS on successful calculation, @c TANGO_INVALID if
-///   inputs are not supported, @c TANGO_ERROR if an internal transform cannot
-///   be calculated.
+/// @return A TangoErrorType value of @c TANGO_SUCCESS on successful
+///   calculation, @c TANGO_INVALID if inputs are not supported, or
+///   @c TANGO_ERROR if an internal transform cannot be calculated.
 TangoErrorType TangoSupport_calculateRelativePose(
     double base_timestamp, TangoCoordinateFrameType base_frame,
     double target_timestamp, TangoCoordinateFrameType target_frame,
     TangoPoseData* base_frame_T_target_frame);
 
 /// @brief Get a pose at a given timestamp from the base to the target frame
-/// using the specified engine's coordinate system conventions.
+///   using the specified engine's coordinate system conventions.
 ///
 /// @param timestamp Time specified in seconds. This behaves the same as the
 ///   @p timestamp parameter in @c TangoService_getPoseAtTime.
@@ -461,7 +443,7 @@ TangoErrorType TangoSupport_getPoseAtTime(
     TangoSupportDisplayRotation display_rotation_type, TangoPoseData* pose);
 
 /// @brief Calculate the tranformation matrix between specified frames and
-/// engine types. The output matrix uses floats and is in column-major order.
+///   engine types. The output matrix uses floats and is in column-major order.
 ///
 /// @param timestamp The timestamp of the transformation matrix of interest.
 /// @param base_frame The frame of reference the matrix converts to.
@@ -483,7 +465,7 @@ TangoErrorType TangoSupport_getMatrixTransformAtTime(
     TangoMatrixTransformData* matrix_transform);
 
 /// @brief Calculate the tranformation matrix between specified frames and
-/// engine types. The output matrix uses doubles and is in column-major order.
+///   engine types. The output matrix uses doubles and is in column-major order.
 ///
 /// @param timestamp The timestamp of the transformation matrix of interest.
 /// @param base_frame The frame of reference the matrix converts to.
@@ -532,11 +514,10 @@ TangoErrorType TangoSupport_doubleTransformPose(
     double out_quaternion[4]);
 
 /// @brief Multiplies a point cloud (represented as a TangoPointCloud) by a
-/// matrix.
-///   No projective divide is done, the W component is dropped. We explicitly
-///   support the case where point == out to do an in-place transform. The
-///   points in the output point cloud must be allocated before calling this
-///   function.
+///   matrix. No projective divide is done, the W component is dropped. We
+///   explicitly support the case where point == out to do an in-place
+///   transform. The points in the output point cloud must be allocated before
+///   calling this function.
 ///
 /// @param matrix_transform The matrix all the points are transformed by.
 /// @param point_cloud The original point cloud.
@@ -595,8 +576,8 @@ TangoErrorType TangoSupport_transformPointCloud(
 /// @{
 
 /// @brief Calculates the pixel coordinates in the camera frame of a
-/// user-specified 3D point expressed in the same camera frame, accounting for
-/// intrinsic distortion.
+///   user-specified 3D point expressed in the same camera frame, accounting for
+///   intrinsic distortion.
 ///
 /// @param camera_id The camera id the intrinsics are being queried for.
 /// @param camera_point The point (x, y, z) to be projected, expressed in the
@@ -613,7 +594,7 @@ TangoErrorType TangoSupport_projectCameraPointToDistortedPixel(
     float pixel_coordinates[2], int* is_distorted_pixel_in_image);
 
 /// @brief Calculates camera ray in the camera frame of a user-specified pixel
-/// expressed in the distorted image, accounting for intrinsic distortion.
+///   expressed in the distorted image, accounting for intrinsic distortion.
 ///
 /// @param camera_id The camera id the intrinsics are being queried for.
 /// @param pixel_coordinates The pixel coordinates of the point to unproject.
@@ -634,7 +615,7 @@ TangoErrorType TangoSupport_DistortedPixelToCameraRay(
 /// @{
 
 /// @brief Calculates the depth in the color camera space at a user-specified
-/// location using nearest-neighbor interpolation.
+///   location using nearest-neighbor interpolation.
 ///
 /// @param point_cloud The point cloud. Cannot be NULL and must have at least
 ///   one point.
@@ -658,8 +639,8 @@ TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
     const float uv_coordinates[2], float color_camera_point[3]);
 
 /// @brief The TangoSupportDepthInterpolator contains references to camera
-/// intrinsics and cached data structures needed to upsample depth data to
-/// a camera image.
+///   intrinsics and cached data structures needed to upsample depth data to
+///   a camera image.
 struct TangoSupportDepthInterpolator;
 
 /// @brief Create an object for depth interpolation.
@@ -678,8 +659,8 @@ TangoErrorType TangoSupport_freeDepthInterpolator(
     TangoSupportDepthInterpolator* interpolator);
 
 /// @brief Calculates the depth in the color camera space at a user-specified
-/// location using bilateral filtering weighted by both spatial distance from
-/// the user coordinate and by intensity similarity.
+///   location using bilateral filtering weighted by both spatial distance from
+///   the user coordinate and by intensity similarity.
 ///
 /// @param interpolator A handle to the interpolator object. The intrinsics of
 ///   this interpolator object must match those of the image_buffer.
@@ -707,7 +688,7 @@ TangoErrorType TangoSupport_getDepthAtPointBilateral(
     const float uv_coordinates[2], float color_camera_point[3]);
 
 /// @brief A structure to hold depth values for image upsampling. The units of
-/// the depth are the same as for @c TangoPointCloud.
+///   the depth are the same as for @c TangoPointCloud.
 struct TangoSupportDepthBuffer {
   float* depths;
   uint32_t width;
@@ -735,10 +716,10 @@ TangoErrorType TangoSupport_freeDepthBuffer(
     TangoSupportDepthBuffer* depth_buffer);
 
 /// @brief Upsamples the depth data to the resolution of the color image. This
-/// uses the resolution specified by the intrinsics used to construct the
-/// interpolator. This function fills depth around each sample using a fixed
-/// radius. The resolution of the intrinsics provided to the interpolator and
-/// the the resolution of the output depth_buffer must match.
+///   uses the resolution specified by the intrinsics used to construct the
+///   interpolator. This function fills depth around each sample using a fixed
+///   radius. The resolution of the intrinsics provided to the interpolator and
+///   the the resolution of the output depth_buffer must match.
 ///
 /// @param interpolator A handle to the interpolator object. The intrinsics of
 ///   this interpolator object must match those of the image_buffer. Cannot be
@@ -759,10 +740,11 @@ TangoErrorType TangoSupport_upsampleImageNearestNeighbor(
     TangoSupportDepthBuffer* depth_buffer);
 
 /// @brief Upsamples the depth data to the resolution of the color image. This
-/// uses the resolution specified by the intrinsics used to construct the
-/// interpolator. This function fills depth around each sample using a bilateral
-/// filtering approach. The resolution of the intrinsics provided to the
-/// interpolator and the resolution of the output depth_buffer must match.
+///   uses the resolution specified by the intrinsics used to construct the
+///   interpolator. This function fills depth around each sample using a
+///   bilateral filtering approach. The resolution of the intrinsics provided
+///   to the interpolator and the resolution of the output depth_buffer must
+///   match.
 ///
 /// @param interpolator A handle to the interpolator object. The intrinsics of
 ///   this interpolator object must match those of the image_buffer. Cannot be
@@ -786,10 +768,11 @@ TangoErrorType TangoSupport_upsampleImageBilateral(
     TangoSupportDepthBuffer* depth_buffer);
 
 /// @brief Finds a similarity transformation (rotation, translation, and
-/// scaling) given two sets of correspondence points. This uses the Umeyama
-/// algorithm (http://www.cis.jhu.edu/software/lddmm-similitude/umeyama.pdf)
-/// which minimizes the mean squared error. The returned transform is stored in
-/// column-major order.
+///   scaling) given two sets of correspondence points. This uses the Umeyama
+///   algorithm (http://www.cis.jhu.edu/software/lddmm-similitude/umeyama.pdf)
+///   which minimizes the mean squared error. The returned transform is stored
+///   in column-major order.
+///
 /// NOTE: If less than three non-collinear points are passed then this will
 /// return one of the many possible transforms that make that correspondence.
 ///
@@ -818,8 +801,8 @@ struct TangoSupportEdge {
 };
 
 /// @brief Find the list of edges "close" to the user-specified location and
-/// that are on the plane estimated from the input location. The edges are
-/// detected in the color camera image and specified in the depth frame.
+///   that are on the plane estimated from the input location. The edges are
+///   detected in the color camera image and specified in the depth frame.
 ///
 /// @param point_cloud The point cloud. Cannot be NULL and must have sufficient
 ///   points to estimate the plane at the location of the input.
@@ -863,9 +846,9 @@ TangoSupportVolume* TangoSupport_createVolume();
 void TangoSupport_deleteVolume(TangoSupportVolume** volume);
 
 /// @brief Add the reference plane for the volume measurement. The reference
-/// plane is a surface the volume object is on. This routine must be called
-/// before calling TangoSupport_addSeedPointToVolume() or
-/// TangoSupport_addPointCloudToVolume() methods.
+///   plane is a surface the volume object is on. This routine must be called
+///   before calling TangoSupport_addSeedPointToVolume() or
+///   TangoSupport_addPointCloudToVolume() methods.
 ///
 /// NOTE: This function expects a transformation from the input frame to the
 /// output frame. The output frame has to be a right-hand 3D world frame and
@@ -884,10 +867,11 @@ TangoErrorType TangoSupport_addReferencePlaneToVolume(
     const double translation[3], const double orientation[4]);
 
 /// @brief Add a seed point to the volume measurement. Seed points are used as
-/// starting locations when searching point clouds for volume object boundaries.
-/// A seed point by itself is also used to define the volume boundary. The
-/// reference plane of the volume must be specified by
-/// TangoSupport_addReferencePlaneToVolume() method before calling this routine.
+///   starting locations when searching point clouds for volume object
+///   boundaries. A seed point by itself is also used to define the volume
+///   boundary. The reference plane of the volume must be specified by
+///   TangoSupport_addReferencePlaneToVolume() method before calling this
+///   routine.
 ///
 /// NOTE: This function expects a transformation from the input frame to the
 /// output frame. The output frame has to be a right-hand 3D world frame and
@@ -907,10 +891,10 @@ TangoErrorType TangoSupport_addSeedPointToVolume(TangoSupportVolume* volume,
                                                  const double translation[3],
                                                  const double orientation[4]);
 
-/// @brief Add a point cloud to the volume measurement. Point clouds are used to
-/// grow the volume from input seed points to the boundary of the object. This
-/// routine should be called after at least one call to
-/// TangoSupport_addSeedPointCloudToVolume() method.
+/// @brief Add a point cloud to the volume measurement. Point clouds are used
+///   to grow the volume from input seed points to the boundary of the object.
+///   This routine should be called after at least one call to
+///   TangoSupport_addSeedPointCloudToVolume() method.
 ///
 /// NOTE: This function expects a transformation from the input frame to the
 /// output frame. The output frame has to be a right-hand 3D world frame and
@@ -930,7 +914,7 @@ TangoErrorType TangoSupport_addPointCloudToVolume(
     const double translation[3], const double orientation[4]);
 
 /// @brief Get the current volume measurement information, including both the
-/// volume size and the 8 corner points of the volume.
+///   volume size and the 8 corner points of the volume.
 ///
 /// NOTE: The volume_points are in the output frame specified by previous call
 /// of TangoSupport_addReferencePlaneToVolume(),
@@ -940,7 +924,7 @@ TangoErrorType TangoSupport_addPointCloudToVolume(
 ///
 /// @param volume Pointer to the volume measurement object.
 /// @param volume_size The size of the volume, in mm^3.
-/// @param volume_point Array of points defining the oriented bounding-box of
+/// @param volume_points Array of points defining the oriented bounding-box of
 ///   the detected volume in the output frame.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
 ///   @c TANGO_ERROR on failure.
@@ -955,8 +939,8 @@ TangoErrorType TangoSupport_getVolumeOutput(TangoSupportVolume* volume,
 /// @{
 
 /// @brief A structure to define a corner, including the corner point, and
-/// indices to edges that are associated to the corner. The edges are input
-/// parameters to TangoSupport_detectCorners() routine.
+///   indices to edges that are associated to the corner. The edges are input
+///   parameters to TangoSupport_detectCorners() routine.
 struct TangoSupportCorner {
   float corner_point[3];
   float distance_to_poi;
@@ -965,9 +949,9 @@ struct TangoSupportCorner {
 };
 
 /// @brief A structure that stores a list of corners. After calling
-/// TangoSupport_detectCorners() with a TangoSupportCornerList object, the
-/// object needs to be released by calling TangoSupport_freeCornerList()
-/// function.
+///   TangoSupport_detectCorners() with a TangoSupportCornerList object, the
+///   object needs to be released by calling TangoSupport_freeCornerList()
+///   function.
 struct TangoSupportCornerList {
   TangoSupportCorner* corners;
   int corner_count;
