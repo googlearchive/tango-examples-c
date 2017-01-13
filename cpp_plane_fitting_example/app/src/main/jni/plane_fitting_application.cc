@@ -366,25 +366,30 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
     return;
   }
 
-  /// Calculate the conversion from the latest depth camera position to the
-  /// position of the most recent color camera image. This corrects for screen
-  /// lag between the two systems.
-  TangoPoseData pose_color_camera_t0_T_depth_camera_t1;
+  // Calculate the conversion from the latest color camera position to the
+  // most recent depth camera position. This corrects for screen lag between
+  // the two systems.
+  TangoPoseData pose_depth_camera_t0_T_color_camera_t1;
   int ret = TangoSupport_calculateRelativePose(
-      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
       point_cloud->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
-      &pose_color_camera_t0_T_depth_camera_t1);
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
+      &pose_depth_camera_t0_T_color_camera_t1);
   if (ret != TANGO_SUCCESS) {
     LOGE("%s: could not calculate relative pose", __func__);
     return;
   }
   glm::vec2 uv(x / screen_width_, y / screen_height_);
 
+  double identity_translation[3] = {0.0, 0.0, 0.0};
+  double identity_orientation[4] = {0.0, 0.0, 0.0, 1.0};
   glm::dvec3 double_depth_position;
   glm::dvec4 double_depth_plane_equation;
   if (TangoSupport_fitPlaneModelNearPoint(
-          point_cloud, &pose_color_camera_t0_T_depth_camera_t1,
-          glm::value_ptr(uv), glm::value_ptr(double_depth_position),
+          point_cloud, identity_translation, identity_orientation,
+          glm::value_ptr(uv),
+          pose_depth_camera_t0_T_color_camera_t1.translation,
+          pose_depth_camera_t0_T_color_camera_t1.orientation,
+          glm::value_ptr(double_depth_position),
           glm::value_ptr(double_depth_plane_equation)) != TANGO_SUCCESS) {
     return;  // Assume error has already been reported.
   }

@@ -226,28 +226,40 @@ TangoErrorType TangoSupport_copyPointCloud(
 ///   and only points near the user selection are kept. Then a plane is fit to
 ///   the subset using RANSAC. After the RANSAC fit, all inliers from the
 ///   original input point cloud are used to refine the plane model. The output
-///   is in the coordinate system of the input point cloud.
+///   is in the base frame of the input translations and rotations. This output
+///   frame is usually an application's world frame.
 ///
 /// @param point_cloud The input point cloud. Cannot be NULL and must have at
 ///   least three points.
-/// @param color_camera_T_point_cloud The pose of the point cloud relative to
-///   the color camera used to obtain uv_coordinates.
-/// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
-///   pixel coordinates by dividing by the width or height. Cannot be NULL.
+/// @param point_cloud_translation The translation component of the
+///   transformation from the point cloud to the output frame. Cannot be NULL.
+/// @param point_cloud_orientation The orientation component (as a quaternion)
+///   of the transformation from the point cloud to the output frame.
+///   Cannot be NULL.
+/// @param color_camera_uv_coordinates The UV coordinates for the user
+///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
+///   can be computed from pixel coordinates by dividing by the width or
+///   height. Cannot be NULL.
+/// @param color_camera_translation The translation component of the
+///   transformation from the color camera to the output frame. Cannot be NULL.
+/// @param color_camera_orientation The orientation component (as a quaternion)
+///   of the transformation from the color camera to the output frame.
+///   Cannot be NULL.
 /// @param intersection_point The intersection of the fitted plane with the user
-///   selected camera-ray, in point cloud coordinates, accounting for distortion
-///   by undistorting the input uv coordinate. Cannot be NULL.
+///   selected camera-ray, in output frame coordinates, accounting for
+///   distortion by undistorting the input uv coordinate. Cannot be NULL.
 /// @param plane_model The four parameters a, b, c, d for the general plane
 ///   equation ax + by + cz + d = 0 of the plane fit. The first three
 ///   components are a unit vector. The output is in the coordinate system of
-///   the point cloud. Cannot be NULL.
+///   the requested output frame. Cannot be NULL.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
 ///   @c TANGO_ERROR on failure.
 TangoErrorType TangoSupport_fitPlaneModelNearPoint(
-    const TangoPointCloud* point_cloud,
-    const TangoPoseData* color_camera_T_point_cloud,
-    const float uv_coordinates[2], double intersection_point[3],
+    const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
+    const double point_cloud_orientation[4],
+    const float color_camera_uv_coordinates[2],
+    const double color_camera_translation[3],
+    const double color_camera_orientation[4], double intersection_point[3],
     double plane_model[4]);
 
 /// The TangoSupportPointCloudManager maintains a set of point clouds to
@@ -400,8 +412,8 @@ typedef enum {
   ROTATION_270
 } TangoSupportDisplayRotation;
 
-/// @brief Calculates the relative pose from the target frame at time
-///   target_timestamp to the base frame at time base_timestamp.
+/// @brief Calculates the relative pose of the target frame at time
+///   target_timestamp with respect to the base frame at time base_timestamp.
 ///
 /// @param base_timestamp The timestamp for base frame position. Must be
 ///   non-negative. If set to 0.0, the most recent pose estimate is used.
@@ -614,29 +626,43 @@ TangoErrorType TangoSupport_DistortedPixelToCameraRay(
 /// @brief Functions for interpolating depth.
 /// @{
 
-/// @brief Calculates the depth in the color camera space at a user-specified
-///   location using nearest-neighbor interpolation.
+/// @brief Calculates the depth at a user-specified location using
+///   nearest-neighbor interpolation. The output is in the base frame of the
+///   input translations and rotations. This output frame is usually an
+///   application's world frame.
 ///
 /// @param point_cloud The point cloud. Cannot be NULL and must have at least
 ///   one point.
-/// @param color_camera_T_point_cloud The pose of the point cloud relative to
-///   the color camera used to obtain uv_coordinates.
-/// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
-///   pixel coordinates by dividing by the width or height. Cannot be NULL.
-/// @param color_camera_point The point (x, y, z), where (x, y) is the
-///   back-projection of the UV coordinates to the color camera space and z is
-///   the z coordinate of the point in the point cloud nearest to the user
-///   selection after projection onto the image plane. If there is not a point
-///   cloud point close to the user selection after projection onto the image
-///   plane, then the point will be set to (0.0, 0.0, 0.0) and @c TANGO_ERROR
-///   will be returned.
+/// @param point_cloud_translation The translation component of the
+///   transformation from the point cloud to the output frame. Cannot be NULL.
+/// @param point_cloud_orientation The orientation component (as a quaternion)
+///   of the transformation from the point cloud to the output frame.
+///   Cannot be NULL.
+/// @param color_camera_uv_coordinates The UV coordinates for the user
+///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
+///   can be computed from pixel coordinates by dividing by the width or
+///   height. Cannot be NULL.
+/// @param color_camera_translation The translation component of the
+///   transformation from the color camera to the output frame. Cannot be NULL.
+/// @param color_camera_orientation The orientation component (as a quaternion)
+///   of the transformation from the color camera to the output frame.
+///   Cannot be NULL.
+/// @param output_point The point (x, y, z), which is the transformation of the
+///   point (x', y', z') in the color camera space to the desired output frame.
+///   (x', y') is the back-projection of the UV coordinates to the color camera
+///   space and z' is the z coordinate of the point in the point cloud nearest
+///   to the user selection after projection onto the image plane. If there is
+///   no point in the point cloud close to the user selection after projection
+///   onto the image plane, then the point will be set to (0.0, 0.0, 0.0) and
+///   @c TANGO_ERROR will be returned.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_ERROR if a valid point is not
 ///   found, or @c TANGO_INVALID on invalid input.
 TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
-    const TangoPointCloud* point_cloud,
-    const TangoPoseData* color_camera_T_point_cloud,
-    const float uv_coordinates[2], float color_camera_point[3]);
+    const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
+    const double point_cloud_orientation[4],
+    const float color_camera_uv_coordinates[2],
+    const double color_camera_translation[3],
+    const double color_camera_orientation[4], float output_point[3]);
 
 /// @brief The TangoSupportDepthInterpolator contains references to camera
 ///   intrinsics and cached data structures needed to upsample depth data to
@@ -658,34 +684,48 @@ TangoErrorType TangoSupport_createDepthInterpolator(
 TangoErrorType TangoSupport_freeDepthInterpolator(
     TangoSupportDepthInterpolator* interpolator);
 
-/// @brief Calculates the depth in the color camera space at a user-specified
-///   location using bilateral filtering weighted by both spatial distance from
-///   the user coordinate and by intensity similarity.
+/// @brief Calculates the depth at a user-specified location using bilateral
+///   filtering weighted by both spatial distance from the user coordinate and
+///   by intensity similarity. The output is in the base frame of the input
+///   translations and rotations. This output frame is usually an application's
+///   world frame.
 ///
 /// @param interpolator A handle to the interpolator object. The intrinsics of
 ///   this interpolator object must match those of the image_buffer.
 /// @param point_cloud The point cloud. Cannot be NULL and must have at least
 ///   one point.
-/// @param image_buffer The RGB image buffer. This must have intrinsics matching
-///   those used to create the interpolator object. Cannot be NULL.
-/// @param color_camera_T_point_cloud The pose of the point cloud relative to
-///   the color camera used to obtain uv_coordinates.
-/// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
-///   pixel coordinates by dividing by the width or height. Cannot be NULL.
-/// @param color_camera_point The point (x, y, z), where (x, y) is the
-///   back-projection of the UV coordinates to the color camera space and z is
-///   the bilateral interpolation of the z coordinate of the point. If there is
-///   not a point cloud point close to the user selection after projection onto
-///   the image plane, then the point will be set to (0.0, 0.0, 0.0) and
-///   @c TANGO_ERROR will be returned.
+/// @param point_cloud_translation The translation component of the
+///   transformation from the point cloud to the output frame. Cannot be NULL.
+/// @param point_cloud_orientation The orientation component (as a quaternion)
+///   of the transformation from the point cloud to the output frame.
+///   Cannot be NULL.
+/// @param image_buffer The RGB image buffer. This must have intrinsics
+///   matching those used to create the interpolator object. Cannot be NULL.
+/// @param color_camera_uv_coordinates The UV coordinates for the user
+///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
+///   can be computed from pixel coordinates by dividing by the width or
+///   height. Cannot be NULL.
+/// @param color_camera_translation The translation component of the
+///   transformation from the color camera to the output frame. Cannot be NULL.
+/// @param color_camera_orientation The orientation component (as a quaternion)
+///   of the transformation from the color camera to the output frame.
+///   Cannot be NULL.
+/// @param output_point The point (x, y, z), which is the transformation of the
+///   point (x', y', z') in the color camera space to the desired output frame.
+///   (x', y') is the back-projection of the UV coordinates to the color camera
+///   space and z' is the bilateral interpolation of the z coordinate of the
+///   point. If the bilateral interpolation fails then the point will be set to
+///   (0.0, 0.0, 0.0) and @c TANGO_ERROR will be returned.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_ERROR if a valid point is not
 ///   found, or @c TANGO_INVALID on invalid input.
 TangoErrorType TangoSupport_getDepthAtPointBilateral(
     const TangoSupportDepthInterpolator* interpolator,
-    const TangoPointCloud* point_cloud, const TangoImageBuffer* image_buffer,
-    const TangoPoseData* color_camera_T_point_cloud,
-    const float uv_coordinates[2], float color_camera_point[3]);
+    const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
+    const double point_cloud_orientation[4],
+    const TangoImageBuffer* image_buffer,
+    const float color_camera_uv_coordinates[2],
+    const double color_camera_translation[3],
+    const double color_camera_orientation[4], float output_point[3]);
 
 /// @brief A structure to hold depth values for image upsampling. The units of
 ///   the depth are the same as for @c TangoPointCloud.
@@ -802,24 +842,41 @@ struct TangoSupportEdge {
 
 /// @brief Find the list of edges "close" to the user-specified location and
 ///   that are on the plane estimated from the input location. The edges are
-///   detected in the color camera image and specified in the depth frame.
+///   detected in the color camera image and are output in the base frame
+///   of the input translations and rotations. This output frame is usually an
+///   application's world frame.
 ///
 /// @param point_cloud The point cloud. Cannot be NULL and must have sufficient
 ///   points to estimate the plane at the location of the input.
+/// @param point_cloud_translation The translation component of the
+///   transformation from the point cloud to the output frame. Cannot be NULL.
+/// @param point_cloud_orientation The orientation component (as a quaternion)
+///   of the transformation from the point cloud to the output frame.
+///   Cannot be NULL.
 /// @param image_buffer The RGB image buffer. Cannot be NULL.
-/// @param uv_coordinates The UV coordinates for the user selection. This is
-///   expected to be between (0.0, 0.0) and (1.0, 1.0) and can be computed from
-///   pixel coordinates by dividing by the width or height. Cannot be NULL.
+/// @param color_camera_uv_coordinates The UV coordinates for the user
+///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
+///   can be computed from pixel coordinates by dividing by the width or
+///   height. Cannot be NULL.
+/// @param color_camera_translation The translation component of the
+///   transformation from the color camera to the output frame. Cannot be NULL.
+/// @param color_camera_orientation The orientation component (as a quaternion)
+///   of the transformation from the color camera to the output frame.
+///   Cannot be NULL.
 /// @param edges An array of 3D edges close to the input point and specified in
-///   the depth frame. The edges will lie on the plane estimated at the location
-///   of the input point. The array should be deleted by calling
+///   the requested output frame. The edges will lie on the plane estimated at
+///   the location of the input point. The array should be deleted by calling
 ///   TangoSupport_freeEdgeList. Cannot be NULL.
 /// @param number_of_edges The number of edges in @p edges. Cannot be NULL.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input, and
 ///   @c TANGO_ERROR on failure.
 TangoErrorType TangoSupport_findEdgesNearPoint(
-    const TangoPointCloud* point_cloud, const TangoImageBuffer* image_buffer,
-    const float uv_coordinates[2], TangoSupportEdge** edges,
+    const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
+    const double point_cloud_orientation[4],
+    const TangoImageBuffer* image_buffer,
+    const float color_camera_uv_coordinates[2],
+    const double color_camera_translation[3],
+    const double color_camera_orientation[4], TangoSupportEdge** edges,
     int* number_of_edges);
 
 /// @brief Free memory allocated in call to TangoSupport_findEdgesNearPoint.

@@ -512,15 +512,22 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   glm::vec2 rotated_uv = tango_gl::util::GetColorCameraUVFromDisplay(
       uv, color_camera_to_display_rotation_);
   float color_position[3] = {0.0f, 0.0f, 0.0f};
+  double identity_translation[3] = {0.0, 0.0, 0.0};
+  double identity_orientation[4] = {0.0, 0.0, 0.0, 1.0};
   TangoErrorType depth_at_point_return;
   if (algorithm_ == UpsampleAlgorithm::kNearest) {
     depth_at_point_return = TangoSupport_getDepthAtPointNearestNeighbor(
-        point_cloud, &pose_color_camera_T_depth_camera,
-        glm::value_ptr(rotated_uv), color_position);
+        point_cloud, pose_color_camera_T_depth_camera.translation,
+        pose_color_camera_T_depth_camera.orientation,
+        glm::value_ptr(rotated_uv), identity_translation, identity_orientation,
+        color_position);
   } else {
     depth_at_point_return = TangoSupport_getDepthAtPointBilateral(
-        interpolator_, point_cloud, image, &pose_color_camera_T_depth_camera,
-        glm::value_ptr(rotated_uv), color_position);
+        interpolator_, point_cloud,
+        pose_color_camera_T_depth_camera.translation,
+        pose_color_camera_T_depth_camera.orientation, image,
+        glm::value_ptr(rotated_uv), identity_translation, identity_orientation,
+        color_position);
   }
 
   // If we found a point, let's transform it to the world and draw it.

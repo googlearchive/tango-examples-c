@@ -73,11 +73,12 @@ typedef enum {
   TANGO_3DR_CALIBRATION_POLYNOMIAL_5_PARAMETERS = 4,
 } Tango3DR_TangoCalibrationType;
 
-/// @brief Tango 3DR configuration enumerations
+/// @brief Tango 3DR configuration enumerations.
 typedef enum {
   /// Configuration for Tango3DR_create.
   TANGO_3DR_CONFIG_CONTEXT = 0,
   /// Texturing configuration for Tango3DR_textureMeshFromDataset.
+  // TODO(idryanov): Call this TANGO_3DR_CONFIG_TEXTURING_CONTEXT
   TANGO_3DR_CONFIG_TEXTURING = 1
 } Tango3DR_ConfigType;
 
@@ -107,6 +108,9 @@ typedef enum {
 /// This provides a handle to a Tango 3D reconstruction server.
 typedef void* Tango3DR_Context;
 
+/// This provides a handle to a Tango 3D texturing context.
+typedef void* Tango3DR_TexturingContext;
+
 /// This defines a handle to a Tango3DR_ConfigH; key/value pairs can only be
 /// accessed through API calls.
 typedef void* Tango3DR_ConfigH;
@@ -115,7 +119,7 @@ typedef void* Tango3DR_ConfigH;
 /// traveled over time.
 typedef void* Tango3DR_TrajectoryH;
 
-/// An array of three floats, commonly a position or normal.
+/// An array of three floats, commonly a 3D position or normal.
 typedef float Tango3DR_Vector3[3];
 
 /// An array of four floats, commonly a point cloud point with
@@ -132,6 +136,9 @@ typedef uint8_t Tango3DR_Color[4];
 /// An array of three integers describing a specific index in the 3D
 /// Reconstruction volume grid.
 typedef int Tango3DR_GridIndex[3];
+
+/// An array of two integers describing a specific location in the 2D.
+typedef int Tango3DR_GridIndex2D[2];
 
 /// An array of two floats describing a texture coordinate in UV order.
 typedef float Tango3DR_TexCoord[2];
@@ -298,6 +305,58 @@ typedef struct Tango3DR_Mesh {
   Tango3DR_ImageBuffer* textures;
 } Tango3DR_Mesh;
 
+/// Struct representing a single building level.
+typedef struct Tango3DR_FloorplanLevel {
+  /// Vertical position of the floor (in meters).
+  float min_z;
+
+  /// Vertical position of the ceiling (in meters).
+  float max_z;
+} Tango3DR_Level;
+
+/// Struct representing building levels.
+typedef struct Tango3DR_FloorplanLevels {
+  /// Number of building levels.
+  uint32_t num_levels;
+
+  /// Array with building level information.
+  Tango3DR_FloorplanLevel* levels;
+} Tango3DR_Levels;
+
+/// An array of two floats, commonly a 2D position.
+typedef float Tango3DR_Vector2[2];
+
+/// Enumeration of floor plan layers.
+typedef enum {
+  TANGO_3DR_LAYER_SPACE = 0,
+  TANGO_3DR_LAYER_WALLS,
+  TANGO_3DR_LAYER_FURNITURE,
+} Tango3DR_FloorplanLayer;
+
+/// Struct representing a single 2D polyline or polygon.
+typedef struct Tango3DR_Polygon {
+  /// Number of vertices contained in the <code>vertices</code> array.
+  uint32_t num_vertices;
+
+  /// If true, indicates that the path is closed, i.e., the last and the first
+  /// vertex are connected.
+  bool closed;
+
+  /// Floor plan layer to which this path belongs to.
+  Tango3DR_FloorplanLayer layer;
+
+  /// 2D points.
+  Tango3DR_Vector2* vertices;  // In meters.
+} Tango3DR_Path;
+
+/// 2D vector graphics object.
+typedef struct Tango3DR_VectorGraphics {
+  /// Number of paths contained in the <code>paths</code> array.
+  uint32_t num_paths;
+
+  /// Array containing 2D polylines/polygons.
+  Tango3DR_Polygon* paths;
+} Tango3DR_Graphics;
 
 /// Create a point cloud.
 ///
@@ -512,7 +571,16 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 ///         @c Tango3DR_UpdateMethod. </td></tr>
 ///
 /// <tr><td>boolean use_floorplan</td><td>
-///         When true, extract a 2D floor plan instead of a full 3D mesh.
+///         When true, enable floor plan mode. Note that this switches the mesh
+///         to an stylized/extruded mesh of the floor plan. Default is false.
+///
+/// <tr><td>boolean use_floorplan_canonical_orientation</td><td>
+///         Rotate the floor plan so that most dominant direction is aligned
+///         with the x axis. Default is false.
+///
+/// <tr><td>double floorplan_max_error</td><td>
+///         Upper bound on geometric error in meters during polygon
+///         simplification. Set to zero to disable simplification.
 /// </td></tr>
 ///
 /// </table>
@@ -551,12 +619,6 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 ///         useful to convert meshes generated to a left-handed
 ///         coordinate system or to some other coordinate system
 ///         convention than Tango's.</td></tr>
-///
-/// <tr><td>int64 dataset_start_time</td><td>
-///         Start time in ns. Defaults to 0. When reconstructing or
-///         texturing from a dataset, all messages with timestamps <
-///         dataset_start_time will be ignored.</td></tr>
-/// </table>
 ///
 /// @{
 
@@ -738,7 +800,6 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 ///
 /// @{
 
-
 /// Create a new Tango 3D Reconstruction server and return a handle to
 /// it.  You can run as many 3D Reconstruction servers as you want.
 ///
@@ -756,6 +817,28 @@ Tango3DR_Context Tango3DR_create(const Tango3DR_ConfigH context_config);
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
 ///     the server.  Returns @c TANGO_3DR_INVALID if context is NULL.
 Tango3DR_Status Tango3DR_destroy(Tango3DR_Context context);
+
+/// Create a new Tango 3D texturing context and return a handle to it.
+///
+/// @param context_config The server will be started with the setting
+///     specified by this config handle.  If NULL is passed here, then
+///     the server will be started in the default configuration.
+/// @param path to the Tango dataset containing the calibration file.
+/// @param tango_mesh mesh that will be textured.
+///
+/// @return A handle to the Tango texturing context.
+Tango3DR_TexturingContext Tango3DR_createTexturingContext(
+    const Tango3DR_ConfigH texture_config, const char* const dataset_path,
+    const Tango3DR_Mesh* tango_mesh);
+
+/// Destroy a previously created texturing context.
+///
+/// @param context Handle to a previously created context.
+///
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying
+///     the context.  Returns @c TANGO_3DR_INVALID if context is NULL.
+Tango3DR_Status Tango3DR_destroyTexturingContext(
+    Tango3DR_TexturingContext context);
 
 /// Set a boolean runtime parameter.
 /// @param context Handle to a previously created server.
@@ -789,8 +872,9 @@ Tango3DR_Status Tango3DR_clear(Tango3DR_Context context);
 /// Updates the voxels using a point cloud and image.
 ///
 /// A list of affected voxel cells are returned so that you can create
-/// new meshes for only those cells via Tango3DR_extractMeshSegment()
-/// or Tango3DR_extractPreallocatedMeshSegment().
+/// new meshes for only those cells via Tango3DR_extractMeshSegment(),
+/// Tango3DR_extractPreallocatedMeshSegment(),
+/// Tango3DR_updateFloorplanSegment() or Tango3DR_extractFloorplanSegment().
 ///
 /// @param context Handle to a previously created server.
 /// @param cloud Point cloud depth data.
@@ -1038,6 +1122,7 @@ Tango3DR_Status Tango3DR_textureMeshFromDataset(
     Tango3DR_Mesh** tango_mesh_out, Tango3DR_ProgressCallback progress_callback,
     void* callback_param);
 
+// TODO(idryanov): Add unit tests for trajectories (b/33011366).
 /// Destroy a previously created trajectory.
 ///
 /// @param trajectory Handle to a previously created trajectory.
@@ -1046,8 +1131,142 @@ Tango3DR_Status Tango3DR_textureMeshFromDataset(
 ///     NULL.
 Tango3DR_Status Tango3DR_Trajectory_destroy(Tango3DR_TrajectoryH trajectory);
 
+/// Retrieves the pose at a given time from a trajectory.
+///
+/// @param trajectory The handle to a Tango trajectory.
+/// @param timestamp The timestamp, in seconds, at which to query the pose.
+/// @param tango_pose A pointer to the output pose. Must be within the start
+///     and end time of the trajectory.
+/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
+///     parameters are not valid, and @c TANGO_3DR_ERROR if the timestamp
+///     queried is not in the range of the trajectory.
+Tango3DR_Status Tango3DR_getPoseAtTime(const Tango3DR_TrajectoryH trajectory,
+                                       const double timestamp,
+                                       Tango3DR_Pose* tango_pose);
+
+/// Updates the texturing context using an image with a corresponding pose. Must
+/// be called from the same thread where the context was created and destroyed.
+///
+/// @param context Handle to the texturing context.
+/// @param image Image used for texturing.
+/// @param image_pose Pose corresponding to the image.
+/// @return @c TANGO_3DR_SUCCESS on success and @c TANGO_3DR_INVALID if the
+///     parameters are not valid.
+Tango3DR_Status Tango3DR_updateTexture(Tango3DR_TexturingContext context,
+                                       const Tango3DR_ImageBuffer* image,
+                                       const Tango3DR_Pose* image_pose);
+
+/// Extracts the textured mesh from the texturing context.
+///
+/// @param context Handle to the texturing context.
+/// @param mesh On successful return, a freshly allocated Tango3DR_Mesh
+///     containing the mesh for the grid cell.  After use, free this by calling
+///     Tango3DR_Mesh_destroy().
+/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
+///     parameters are not valid
+Tango3DR_Status Tango3DR_getTexturedMesh(
+    const Tango3DR_TexturingContext context, Tango3DR_Mesh** tango_mesh_out);
+
 /**@} */
 /// @endcond
+
+/// Detect and extract (vertical) building levels. Currently, we only support
+/// single story buildings, so levels->num_levels will always equal 1.
+///
+/// @param context Handle to a previously created server.
+/// @param graphics On successful return, this will be filled with a pointer
+/// to a freshly allocated Tango3DR_Levels object containing the levels
+/// of the building.  After use, free this by calling
+/// Tango3DR_destroyGraphics().
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying
+/// the vector graphics. Returns @c TANGO_3DR_INVALID if
+/// <code>context</code> or <code>graphics</code> is NULL.
+Tango3DR_Status Tango3DR_extractLevels(const Tango3DR_Context context,
+                                       Tango3DR_FloorplanLevels** levels);
+
+/// Reset and enable automatic building level estimator. To disable the
+/// automatic estimator and to specify the building level manually instead,
+/// call <code>Tango3DR_selectLevel</code>.
+///
+/// @param context Handle to a previously created server.
+/// @return @c TANGO_3DR_SUCCESS on successfully resetting the building level
+/// estimator. Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
+Tango3DR_Status Tango3DR_resetLevelsEstimator(const Tango3DR_Context context);
+
+/// Manually select building level. This disables the automatic building level
+/// estimator. To re-enable the automatic estimator, call <code>
+/// Tango3DR_resetLevelsEstimator</code>.
+///
+/// @param context Handle to a previously created server.
+/// @param min_z Floor height, in meters.
+/// @param max_z Ceiling height, in meters.
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying
+/// the vector graphics. Returns @c TANGO_3DR_INVALID if
+/// <code>context</code> is NULL.
+Tango3DR_Status Tango3DR_selectLevel(const Tango3DR_Context context,
+                                     const Tango3DR_FloorplanLevel& level);
+
+/// Destroy a previously created Tango3DR_Levels object.
+///
+/// @param config Pointer to a previously created vector graphics object.
+void Tango3DR_destroyLevels(Tango3DR_FloorplanLevels* levels);
+
+/// Update a floor plan in an existing 3D reconstruction context.
+/// You need to call this function or Tango3DR_updateFloorplan() prior to
+/// extracting a floor plan using Tango3DR_extractFullFloorplan() or
+/// Tango3DR_extractFloorplanSegment().
+///
+/// @param context Handle to a previously created server.
+/// @return @c TANGO_3DR_SUCCESS on successfully updating the floor plan.
+/// Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
+Tango3DR_Status Tango3DR_updateFullFloorplan(const Tango3DR_Context context);
+
+/// Update a floor plan in an existing 3D reconstruction context.
+/// You need to call this function or Tango3DR_updateFullFloorplan() prior to
+/// extracting a floor plan using Tango3DR_extractFullFloorplan() or
+/// Tango3DR_extractFloorplanSegment().
+///
+/// @param context Handle to a previously created server.
+/// @param grid_index_array Grid cells that need to be updated.
+/// @return @c TANGO_3DR_SUCCESS on successfully updating the floor plan.
+/// Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
+Tango3DR_Status Tango3DR_updateFloorplan(
+    const Tango3DR_Context context,
+    const Tango3DR_GridIndexArray* grid_index_array);
+
+/// Extract a floor plan from an existing 3D reconstruction context.
+///
+/// @param context Handle to a previously created server.
+/// @param levels Building levels to extract.
+/// @param graphics On successful return, this will be filled with a pointer
+/// to a freshly allocated Tango3DR_Graphics object containing a vector graphics
+/// object. After use, free this by calling Tango3DR_destroyGraphics().
+/// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
+/// Returns @c TANGO_3DR_INVALID if <code>context</code> or
+/// <code>graphics</code> is NULL.
+Tango3DR_Status Tango3DR_extractFullFloorplan(
+    const Tango3DR_Context context, Tango3DR_VectorGraphics** graphics);
+
+/// Extract a floor plan segment from an existing 3D reconstruction context.
+/// Note that this function takes only a 2D grid index (x,y) instead of a
+/// 3D grid index (x,y,z).
+///
+/// @param context Handle to a previously created server.
+/// @param grid_index Index for the grid cell to extract.
+/// @param graphics On successful return, this will be filled with a pointer
+/// to a freshly allocated Tango3DR_Graphics object containing a vector graphics
+/// object. After use, free this by calling Tango3DR_destroyGraphics().
+/// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
+/// Returns @c TANGO_3DR_INVALID if <code>context</code> or
+/// <code>graphics</code> is NULL.
+Tango3DR_Status Tango3DR_extractFloorplanSegment(
+    const Tango3DR_Context context, const Tango3DR_GridIndex2D grid_index,
+    Tango3DR_VectorGraphics** graphics);
+
+/// Destroy a previously created vector graphics object.
+///
+/// @param config Pointer to a previously created vector graphics object.
+void Tango3DR_VectorGraphics_destroy(Tango3DR_VectorGraphics* graphics);
 
 #ifdef __cplusplus
 }

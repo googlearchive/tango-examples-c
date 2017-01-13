@@ -513,22 +513,6 @@ typedef struct TangoEvent {
   const char* event_value;
 } TangoEvent;
 
-/// The LevelData structure contains information about the current level
-/// according to the current pose of the device.
-typedef struct LevelData {
-  /// Encode the version of the LevelData structure itself.
-  uint32_t version;
-  /// A human-readable short name, as it would appear on elevator buttons,
-  /// for example "5", or "B1" (null-terminated).
-  char short_name[TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN];
-  /// Level number E3: the number of floors above ground of this level
-  /// multiplied by 1000, for example -1000, +2000 for whole floors, 8500 for a
-  /// mezzanine on the 8th floor.
-  int32_t level_number_E3;
-  /// An opaque level ID (null-terminated).
-  char level_id[TANGO_LEVEL_ID_BYTE_MAX_LEN];
-} LevelData;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -716,11 +700,6 @@ TangoErrorType TangoService_connectOnPoseAvailable(
     uint32_t count, const TangoCoordinateFramePair* frames,
     void (*TangoService_onPoseAvailable)(void* context,
                                          const TangoPoseData* pose),
-    ...);
-
-TangoErrorType TangoService_connectOnLevelDataChanged(
-    void (*TangoService_onLevelDataChanged)(void* context,
-                                            const LevelData* level_data),
     ...);
 
 /// Get a pose at a given timestamp from the base to the target frame.
@@ -1002,7 +981,7 @@ TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
 
 /// Connect a callback to a camera for access to the pixels. This is not
 /// recommended for display but for applications requiring access to the
-/// @c HAL_PIXEL_FORMAT_YV12 pixel data. The camera is selected via
+/// pixel data as an array of bytes. The camera is selected via
 /// @p TangoCameraId. Currently only @c TANGO_CAMERA_COLOR and
 /// @c TANGO_CAMERA_FISHEYE are supported. The @c onFrameAvailable callback will
 /// be called when a new frame is available from the camera.
@@ -1521,65 +1500,6 @@ TangoErrorType TangoService_Experimental_connectTextureIdUnity(
     unsigned int texture_Cr, void* context,
     void (*callback)(void*, TangoCameraId));
 
-/// The 3D position of a point relative to an arbitrary reference frame.
-typedef struct TangoPositionData_Experimental {
-  /// 3D position ordered x, y, z.
-  double position[3];
-} TangoPositionData_Experimental;
-
-/// Experimental API only, subject to change.
-/// Returns a trajectory from the current device position to the specified goal
-/// position. This will only work when successfully relocalized against an ADF.
-/// The input position and the output trajectory are relative to base_frame;
-/// allowed frames are TANGO_COORDINATE_FRAME_AREA_DESCRIPTION (always) and
-/// TANGO_COORDINATE_FRAME_GLOBAL_WGS84 (only if the ADF's"transformation"
-/// metadata field populated).
-/// @param goal_position_in_base_frame The 3D coordinate of the goal position.
-/// @param base_frame Coordinate frame for the goal and output trajectory.
-/// @param[out] trajectory_size The length of the returned trajectory.
-/// @param[out] trajectory The planned trajectory.
-/// @return @c TANGO_SUCCESS if a trajectory from the current position to goal
-///     position was found. @c TANGO_INVALID can occur if the your current
-///     position in the loaded ADF is not known, if no ADF is loaded, if
-///     @p base_frame is set to an unsupported value, or if the trajectory
-///     planner failed to initialize. Returns @c TANGO_ERROR if communication
-///     fails or if the service needs to be initialized.
-TangoErrorType TangoService_Experimental_getTrajectoryToGoal(
-    const TangoPositionData_Experimental goal_position_in_base_frame,
-    const TangoCoordinateFrameType base_frame, size_t* trajectory_size,
-    TangoPositionData_Experimental** trajectory);
-
-/// Experimental API only, subject to change.
-/// Returns a trajectory between the specified start and goal positions.
-/// This will only work when successfully relocalized against an ADF.
-/// The input positions and the output trajectory are relative to base_frame;
-/// allowed frames are TANGO_COORDINATE_FRAME_AREA_DESCRIPTION (always) and
-/// TANGO_COORDINATE_FRAME_GLOBAL_WGS84 (only if the ADF's"transformation"
-/// metadata field populated).
-/// @param start_position_in_base_frame The 3D coordinate of the start position.
-/// @param goal_position_in_base_frame The 3D coordinate of the goal position.
-/// @param base_frame Coordinate frame for the goal and output trajectory.
-/// @param[out] trajectory_size The length of the returned trajectory.
-/// @param[out] trajectory The planned trajectory.
-/// @return @c TANGO_SUCCESS if a trajectory from the current position
-///     to goal position was found. @c TANGO_INVALID can occur if the your
-///     current position in the loaded ADF is not known, if no ADF is loaded,
-///     if @p base_frame is set to an unsupported value, or if the trajectory
-///     planner failed to initialize. Returns @c TANGO_ERROR if communication
-///     fails or if the service needs to be initialized.
-TangoErrorType TangoService_Experimental_getTrajectoryFromStartToGoal(
-    const TangoPositionData_Experimental start_position_in_base_frame,
-    const TangoPositionData_Experimental goal_position_in_base_frame,
-    const TangoCoordinateFrameType base_frame, size_t* trajectory_size,
-    TangoPositionData_Experimental** trajectory);
-
-/// Free a trajectory created by a call to
-/// TangoService_Experimental_getTrajectoryToGoal or to
-/// TangoService_Experimental_getTrajectoryFromStartToGoal.
-/// A trajectory should only be freed if the returned trajectory_size > 0.
-TangoErrorType TangoService_Experimental_freeTrajectory(
-    TangoPositionData_Experimental** trajectory);
-
 /// Experimental API only, subject to change.
 /// Loads an area description with the specified unique ID. This allows an
 /// application to load an ADF for localization after connecting to the service.
@@ -1618,18 +1538,6 @@ TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
 ///     given file path is invalid or does not point to an ADF that was
 ///     previously loaded; @c TANGO_ERROR if communication fails.
 TangoErrorType TangoService_Experimental_unloadAreaDescriptionFromFile(
-    const char* file_path);
-
-/// Experimental API only, subject to change.
-/// Loads a navigation graph with the specified file path. This allows an
-/// application to load a graph for navigation after connecting to the service.
-/// It should only be called after calling TangoService_connect(), and then only
-/// if the connect configuration did not enable learning mode.
-/// @param file_path The file path for the graph to load.
-/// @return @c TANGO_SUCCESS if the graph is successfully loaded for navigation;
-///     @c TANGO_INVALID if the file path is invalid; @c TANGO_ERROR if
-///     communication fails or if the service needs to be initialized.
-TangoErrorType TangoService_Experimental_loadNavigationGraphFromFile(
     const char* file_path);
 
 /// Experimental API only, subject to change.
@@ -1676,15 +1584,6 @@ TangoErrorType TangoService_Experimental_deleteDataset(
 ///     @c TANGO_ERROR if communication failed.
 TangoErrorType TangoService_Experimental_getCurrentDatasetUUID(
     TangoUUID* dataset_uuid);
-
-/// Experimental API only, subject to change.
-/// Returns the last level data available, according to the last available pose.
-/// @param level_data An output parameter for the level data returned.
-/// @return @c TANGO_INVALID  if no level data is available for the last pose
-///     available or if the user could not be localized; @c TANGO_SUCCESS
-///     otherwise.
-TangoErrorType TangoService_Experimental_getLastIndoorLevel(
-    LevelData* level_data);
 
 #ifdef __cplusplus
 }
