@@ -277,9 +277,8 @@ void SynchronizationApplication::OnDrawFrame() {
   // In the following code, we define t0 as the depth timestamp and t1 as the
   // color camera timestamp.
 
-  // Calculate the relative pose from color camera frame at timestamp
-  // color_timestamp t1 and depth
-  // camera frame at depth_timestamp t0.
+  // Calculate the relative pose between color camera frame at timestamp
+  // color_timestamp t1 and depth camera frame at depth_timestamp t0.
   TangoPoseData pose_color_image_t1_T_depth_image_t0;
   if (TangoSupport_calculateRelativePose(
           color_timestamp, TANGO_COORDINATE_FRAME_CAMERA_COLOR, depth_timestamp,
