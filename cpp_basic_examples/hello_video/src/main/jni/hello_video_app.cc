@@ -32,9 +32,17 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
 // on the CPU.
 inline void Yuv2Rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue, uint8_t* r,
                     uint8_t* g, uint8_t* b) {
-  *r = yValue + (1.370705 * (vValue - 128));
-  *g = yValue - (0.698001 * (vValue - 128)) - (0.337633 * (uValue - 128));
-  *b = yValue + (1.732446 * (uValue - 128));
+      float R = yValue + 1.402 * (vValue - 128) ;
+      float G = yValue - 0.344 * (uValue - 128) - 0.714 * (vValue - 128);
+      float B = yValue + 1.772 * (uValue - 128);
+
+      R= R * !(R<0);
+      G= G * !(G<0);
+      B= B * !(B<0);
+
+      *r = R*(!(R>255)) + 255 * (R>255);
+      *g = G*(!(G>255)) + 255 * (G>255);
+      *b = B*(!(B>255)) + 255 * (B>255);
 }
 }  // namespace
 
