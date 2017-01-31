@@ -46,7 +46,7 @@ void Transform::Translate(const glm::vec3& translation) {
 }
 
 void Transform::SetTransformationMatrix(const glm::mat4& transform_mat) {
-  util::DecomposeMatrix(transform_mat, position_, rotation_, scale_);
+  util::DecomposeMatrix(transform_mat, &position_, &rotation_, &scale_);
 }
 
 glm::mat4 Transform::GetTransformationMatrix() const {

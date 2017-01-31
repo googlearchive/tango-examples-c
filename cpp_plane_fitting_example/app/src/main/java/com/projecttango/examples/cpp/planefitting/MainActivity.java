@@ -22,11 +22,14 @@ import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.hardware.Camera;
+import android.hardware.display.DisplayManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,9 +49,6 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 public class MainActivity extends Activity {
   private static final String TAG = MainActivity.class.getSimpleName();
 
-  // The minimum Tango Core version required from this application.
-  private static final int  MIN_TANGO_CORE_VERSION = 9377;
-
   // GLSurfaceView and renderer, all of the graphic content is rendered
   // through OpenGL ES 2.0 in native code.
   private GLSurfaceView mGLView;
@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         TangoJNINative.onTangoServiceConnected(service);
+        setAndroidOrientation();
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -98,6 +99,25 @@ public class MainActivity extends Activity {
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+    // Register for display orientation change updates.
+    DisplayManager displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+    if (displayManager != null) {
+      displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+        @Override
+        public void onDisplayAdded(int displayId) {}
+
+        @Override
+        public void onDisplayChanged(int displayId) {
+          synchronized (this) {
+            setAndroidOrientation();
+          }
+        }
+
+        @Override
+        public void onDisplayRemoved(int displayId) {}
+      }, null);
+    }
+
     setContentView(R.layout.activity_main);
 
     configureGlSurfaceView();
@@ -123,6 +143,15 @@ public class MainActivity extends Activity {
     }
 
     return super.onTouchEvent(event);
+  }
+
+  // Pass device's camera sensor rotation to native layer.
+  // This parameter is important for Tango to render video overlay and
+  // virtual objects in the correct device orientation.
+  private void setAndroidOrientation() {
+    Display display = getWindowManager().getDefaultDisplay();
+
+    TangoJNINative.onDisplayChanged(display.getRotation());
   }
 
   private void configureGlSurfaceView() {

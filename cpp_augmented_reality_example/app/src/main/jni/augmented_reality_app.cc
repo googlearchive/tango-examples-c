@@ -69,8 +69,7 @@ void AugmentedRealityApp::onTextureAvailable(TangoCameraId id) {
 }
 
 void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
-                                   int display_rotation,
-                                   int color_camera_rotation) {
+                                   int display_rotation) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
@@ -91,7 +90,7 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   is_gl_initialized_ = false;
 
   display_rotation_ = display_rotation;
-  color_camera_rotation_ = color_camera_rotation;
+  is_video_overlay_rotation_set_ = false;
 }
 
 void AugmentedRealityApp::OnTangoServiceConnected(JNIEnv* env,
@@ -246,14 +245,15 @@ void AugmentedRealityApp::TangoDisconnect() {
   // resumes after disconnecting, it must re-register configuration and
   // callbacks with the service.
   is_service_connected_ = false;
+  is_gl_initialized_ = false;
+  is_video_overlay_rotation_set_ = false;
   TangoConfig_free(tango_config_);
   tango_config_ = nullptr;
   TangoService_disconnect();
 }
 
 void AugmentedRealityApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
-  main_scene_.InitGLContent(aasset_manager, display_rotation_,
-                            color_camera_rotation_);
+  main_scene_.InitGLContent(aasset_manager);
   is_gl_initialized_ = true;
   UpdateViewportAndProjectionMatrix();
 }
@@ -275,8 +275,11 @@ void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
   // ratio for the render.
   float image_plane_ratio = 0.0f;
 
-  int ret = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR,
-                                             &color_camera_intrinsics_);
+  int ret = TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
+      TANGO_CAMERA_COLOR,
+      static_cast<TangoSupportRotation>(display_rotation_),
+      &color_camera_intrinsics_);
+
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "AugmentedRealityApp: Failed to get camera intrinsics with error"
@@ -293,17 +296,10 @@ void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
   float cy = static_cast<float>(color_camera_intrinsics_.cy);
 
   glm::mat4 projection_mat_ar;
-  if (viewport_width_ > viewport_height_) {
-    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-        image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
-        kArCameraFarClippingPlane);
-    image_plane_ratio = image_height / image_width;
-  } else {
-    projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-        image_height, image_width, fy, fx, cy, cx, kArCameraNearClippingPlane,
-        kArCameraFarClippingPlane);
-    image_plane_ratio = image_width / image_height;
-  }
+  projection_mat_ar = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+      image_width, image_height, fx, fy, cx, cy, kArCameraNearClippingPlane,
+      kArCameraFarClippingPlane);
+  image_plane_ratio = image_height / image_width;
   main_scene_.SetProjectionMatrix(projection_mat_ar);
 
   float screen_ratio = static_cast<float>(viewport_height_) /
@@ -335,11 +331,9 @@ void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
   }
 }
 
-void AugmentedRealityApp::OnDeviceRotationChanged(int display_rotation,
-                                                  int color_camera_rotation) {
+void AugmentedRealityApp::OnDeviceRotationChanged(int display_rotation) {
   display_rotation_ = display_rotation;
-  color_camera_rotation_ = color_camera_rotation;
-  main_scene_.SetVideoOverlayRotation(display_rotation, color_camera_rotation);
+  is_video_overlay_rotation_set_ = false;
 }
 
 void AugmentedRealityApp::OnDrawFrame() {
@@ -347,6 +341,15 @@ void AugmentedRealityApp::OnDrawFrame() {
   // will not be called. Prevent flickering that would otherwise
   // happen by rendering solid white as a fallback.
   main_scene_.Clear();
+
+  if (!is_gl_initialized_ || !is_service_connected_) {
+    return;
+  }
+
+  if (!is_video_overlay_rotation_set_) {
+    main_scene_.SetVideoOverlayRotation(display_rotation_);
+    is_video_overlay_rotation_set_ = true;
+  }
 
   double video_overlay_timestamp;
   TangoErrorType status = TangoService_updateTextureExternalOes(
@@ -360,16 +363,12 @@ void AugmentedRealityApp::OnDrawFrame() {
     //
     // Note that if you don't want to use the drift corrected pose, the
     // normal device with respect to start of service pose is still available.
-    int color_camera_to_display =
-        tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
-            display_rotation_, color_camera_rotation_);
-
     TangoDoubleMatrixTransformData matrix_transform;
     status = TangoSupport_getDoubleMatrixTransformAtTime(
         video_overlay_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
         TANGO_SUPPORT_ENGINE_OPENGL,
-        static_cast<TangoSupportDisplayRotation>(color_camera_to_display),
+        static_cast<TangoSupportRotation>(display_rotation_),
         &matrix_transform);
     if (matrix_transform.status_code == TANGO_POSE_VALID) {
       {

@@ -62,7 +62,7 @@ void extract3DRPose(const glm::mat4& mat, Tango3DR_Pose* pose) {
   glm::vec3 translation;
   glm::quat rotation;
   glm::vec3 scale;
-  tango_gl::util::DecomposeMatrix(mat, translation, rotation, scale);
+  tango_gl::util::DecomposeMatrix(mat, &translation, &rotation, &scale);
   pose->translation[0] = translation[0];
   pose->translation[1] = translation[1];
   pose->translation[2] = translation[2];
@@ -97,7 +97,7 @@ void MeshBuilderApp::onPointCloudAvailable(const TangoPointCloud* point_cloud) {
   TangoSupport_getMatrixTransformAtTime(
       point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "MeshBuilderExample: Could not find a valid matrix transform at "
@@ -135,7 +135,7 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
   TangoSupport_getMatrixTransformAtTime(
       buffer->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "MeshBuilderExample: Could not find a valid matrix transform at "
@@ -439,8 +439,8 @@ void MeshBuilderApp::OnDrawFrame() {
   TangoMatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
       0, TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE,
-      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0,
-      &matrix_transform);
+      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL,
+      ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
   } else {

@@ -49,8 +49,7 @@ SynchronizationApplication::SynchronizationApplication()
       gpu_upsample_(false),
       is_service_connected_(false),
       is_gl_initialized_(false),
-      color_camera_to_display_rotation_(
-          TangoSupportDisplayRotation::ROTATION_0) {}
+      color_camera_to_display_rotation_(TangoSupportRotation::ROTATION_0) {}
 
 SynchronizationApplication::~SynchronizationApplication() {
   if (tango_config_) {

@@ -73,7 +73,7 @@ void CameraTextureDrawable::InitializeGL() {
 }
 
 void CameraTextureDrawable::RenderImage(
-    TangoSupportDisplayRotation camera_to_display_rotation) {
+    TangoSupportRotation camera_to_display_rotation) {
   if (shader_program_ == 0) {
     InitializeGL();
   }
@@ -106,15 +106,15 @@ void CameraTextureDrawable::RenderImage(
 
   glEnableVertexAttribArray(attrib_texture_coords_);
   switch (camera_to_display_rotation) {
-    case TangoSupportDisplayRotation::ROTATION_90:
+    case TangoSupportRotation::ROTATION_90:
       glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
                             kTextureCoords90);
       break;
-    case TangoSupportDisplayRotation::ROTATION_180:
+    case TangoSupportRotation::ROTATION_180:
       glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
                             kTextureCoords180);
       break;
-    case TangoSupportDisplayRotation::ROTATION_270:
+    case TangoSupportRotation::ROTATION_270:
       glVertexAttribPointer(attrib_texture_coords_, 2, GL_FLOAT, GL_FALSE, 0,
                             kTextureCoords270);
       break;

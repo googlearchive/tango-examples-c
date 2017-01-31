@@ -43,7 +43,7 @@ class Scene {
 
   // Renders the scene onto the camera image using the provided depth texture.
   void Render(GLuint color_texture_id, GLuint depth_texture_id,
-              TangoSupportDisplayRotation camera_to_display_rotation);
+              TangoSupportRotation camera_to_display_rotation);
 
   // Recreate GL structures because of context creation.
   void InitializeGL();

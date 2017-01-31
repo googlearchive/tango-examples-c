@@ -53,8 +53,8 @@ void CheckGlError(const char* operation);
 
 GLuint CreateProgram(const char* vertex_source, const char* fragment_source);
 
-void DecomposeMatrix(const glm::mat4& transform_mat, glm::vec3& translation,
-                     glm::quat& rotation, glm::vec3& scale);
+void DecomposeMatrix(const glm::mat4& transform_mat, glm::vec3* translation,
+                     glm::quat* rotation, glm::vec3* scale);
 
 // Get a 3x1 column from the upper 3x4 of a transformation matrix. Columns
 // 0, 1, 2 are the rotation/scale portion, and column 3 is the translation.
@@ -87,7 +87,7 @@ glm::vec3 ApplyTransform(const glm::mat4& mat, const glm::vec3& vec);
 // available are 0, 90, 180, 270. Followed by Android camera orientation
 // standard:
 // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
-TangoSupportDisplayRotation GetAndroidRotationFromColorCameraToDisplay(
+TangoSupportRotation GetAndroidRotationFromColorCameraToDisplay(
     int display_rotation, int color_camera_rotation);
 
 // Get the Android rotation integer value from color camera to display.
@@ -99,14 +99,14 @@ TangoSupportDisplayRotation GetAndroidRotationFromColorCameraToDisplay(
 // available are 0, 90, 180, 270. Followed by Android camera orientation
 // standard:
 // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
-TangoSupportDisplayRotation GetAndroidRotationFromColorCameraToDisplay(
-    TangoSupportDisplayRotation display_rotation, int color_camera_rotation);
+TangoSupportRotation GetAndroidRotationFromColorCameraToDisplay(
+    TangoSupportRotation display_rotation, int color_camera_rotation);
 
 // Convert an UV coordinate from Android Display space to Color Camera space
 // This function is used to get the UV value needed by tango_support_library
 // when device display is rotated.
 glm::vec2 GetColorCameraUVFromDisplay(
-    const glm::vec2& uv, TangoSupportDisplayRotation color_to_display_rotation);
+    const glm::vec2& uv, TangoSupportRotation color_to_display_rotation);
 }  // namespace util
 }  // namespace tango_gl
 #endif  // TANGO_GL_UTIL_H_

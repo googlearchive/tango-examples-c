@@ -72,6 +72,12 @@ Java_com_projecttango_examples_cpp_planefitting_TangoJNINative_onTouchEvent(
   app.OnTouchEvent(x, y);
 }
 
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_planefitting_TangoJNINative_onDisplayChanged(
+    JNIEnv* /*env*/, jobject /*obj*/, jint display_rotation) {
+  app.OnDisplayChanged(display_rotation);
+}
+
 #ifdef __cplusplus
 }
 #endif

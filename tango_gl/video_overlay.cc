@@ -29,7 +29,7 @@ namespace tango_gl {
 
 VideoOverlay::VideoOverlay()
     : texture_type_(GL_TEXTURE_EXTERNAL_OES),
-      camera_to_display_rotation_(TangoSupportDisplayRotation::ROTATION_0),
+      display_rotation_(TangoSupportRotation::ROTATION_IGNORED),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
@@ -37,32 +37,31 @@ VideoOverlay::VideoOverlay()
 
 VideoOverlay::VideoOverlay(GLuint texture_type)
     : texture_type_(texture_type),
-      camera_to_display_rotation_(TangoSupportDisplayRotation::ROTATION_0),
+      display_rotation_(TangoSupportRotation::ROTATION_IGNORED),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
 }
 
-VideoOverlay::VideoOverlay(
-    TangoSupportDisplayRotation camera_to_display_rotation)
+VideoOverlay::VideoOverlay(TangoSupportRotation display_rotation)
     : texture_type_(GL_TEXTURE_EXTERNAL_OES),
-      camera_to_display_rotation_(camera_to_display_rotation),
+      display_rotation_(display_rotation),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
 }
 
-VideoOverlay::VideoOverlay(
-    GLuint texture_type, TangoSupportDisplayRotation camera_to_display_rotation)
+VideoOverlay::VideoOverlay(GLuint texture_type,
+                           TangoSupportRotation display_rotation)
     : texture_type_(texture_type),
-      camera_to_display_rotation_(camera_to_display_rotation),
+      display_rotation_(display_rotation),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
 }
 
 void VideoOverlay::Initialize() {
-  SetColorToDisplayRotation(camera_to_display_rotation_);
+  SetDisplayRotation(display_rotation_);
 
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
   if (texture_type_ == GL_TEXTURE_EXTERNAL_OES) {
@@ -112,34 +111,18 @@ void VideoOverlay::Initialize() {
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
 
-void VideoOverlay::SetColorToDisplayRotation(
-    TangoSupportDisplayRotation rotation) {
-  camera_to_display_rotation_ = rotation;
-  switch (camera_to_display_rotation_) {
-    case TangoSupportDisplayRotation::ROTATION_90:
-      texture_coords_ = {1.0f - u_offset_, 0.0f + v_offset_,
-                         0.0f + u_offset_, 0.0f + v_offset_,
-                         1.0f - u_offset_, 1.0f - v_offset_,
-                         0.0f + u_offset_, 1.0f - v_offset_};
-      break;
-    case TangoSupportDisplayRotation::ROTATION_180:
-      texture_coords_ = {1.0f - u_offset_, 1.0f - v_offset_,
-                         1.0f - u_offset_, 0.0f + v_offset_,
-                         0.0f + u_offset_, 1.0f - v_offset_,
-                         0.0f + u_offset_, 0.0f + v_offset_};
-      break;
-    case TangoSupportDisplayRotation::ROTATION_270:
-      texture_coords_ = {0.0f + u_offset_, 1.0f - v_offset_,
-                         1.0f - u_offset_, 1.0f - v_offset_,
-                         0.0f + u_offset_, 0.0f + v_offset_,
-                         1.0f - u_offset_, 0.0f + v_offset_};
-      break;
-    default:
-      texture_coords_ = {0.0f + u_offset_, 0.0f + v_offset_,
-                         0.0f + u_offset_, 1.0f - v_offset_,
-                         1.0f - u_offset_, 0.0f + v_offset_,
-                         1.0f - u_offset_, 1.0f - v_offset_};
-      break;
+void VideoOverlay::SetDisplayRotation(
+    TangoSupportRotation display_rotation) {
+  display_rotation_ = display_rotation;
+  float texture_coords_0[8] = {
+      0.0f + u_offset_, 0.0f + v_offset_, 0.0f + u_offset_, 1.0f - v_offset_,
+      1.0f - u_offset_, 0.0f + v_offset_, 1.0f - u_offset_, 1.0f - v_offset_};
+  float output_texture_coords[8];
+  TangoErrorType r = TangoSupport_getVideoOverlayUVBasedOnDisplayRotation(
+      texture_coords_0, display_rotation, output_texture_coords);
+  if (r == TANGO_SUCCESS) {
+    std::copy(std::begin(output_texture_coords),
+              std::end(output_texture_coords), std::begin(texture_coords_));
   }
 }
 
@@ -170,7 +153,7 @@ void VideoOverlay::SetTextureOffset(float screen_width, float screen_height,
   u_offset_ = ((render_width - screen_width) / 2.0f) / render_width;
   v_offset_ = ((render_height - screen_height) / 2.0f) / render_height;
 
-  SetColorToDisplayRotation(camera_to_display_rotation_);
+  SetDisplayRotation(display_rotation_);
 }
 
 void VideoOverlay::Render(const glm::mat4& projection_mat,

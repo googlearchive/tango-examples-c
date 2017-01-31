@@ -50,6 +50,24 @@ void OnPointCloudAvailableRouter(void* context,
 // requires a callback function pointer, and it cannot be null.
 void onTextureAvailableRouter(void*, TangoCameraId) { return; }
 
+/**
+ * Create an OpenGL perspective matrix from window size, camera intrinsics,
+ * and clip settings.
+ */
+glm::mat4 ProjectionMatrixForCameraIntrinsics(
+    const TangoCameraIntrinsics& intrinsics, float near, float far) {
+  // Adjust camera intrinsics according to rotation
+  double cx = intrinsics.cx;
+  double cy = intrinsics.cy;
+  double width = intrinsics.width;
+  double height = intrinsics.height;
+  double fx = intrinsics.fx;
+  double fy = intrinsics.fy;
+
+  return tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
+      width, height, fx, fy, cx, cy, near, far);
+}
+
 }  // end namespace
 
 void PlaneFittingApplication::OnPointCloudAvailable(
@@ -61,7 +79,8 @@ PlaneFittingApplication::PlaneFittingApplication()
     : point_cloud_debug_render_(false),
       last_gpu_timestamp_(0.0),
       is_service_connected_(false),
-      is_gl_initialized_(false) {}
+      is_gl_initialized_(false),
+      is_scene_camera_configured_(false) {}
 
 PlaneFittingApplication::~PlaneFittingApplication() {
   TangoConfig_free(tango_config_);
@@ -227,15 +246,6 @@ void PlaneFittingApplication::TangoConnect() {
     std::exit(EXIT_SUCCESS);
   }
 
-  constexpr float kNearPlane = 0.1;
-  constexpr float kFarPlane = 100.0;
-
-  projection_matrix_ar_ = tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
-      color_camera_intrinsics_.width, color_camera_intrinsics_.height,
-      color_camera_intrinsics_.fx, color_camera_intrinsics_.fy,
-      color_camera_intrinsics_.cx, color_camera_intrinsics_.cy, kNearPlane,
-      kFarPlane);
-
   // Initialize TangoSupport context.
   TangoSupport_initializeLibrary();
 }
@@ -251,6 +261,7 @@ void PlaneFittingApplication::TangoDisconnect() { TangoService_disconnect(); }
 
 void PlaneFittingApplication::OnSurfaceCreated() {
   video_overlay_ = new tango_gl::VideoOverlay();
+  video_overlay_->SetDisplayRotation(display_rotation_);
   point_cloud_renderer_ = new PointCloudRenderer();
   cube_ = new tango_gl::Cube();
   cube_->SetScale(glm::vec3(kCubeScale, kCubeScale, kCubeScale));
@@ -267,7 +278,7 @@ void PlaneFittingApplication::OnSurfaceChanged(int width, int height) {
   screen_width_ = static_cast<float>(width);
   screen_height_ = static_cast<float>(height);
 
-  glViewport(0, 0, screen_width_, screen_height_);
+  is_scene_camera_configured_ = false;
 }
 
 void PlaneFittingApplication::OnDrawFrame() {
@@ -279,6 +290,11 @@ void PlaneFittingApplication::OnDrawFrame() {
 
   if (!is_gl_initialized_ || !is_service_connected_) {
     return;
+  }
+
+  if (!is_scene_camera_configured_) {
+    SetViewportAndProjectionGLThread();
+    is_scene_camera_configured_ = true;
   }
 
   // We need to make sure that we update the texture associated with the color
@@ -295,7 +311,7 @@ void PlaneFittingApplication::OnDrawFrame() {
   TangoSupport_getMatrixTransformAtTime(
       last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_0, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_OPENGL, display_rotation_, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "PlaneFittingApplication: Could not find a valid matrix transform at "
@@ -353,6 +369,34 @@ void PlaneFittingApplication::DeleteResources() {
   point_cloud_renderer_ = nullptr;
 }
 
+void PlaneFittingApplication::OnDisplayChanged(int display_rotation) {
+  display_rotation_ =
+      static_cast<TangoSupportRotation>(display_rotation);
+  is_scene_camera_configured_ = false;
+}
+
+void PlaneFittingApplication::SetViewportAndProjectionGLThread() {
+  if (!is_gl_initialized_ || !is_service_connected_) {
+    return;
+  }
+
+  TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
+      TANGO_CAMERA_COLOR, display_rotation_, &color_camera_intrinsics_);
+
+  video_overlay_->SetDisplayRotation(display_rotation_);
+  video_overlay_->SetTextureOffset(
+      screen_width_, screen_height_,
+      static_cast<float>(color_camera_intrinsics_.width),
+      static_cast<float>(color_camera_intrinsics_.height));
+
+  glViewport(0, 0, screen_width_, screen_height_);
+
+  constexpr float kNearPlane = 0.1f;
+  constexpr float kFarPlane = 100.0f;
+  projection_matrix_ar_ = ProjectionMatrixForCameraIntrinsics(
+      color_camera_intrinsics_, kNearPlane, kFarPlane);
+}
+
 // We assume the Java layer ensures this function is called on the GL thread.
 void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   if (!is_gl_initialized_ || !is_service_connected_) {
@@ -386,7 +430,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   glm::dvec4 double_depth_plane_equation;
   if (TangoSupport_fitPlaneModelNearPoint(
           point_cloud, identity_translation, identity_orientation,
-          glm::value_ptr(uv),
+          glm::value_ptr(uv), display_rotation_,
           pose_depth_camera_t0_T_color_camera_t1.translation,
           pose_depth_camera_t0_T_color_camera_t1.orientation,
           glm::value_ptr(double_depth_position),
@@ -451,7 +495,7 @@ glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform(
   TangoSupport_getMatrixTransformAtTime(
       timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     // When the pose status is not valid, it indicates the tracking has
     // been lost. In this case, we simply stop rendering.

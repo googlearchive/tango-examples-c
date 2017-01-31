@@ -152,7 +152,7 @@ class SynchronizationApplication {
   bool is_service_connected_;
   bool is_gl_initialized_;
 
-  TangoSupportDisplayRotation color_camera_to_display_rotation_;
+  TangoSupportRotation color_camera_to_display_rotation_;
 };
 }  // namespace rgb_depth_sync
 

@@ -111,8 +111,8 @@ GLuint util::CreateProgram(const char* vertex_source,
 }
 
 void util::DecomposeMatrix(const glm::mat4& transform_mat,
-                           glm::vec3& translation, glm::quat& rotation,
-                           glm::vec3& scale) {
+                           glm::vec3* translation, glm::quat* rotation,
+                           glm::vec3* scale) {
   float scale_x = glm::length(
       glm::vec3(transform_mat[0][0], transform_mat[1][0], transform_mat[2][0]));
   float scale_y = glm::length(
@@ -123,9 +123,9 @@ void util::DecomposeMatrix(const glm::mat4& transform_mat,
   float determinant = glm::determinant(transform_mat);
   if (determinant < 0.0) scale_x = -scale_x;
 
-  translation.x = transform_mat[3][0];
-  translation.y = transform_mat[3][1];
-  translation.z = transform_mat[3][2];
+  translation->x = transform_mat[3][0];
+  translation->y = transform_mat[3][1];
+  translation->z = transform_mat[3][2];
 
   float inverse_scale_x = 1.0 / scale_x;
   float inverse_scale_y = 1.0 / scale_y;
@@ -145,11 +145,11 @@ void util::DecomposeMatrix(const glm::mat4& transform_mat,
   transform_unscaled[1][2] *= inverse_scale_z;
   transform_unscaled[2][2] *= inverse_scale_z;
 
-  rotation = glm::quat_cast(transform_mat);
+  *rotation = glm::quat_cast(transform_mat);
 
-  scale.x = scale_x;
-  scale.y = scale_y;
-  scale.z = scale_z;
+  scale->x = scale_x;
+  scale->y = scale_y;
+  scale->z = scale_z;
 }
 
 glm::vec3 util::GetColumnFromMatrix(const glm::mat4& mat, const int col) {
@@ -235,36 +235,34 @@ glm::vec3 util::ApplyTransform(const glm::mat4& mat, const glm::vec3& vec) {
   return glm::vec3(mat * glm::vec4(vec, 1.0f));
 }
 
-TangoSupportDisplayRotation util::GetAndroidRotationFromColorCameraToDisplay(
+TangoSupportRotation util::GetAndroidRotationFromColorCameraToDisplay(
     int display_rotation, int color_camera_rotation) {
-  TangoSupportDisplayRotation r =
-      static_cast<TangoSupportDisplayRotation>(display_rotation);
+  TangoSupportRotation r = static_cast<TangoSupportRotation>(display_rotation);
   return util::GetAndroidRotationFromColorCameraToDisplay(
       r, color_camera_rotation);
 }
 
-TangoSupportDisplayRotation util::GetAndroidRotationFromColorCameraToDisplay(
-    TangoSupportDisplayRotation display_rotation, int color_camera_rotation) {
+TangoSupportRotation util::GetAndroidRotationFromColorCameraToDisplay(
+    TangoSupportRotation display_rotation, int color_camera_rotation) {
   int color_camera_n = NormalizedColorCameraRotation(color_camera_rotation);
 
   int ret = static_cast<int>(display_rotation) - color_camera_n;
   if (ret < 0) {
     ret += 4;
   }
-  return static_cast<TangoSupportDisplayRotation>(ret % 4);
+  return static_cast<TangoSupportRotation>(ret % 4);
 }
 
 glm::vec2 util::GetColorCameraUVFromDisplay(
-    const glm::vec2& uv,
-    TangoSupportDisplayRotation color_to_display_rotation) {
+    const glm::vec2& uv, TangoSupportRotation color_to_display_rotation) {
   switch (color_to_display_rotation) {
-    case TangoSupportDisplayRotation::ROTATION_90:
+    case TangoSupportRotation::ROTATION_90:
     return glm::vec2(1.0f - uv.y, uv.x);
     break;
-    case TangoSupportDisplayRotation::ROTATION_180:
+    case TangoSupportRotation::ROTATION_180:
     return glm::vec2(1.0f - uv.x, 1.0f - uv.y);
     break;
-    case TangoSupportDisplayRotation::ROTATION_270:
+    case TangoSupportRotation::ROTATION_270:
     return glm::vec2(uv.y, 1.0f - uv.x);
     break;
   default:

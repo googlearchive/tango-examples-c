@@ -223,8 +223,7 @@ void PointCloudApp::OnDrawFrame() {
   TangoSupport_getDoubleMatrixTransformAtTime(
       0, TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE,
       TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL,
-      static_cast<TangoSupportDisplayRotation>(screen_rotation_),
-      &matrix_transform);
+      static_cast<TangoSupportRotation>(screen_rotation_), &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
   } else {
@@ -252,7 +251,7 @@ void PointCloudApp::OnDrawFrame() {
   TangoSupport_getDoubleMatrixTransformAtTime(
       point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_0, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_opengl_T_depth_tango_ =
         glm::make_mat4(matrix_transform.matrix);

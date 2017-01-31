@@ -64,8 +64,7 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
  * and clip settings.
  */
 glm::mat4 ProjectionMatrixForCameraIntrinsics(
-    const TangoCameraIntrinsics& intrinsics, float near, float far,
-    TangoSupportDisplayRotation rotation) {
+    const TangoCameraIntrinsics& intrinsics, float near, float far) {
   // Adjust camera intrinsics according to rotation
   double cx = intrinsics.cx;
   double cy = intrinsics.cy;
@@ -73,30 +72,6 @@ glm::mat4 ProjectionMatrixForCameraIntrinsics(
   double height = intrinsics.height;
   double fx = intrinsics.fx;
   double fy = intrinsics.fy;
-
-  switch (rotation) {
-    case TangoSupportDisplayRotation::ROTATION_90:
-      cx = intrinsics.cy;
-      cy = intrinsics.width - intrinsics.cx;
-      width = intrinsics.height;
-      height = intrinsics.width;
-      fx = intrinsics.fy;
-      fy = intrinsics.fx;
-      break;
-    case TangoSupportDisplayRotation::ROTATION_180:
-      cx = intrinsics.width - cx;
-      cy = intrinsics.height - cy;
-      break;
-    case TangoSupportDisplayRotation::ROTATION_270:
-      cx = intrinsics.height - intrinsics.cy;
-      cy = intrinsics.cx;
-      width = intrinsics.height;
-      height = intrinsics.width;
-      fx = intrinsics.fy;
-      fy = intrinsics.fx;
-    default:
-      break;
-  }
 
   return tango_gl::Camera::ProjectionMatrixForCameraIntrinsics(
       width, height, fx, fy, cx, cy, near, far);
@@ -124,9 +99,8 @@ PointToPointApplication::PointToPointApplication()
       segment_is_drawable_(false),
       is_service_connected_(false),
       is_gl_initialized_(false),
-      display_rotation_(TangoSupportDisplayRotation::ROTATION_0),
-      color_camera_to_display_rotation_(
-          TangoSupportDisplayRotation::ROTATION_0) {}
+      is_scene_camera_configured_(false),
+      display_rotation_(TangoSupportRotation::ROTATION_IGNORED) {}
 
 PointToPointApplication::~PointToPointApplication() {
   TangoConfig_free(tango_config_);
@@ -342,7 +316,7 @@ void PointToPointApplication::TangoDisconnect() { TangoService_disconnect(); }
 
 void PointToPointApplication::OnSurfaceCreated() {
   video_overlay_ = new tango_gl::VideoOverlay();
-  video_overlay_->SetColorToDisplayRotation(color_camera_to_display_rotation_);
+  video_overlay_->SetDisplayRotation(display_rotation_);
 
   segment_ = new tango_gl::SegmentDrawable();
   segment_->SetLineWidth(4.0);
@@ -364,16 +338,18 @@ void PointToPointApplication::SetUpsampleViaBilateralFiltering(bool on) {
 void PointToPointApplication::OnSurfaceChanged(int width, int height) {
   screen_width_ = static_cast<float>(width);
   screen_height_ = static_cast<float>(height);
-
-  SetViewportAndProjection();
+  is_scene_camera_configured_ = false;
 }
 
-void PointToPointApplication::SetViewportAndProjection() {
+void PointToPointApplication::SetViewportAndProjectionGLThread() {
   if (!is_gl_initialized_ || !is_service_connected_) {
     return;
   }
 
-  video_overlay_->SetColorToDisplayRotation(color_camera_to_display_rotation_);
+  TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
+      TANGO_CAMERA_COLOR, display_rotation_, &color_camera_intrinsics_);
+
+  video_overlay_->SetDisplayRotation(display_rotation_);
   video_overlay_->SetTextureOffset(
       screen_width_, screen_height_,
       static_cast<float>(color_camera_intrinsics_.width),
@@ -384,8 +360,7 @@ void PointToPointApplication::SetViewportAndProjection() {
   constexpr float kNearPlane = 0.1f;
   constexpr float kFarPlane = 100.0f;
   projection_matrix_ar_ = ProjectionMatrixForCameraIntrinsics(
-      color_camera_intrinsics_, kNearPlane, kFarPlane,
-      color_camera_to_display_rotation_);
+      color_camera_intrinsics_, kNearPlane, kFarPlane);
 }
 
 void PointToPointApplication::OnDrawFrame() {
@@ -397,6 +372,11 @@ void PointToPointApplication::OnDrawFrame() {
 
   if (!is_gl_initialized_ || !is_service_connected_) {
     return;
+  }
+
+  if (!is_scene_camera_configured_) {
+    SetViewportAndProjectionGLThread();
+    is_scene_camera_configured_ = true;
   }
 
   // Update the texture associated with the color camera.
@@ -419,9 +399,7 @@ void PointToPointApplication::OnDrawFrame() {
   TangoSupport_getMatrixTransformAtTime(
       last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_OPENGL, static_cast<TangoSupportDisplayRotation>(
-                                       color_camera_to_display_rotation_),
-      &matrix_transform);
+      TANGO_SUPPORT_ENGINE_OPENGL, display_rotation_, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     // When the pose status is not valid, it indicates the tracking has
     // been lost. In this case, we simply stop rendering.
@@ -509,8 +487,6 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
 
   // Get the point near the user's click.
   glm::vec2 uv = glm::vec2(x / screen_width_, y / screen_height_);
-  glm::vec2 rotated_uv = tango_gl::util::GetColorCameraUVFromDisplay(
-      uv, color_camera_to_display_rotation_);
   float color_position[3] = {0.0f, 0.0f, 0.0f};
   double identity_translation[3] = {0.0, 0.0, 0.0};
   double identity_orientation[4] = {0.0, 0.0, 0.0, 1.0};
@@ -518,15 +494,15 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   if (algorithm_ == UpsampleAlgorithm::kNearest) {
     depth_at_point_return = TangoSupport_getDepthAtPointNearestNeighbor(
         point_cloud, pose_color_camera_T_depth_camera.translation,
-        pose_color_camera_T_depth_camera.orientation,
-        glm::value_ptr(rotated_uv), identity_translation, identity_orientation,
+        pose_color_camera_T_depth_camera.orientation, glm::value_ptr(uv),
+        display_rotation_, identity_translation, identity_orientation,
         color_position);
   } else {
     depth_at_point_return = TangoSupport_getDepthAtPointBilateral(
         interpolator_, point_cloud,
         pose_color_camera_T_depth_camera.translation,
-        pose_color_camera_T_depth_camera.orientation, image,
-        glm::value_ptr(rotated_uv), identity_translation, identity_orientation,
+        pose_color_camera_T_depth_camera.orientation, image, glm::value_ptr(uv),
+        display_rotation_, identity_translation, identity_orientation,
         color_position);
   }
 
@@ -545,15 +521,10 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   }
 }
 
-void PointToPointApplication::OnDisplayChanged(int display_rotation,
-                                               int color_camera_rotation) {
+void PointToPointApplication::OnDisplayChanged(int display_rotation) {
   display_rotation_ =
-      static_cast<TangoSupportDisplayRotation>(display_rotation);
-  color_camera_to_display_rotation_ =
-      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
-          display_rotation_, color_camera_rotation);
-
-  SetViewportAndProjection();
+      static_cast<TangoSupportRotation>(display_rotation);
+  is_scene_camera_configured_ = false;
 }
 
 glm::mat4 PointToPointApplication::GetStartServiceTColorPose(
@@ -563,8 +534,7 @@ glm::mat4 PointToPointApplication::GetStartServiceTColorPose(
   TangoSupport_getMatrixTransformAtTime(
       image_time, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, static_cast<TangoSupportDisplayRotation>(0),
-      &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "PointToPointApplication: Could not find a valid matrix transform at "

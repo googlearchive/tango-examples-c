@@ -42,8 +42,7 @@ public class TangoJniNative {
      *
      * @param callerActivity the caller activity of this function.
      */
-    public static native void onCreate(Activity callerActivity, int activityOrientation,
-                                       int cameraOrientation);
+    public static native void onCreate(Activity callerActivity);
 
     /**
      * Called when the Tango service is connected.
@@ -79,4 +78,9 @@ public class TangoJniNative {
      *                     the Texture ID rendering method will be used instead.
      */
     public static native void setYuvMethod(boolean useYuvMethod);
+
+    /**
+     * Respond to a display change.
+     */
+    public static native void onDisplayChanged(int displayRotation);
 }

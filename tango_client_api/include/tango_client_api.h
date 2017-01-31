@@ -578,7 +578,7 @@ TangoErrorType TangoService_initialize(void* jni_env, void* activity);
 
 /// Completes initialization of TangoService by allowing the client to pass the
 /// native binder object received by binding to TangoService back down to the
-//  underlying C API code.
+///  underlying C API code.
 /// Must be called before trying to use the C API.
 ///
 /// @param jni_env A pointer to the JNI Context of the native activity. This
@@ -621,10 +621,10 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 /// direct calls or callbacks. When the service starts, it uses the TangoConfig
 /// specified by config; you can free it after the call completes.
 /// @param context Optional. A user defined pointer that is returned in callback
-///     functions onPoseAvailable, onXYZijAvailable and onTangoEvent. If set to
-///     NULL then an additional argument can be passed to onPoseAvailable,
-///     onXYZijAvailable and onTangoEvent to optionally set individual callback
-///     contexts.
+///     functions onPoseAvailable, onPointCloudAvailable and onTangoEvent. If
+///     set to NULL then an additional argument can be passed to
+///     onPoseAvailable, onPointCloudAvailable and onTangoEvent to optionally
+///     set individual callback contexts.
 /// @param config The service will be started with the setting specified by this
 ///     TangoConfig handle. If NULL is passed here, then the service will be
 ///     started in the default configuration.
@@ -1010,12 +1010,8 @@ TangoErrorType TangoService_connectOnFrameAvailable(
 TangoErrorType TangoService_disconnectCamera(TangoCameraId id);
 
 /// Get the intrinsic calibration parameters for a given camera. The intrinsics
-/// are as specified by the TangoCameraIntrinsics struct. Intrinsics are read
-/// from the on-device intrinsics file (typically
-/// <code>/sdcard/config/calibration.xml</code> but to ensure compatibility
-/// applications should only access these parameters via the API), or default
-/// internal model parameters corresponding to the device are used if the
-/// calibration.xml file is not found.
+/// are as specified by the TangoCameraIntrinsics struct and are accessed via
+/// the API.
 /// @param camera_id The camera ID to retrieve the calibration intrinsics for.
 /// @param intrinsics A TangoCameraIntrinsics struct that must be allocated
 ///     before calling, and is filled with calibration intrinsics for the camera
@@ -1240,22 +1236,6 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// The supported configuration parameters that can be set are:
 ///
 /// <table>
-/// <tr><td>boolean config_color_mode_auto</td><td>
-/// Use auto-exposure/auto-whitebalance with the color camera. Defaults to
-/// true, and
-/// if true, the values for config_color_iso and config_color_exp are ignored.
-/// </td></tr>
-///
-/// <tr><td>int32 config_color_iso</td><td>
-///         ISO value for the color camera.
-///         One of 100, 200, 400 or 800. Default is 100. Only applied if
-///         config_color_mode_auto is set to false.</td></tr>
-///
-/// <tr><td>int32 config_color_exp</td><td>
-///         Exposure value for the color camera, in nanoseconds. Default is
-///         11100000 (11.1 ms). Valid from 0 to 30000000. Only applied if
-///         config_color_mode_auto is set to false.</td></tr>
-///
 /// <tr><td>int32 config_depth_mode</td><td>
 ///         Determines the depth data format provided from the API. See
 ///         @link TangoDepthMode @endlink for supported formats.</td></tr>
@@ -1320,11 +1300,6 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 ///         remains the same as only enabling config_enable_motion_tracking
 ///         flag. learning_mode and loading load_area_description cannot be
 ///         used if drift correction is enabled</td></tr>
-///
-/// <tr><td>boolean config_experimental_enable_scene_reconstruction</td><td>
-///         EXPERIMENTAL This flag enables the experimental scene reconstruction
-///         APIs which can be used to construct a mesh of an environment. Note
-///         that this API is subject to change.</td></tr>
 /// </table>
 ///
 /// The supported configuration parameters that can be queried are:

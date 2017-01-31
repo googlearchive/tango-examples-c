@@ -42,10 +42,8 @@ public class TangoJNINative {
    *
    * @param callerActivity the caller activity of this function.
    * @param activityOrientation orientation of the display.
-   * @param sensorOrientation orientation of color camera.
    */
-  public static native void onCreate(Activity callerActivity, int activityOrientation,
-                                     int sensorOrientation);
+  public static native void onCreate(Activity callerActivity, int activityOrientation);
 
   /**
    * Called when the Tango service is connected successfully.
@@ -82,6 +80,5 @@ public class TangoJNINative {
   /**
    * Configuration changed callback, called when screen rotates.
    */
-  public static native void onConfigurationChanged(int displayOrientation,
-                                                   int colorCameraOrientation);
+  public static native void onConfigurationChanged(int displayOrientation);
 }

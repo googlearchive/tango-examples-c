@@ -32,23 +32,14 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
 // on the CPU.
 inline void Yuv2Rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue, uint8_t* r,
                     uint8_t* g, uint8_t* b) {
-      float R = yValue + 1.402 * (vValue - 128) ;
-      float G = yValue - 0.344 * (uValue - 128) - 0.714 * (vValue - 128);
-      float B = yValue + 1.772 * (uValue - 128);
-
-      R= R * !(R<0);
-      G= G * !(G<0);
-      B= B * !(B<0);
-
-      *r = R*(!(R>255)) + 255 * (R>255);
-      *g = G*(!(G>255)) + 255 * (G>255);
-      *b = B*(!(B>255)) + 255 * (B>255);
+  *r = yValue + (1.370705 * (vValue - 128));
+  *g = yValue - (0.698001 * (vValue - 128)) - (0.337633 * (uValue - 128));
+  *b = yValue + (1.732446 * (uValue - 128));
 }
 }  // namespace
 
 namespace hello_video {
-void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity,
-                             int activity_rotation, int sensor_rotation) {
+void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version = 0;
@@ -66,8 +57,7 @@ void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity,
   is_texture_id_set_ = false;
   video_overlay_drawable_ = NULL;
   yuv_drawable_ = NULL;
-  activity_rotation_ = activity_rotation;
-  sensor_rotation_ = sensor_rotation;
+  is_video_overlay_rotation_set_ = false;
 }
 
 void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
@@ -120,6 +110,9 @@ void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
     std::exit(EXIT_SUCCESS);
   }
 
+  // Initialize TangoSupport context.
+  TangoSupport_initializeLibrary();
+
   is_service_connected_ = true;
 }
 
@@ -137,6 +130,7 @@ void HelloVideoApp::OnPause() {
   is_yuv_texture_available_ = false;
   swap_buffer_signal_ = false;
   is_service_connected_ = false;
+  is_video_overlay_rotation_set_ = false;
   is_texture_id_set_ = false;
   rgb_buffer_.clear();
   yuv_buffer_.clear();
@@ -194,14 +188,9 @@ void HelloVideoApp::OnSurfaceCreated() {
     this->DeleteDrawables();
   }
 
-  TangoSupportDisplayRotation color_camera_to_display_rotation =
-      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
-          activity_rotation_, sensor_rotation_);
-
-  video_overlay_drawable_ = new tango_gl::VideoOverlay(
-      GL_TEXTURE_EXTERNAL_OES, color_camera_to_display_rotation);
-  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D,
-                                             color_camera_to_display_rotation);
+  video_overlay_drawable_ =
+      new tango_gl::VideoOverlay(GL_TEXTURE_EXTERNAL_OES, display_rotation_);
+  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D, display_rotation_);
 }
 
 void HelloVideoApp::OnSurfaceChanged(int width, int height) {
@@ -209,7 +198,14 @@ void HelloVideoApp::OnSurfaceChanged(int width, int height) {
 }
 
 void HelloVideoApp::OnDrawFrame() {
-  if (is_service_connected_ && !is_texture_id_set_) {
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  if (!is_service_connected_) {
+    return;
+  }
+
+  if (!is_texture_id_set_) {
     is_texture_id_set_ = true;
     // Connect color camera texture. TangoService_connectTextureId expects a
     // valid texture id from the caller, so we will need to wait until the GL
@@ -225,8 +221,12 @@ void HelloVideoApp::OnDrawFrame() {
     }
   }
 
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  if (!is_video_overlay_rotation_set_) {
+    video_overlay_drawable_->SetDisplayRotation(display_rotation_);
+    yuv_drawable_->SetDisplayRotation(display_rotation_);
+    is_video_overlay_rotation_set_ = true;
+  }
+
   switch (current_texture_method_) {
     case TextureMethod::kYuv:
       RenderYuv();
@@ -297,6 +297,11 @@ void HelloVideoApp::RenderTextureId() {
         ret);
   }
   video_overlay_drawable_->Render(glm::mat4(1.0f), glm::mat4(1.0f));
+}
+
+void HelloVideoApp::OnDisplayChanged(int display_rotation) {
+  display_rotation_ = static_cast<TangoSupportRotation>(display_rotation);
+  is_video_overlay_rotation_set_ = false;
 }
 
 }  // namespace hello_video

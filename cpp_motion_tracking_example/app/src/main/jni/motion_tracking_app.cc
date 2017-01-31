@@ -130,7 +130,7 @@ void MotionTrackingApp::OnDrawFrame() {
   TangoSupport_getPoseAtTime(
       0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
-      static_cast<TangoSupportDisplayRotation>(screen_rotation_), &pose);
+      static_cast<TangoSupportRotation>(screen_rotation_), &pose);
 
   if (pose.status_code != TANGO_POSE_VALID) {
     LOGE("MotionTrackingApp: Tango pose is not valid.");

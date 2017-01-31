@@ -91,6 +91,16 @@ class PlaneFittingApplication {
   // @param y The requested y coordinate in screen space of the window.
   void OnTouchEvent(float x, float y);
 
+  // Callback for display change event, we use this function to detect display
+  // orientation change.
+  //
+  // @param display_rotation, the rotation index of the display. Same as the
+  // Android display enum value, see here:
+  // https://developer.android.com/reference/android/view/Display.html#getRotation()
+  // Same as the Android sensor rotation enum value, see here:
+  // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
+  void OnDisplayChanged(int display_rotation);
+
  private:
   // Details of rendering to OpenGL after determining transforms.
   void GLRender(const glm::mat4& w_T_cc);
@@ -125,6 +135,9 @@ class PlaneFittingApplication {
   // coordinate frame.
   glm::mat4 GetAreaDescriptionTDepthTransform(double timestamp);
 
+  // Set view port and projection matrix. This must be called in the GL thread.
+  void SetViewportAndProjectionGLThread();
+
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
 
@@ -147,9 +160,14 @@ class PlaneFittingApplication {
 
   std::atomic<bool> is_service_connected_;
   std::atomic<bool> is_gl_initialized_;
+  std::atomic<bool> is_scene_camera_configured_;
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
+
+  // Both of these orientation is used for handling display rotation in portrait
+  // or landscape.
+  TangoSupportRotation display_rotation_;
 };
 
 }  // namespace tango_plane_fitting

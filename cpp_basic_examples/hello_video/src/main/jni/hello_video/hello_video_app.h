@@ -43,10 +43,7 @@ class HelloVideoApp {
   //
   // @param env, java environment parameter OnCreate is being called.
   // @param caller_activity, caller of this function.
-  // @param env, orienation param for the activity.
-  // @param caller_activity, orientation param for the color camera sensor.
-  void OnCreate(JNIEnv* env, jobject caller_activity, int activity_rotation,
-                int sensor_rotation);
+  void OnCreate(JNIEnv* env, jobject caller_activity);
 
   // Called when the Tango service is connect. We set the binder object to Tango
   // Service in this function.
@@ -82,6 +79,14 @@ class HelloVideoApp {
   // YUV data callback.
   void OnFrameAvailable(const TangoImageBuffer* buffer);
 
+  // Callback for display change event, we use this function to detect display
+  // orientation change.
+  //
+  // @param display_rotation, the rotation index of the display. Same as the
+  // Android display enum value, see here:
+  // https://developer.android.com/reference/android/view/Display.html#getRotation()
+  void OnDisplayChanged(int display_rotation);
+
  private:
   // Tango configration file, this object is for configuring Tango Service setup
   // before connect to service. For example, we set the flag
@@ -109,9 +114,9 @@ class HelloVideoApp {
 
   bool is_service_connected_;
   bool is_texture_id_set_;
+  bool is_video_overlay_rotation_set_;
 
-  int activity_rotation_;
-  int sensor_rotation_;
+  TangoSupportRotation display_rotation_;
 
   void AllocateTexture(GLuint texture_id, int width, int height);
   void RenderYuv();
