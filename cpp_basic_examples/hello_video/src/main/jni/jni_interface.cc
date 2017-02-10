@@ -26,9 +26,8 @@ extern "C" {
 #endif
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onCreate(
-    JNIEnv* env, jobject, jobject activity, int activity_rotation,
-    int sensor_rotation) {
-  app.OnCreate(env, activity, activity_rotation, sensor_rotation);
+    JNIEnv* env, jobject, jobject activity) {
+  app.OnCreate(env, activity);
 }
 
 JNIEXPORT void JNICALL
@@ -69,6 +68,12 @@ Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_setYuvMethod(
   } else {
     app.SetTextureMethod(hello_video::HelloVideoApp::TextureMethod::kTextureId);
   }
+}
+
+JNIEXPORT void JNICALL
+Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onDisplayChanged(
+    JNIEnv* /*env*/, jobject /*obj*/, jint display_rotation) {
+  app.OnDisplayChanged(display_rotation);
 }
 
 #ifdef __cplusplus

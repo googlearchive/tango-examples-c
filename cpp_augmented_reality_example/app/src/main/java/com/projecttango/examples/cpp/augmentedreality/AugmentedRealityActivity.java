@@ -35,9 +35,6 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * glSurfaceView that renders graphic content.
  */
 public class AugmentedRealityActivity extends Activity {
-  // On current Tango devices, camera id 0 is the color camera.
-  private static final int CAMERA_ID = 0;
-
   // GLSurfaceView and its renderer, all of the graphic content is rendered
   // through OpenGL ES 2.0 in the native code.
   private AugmentedRealityRenderer mRenderer;
@@ -68,10 +65,8 @@ public class AugmentedRealityActivity extends Activity {
     WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
     Display display = windowManager.getDefaultDisplay();
     display.getSize(mScreenSize);
-    Camera.CameraInfo info = new Camera.CameraInfo();
-    Camera.getCameraInfo(CAMERA_ID, info);
 
-    TangoJNINative.onCreate(this, display.getRotation(), info.orientation);
+    TangoJNINative.onCreate(this, display.getRotation());
 
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -126,10 +121,8 @@ public class AugmentedRealityActivity extends Activity {
     WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
     Display display = windowManager.getDefaultDisplay();
     display.getSize(mScreenSize);
-    Camera.CameraInfo info = new Camera.CameraInfo();
-    Camera.getCameraInfo(CAMERA_ID, info);
 
-    TangoJNINative.onConfigurationChanged(display.getRotation(), info.orientation);
+    TangoJNINative.onConfigurationChanged(display.getRotation());
   }
 
   // Request onGlSurfaceDrawFrame on the glSurfaceView. This function is called from the

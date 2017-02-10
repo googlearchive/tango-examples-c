@@ -42,18 +42,13 @@ Scene::Scene() {}
 
 Scene::~Scene() {}
 
-void Scene::InitGLContent(AAssetManager* aasset_manager, int display_rotation,
-                          int color_camera_rotation) {
+void Scene::InitGLContent(AAssetManager* aasset_manager) {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
-  TangoSupportDisplayRotation color_to_display_rotation =
-      tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
-          display_rotation, color_camera_rotation);
-
   // Allocating render camera and drawable object.
   // All of these objects are for visualization purposes.
-  video_overlay_ = new tango_gl::VideoOverlay(color_to_display_rotation);
+  video_overlay_ = new tango_gl::VideoOverlay();
   camera_ = new tango_gl::Camera();
 
   // Init earth mesh and material
@@ -194,13 +189,10 @@ void Scene::RotateYAxisForTimestamp(double timestamp,
   *last_timestamp = timestamp;
 }
 
-void Scene::SetVideoOverlayRotation(int display_rotation,
-                                    int color_camera_rotation) {
+void Scene::SetVideoOverlayRotation(int display_rotation) {
   if (is_content_initialized_) {
-    TangoSupportDisplayRotation color_to_display_rotation =
-        tango_gl::util::GetAndroidRotationFromColorCameraToDisplay(
-            display_rotation, color_camera_rotation);
-    video_overlay_->SetColorToDisplayRotation(color_to_display_rotation);
+    video_overlay_->SetDisplayRotation(
+        static_cast<TangoSupportRotation>(display_rotation));
   }
 }
 

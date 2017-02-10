@@ -27,12 +27,12 @@ class VideoOverlay : public DrawableObject {
  public:
   VideoOverlay();
   explicit VideoOverlay(GLuint texture_type);
-  explicit VideoOverlay(TangoSupportDisplayRotation camera_to_display_rotation);
+  explicit VideoOverlay(TangoSupportRotation camera_to_display_rotation);
   explicit VideoOverlay(GLuint texture_type,
-                        TangoSupportDisplayRotation camera_to_display_rotation);
+                        TangoSupportRotation camera_to_display_rotation);
   void Initialize();
 
-  void SetColorToDisplayRotation(TangoSupportDisplayRotation rotation);
+  void SetDisplayRotation(TangoSupportRotation rotation);
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
 
@@ -49,7 +49,7 @@ class VideoOverlay : public DrawableObject {
   GLuint vertex_buffers_[2];
 
   std::array<GLfloat, 8> texture_coords_;
-  TangoSupportDisplayRotation camera_to_display_rotation_;
+  TangoSupportRotation display_rotation_;
   float u_offset_;
   float v_offset_;
 };

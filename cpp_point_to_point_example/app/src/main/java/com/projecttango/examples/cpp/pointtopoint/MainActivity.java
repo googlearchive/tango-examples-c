@@ -47,9 +47,6 @@ public class MainActivity extends Activity {
   // service for pose and event information.
   private static final int UPDATE_UI_INTERVAL_MS = 10;
 
-  // For all current Tango devices, color camera is in the camera id 0.
-  private static final int COLOR_CAMERA_ID = 0;
-
   // GLSurfaceView and renderer, all of the graphic content is rendered
   // through OpenGL ES 2.0 in native code.
   private GLSurfaceView mGLView;
@@ -67,7 +64,7 @@ public class MainActivity extends Activity {
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
         TangoJNINative.onTangoServiceConnected(service);
-        setAndroidOrientation();
+        setDisplayRotation();
       }
 
       public void onServiceDisconnected(ComponentName name) {
@@ -83,6 +80,7 @@ public class MainActivity extends Activity {
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+    // Register for display orientation change updates.
     DisplayManager displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
     if (displayManager != null) {
       displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
@@ -92,7 +90,7 @@ public class MainActivity extends Activity {
         @Override
         public void onDisplayChanged(int displayId) {
           synchronized (this) {
-            setAndroidOrientation();
+            setDisplayRotation();
           }
         }
 
@@ -133,12 +131,10 @@ public class MainActivity extends Activity {
   // Pass device's camera sensor rotation and display rotation to native layer.
   // These two parameter are important for Tango to render video overlay and
   // virtual objects in the correct device orientation.
-  private void setAndroidOrientation() {
+  private void setDisplayRotation() {
     Display display = getWindowManager().getDefaultDisplay();
-    Camera.CameraInfo colorCameraInfo = new Camera.CameraInfo();
-    Camera.getCameraInfo(COLOR_CAMERA_ID, colorCameraInfo);
 
-    TangoJNINative.onDisplayChanged(display.getRotation(), colorCameraInfo.orientation);
+    TangoJNINative.onDisplayChanged(display.getRotation());
   }
 
   private void configureGlSurfaceView() {

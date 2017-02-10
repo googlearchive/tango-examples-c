@@ -111,11 +111,9 @@ class PointToPointApplication {
   // @param display_rotation, the rotation index of the display. Same as the
   // Android display enum value, see here:
   // https://developer.android.com/reference/android/view/Display.html#getRotation()
-  // @param color_camera_rotation, the rotation index of color camera
-  // orientation.
   // Same as the Android sensor rotation enum value, see here:
   // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
-  void OnDisplayChanged(int display_rotation, int color_camera_rotation);
+  void OnDisplayChanged(int display_rotation);
 
  private:
   // Details of rendering to OpenGL after determining transforms.
@@ -151,7 +149,8 @@ class PointToPointApplication {
   // coordinate frame.
   glm::mat4 GetStartServiceTColorPose(const double& image_time);
 
-  void SetViewportAndProjection();
+  // Set view port and projection matrix. This must be called in the GL thread.
+  void SetViewportAndProjectionGLThread();
 
   TangoConfig tango_config_;
   TangoCameraIntrinsics color_camera_intrinsics_;
@@ -204,11 +203,11 @@ class PointToPointApplication {
 
   std::atomic<bool> is_service_connected_;
   std::atomic<bool> is_gl_initialized_;
+  std::atomic<bool> is_scene_camera_configured_;
 
-  // Both of these orientation is used for handling display rotation in portrait
+  // Orientation is used for handling display rotation in portrait
   // or landscape.
-  TangoSupportDisplayRotation display_rotation_;
-  TangoSupportDisplayRotation color_camera_to_display_rotation_;
+  TangoSupportRotation display_rotation_;
 };
 
 }  // namespace tango_point_to_point

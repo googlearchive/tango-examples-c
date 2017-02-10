@@ -100,6 +100,9 @@ class Scene {
   // Locks or unlocks the camera.
   void SetCameraLocked(bool camera_locked);
 
+  // Sets the display rotation.
+  void SetDisplayRotation(TangoSupportRotation display_rotation);
+
  private:
   // Returns the smooth predicted virtual camera rotation.
   glm::quat GetSmoothedCameraRotation();

@@ -256,6 +256,7 @@ void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
   main_scene_.SetProjectionMatrix(projection_mat_ar);
   main_scene_.SetImagePlaneDistance(image_plane_distance);
   main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
+  main_scene_.SetDisplayRotation(ROTATION_IGNORED);
 
   float screen_ratio = static_cast<float>(viewport_height_) /
                        static_cast<float>(viewport_width_);
@@ -302,11 +303,10 @@ void VideoStabilizationApp::Render() {
 
   if (status == TANGO_SUCCESS) {
     TangoPoseData pose;
-    TangoSupport_getPoseAtTime(
-        0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        // TODO(duckmanito) Change this zero with the real orientation
-        static_cast<TangoSupportDisplayRotation>(0), &pose);
+    TangoSupport_getPoseAtTime(0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+                               TANGO_COORDINATE_FRAME_CAMERA_COLOR,
+                               TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_IGNORED,
+                               &pose);
     if (pose.status_code == TANGO_POSE_VALID) {
       main_scene_.AddNewPose(pose);
       main_scene_.Render();

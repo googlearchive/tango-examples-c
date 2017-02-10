@@ -17,6 +17,7 @@
 #ifndef TANGO_AUGMENTED_REALITY_AUGMENTED_REALITY_APP_H_
 #define TANGO_AUGMENTED_REALITY_AUGMENTED_REALITY_APP_H_
 
+#include <atomic>
 #include <jni.h>
 #include <memory>
 #include <string>
@@ -39,10 +40,7 @@ class AugmentedRealityApp {
   // @param env, java environment parameter OnCreate is being called.
   // @param caller_activity, caller of this function.
   // @param display_rotation, orienation param for the current display.
-  // @param color_camera_rotation, orientation param for the color camera
-  // sensor.
-  void OnCreate(JNIEnv* env, jobject caller_activity, int display_rotation,
-                int color_camera_rotation);
+  void OnCreate(JNIEnv* env, jobject caller_activity, int display_rotation);
 
   // OnPause() callback is called when this Android application's
   // OnCreate function is called from UI thread. In our application,
@@ -99,8 +97,7 @@ class AugmentedRealityApp {
   // Called when the device orientation changed
   //
   // @JavaVM display_rotation: orientation of current display.
-  // @JavaVM color_camera_rotation: color camera orientation.
-  void OnDeviceRotationChanged(int display_rotation, int color_camera_rotation);
+  void OnDeviceRotationChanged(int display_rotation);
 
  private:
   // Request the render function from Java layer.
@@ -193,14 +190,14 @@ class AugmentedRealityApp {
   jobject calling_activity_obj_;
   jmethodID on_demand_render_;
 
-  bool is_service_connected_;
-  bool is_gl_initialized_;
+  std::atomic<bool> is_service_connected_;
+  std::atomic<bool> is_gl_initialized_;
+  std::atomic<bool> is_video_overlay_rotation_set_;
 
   int viewport_width_;
   int viewport_height_;
 
   int display_rotation_;
-  int color_camera_rotation_;
 };
 }  // namespace tango_augmented_reality
 

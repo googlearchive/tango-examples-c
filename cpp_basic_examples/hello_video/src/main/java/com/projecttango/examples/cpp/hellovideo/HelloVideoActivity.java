@@ -19,13 +19,12 @@ package com.projecttango.examples.cpp.hellovideo;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
-import android.hardware.Camera;
+import android.hardware.display.DisplayManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.Display;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ToggleButton;
 
 import com.projecttango.examples.cpp.util.TangoInitializationHelper;
@@ -34,8 +33,6 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * Main activity shows video overlay scene.
  */
 public class HelloVideoActivity extends Activity {
-    private static final int CAMERA_ID = 0;
-
     private GLSurfaceView mSurfaceView;
     private ToggleButton mYuvRenderSwitcher;
 
@@ -43,6 +40,7 @@ public class HelloVideoActivity extends Activity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             TangoJniNative.onTangoServiceConnected(binder);
+            setDisplayRotation();
         }
 
         @Override
@@ -58,13 +56,28 @@ public class HelloVideoActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        // Check the current screen rotation and set it to the renderer.
-        WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        Display display = windowManager.getDefaultDisplay();
-        Camera.CameraInfo info = new Camera.CameraInfo();
-        Camera.getCameraInfo(CAMERA_ID, info);
+        TangoJniNative.onCreate(this);
 
-        TangoJniNative.onCreate(this, display.getRotation(), info.orientation);
+        // Register for display orientation change updates.
+        DisplayManager displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+        if (displayManager != null) {
+            displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
+                @Override
+                public void onDisplayAdded(int displayId) {}
+
+                @Override
+                public void onDisplayChanged(int displayId) {
+                    synchronized (this) {
+                        setDisplayRotation();
+                    }
+                }
+
+                @Override
+                public void onDisplayRemoved(int displayId) {}
+            }, null);
+        }
+
+
 
         // Configure OpenGL renderer
         mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
@@ -95,5 +108,14 @@ public class HelloVideoActivity extends Activity {
      */
     public void renderModeClicked(View view) {
         TangoJniNative.setYuvMethod(mYuvRenderSwitcher.isChecked());
+    }
+
+    /**
+     *  Pass device rotation to native layer. This parameter is important for Tango to render video
+     *  overlay in the correct device orientation.
+     */
+    private void setDisplayRotation() {
+        Display display = getWindowManager().getDefaultDisplay();
+        TangoJniNative.onDisplayChanged(display.getRotation());
     }
 }

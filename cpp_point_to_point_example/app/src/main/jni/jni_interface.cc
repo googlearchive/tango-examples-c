@@ -79,9 +79,8 @@ Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onTouchEvent(
 
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointtopoint_TangoJNINative_onDisplayChanged(
-    JNIEnv* /*env*/, jobject /*obj*/, jint display_rotation,
-    jint color_camera_rotation) {
-  app.OnDisplayChanged(display_rotation, color_camera_rotation);
+    JNIEnv* /*env*/, jobject /*obj*/, jint display_rotation) {
+  app.OnDisplayChanged(display_rotation);
 }
 
 #ifdef __cplusplus

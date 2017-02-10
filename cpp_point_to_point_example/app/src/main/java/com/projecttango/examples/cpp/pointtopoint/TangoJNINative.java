@@ -75,5 +75,5 @@ public class TangoJNINative {
   public static native void onTouchEvent(float x, float y);
 
   // Respond to a display change.
-  public static native void onDisplayChanged(int displayRotation, int colorCameraRotation);
+  public static native void onDisplayChanged(int displayRotation);
 }

@@ -234,4 +234,10 @@ void Scene::SetCameraLocked(bool camera_locked) {
   std::lock_guard<std::mutex> lock(camera_locked_mutex_);
   is_camera_locked_ = camera_locked;
 }
+
+void Scene::SetDisplayRotation(TangoSupportRotation display_rotation) {
+  for (unsigned i = 0; i < video_overlay_buffer_.size(); ++i) {
+    video_overlay_buffer_[i]->SetDisplayRotation(display_rotation);
+  }
+}
 }  // namespace tango_video_stabilization

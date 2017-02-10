@@ -33,6 +33,32 @@ extern "C" {
 /// @brief Functions that do not fit into any other group.
 /// @{
 
+// Display orientation. This is a relative orientation between
+// default (natural) screen orientation and current screen orientation.
+// The orientation is calculated based on a clockwise rotation.
+//
+// The index number mirrors the Android surface rotation constants as in
+// Surface.ROTATION_0, Surface.ROTATION.90, etc.
+// https://developer.android.com/reference/android/view/Surface.html
+// This allows the developer to directly pass in the index value returned from
+// Android.
+typedef enum {
+  // Not apply any rotation.
+  ROTATION_IGNORED = -1,
+
+  // 0 degree rotation (natural orientation)
+  ROTATION_0 = 0,
+
+  // 90 degree rotation.
+  ROTATION_90 = 1,
+
+  // 180 degree rotation.
+  ROTATION_180 = 2,
+
+  // 270 degree rotation.
+  ROTATION_270 = 3
+} TangoSupportRotation;
+
 /// @brief Get the version code of the installed TangoCore package.
 /// @param jni_env A pointer to the JNI Context of the native activity. This
 ///   must be of type JNIEnv*, and implicit type conversion should do the right
@@ -57,12 +83,13 @@ typedef TangoErrorType (*TangoSupport_GetPoseAtTimeFn)(
 typedef TangoErrorType (*TangoSupport_GetCameraIntrinsicsFn)(
     TangoCameraId camera_id, TangoCameraIntrinsics* intrinsics);
 
-/// @brief Initialize the support library with any function pointers or values
-///   that are required for functionality provided by the library. This version
-///   requires providing each of the necessary initialization parameters and
-///   only needs to be used if specialized parameters are necessary. Generally
-///   either this version or @c TangoSupport_initializeLibrary should be called
-///   during application initialization, but not both.
+/// @brief Initialize the support library with function pointers required by
+///   the library. Either this version or @c TangoSupport_initializeLibrary
+///   should be called during application initialization, but not both. This
+///   version requires each of the initialization parameters and should only be
+///   used if specialized parameters are necessary.
+///   NOTE: This function must be called after the Android service has been
+///   bound.
 ///
 /// @param getPoseAtTime The function to call to retrieve device pose
 ///   information. In practice this is TangoService_getPoseAtTime, except
@@ -74,14 +101,47 @@ void TangoSupport_initialize(
     TangoSupport_GetPoseAtTimeFn getPoseAtTime,
     TangoSupport_GetCameraIntrinsicsFn getCameraIntrinsics);
 
-/// @brief Initialize the support library with any function pointers or values
-///   that are required for functionality provided by the library. Generally
-///   either this version or @c TangoSupport_initialize should be called
-///   during application initialization, but not both.
+/// @brief Initialize the support library with function pointers required by
+///   the library. Either this version or @c TangoSupport_initialize should be
+///   called during application initialization, but not both. Use this version
+///   unless specialized parameters are required.
+///   NOTE: This function must be called after the Android service has been
+///   bound.
 inline void TangoSupport_initializeLibrary() {
   TangoSupport_initialize(TangoService_getPoseAtTime,
                           TangoService_getCameraIntrinsics);
 }
+
+/// @brief Get the video overlay UV coordinates based on the display rotation.
+///   Given the UV coordinates belonging to a display rotation that
+///   matches the camera rotation, this function will return the UV coordinates
+///   for any display rotation.
+/// @param uv_coordinates The UV coordinates corresponding to a display
+///   rotation that matches the camera rotation. Cannot be NULL.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
+/// @param output_uv_coordinates The UV coordinates for this
+///   rotation.
+/// @return @c TANGO_SUCCESS on success,  @c TANGO_ERROR if the support library
+///   was not previously initialized, or @c TANGO_INVALID on invalid input.
+TangoErrorType TangoSupport_getVideoOverlayUVBasedOnDisplayRotation(
+    const float uv_coordinates[8], TangoSupportRotation display_rotation,
+    float output_uv_coordinates[8]);
+
+/// @brief Get the camera intrinsics based on the display rotation. This
+///   function will query the camera intrinsics and rotate them according to
+///   the display rotation.
+/// @param camera_id The camera ID to retrieve the calibration intrinsics for.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
+/// @param intrinsics A TangoCameraIntrinsics struct that must be allocated
+///   before calling, and is filled with camera intrinsics for the rotated
+///   camera @p camera_id upon successful return.
+/// @return @c TANGO_SUCCESS on success,  @c TANGO_ERROR if the support library
+///   was not previously initialized, or @c TANGO_INVALID on invalid input.
+TangoErrorType TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
+    TangoCameraId camera_id, TangoSupportRotation display_rotation,
+    TangoCameraIntrinsics* intrinsics);
 
 /// @}
 
@@ -188,39 +248,6 @@ TangoErrorType TangoSupport_getLatestImageBuffer(
 /// @brief Functions for managing depth data.
 /// @{
 
-/// @brief Initializes an empty point cloud with a buffer large enough to store
-///   the specific maximum point cloud size. The logical number of vertices
-///   (xyz_count) is initialized to zero.
-///
-/// @param max_point_cloud_size The maximum number of vertices in the point
-///   cloud. This value should typically be retrieved from TangoConfig
-///   max_point_cloud_elements.
-/// @param point_cloud A pointer to the point cloud to be initialized. Cannot be
-///   NULL.
-/// @return @c TANGO_SUCCESS on successful allocation, or @c TANGO_INVALID if
-///   @p point_cloud is NULL.
-TangoErrorType TangoSupport_createPointCloud(uint32_t max_point_cloud_size,
-                                             TangoPointCloud* point_cloud);
-
-/// @brief Deletes a point cloud.
-///
-/// @param point_cloud A pointer to the point cloud to be deleted. Cannot be
-///   NULL.
-/// @return @c TANGO_SUCCESS if memory was freed successfully, or
-///   @c TANGO_INVALID if @p point_cloud was NULL.
-TangoErrorType TangoSupport_freePointCloud(TangoPointCloud* point_cloud);
-
-/// @brief Performs a deep copy between two point clouds. The point clouds must
-///   have been initialized with the same maximum size.
-///
-/// @param input_point_cloud The point cloud to be copied. Cannot be NULL.
-/// @param output_point_cloud The output point cloud. Cannot be NULL.
-/// @return @c TANGO_SUCCESS if copy was successful, @c TANGO_INVALID if
-///   @p input_point_cloud or @p output_point_cloud is NULL.
-TangoErrorType TangoSupport_copyPointCloud(
-    const TangoPointCloud* input_point_cloud,
-    TangoPointCloud* output_point_cloud);
-
 /// @brief Fits a plane to a point cloud near a user-specified location. This
 ///   occurs in two passes. First, all points are projected to the image plane
 ///   and only points near the user selection are kept. Then a plane is fit to
@@ -240,6 +267,8 @@ TangoErrorType TangoSupport_copyPointCloud(
 ///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
 ///   can be computed from pixel coordinates by dividing by the width or
 ///   height. Cannot be NULL.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param color_camera_translation The translation component of the
 ///   transformation from the color camera to the output frame. Cannot be NULL.
 /// @param color_camera_orientation The orientation component (as a quaternion)
@@ -258,6 +287,7 @@ TangoErrorType TangoSupport_fitPlaneModelNearPoint(
     const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
     const double point_cloud_orientation[4],
     const float color_camera_uv_coordinates[2],
+    TangoSupportRotation display_rotation,
     const double color_camera_translation[3],
     const double color_camera_orientation[4], double intersection_point[3],
     double plane_model[4]);
@@ -391,27 +421,6 @@ typedef struct TangoDoubleMatrixTransformData {
   TangoPoseStatusType status_code;
 } TangoDoubleMatrixTransformData;
 
-// Display orientation. This is a relative orientation between
-// default (natural) screen orientation and current screen orientation.
-// The orientation is calculated based on a clockwise rotation.
-//
-// The index number mirrors Android display rotation constant. This
-// allows the developer to directly pass in the index value returned from
-// Android.
-typedef enum {
-  // 0 degree rotation (natural orientation)
-  ROTATION_0,
-
-  // 90 degree rotation.
-  ROTATION_90,
-
-  // 90 degree rotation.
-  ROTATION_180,
-
-  // 270 degree rotation.
-  ROTATION_270
-} TangoSupportDisplayRotation;
-
 /// @brief Calculates the relative pose of the target frame at time
 ///   target_timestamp with respect to the base frame at time base_timestamp.
 ///
@@ -443,16 +452,18 @@ TangoErrorType TangoSupport_calculateRelativePose(
 /// @param target_frame The target frame of reference to use in the query.
 /// @param engine The coordinate system conventions to use for the @p pose data.
 ///   Can be OpenGL, Unity, or Tango.
-/// @param display_rotation_type The index of the display rotation between
+/// @param display_rotation The index of the display rotation between
 ///   display's default (natural) orientation and current orientation.
 /// @param pose The pose of target with respect to base frame of reference,
 ///   accounting for the specified engine and display rotation.
 /// @return @c TANGO_SUCCESS on success, @c TANGO_INVALID on invalid input,
 ///   and @c TANGO_ERROR on failure.
-TangoErrorType TangoSupport_getPoseAtTime(
-    double timestamp, TangoCoordinateFrameType base_frame,
-    TangoCoordinateFrameType target_frame, TangoSupportEngineType engine,
-    TangoSupportDisplayRotation display_rotation_type, TangoPoseData* pose);
+TangoErrorType TangoSupport_getPoseAtTime(double timestamp,
+                                          TangoCoordinateFrameType base_frame,
+                                          TangoCoordinateFrameType target_frame,
+                                          TangoSupportEngineType engine,
+                                          TangoSupportRotation display_rotation,
+                                          TangoPoseData* pose);
 
 /// @brief Calculate the tranformation matrix between specified frames and
 ///   engine types. The output matrix uses floats and is in column-major order.
@@ -464,16 +475,15 @@ TangoErrorType TangoSupport_getPoseAtTime(
 ///   converts to.
 /// @param target_engine Specifies the original orientation convention the
 ///   matrix converts from.
-/// @param display_rotation_type Specifies how the display screen is
-///   oriented. NOT YET UTILIZED.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param matrix_transform The final matrix output with metadata.
 /// @return @c TANGO_INVALID on invalid input. @c TANGO_ERROR if the
 ///   pose calculation returns error. @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_getMatrixTransformAtTime(
     double timestamp, TangoCoordinateFrameType base_frame,
     TangoCoordinateFrameType target_frame, TangoSupportEngineType base_engine,
-    TangoSupportEngineType target_engine,
-    TangoSupportDisplayRotation display_rotation_type,
+    TangoSupportEngineType target_engine, TangoSupportRotation display_rotation,
     TangoMatrixTransformData* matrix_transform);
 
 /// @brief Calculate the tranformation matrix between specified frames and
@@ -486,16 +496,15 @@ TangoErrorType TangoSupport_getMatrixTransformAtTime(
 ///   converts to.
 /// @param target_engine Specifies the original orientation convention the
 ///   matrix converts from.
-/// @param display_rotation_type Specifies how the display screen is
-///   oriented. NOT YET UTILIZED.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param matrix_transform The final matrix output with metadata.
 /// @return @c TANGO_INVALID on invalid input. @c TANGO_ERROR if the
 ///   pose calculation returns error. @c TANGO_SUCCESS otherwise.
 TangoErrorType TangoSupport_getDoubleMatrixTransformAtTime(
     double timestamp, TangoCoordinateFrameType base_frame,
     TangoCoordinateFrameType target_frame, TangoSupportEngineType base_engine,
-    TangoSupportEngineType target_engine,
-    TangoSupportDisplayRotation display_rotation_type,
+    TangoSupportEngineType target_engine, TangoSupportRotation display_rotation,
     TangoDoubleMatrixTransformData* matrix_transform);
 
 /// @brief Multiplies a point by a matrix. No projective divide is done, the W
@@ -642,6 +651,8 @@ TangoErrorType TangoSupport_DistortedPixelToCameraRay(
 ///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
 ///   can be computed from pixel coordinates by dividing by the width or
 ///   height. Cannot be NULL.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param color_camera_translation The translation component of the
 ///   transformation from the color camera to the output frame. Cannot be NULL.
 /// @param color_camera_orientation The orientation component (as a quaternion)
@@ -661,6 +672,7 @@ TangoErrorType TangoSupport_getDepthAtPointNearestNeighbor(
     const TangoPointCloud* point_cloud, const double point_cloud_translation[3],
     const double point_cloud_orientation[4],
     const float color_camera_uv_coordinates[2],
+    TangoSupportRotation display_rotation,
     const double color_camera_translation[3],
     const double color_camera_orientation[4], float output_point[3]);
 
@@ -705,6 +717,8 @@ TangoErrorType TangoSupport_freeDepthInterpolator(
 ///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
 ///   can be computed from pixel coordinates by dividing by the width or
 ///   height. Cannot be NULL.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param color_camera_translation The translation component of the
 ///   transformation from the color camera to the output frame. Cannot be NULL.
 /// @param color_camera_orientation The orientation component (as a quaternion)
@@ -724,6 +738,7 @@ TangoErrorType TangoSupport_getDepthAtPointBilateral(
     const double point_cloud_orientation[4],
     const TangoImageBuffer* image_buffer,
     const float color_camera_uv_coordinates[2],
+    TangoSupportRotation display_rotation,
     const double color_camera_translation[3],
     const double color_camera_orientation[4], float output_point[3]);
 
@@ -853,11 +868,15 @@ struct TangoSupportEdge {
 /// @param point_cloud_orientation The orientation component (as a quaternion)
 ///   of the transformation from the point cloud to the output frame.
 ///   Cannot be NULL.
-/// @param image_buffer The RGB image buffer. Cannot be NULL.
+/// @param image_buffer The RGB image buffer. Although accuracy will be
+///   reduced, a down-sampled image can be used to improve performance.
+///   Cannot be NULL.
 /// @param color_camera_uv_coordinates The UV coordinates for the user
 ///   selection. This is expected to be between (0.0, 0.0) and (1.0, 1.0) and
 ///   can be computed from pixel coordinates by dividing by the width or
 ///   height. Cannot be NULL.
+/// @param display_rotation The index of the display rotation between
+///   display's default (natural) orientation and current orientation.
 /// @param color_camera_translation The translation component of the
 ///   transformation from the color camera to the output frame. Cannot be NULL.
 /// @param color_camera_orientation The orientation component (as a quaternion)
@@ -875,6 +894,7 @@ TangoErrorType TangoSupport_findEdgesNearPoint(
     const double point_cloud_orientation[4],
     const TangoImageBuffer* image_buffer,
     const float color_camera_uv_coordinates[2],
+    TangoSupportRotation display_rotation,
     const double color_camera_translation[3],
     const double color_camera_orientation[4], TangoSupportEdge** edges,
     int* number_of_edges);

@@ -44,8 +44,7 @@ class Scene {
   ~Scene();
 
   // Allocate OpenGL resources for rendering.
-  void InitGLContent(AAssetManager* aasset_manager, int activity_rotation,
-                     int sensor_rotation);
+  void InitGLContent(AAssetManager* aasset_manager);
 
   // Release non-OpenGL resources.
   void DeleteResources();
@@ -104,7 +103,7 @@ class Scene {
                                double* last_angle, double* last_timestamp);
 
   // Set video overlay's orientation based on current device orientation.
-  void SetVideoOverlayRotation(int display_rotation, int color_camera_rotation);
+  void SetVideoOverlayRotation(int display_rotation);
 
  private:
   // Video overlay drawable object to display the camera image.
