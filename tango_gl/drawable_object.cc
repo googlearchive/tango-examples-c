@@ -63,4 +63,12 @@ void DrawableObject::SetVertices(const std::vector<GLfloat>& vertices,
   vertices_ = vertices;
   normals_ = normals;
 }
+
+void DrawableObject::SetVertices(const std::vector<GLfloat>& vertices,
+                                 const std::vector<GLfloat>& normals,
+                                 const std::vector<GLushort>& indices) {
+  vertices_ = vertices;
+  normals_ = normals;
+  indices_ = indices;
+}
 }  // namespace tango_gl
