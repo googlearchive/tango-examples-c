@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_AUGMENTED_REALITY_SCENE_H_
-#define TANGO_AUGMENTED_REALITY_SCENE_H_
+#ifndef CPP_AUGMENTED_REALITY_EXAMPLE_TANGO_AUGMENTED_REALITY_SCENE_H_
+#define CPP_AUGMENTED_REALITY_EXAMPLE_TANGO_AUGMENTED_REALITY_SCENE_H_
 
 #include <jni.h>
 #include <memory>
@@ -156,4 +156,4 @@ class Scene {
 };
 }  // namespace tango_augmented_reality
 
-#endif  // TANGO_AUGMENTED_REALITY_SCENE_H_
+#endif  // CPP_AUGMENTED_REALITY_EXAMPLE_TANGO_AUGMENTED_REALITY_SCENE_H_

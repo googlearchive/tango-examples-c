@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_DEPTH_IMAGE_H_
-#define RGB_DEPTH_SYNC_DEPTH_IMAGE_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_DEPTH_IMAGE_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_DEPTH_IMAGE_H_
 
 #include <tango_client_api.h>
 #include <tango-gl/util.h>
@@ -149,4 +149,4 @@ class DepthImage {
 };
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_DEPTH_IMAGE_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_DEPTH_IMAGE_H_

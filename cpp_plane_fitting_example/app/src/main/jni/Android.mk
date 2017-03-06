@@ -26,16 +26,16 @@ LOCAL_SRC_FILES := jni_interface.cc \
                    plane_fitting.cc \
                    plane_fitting_application.cc \
                    point_cloud_renderer.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/bounding_box.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/camera.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/conversions.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/cube.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/drawable_object.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/mesh.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/transform.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/util.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/video_overlay.cc
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/bounding_box.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/camera.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/conversions.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/cube.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/drawable_object.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/mesh.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/util.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/video_overlay.cc
 LOCAL_LDLIBS := -lGLESv2 -llog -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
 

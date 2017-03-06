@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TANGO_SUPPORT_API_H_
-#define TANGO_SUPPORT_API_H_
+#ifndef TANGO_SUPPORT_API_HEADER_TANGO_SUPPORT_API_H_
+#define TANGO_SUPPORT_API_HEADER_TANGO_SUPPORT_API_H_
 
 #include <tango_client_api.h>
 
@@ -33,29 +33,27 @@ extern "C" {
 /// @brief Functions that do not fit into any other group.
 /// @{
 
-// Display orientation. This is a relative orientation between
-// default (natural) screen orientation and current screen orientation.
-// The orientation is calculated based on a clockwise rotation.
-//
-// The index number mirrors the Android surface rotation constants as in
-// Surface.ROTATION_0, Surface.ROTATION.90, etc.
-// https://developer.android.com/reference/android/view/Surface.html
-// This allows the developer to directly pass in the index value returned from
-// Android.
+/// Display orientation. This is a relative orientation between
+/// default (natural) screen orientation and current screen orientation.
+/// The orientation is calculated based on a clockwise rotation.
+///
+/// The index number mirrors Android display rotation constant. This
+/// allows the developer to directly pass in the index value returned from
+/// Android.
 typedef enum {
-  // Not apply any rotation.
+  /// Not apply any rotation.
   ROTATION_IGNORED = -1,
 
-  // 0 degree rotation (natural orientation)
+  /// 0 degree rotation (natural orientation)
   ROTATION_0 = 0,
 
-  // 90 degree rotation.
+  /// 90 degree rotation.
   ROTATION_90 = 1,
 
-  // 180 degree rotation.
+  /// 180 degree rotation.
   ROTATION_180 = 2,
 
-  // 270 degree rotation.
+  /// 270 degree rotation.
   ROTATION_270 = 3
 } TangoSupportRotation;
 
@@ -232,7 +230,7 @@ TangoErrorType TangoSupport_getLatestImageBufferAndNewDataFlag(
 
 /// @brief Check if updated color image data is available. If so, swap new data
 ///   to the front buffer and set image_buffer to point to the front buffer.
-//    This should be called from a single computation or render thread.
+///   This should be called from a single computation or render thread.
 ///
 /// @param manager A handle to the image buffer manager.
 /// @param image_buffer After the call contains a pointer to the most recent
@@ -377,24 +375,24 @@ typedef enum {
   TANGO_SUPPORT_COORDINATE_CONVENTION_TANGO,
 } TangoCoordinateConventionType;
 
-// Enumeration of support engines. Every engine conversion
-// corresponds to an axis swap from the Tango-native frame
+/// Enumeration of support engines. Every engine conversion
+/// corresponds to an axis swap from the Tango-native frame
 typedef enum {
-  // Tango native frame, has a different convention
-  // for forward, right, and up
-  // for each reference frame
+  /// Tango native frame, has a different convention
+  /// for forward, right, and up
+  /// for each reference frame
   TANGO_SUPPORT_ENGINE_TANGO,
 
-  // OpenGL frame, -Z forward, X right, Y up
+  /// OpenGL frame, -Z forward, X right, Y up
   TANGO_SUPPORT_ENGINE_OPENGL,
 
-  // Unity frame, +Z forward, X, right, Y up
+  /// Unity frame, +Z forward, X, right, Y up
   TANGO_SUPPORT_ENGINE_UNITY,
 
-  // UnrealEngine frame, X forward, Y right, Z up
+  /// UnrealEngine frame, X forward, Y right, Z up
   TANGO_SUPPORT_ENGINE_UNREAL,
 
-  // etc.
+  /// etc.
 } TangoSupportEngineType;
 
 /// @brief Struct to hold transformation float matrix and its metadata.
@@ -1060,4 +1058,4 @@ TangoErrorType TangoSupport_freeCornerList(TangoSupportCornerList* corner_list);
 }
 #endif
 
-#endif  // TANGO_SUPPORT_API_H_
+#endif  // TANGO_SUPPORT_API_HEADER_TANGO_SUPPORT_API_H_

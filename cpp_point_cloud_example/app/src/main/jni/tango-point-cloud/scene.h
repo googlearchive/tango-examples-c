@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_POINT_CLOUD_SCENE_H_
-#define TANGO_POINT_CLOUD_SCENE_H_
+#ifndef CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_SCENE_H_
+#define CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_SCENE_H_
 
 #include <jni.h>
 #include <memory>
@@ -103,4 +103,4 @@ class Scene {
 };
 }  // namespace tango_point_cloud
 
-#endif  // TANGO_POINT_CLOUD_SCENE_H_
+#endif  // CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_SCENE_H_

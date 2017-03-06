@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_
-#define RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_
 
 #include <jni.h>
 #include <vector>
@@ -156,4 +156,4 @@ class SynchronizationApplication {
 };
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_RGB_DEPTH_SYNC_APPLICATION_H_

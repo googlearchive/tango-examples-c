@@ -257,17 +257,17 @@ glm::vec2 util::GetColorCameraUVFromDisplay(
     const glm::vec2& uv, TangoSupportRotation color_to_display_rotation) {
   switch (color_to_display_rotation) {
     case TangoSupportRotation::ROTATION_90:
-    return glm::vec2(1.0f - uv.y, uv.x);
-    break;
+      return glm::vec2(1.0f - uv.y, uv.x);
+      break;
     case TangoSupportRotation::ROTATION_180:
-    return glm::vec2(1.0f - uv.x, 1.0f - uv.y);
-    break;
+      return glm::vec2(1.0f - uv.x, 1.0f - uv.y);
+      break;
     case TangoSupportRotation::ROTATION_270:
-    return glm::vec2(uv.y, 1.0f - uv.x);
-    break;
-  default:
-    return glm::vec2(uv.x, uv.y);
-    break;
-}
+      return glm::vec2(uv.y, 1.0f - uv.x);
+      break;
+    default:
+      return glm::vec2(uv.x, uv.y);
+      break;
+  }
 }
 }  // namespace tango_gl

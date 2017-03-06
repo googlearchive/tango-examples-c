@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MESH_BUILDER_MESH_BUILDER_APP_H_
-#define MESH_BUILDER_MESH_BUILDER_APP_H_
+#ifndef CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_
+#define CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_
 
 #include <jni.h>
 #include <memory>
@@ -207,4 +207,4 @@ class MeshBuilderApp {
 };
 }  // namespace mesh_builder
 
-#endif  // MESH_BUILDER_MESH_BUILDER_APP_H_
+#endif  // CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_

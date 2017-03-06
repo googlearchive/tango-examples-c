@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_SHADER_H_
-#define RGB_DEPTH_SYNC_SHADER_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SHADER_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SHADER_H_
 
 namespace rgb_depth_sync {
 namespace shader {
@@ -51,4 +51,4 @@ static const char kColorCameraFrag[] =
 }  // namespace shader
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_SHADER_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SHADER_H_

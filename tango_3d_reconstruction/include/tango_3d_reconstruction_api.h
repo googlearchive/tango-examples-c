@@ -82,6 +82,14 @@ typedef enum {
   TANGO_3DR_CONFIG_TEXTURING = 1
 } Tango3DR_ConfigType;
 
+/// @brief Enumerates the available texturing backends.
+typedef enum {
+  /// Default CPU texturing pipeline.
+  TANGO_3DR_CPU_TEXTURING = 0,
+  /// OpenGL texturing pipeline, trading some quality for performance.
+  TANGO_3DR_GL_TEXTURING = 1,
+} Tango3DR_TexturingBackend;
+
 /// @brief 3D Reconstruction update algorithm types.
 /// Determines the algorithm used to update the reconstruction during the
 /// Tango3DR_update call. The default value is TANGO_3DR_TRAVERSAL_UPDATE.
@@ -347,9 +355,17 @@ typedef struct Tango3DR_Polygon {
 
   /// 2D points.
   Tango3DR_Vector2* vertices;  // In meters.
+
+  /// Surface area of the path. A negative number indicates that this polygon
+  /// represents a hole (in a bigger polygon).
+  double area;  // In square meters.
 } Tango3DR_Polygon;
 
 /// 2D vector graphics object.
+/// The polygons are sorted by decreasing surface area, so that it is safe to
+/// render them directly using the provided ordering. Note that polygons with
+/// negative surface area indicate holes that need to be rendered in the
+/// background color.
 typedef struct Tango3DR_PolygonArray {
   /// Number of paths contained in the <code>paths</code> array.
   uint32_t num_polygons;
@@ -589,6 +605,10 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 /// TANGO_3DR_CONFIG_TEXTURING are:
 ///
 /// <table>
+///
+/// <tr><td>int32_t texturing_backend</td><td>
+///         Backend to use when performing mesh texturing. See
+///         @c Tango3DR_TexturingBackend. </td></tr>
 ///
 /// <tr><td>int32 mesh_simplification_factor</td><td>
 ///         Reduce the number of vertices by this factor before
@@ -1259,7 +1279,11 @@ Tango3DR_Status Tango3DR_updateFloorplan(
 /// @param levels Building levels to extract.
 /// @param graphics On successful return, this will be filled with a pointer
 /// to a freshly allocated Tango3DR_Graphics object containing a vector graphics
-/// object. After use, free this by calling Tango3DR_destroyGraphics().
+/// object. The polygons are sorted by decreasing surface area, so that it is
+/// safe to render them directly using the provided ordering. Note that polygons
+/// with negative surface area indicate holes that need to be rendered in the
+/// background color. After use, free this by calling
+/// Tango3DR_destroyGraphics().
 /// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
 /// Returns @c TANGO_3DR_INVALID if <code>context</code> or
 /// <code>graphics</code> is NULL.
