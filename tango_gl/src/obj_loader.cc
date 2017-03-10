@@ -18,8 +18,8 @@
 #include "tango-gl/obj_loader.h"
 
 namespace tango_gl {
-bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
-                             std::vector<GLushort>& indices) {
+bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>* vertices,
+                             std::vector<GLushort>* indices) {
   FILE* file = fopen(path, "r");
   if (file == NULL) {
     LOGE("Failed to open file: %s", path);
@@ -38,9 +38,9 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
         LOGE("Format of 'v float float float' required for each vertice line");
         return false;
       }
-      vertices.push_back(vertex[0]);
-      vertices.push_back(vertex[1]);
-      vertices.push_back(vertex[2]);
+      vertices->push_back(vertex[0]);
+      vertices->push_back(vertex[1]);
+      vertices->push_back(vertex[2]);
     } else if (strcmp(lineHeader, "f") == 0) {
       GLushort vertexIndex[3];
       int matches = fscanf(file, "%hu %hu %hu\n", &vertexIndex[0],
@@ -49,9 +49,9 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
         LOGE("Format of 'f int int int' required for each face line");
         return false;
       }
-      indices.push_back(vertexIndex[0] - 1);
-      indices.push_back(vertexIndex[1] - 1);
-      indices.push_back(vertexIndex[2] - 1);
+      indices->push_back(vertexIndex[0] - 1);
+      indices->push_back(vertexIndex[1] - 1);
+      indices->push_back(vertexIndex[2] - 1);
     } else {
       char comments_buffer[1000];
       fgets(comments_buffer, 1000, file);
@@ -61,8 +61,8 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
   return true;
 }
 
-bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
-                             std::vector<GLfloat>& normals) {
+bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>* vertices,
+                             std::vector<GLfloat>* normals) {
   std::vector<unsigned int> vertexIndices, normalIndices;
   std::vector<GLfloat> temp_vertices, temp_normals;
 
@@ -158,12 +158,12 @@ bool obj_loader::LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
     unsigned int vertexIndex = vertexIndices[i];
     unsigned int normalIndex = normalIndices[i];
 
-    vertices.push_back(temp_vertices[vertexIndex * 3]);
-    vertices.push_back(temp_vertices[vertexIndex * 3 + 1]);
-    vertices.push_back(temp_vertices[vertexIndex * 3 + 2]);
-    normals.push_back(temp_normals[normalIndex * 3]);
-    normals.push_back(temp_normals[normalIndex * 3 + 1]);
-    normals.push_back(temp_normals[normalIndex * 3 + 2]);
+    vertices->push_back(temp_vertices[vertexIndex * 3]);
+    vertices->push_back(temp_vertices[vertexIndex * 3 + 1]);
+    vertices->push_back(temp_vertices[vertexIndex * 3 + 2]);
+    normals->push_back(temp_normals[normalIndex * 3]);
+    normals->push_back(temp_normals[normalIndex * 3 + 1]);
+    normals->push_back(temp_normals[normalIndex * 3 + 2]);
   }
   fclose(file);
   return true;

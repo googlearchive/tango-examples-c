@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_UTIL_H_
-#define RGB_DEPTH_SYNC_UTIL_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_UTIL_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_UTIL_H_
 
 #include "tango_client_api.h"  // NOLINT
 #include "tango-gl/util.h"
@@ -29,4 +29,4 @@ glm::mat4 GetMatrixFromPose(const TangoPoseData* pose_data);
 }  // namespace util
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_UTIL_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_UTIL_H_

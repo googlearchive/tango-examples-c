@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef TANGO_CLIENT_API_H_
-#define TANGO_CLIENT_API_H_
+#ifndef TANGO_CLIENT_API_HEADER_TANGO_CLIENT_API_H_
+#define TANGO_CLIENT_API_HEADER_TANGO_CLIENT_API_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -807,6 +807,7 @@ TangoErrorType TangoService_Experimental_createFrameOfInterest(
     double timestamp, TangoCoordinateFrameId base_frame_id,
     TangoTransformation tango_transformation, TangoCoordinateFrameId* foi_id);
 
+/// @deprecated
 /// Updates an existing frame of interest (FOI) and saves the updated
 /// FOI to a file.
 /// @param timestamp Timestamp of the base frame transformation, in seconds. If
@@ -834,6 +835,7 @@ TangoErrorType TangoService_Experimental_updateFrameOfInterest(
     double timestamp, TangoCoordinateFrameId base_frame_id,
     TangoTransformation tango_transformation, TangoCoordinateFrameId foi_id);
 
+/// @deprecated
 /// Deletes a frame of interest (FOI) with the given id.
 /// @param foi_id The id of the FOI to be deleted.
 /// @return False if no FOI with the given id exists in the current ADF or if
@@ -1475,6 +1477,7 @@ TangoErrorType TangoService_Experimental_connectTextureIdUnity(
     unsigned int texture_Cr, void* context,
     void (*callback)(void*, TangoCameraId));
 
+/// @deprecated
 /// Experimental API only, subject to change.
 /// Loads an area description with the specified unique ID. This allows an
 /// application to load an ADF for localization after connecting to the service.
@@ -1564,4 +1567,4 @@ TangoErrorType TangoService_Experimental_getCurrentDatasetUUID(
 }
 #endif
 
-#endif  // TANGO_CLIENT_API_H_
+#endif  // TANGO_CLIENT_API_HEADER_TANGO_CLIENT_API_H_

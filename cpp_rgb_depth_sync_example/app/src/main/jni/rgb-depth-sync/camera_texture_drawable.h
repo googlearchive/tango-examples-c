@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
-#define RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
 
 #include <tango_support_api.h>
 #include <tango-gl/util.h>
@@ -72,4 +72,4 @@ class CameraTextureDrawable {
 };
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_

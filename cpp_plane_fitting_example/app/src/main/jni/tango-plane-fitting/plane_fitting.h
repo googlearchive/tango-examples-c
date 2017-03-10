@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_PLANE_FITTING_PLANE_FITTING_H_
-#define TANGO_PLANE_FITTING_PLANE_FITTING_H_
+#ifndef CPP_PLANE_FITTING_EXAMPLE_TANGO_PLANE_FITTING_PLANE_FITTING_H_
+#define CPP_PLANE_FITTING_EXAMPLE_TANGO_PLANE_FITTING_PLANE_FITTING_H_
 
 #include <vector>
 
@@ -29,4 +29,4 @@ void PlaneTransform(const glm::vec4& in_plane, const glm::mat4& out_T_in,
 
 }  // namespace tango_plane_fitting
 
-#endif  // TANGO_PLANE_FITTING_PLANE_FITTING_H_
+#endif  // CPP_PLANE_FITTING_EXAMPLE_TANGO_PLANE_FITTING_PLANE_FITTING_H_

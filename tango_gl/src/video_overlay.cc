@@ -111,8 +111,7 @@ void VideoOverlay::Initialize() {
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
 
-void VideoOverlay::SetDisplayRotation(
-    TangoSupportRotation display_rotation) {
+void VideoOverlay::SetDisplayRotation(TangoSupportRotation display_rotation) {
   display_rotation_ = display_rotation;
   float texture_coords_0[8] = {
       0.0f + u_offset_, 0.0f + v_offset_, 0.0f + u_offset_, 1.0f - v_offset_,

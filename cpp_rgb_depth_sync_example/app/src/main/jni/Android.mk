@@ -35,19 +35,19 @@ LOCAL_SRC_FILES := camera_texture_drawable.cc \
                    rgb_depth_sync_application.cc \
                    scene.cc \
                    util.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/bounding_box.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/camera.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/conversions.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/cube.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/drawable_object.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/frustum.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/grid.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/line.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/mesh.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/trace.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/transform.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/util.cc
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/bounding_box.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/camera.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/conversions.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/cube.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/drawable_object.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/frustum.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/grid.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/line.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/mesh.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/trace.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/util.cc
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

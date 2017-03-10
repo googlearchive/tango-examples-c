@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RGB_DEPTH_SYNC_SCENE_H_
-#define RGB_DEPTH_SYNC_SCENE_H_
+#ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SCENE_H_
+#define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SCENE_H_
 
 #include <tango_support_api.h>
 #include <tango-gl/camera.h>
@@ -59,4 +59,4 @@ class Scene {
 };
 }  // namespace rgb_depth_sync
 
-#endif  // RGB_DEPTH_SYNC_SCENE_H_
+#endif  // CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SCENE_H_

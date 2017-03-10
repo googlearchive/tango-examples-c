@@ -25,11 +25,11 @@ LOCAL_CFLAGS    := -std=c++11
 
 LOCAL_SRC_FILES := jni_interface.cc \
                    hello_video_app.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/drawable_object.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/transform.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/util.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/video_overlay.cc
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/drawable_object.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/util.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/video_overlay.cc
 
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
                     $(PROJECT_ROOT)/third_party/glm
