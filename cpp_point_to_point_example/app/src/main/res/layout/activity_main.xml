@@ -55,11 +55,10 @@
                 android:onClick="onCheckboxClicked"
                 style="@style/TextPrimary" />
 
-
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/linearLayout1"
+            android:id="@+id/linearLayout2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
@@ -67,7 +66,6 @@
             android:orientation="vertical"
             android:paddingLeft="5dp"
             android:paddingStart="5dp">
-            
 
             <TextView
                 android:layout_width="wrap_content"

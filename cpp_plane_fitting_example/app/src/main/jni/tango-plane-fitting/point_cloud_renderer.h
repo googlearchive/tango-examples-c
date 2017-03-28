@@ -49,7 +49,16 @@ class PointCloudRenderer {
   void SetRenderDebugColors(bool on) { debug_colors_ = on; }
 
   // A plane equation in world coordinates for debug rendering.
-  void SetPlaneEquation(const glm::vec4& plane) { plane_model_ = plane; }
+  void SetPlaneEquation(unsigned int index, const glm::vec4& plane) {
+    if (index < 3) {
+      plane_model_[index] = plane;
+    }
+  }
+
+  // The valid number of plane equations set via SetPlaneEquation (max of 3)
+  void SetPlaneCount(unsigned int plane_count) {
+    plane_count_ = plane_count > 3 ? 3 : plane_count;
+  }
 
   // A call to manually free the OpenGL resources
   void DeleteGLResources();
@@ -59,8 +68,9 @@ class PointCloudRenderer {
   GLuint vertex_buffer_;
   GLuint mvp_handle_;
   GLuint vertices_handle_;
-  GLuint plane_handle_;
+  GLuint plane_handle_[3];
   GLuint plane_distance_handle_;
+  GLuint plane_count_handle_;
 
   // A parameter controlling inlier distance.
   GLfloat plane_distance_;
@@ -68,8 +78,11 @@ class PointCloudRenderer {
   // Controls coloring of point data.
   GLboolean debug_colors_;
 
-  // The updated plane model after every plane fit.
-  glm::vec4 plane_model_;
+  // Number of planes to consider in plane_model_ (max is 3)
+  unsigned int plane_count_;
+
+  // The updated plane models after every plane fit.
+  glm::vec4 plane_model_[3];
 };
 
 }  // namespace tango_plane_fitting
