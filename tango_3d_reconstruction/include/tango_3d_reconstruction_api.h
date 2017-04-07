@@ -597,6 +597,11 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 /// <tr><td>double floorplan_max_error</td><td>
 ///         Upper bound on geometric error in meters during polygon
 ///         simplification. Set to zero to disable simplification.
+///
+/// <tr><td>bool rectify_color_image</td><td>
+///         When true, rectification will be applied to color images passed to
+///         the reconstruction context via the update functions. Default is
+///         true.
 /// </td></tr>
 ///
 /// </table>

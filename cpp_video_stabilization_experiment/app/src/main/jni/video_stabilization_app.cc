@@ -303,10 +303,10 @@ void VideoStabilizationApp::Render() {
 
   if (status == TANGO_SUCCESS) {
     TangoPoseData pose;
-    TangoSupport_getPoseAtTime(0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-                               TANGO_COORDINATE_FRAME_CAMERA_COLOR,
-                               TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_IGNORED,
-                               &pose);
+    TangoSupport_getPoseAtTime(
+        0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+        TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_IGNORED, &pose);
     if (pose.status_code == TANGO_POSE_VALID) {
       main_scene_.AddNewPose(pose);
       main_scene_.Render();

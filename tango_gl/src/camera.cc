@@ -45,6 +45,7 @@ void Camera::SetAspectRatio(float aspect_ratio) {
 
 void Camera::SetFieldOfView(float fov) {
   field_of_view_ = fov * DEGREE_2_RADIANS;
+  UpdateProjectionMatrix();
 }
 
 void Camera::SetProjectionMatrix(const glm::mat4& projection_matrix) {

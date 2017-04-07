@@ -120,7 +120,7 @@ class PointToPointApplication {
   void GLRender(const glm::mat4& opengl_ss_T_color_opengl);
 
   // Update the segment based on a new touch position.
-  void UpdateSegment(glm::vec4 world_position);
+  void UpdateSegment(glm::vec3 world_position);
 
   // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
@@ -139,15 +139,6 @@ class PointToPointApplication {
 
   // Delete the allocate resources.
   void DeleteResources();
-
-  // Return transform for depth camera in Tango coordinate convention with
-  // respect to
-  // Start of Service in OpenGL coordinate convention. The reason to switch from
-  // one convention to
-  // the other is an optimization that allow us to avoid transforming the depth
-  // points into OpenGL
-  // coordinate frame.
-  glm::mat4 GetStartServiceTColorPose(const double& image_time);
 
   // Set view port and projection matrix. This must be called in the GL thread.
   void SetViewportAndProjectionGLThread();

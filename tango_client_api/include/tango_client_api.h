@@ -171,6 +171,18 @@ typedef enum {
   TANGO_RECORDING_MODE_ALL = 3
 } TangoRecordingMode_Experimental;
 
+/// Experimental API only, subject to change.
+/// Runtime control of recording.
+typedef enum {
+  /// Specifies that the recording should not change in this call to runtime
+  /// config.
+  TANGO_RUNTIME_RECORDING_NO_CHANGE = 0,
+  /// Start recording.  Has no effect if recording has already been started.
+  TANGO_RUNTIME_RECORDING_START = 1,
+  /// Stop recording.  Has no effect if recording is not currently started.
+  TANGO_RUNTIME_RECORDING_STOP = 2
+} TangoRuntimeRecordingControl_Experimental;
+
 /**@} */
 
 /// @defgroup Types Project Tango Defined Types
@@ -200,9 +212,11 @@ typedef struct TangoCoordinateFrameId {
   uint8_t data[TANGO_COORDINATE_FRAME_ID_BYTE_LEN];
 } TangoCoordinateFrameId;
 
+// The following predefined UUIDs must be in the reserved space in
+// 10000000-0000-0000-0000-0000000000[00-ff].
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_NONE = {
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff}};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84 = {
     {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
@@ -280,7 +294,7 @@ typedef struct TangoPoseData {
   /// An integer denoting the version of the structure.
   uint32_t version;
 
-  /// Timestamp of the time that this pose estimate corresponds to.
+  /// The timestamp of the pose estimate, in seconds.
   double timestamp;
 
   /// Orientation, as a quaternion, of the pose of the target frame with
@@ -333,7 +347,7 @@ typedef struct TangoImageBuffer {
   uint32_t width;
   /// The height of the image data.
   uint32_t height;
-  /// The number of pixels per scanline of image data.
+  /// The number of bytes per scanline of image data.
   uint32_t stride;
   /// The timestamp of this image.
   double timestamp;
@@ -346,6 +360,48 @@ typedef struct TangoImageBuffer {
   /// Exposure duration of this image in nanoseconds.
   int64_t exposure_duration_ns;
 } TangoImageBuffer;
+
+/// The TangoImage contains information about a byte buffer holding
+/// image data. This version supplies a pointer to the start of each
+/// image plane, as there may be padding between the planes. It is
+/// meant to closely replicate the data available from the Android
+/// Image class, and as such camera specific metadata has been moved
+/// into a separate struct, TangoCameraMetadata.
+#define TANGO_MAX_IMAGE_PLANES (4)
+typedef struct TangoImage {
+  /// The width of the image data.
+  uint32_t width;
+  /// The height of the image data.
+  uint32_t height;
+  /// Pixel format of data.
+  TangoImageFormatType format;
+  /// The timestamp of this image.
+  int64_t timestamp_ns;
+
+  /// Number of planes for the image format of this buffer.
+  uint32_t num_planes;
+  /// Pointers to the pixel data for each image plane.
+  uint8_t* plane_data[TANGO_MAX_IMAGE_PLANES];
+  /// Sizes of the image planes.
+  int32_t plane_size[TANGO_MAX_IMAGE_PLANES];
+  /// Row strides for each image plane.
+  int32_t plane_row_stride[TANGO_MAX_IMAGE_PLANES];
+  /// Pixel strides for each image plane.
+  int32_t plane_pixel_stride[TANGO_MAX_IMAGE_PLANES];
+} TangoImage;
+
+/// TangoCameraMetadata. This struct contains information
+/// specific to the camera capture. It is meant to replicate
+/// some of the information provided by the Android
+/// CameraMetadata class.
+typedef struct TangoCameraMetadata {
+  /// Camera timestamp in nanoseconds
+  int64_t timestamp_ns;
+  /// Camera frame number
+  int64_t frame_number;
+  /// Camera exposure time in nanoseconds
+  int64_t exposure_duration_ns;
+} TangoCameraMetadata;
 
 /// @deprecated Use @c TangoPointCloud instead.
 ///
@@ -780,69 +836,6 @@ TangoErrorType TangoService_Experimental_getPoseAtTime2(
     double timestamp, TangoCoordinateFrameId base_frame_id,
     TangoCoordinateFrameId target_frame_id, TangoPoseData* return_pose);
 
-/// Creates a frame of interest (FOI) in the currently loaded ADF. FOIs
-/// will be stored next to this ADF, local FOIs will be stored on the device and
-/// cloud FOIs will be stored on the cloud server.
-/// @param timestamp Timestamp of the base frame transformation, in seconds. If
-///     not set to 0.0, createFrameOfInterest uses the interpolated
-///     transformation closest to this timestamp to create an FOI. If set to
-///     0.0, the most recent transformation estimate for the base frame is used.
-/// @param base_frame_id The base frame id of @p tango_transformation. It can
-///     be either one of the predefined tango coordinate frame ids
-///     (@c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
-///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
-///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_IMU) or the id of an existing FOI in the
-///     currently loaded ADF. A frame of interest id from a different ADF
-///     will return @c TANGO_INVALID.
-/// @param tango_transformation The transformation of the newly created FOI with
-///     respect to @p base_frame_id.
-/// @param foi_id The id of the newly created FOI.
-/// @return @c TANGO_SUCCESS if an FOI was created successfully, or
-///     @c TANGO_INVALID if @p base_frame_id is invalid (format), unknown or if
-///     the transformation of the newly created FOI cannot be resolved using the
-///     given @p timestamp, @p base_frame_id and @p tango_transformation.
-TangoErrorType TangoService_Experimental_createFrameOfInterest(
-    double timestamp, TangoCoordinateFrameId base_frame_id,
-    TangoTransformation tango_transformation, TangoCoordinateFrameId* foi_id);
-
-/// @deprecated
-/// Updates an existing frame of interest (FOI) and saves the updated
-/// FOI to a file.
-/// @param timestamp Timestamp of the base frame transformation, in seconds. If
-///     not set to 0.0, updateFrameOfInterest uses the interpolated
-///     transformation closest to this timestamp to create an FOI. If set to
-///     0.0, the most recent transformation estimate for the base frame is used.
-/// @param base_frame_id The base frame id of @p tango_transformation. It can
-///     be either one of the predefined tango coordinate frame ids
-///     (@c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
-///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
-///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_IMU) or the id of an existing FOI in the
-///     currently loaded ADF. A frame of interest id from a different ADF
-///     will return @c TANGO_INVALID.
-/// @param tango_transformation The transformation of the newly created FOI with
-///     respect to @p base_frame_id.
-/// @param foi_id The id of the FOI to be updated.
-/// @return @c TANGO_SUCCESS if an FOI was created successfully, or
-///     @c TANGO_INVALID if the @p base_frame_id and/or @p foi_id are invalid
-///     (format), unknown or if the transformation of the updated FOI cannot be
-///     resolved using the given @p timestamp, @p base_frame_id and
-///     @p tango_transformation.
-TangoErrorType TangoService_Experimental_updateFrameOfInterest(
-    double timestamp, TangoCoordinateFrameId base_frame_id,
-    TangoTransformation tango_transformation, TangoCoordinateFrameId foi_id);
-
-/// @deprecated
-/// Deletes a frame of interest (FOI) with the given id.
-/// @param foi_id The id of the FOI to be deleted.
-/// @return False if no FOI with the given id exists in the current ADF or if
-/// the FOI cannot be deleted.
-TangoErrorType TangoService_Experimental_deleteFrameOfInterest(
-    TangoCoordinateFrameId foi_id);
-
 /**@} */
 
 /// @defgroup Depth Tango Service: Depth Interface
@@ -917,8 +910,6 @@ typedef void (*TangoService_OnTextureAvailable)(void*, TangoCameraId);
 /// config_enable_color_camera must be set to true for connectTextureId
 /// to succeed after TangoService_connect() is called.
 ///
-/// Note: The first scanline of the color image is reserved for metadata
-/// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onFrameAvailable callback.
@@ -950,8 +941,6 @@ TangoErrorType TangoService_updateTexture(TangoCameraId id, double* timestamp);
 /// must be set to true for connectOnTextureAvailable to succeed after
 /// @c TangoService_connect() is called.
 ///
-/// Note: The first scanline of the color image is reserved for metadata
-/// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onTextureAvailable callback.
@@ -981,6 +970,54 @@ TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
                                                      unsigned int tex,
                                                      double* timestamp);
 
+typedef int64_t TangoBufferId;
+
+/// Keep the most recent image buffer of a camera around so that it
+/// can be available to update in the future.
+///
+/// This is useful to get the timestamp for a camera image outside of
+/// the render thread and then update the image in the render thread.
+///
+/// @param id The ID of the camera to lock the most recent image.
+/// @param timestamp Upon return, if not NULL upon calling, timestamp
+///     contains the timestamp of the image buffer locked.
+/// @param buffer Upon return, buffer contains a handle that can be
+///     passed to @c TangoService_updateTextureExternalOesForBuffer to
+///     update a GL texture in the render thread.
+/// @return @c TANGO_INVALID if @p id is out of range or @p buffer is
+///     NULL; @c TANGO_ERROR if too many buffers are currently
+///     locked; @c TANGO_SUCCESS otherwise.
+TangoErrorType TangoService_lockCameraBuffer(TangoCameraId id,
+                                             double* timestamp,
+                                             TangoBufferId* buffer);
+
+/// Stop keeping a specific camera buffer around.
+///
+/// Call this after you have issues all the necessary render commands
+/// for a texture. This must be called in the render thread.
+///
+/// @param id The ID of the camera whose buffer to unlock.
+/// @param buffer The buffer to unlock.
+void TangoService_unlockCameraBuffer(TangoCameraId id, TangoBufferId buffer);
+
+/// Update a GL_TEXTURE_EXTERNAL_OES texture to a previously locked
+/// buffer. This must be called in the render thread.
+///
+/// The texture passed in must be of type @c
+/// GL_TEXTURE_EXTERNAL_OES. This is not checked.
+///
+/// @param id The ID of the camera to use for the update. Only @c
+///     TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
+/// @param texture_id Texture to update. This texture must be of
+///     type @c GL_TEXTURE_EXTERNAL_OES.
+/// @param buffer A previously locked buffer returned from @c
+///     TangoService_lockCameraBuffer.
+/// @return @c TANGO_INVALID if @p id is out of range, if @c tex is
+///     not a texture ID, or buffer is not a locked buffer; @c
+///     TANGO_SUCCESS otherwise.
+TangoErrorType TangoService_updateTextureExternalOesForBuffer(
+    TangoCameraId id, unsigned int texture_id, TangoBufferId buffer);
+
 /// Connect a callback to a camera for access to the pixels. This is not
 /// recommended for display but for applications requiring access to the
 /// pixel data as an array of bytes. The camera is selected via
@@ -992,8 +1029,6 @@ TangoErrorType TangoService_updateTextureExternalOes(TangoCameraId id,
 /// TangoService_connectOnFrameAvailable() to succeed after
 /// TangoService_connect() is called.
 ///
-/// Note: The first scanline of the color image is reserved for metadata
-/// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onFrameAvailable callback.
@@ -1003,6 +1038,28 @@ TangoErrorType TangoService_connectOnFrameAvailable(
     TangoCameraId id, void* context,
     void (*onFrameAvailable)(void* context, TangoCameraId id,
                              const TangoImageBuffer* buffer));
+
+/// Connect a callback to a camera for access to the pixels. This is not
+/// recommended for display but for applications requiring access to the
+/// pixel data as an array of bytes. The camera is selected via
+/// @p TangoCameraId. Currently only TANGO_CAMERA_COLOR is supported.
+/// The @c onImageAvailable callback will be called when a new image is
+/// available from the camera. The TangoConfig flag @p
+/// config_enable_color_camera
+/// (see @link ConfigParams Configuration Parameters @endlink) must be set to
+/// true in order to receive callbacks after TangoService_connect() is
+/// called.
+///
+/// @param id The ID of the camera to connect this texture to. Only
+///     @c TANGO_CAMERA_COLOR is supported.
+/// @param context The context returned during the onImageAvailable callback.
+/// @param onImageAvailable Function called when a new image is available
+///     from the camera.
+TangoErrorType TangoService_connectOnImageAvailable(
+    TangoCameraId id, void* context,
+    void (*onImageAvailable)(void* context, TangoCameraId id,
+                             const TangoImage* image,
+                             const TangoCameraMetadata* metadata));
 
 /// Disconnect a camera. The camera is selected via TangoCameraId.
 /// Currently only @c TANGO_CAMERA_COLOR and @c TANGO_CAMERA_FISHEYE are
@@ -1462,8 +1519,6 @@ TangoErrorType TangoConfig_getString(TangoConfig config, const char* key,
 /// texture_Cb and texture_Cr will be 2x2 downsampled versions of the same.
 /// See YV12 and NV21 formats for details.
 ///
-/// Note: The first scanline of the color image is reserved for metadata
-/// instead of image pixels.
 /// @param id The ID of the camera to connect this texture to. Only
 ///     TANGO_CAMERA_COLOR and TANGO_CAMERA_FISHEYE are supported.
 /// @param context The context returned during the onFrameAvailable callback.

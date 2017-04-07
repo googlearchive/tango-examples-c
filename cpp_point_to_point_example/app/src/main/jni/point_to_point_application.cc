@@ -473,51 +473,56 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
     color_image_timestamp = image->timestamp;  // CPU
   }
 
-  // Calculate the relative pose between the depth camera and color camera.
-  TangoPoseData pose_color_camera_T_depth_camera;
-  int ret = TangoSupport_calculateRelativePose(
-      color_image_timestamp, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
-      point_cloud->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
-      &pose_color_camera_T_depth_camera);
+  // Get poses of point cloud and color camera in OpenGL world space.
+  TangoPoseData pose_depth, pose_color;
+  TangoErrorType ret;
+  ret = TangoSupport_getPoseAtTime(
+      point_cloud->timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_depth);
   if (ret != TANGO_SUCCESS) {
-    LOGE("PointToPointApplication::%s: could not calculate relative pose",
-         __func__);
+    LOGE(
+        "PointToPointApplication::%s: Could not get device pose for point "
+        "cloud timestamp %f.",
+        __func__, point_cloud->timestamp);
+    return;
+  }
+  ret = TangoSupport_getPoseAtTime(
+      color_image_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_color);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "PointToPointApplication::%s: Count not get color camera pose for "
+        "timestamp %f.",
+        __func__, color_image_timestamp);
     return;
   }
 
-  // Get the point near the user's click.
+  // Get the point, in OpenGL world space, near the user's click.
+  // - Result coordinate is in OpenGL world space due to base engine choice
+  //   above.
   glm::vec2 uv = glm::vec2(x / screen_width_, y / screen_height_);
-  float color_position[3] = {0.0f, 0.0f, 0.0f};
-  double identity_translation[3] = {0.0, 0.0, 0.0};
-  double identity_orientation[4] = {0.0, 0.0, 0.0, 1.0};
-  TangoErrorType depth_at_point_return;
+  float opengl_position[3] = {0.0f, 0.0f, 0.0f};
   if (algorithm_ == UpsampleAlgorithm::kNearest) {
-    depth_at_point_return = TangoSupport_getDepthAtPointNearestNeighbor(
-        point_cloud, pose_color_camera_T_depth_camera.translation,
-        pose_color_camera_T_depth_camera.orientation, glm::value_ptr(uv),
-        display_rotation_, identity_translation, identity_orientation,
-        color_position);
+    ret = TangoSupport_getDepthAtPointNearestNeighbor(
+        point_cloud, pose_depth.translation, pose_depth.orientation,
+        glm::value_ptr(uv), display_rotation_, pose_color.translation,
+        pose_color.orientation, opengl_position);
   } else {
-    depth_at_point_return = TangoSupport_getDepthAtPointBilateral(
-        interpolator_, point_cloud,
-        pose_color_camera_T_depth_camera.translation,
-        pose_color_camera_T_depth_camera.orientation, image, glm::value_ptr(uv),
-        display_rotation_, identity_translation, identity_orientation,
-        color_position);
+    ret = TangoSupport_getDepthAtPointBilateral(
+        interpolator_, point_cloud, pose_depth.translation,
+        pose_depth.orientation, image, glm::value_ptr(uv), display_rotation_,
+        pose_color.translation, pose_color.orientation, opengl_position);
   }
 
-  // If we found a point, let's transform it to the world and draw it.
-  if (depth_at_point_return == TANGO_SUCCESS) {
-    const glm::vec3 color_position_vec =
-        glm::vec3(color_position[0], color_position[1], color_position[2]);
-    const glm::mat4 opengl_world_T_color =
-        GetStartServiceTColorPose(color_image_timestamp);
-    // Transform to world coordinates
-    const glm::vec4 world_position =
-        opengl_world_T_color * glm::vec4(color_position_vec, 1.0f);
-    UpdateSegment(world_position);
+  // If we found a point, draw it.
+  if (ret == TANGO_SUCCESS) {
+    const glm::vec3 opengl_position_vec =
+        glm::vec3(opengl_position[0], opengl_position[1], opengl_position[2]);
+    UpdateSegment(opengl_position_vec);
   } else {
-    LOGE("No depth for this point");
+    LOGE("PointToPointApplication::%s: No depth for this point.", __func__);
   }
 }
 
@@ -527,28 +532,8 @@ void PointToPointApplication::OnDisplayChanged(int display_rotation) {
   is_scene_camera_configured_ = false;
 }
 
-glm::mat4 PointToPointApplication::GetStartServiceTColorPose(
-    const double& image_time) {
-  glm::mat4 start_service_opengl_T_color_tango;
-  TangoMatrixTransformData matrix_transform;
-  TangoSupport_getMatrixTransformAtTime(
-      image_time, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
-  if (matrix_transform.status_code != TANGO_POSE_VALID) {
-    LOGE(
-        "PointToPointApplication: Could not find a valid matrix transform at "
-        "time %lf for the color camera.",
-        image_time);
-  } else {
-    start_service_opengl_T_color_tango =
-        glm::make_mat4(matrix_transform.matrix);
-  }
-  return start_service_opengl_T_color_tango;
-}
-
-void PointToPointApplication::UpdateSegment(glm::vec4 world_position) {
-  // Update the points with world_position.
+void PointToPointApplication::UpdateSegment(glm::vec3 world_position) {
+  // Update the points with copy of world_position.
   std::lock_guard<std::mutex> lock(tango_points_mutex_);
   if (point_modifier_flag_) {
     point1_ = glm::vec3(world_position);
