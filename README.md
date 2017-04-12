@@ -36,8 +36,6 @@ different use cases of Tango technology:
  * **cpp_augmented_reality_example** - Achieve an augmented
    reality effect by rendering 3D objects overlaid on the camera image
    such that they appear to stay affixed in space.
- * **cpp_mesh_builder_example** - Use the depth sensor to
-   build a mesh of the surrounding space.
  * **cpp_motion_tracking_example** - Use Tango motion
    tracking to navigate in a virtual 3D world.
  * **cpp_plane_fitting_example** - Build an AR application
