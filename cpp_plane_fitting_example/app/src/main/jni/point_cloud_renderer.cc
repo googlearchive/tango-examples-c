@@ -70,8 +70,7 @@ PointCloudRenderer::PointCloudRenderer()
     : plane_distance_(0.05f),
       debug_colors_(false),
       plane_count_(0),
-      plane_model_{glm::vec4(0.0, 0.0, 1.0, 0.0),
-                   glm::vec4(0.0, 0.0, 1.0, 0.0),
+      plane_model_{glm::vec4(0.0, 0.0, 1.0, 0.0), glm::vec4(0.0, 0.0, 1.0, 0.0),
                    glm::vec4(0.0, 0.0, 1.0, 0.0)} {
   shader_program_ = tango_gl::util::CreateProgram(
       kPointCloudVertexShader.c_str(), kPointCloudFragmentShader.c_str());

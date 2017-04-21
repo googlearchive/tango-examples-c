@@ -49,7 +49,6 @@ typedef enum {
 typedef enum {
   TANGO_3DR_HAL_PIXEL_FORMAT_RGBA_8888 = 1,       ///< RGBA 8888
   TANGO_3DR_HAL_PIXEL_FORMAT_RGB_888 = 3,         ///< RGB 888
-  TANGO_3DR_HAL_PIXEL_FORMAT_YV12 = 0x32315659,   ///< YV12
   TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP = 0x11  ///< NV21
 } Tango3DR_ImageFormatType;
 
@@ -75,10 +74,9 @@ typedef enum {
 
 /// @brief Tango 3DR configuration enumerations.
 typedef enum {
-  /// Configuration for Tango3DR_create.
-  TANGO_3DR_CONFIG_CONTEXT = 0,
+  /// Configuration for Tango3DR_ReconstructionContext_create.
+  TANGO_3DR_CONFIG_RECONSTRUCTION = 0,
   /// Texturing configuration for Tango3DR_textureMeshFromDataset.
-  // TODO(idryanov): Call this TANGO_3DR_CONFIG_TEXTURING_CONTEXT
   TANGO_3DR_CONFIG_TEXTURING = 1
 } Tango3DR_ConfigType;
 
@@ -107,25 +105,36 @@ typedef enum {
   TANGO_3DR_PROJECTIVE_UPDATE = 1,
 } Tango3DR_UpdateMethod;
 
+typedef enum {
+  TANGO_3DR_CAMERA_COLOR = 0,    ///< Back-facing color camera.
+  TANGO_3DR_CAMERA_IR = 1,       ///< Back-facing infrared camera.
+  TANGO_3DR_CAMERA_FISHEYE = 2,  ///< Back-facing fisheye wide-angle camera.
+  TANGO_3DR_CAMERA_DEPTH = 3,    ///< Back-facing depth camera.
+} Tango3DR_CameraId;
+
 /**@} */
 
 /// @defgroup MeshBuildingTypes Mesh Building Types
 /// @brief Types used when building meshes.
 /// @{
 
-/// This provides a handle to a Tango 3D reconstruction server.
-typedef void* Tango3DR_Context;
+/// This provides a handle to a Tango 3D reconstruction context.
+typedef struct _Tango3DR_ReconstructionContext* Tango3DR_ReconstructionContext;
 
 /// This provides a handle to a Tango 3D texturing context.
-typedef void* Tango3DR_TexturingContext;
+typedef struct _Tango3DR_TexturingContext* Tango3DR_TexturingContext;
 
-/// This defines a handle to a Tango3DR_ConfigH; key/value pairs can only be
+/// This provides a handle to a Tango3DR_Config; key/value pairs can only be
 /// accessed through API calls.
-typedef void* Tango3DR_ConfigH;
+typedef struct _Tango3DR_Config* Tango3DR_Config;
 
-/// This defines an opaque handle to a trajectory, representing a path
-/// traveled over time.
-typedef void* Tango3DR_TrajectoryH;
+/// This provides a handle to a trajectory, representing a path traveled over
+/// time.
+typedef struct _Tango3DR_Trajectory* Tango3DR_Trajectory;
+
+/// This provides a handle to an area description, which further encodes the
+/// trajectory of the device.
+typedef struct _Tango3DR_AreaDescription* Tango3DR_AreaDescription;
 
 /// An array of three floats, commonly a 3D position or normal.
 typedef float Tango3DR_Vector3[3];
@@ -374,19 +383,23 @@ typedef struct Tango3DR_PolygonArray {
   Tango3DR_Polygon* polygons;
 } Tango3DR_PolygonArray;
 
-/// Create a point cloud.
+/// Initialize a point cloud of a given size and allocate memory. Call
+/// @c Tango3DR_PointCloud_destroy to free the memory.
 ///
 /// @param num_points How many points the newly allocated point cloud
-///     should be able to hold.
-/// @return A freshly allocated Tango3DR_PointCloud.
-Tango3DR_PointCloud* Tango3DR_PointCloud_create(const uint32_t num_points);
+///     should have.
+/// @param cloud Point cloud to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the cloud.
+///     Returns @c TANGO_3DR_INVALID if cloud is NULL.
+Tango3DR_Status Tango3DR_PointCloud_init(const uint32_t num_points,
+                                         Tango3DR_PointCloud* cloud);
 
 /// Initialize an empty point cloud.
 ///
-/// @param cloud Pointer to point cloud.
-/// @return @c TANGO_3DR_SUCCESS on successfully initializing the struct.
-///     Returns @c TANGO_3DR_INVALID if mesh is NULL.
-Tango3DR_Status Tango3DR_PointCloud_createEmpty(Tango3DR_PointCloud* cloud);
+/// @param cloud Point cloud to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the cloud.
+///     Returns @c TANGO_3DR_INVALID if cloud is NULL.
+Tango3DR_Status Tango3DR_PointCloud_initEmpty(Tango3DR_PointCloud* cloud);
 
 /// Destroy a previously created point cloud.
 ///
@@ -401,17 +414,57 @@ Tango3DR_Status Tango3DR_PointCloud_destroy(Tango3DR_PointCloud* cloud);
 /// @param calibration Pointer to camera calibration.
 /// @return @c TANGO_3DR_SUCCESS on successfully initializing the struct.
 ///     Returns @c TANGO_3DR_INVALID if calibration is NULL.
-Tango3DR_Status Tango3DR_CameraCalibration_createEmpty(
+Tango3DR_Status Tango3DR_CameraCalibration_initEmpty(
+    Tango3DR_CameraCalibration* calibration);
+
+/// Load a camera calibration from a Tango dataset.
+///
+/// @param camera_id The id of the camera. See @c Tango3DR_CameraId.
+/// @param dataset_path Path to the folder containing the Tango dataset.
+/// @param calibration The calibration to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successful load. Returns
+///     @c TANGO_3DR_INVALID if on of the arguments is NULL, or if the provided
+///     camera_id is invalid. Returns@ TANGO_3DR_ERROR if the dataset cannot be
+///     found, or the calibration files in contains cannot be loaded.
+Tango3DR_Status Tango3DR_CameraCalibration_loadFromDataset(
+    Tango3DR_CameraId camera_id, const char* const dataset_path,
     Tango3DR_CameraCalibration* calibration);
 
 /// Initialize an empty image buffer.
 ///
-/// @param image Pointer to image buffer.
+/// @param image Image to be initialized.
 /// @return @c TANGO_3DR_SUCCESS on successfully initializing the buffer.
 ///     Returns @c TANGO_3DR_INVALID if image is NULL.
-Tango3DR_Status Tango3DR_ImageBuffer_createEmpty(Tango3DR_ImageBuffer* image);
+Tango3DR_Status Tango3DR_ImageBuffer_initEmpty(Tango3DR_ImageBuffer* image);
 
-/// Create a mesh.
+/// Initialize an image buffer of a given size and allocate memory. Call
+/// @c Tango3DR_ImageBuffer_destroy to free the memory.
+///
+/// @param width Image width, in pixels.
+/// @param height Image height, in pixels.
+/// @param format Image format (see @c Tango3DR_ImageFormatType).
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the image.
+///     Return @c TANGO_3DR_INVALID if image is NULL.
+Tango3DR_Status Tango3DR_ImageBuffer_init(uint32_t width, uint32_t height,
+                                          Tango3DR_ImageFormatType format,
+                                          Tango3DR_ImageBuffer* image);
+
+/// Destroy a previously created image buffer.
+///
+/// @param image Pointer to a previously created image buffer.
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying the image buffer.
+///     Returns @c TANGO_3DR_INVALID if image is NULL.
+Tango3DR_Status Tango3DR_ImageBuffer_destroy(Tango3DR_ImageBuffer* image);
+
+/// Initialize an empty mesh.
+///
+/// @param mesh Mesh to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the mesh.
+///     Return @c TANGO_3DR_INVALID if mesh is NULL.
+Tango3DR_Status Tango3DR_Mesh_initEmpty(Tango3DR_Mesh* mesh);
+
+/// Initialize a mesh of a given size and allocate memory. Call
+/// @c Tango3DR_Mesh_destroy to free the memory.
 ///
 /// @param vertices_capacity Maximum number of vertices this mesh can
 ///     hold.
@@ -426,15 +479,18 @@ Tango3DR_Status Tango3DR_ImageBuffer_createEmpty(Tango3DR_ImageBuffer* image);
 ///     allocated.
 /// @param textures_height Height in pixels of the texture image
 ///     buffers allocated.
-/// @return A freshly allocated Tango3DR_Mesh.
-Tango3DR_Mesh* Tango3DR_Mesh_create(
+/// @param mesh Mesh to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the mesh.
+///     Return @c TANGO_3DR_INVALID if mesh is NULL.
+Tango3DR_Status Tango3DR_Mesh_init(
     const uint32_t vertices_capacity, const uint32_t faces_capacity,
     const bool allocate_normals, const bool allocate_colors,
     const bool allocate_tex_coords, const bool allocate_tex_ids,
     const uint32_t textures_capacity, const uint32_t textures_width,
-    const uint32_t textures_height);
+    const uint32_t textures_height, Tango3DR_Mesh* mesh);
 
-/// Load a mesh from a .obj file.
+/// Load a mesh from a .obj file and allocate memory.
+/// Call @c Tango3DR_Mesh_destroy to free the memory.
 ///
 /// @param path Path to the .obj mesh.
 /// @param mesh On successful return, this will be filled
@@ -444,7 +500,7 @@ Tango3DR_Mesh* Tango3DR_Mesh_create(
 ///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
 ///     valid, TANGO_3DR_ERROR if using loading failed.
 Tango3DR_Status Tango3DR_Mesh_loadFromObj(const char* const path,
-                                          Tango3DR_Mesh** mesh);
+                                          Tango3DR_Mesh* mesh);
 
 /// Save a mesh to an .obj file.
 ///
@@ -457,44 +513,31 @@ Tango3DR_Status Tango3DR_Mesh_loadFromObj(const char* const path,
 Tango3DR_Status Tango3DR_Mesh_saveToObj(const Tango3DR_Mesh* mesh,
                                         const char* const path);
 
-/// Initialize an empty mesh struct.
-///
-/// @param mesh Pre-allocated mesh struct.
-/// @return @c TANGO_3DR_SUCCESS on successfully initializing the mesh.
-///     Returns @c TANGO_3DR_INVALID if mesh is NULL.
-Tango3DR_Status Tango3DR_Mesh_createEmpty(Tango3DR_Mesh* mesh);
-
 /// Destroy a previously created mesh.
 ///
 /// @param mesh Pointer to a previously created mesh.
-/// @return @c TANGO_3DR_SUCCESS on successfully destroying
-///     the mesh.  Returns @c TANGO_3DR_INVALID if cloud is NULL.
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying the mesh.  Returns
+///    @c TANGO_3DR_INVALID if mesh is NULL.
 Tango3DR_Status Tango3DR_Mesh_destroy(Tango3DR_Mesh* mesh);
 
-/// Create an image buffer.
+/// Initialize a grid index array of a given size and allocate memory. Call
+/// @c Tango3DR_GridIndexArray_destroy to free the memory.
 ///
-/// @param width
-/// @param height
-/// @param format
-/// @return A freshly allocated Tango3DR_ImageBuffer.
-Tango3DR_ImageBuffer* Tango3DR_ImageBuffer_create(
-    uint32_t width, uint32_t height, Tango3DR_ImageFormatType format);
-
-/// Destroy a previously created image buffer.
-///
-/// @param image Pointer to a previously created image buffer.
-/// @return @c TANGO_3DR_SUCCESS on successfully destroying
-///     the image buffer.  Returns @c TANGO_3DR_INVALID if image is
-///     NULL.
-Tango3DR_Status Tango3DR_ImageBuffer_destroy(Tango3DR_ImageBuffer* image);
-
-/// Create a grid index array.
-///
-/// @param num_indices How many grid indecies the newly allocated grid
+/// @param num_indices How many grid indices the newly allocated grid
 ///     index array should be able to hold.
-/// @return A freshly allocated Tango3DR_GridIndexArray.
-Tango3DR_GridIndexArray* Tango3DR_GridIndexArray_create(
-    const uint32_t num_indices);
+/// @param grid_index_array Grid index array to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the array.
+///     Return @c TANGO_3DR_INVALID if array is NULL.
+Tango3DR_Status Tango3DR_GridIndexArray_init(
+    const uint32_t num_indices, Tango3DR_GridIndexArray* grid_index_array);
+
+/// Initialize an empty grid index array.
+///
+/// @param grid_index_array Grid index array to be initialized.
+/// @return @c TANGO_3DR_SUCCESS on successfully initializing the array.
+///     Return @c TANGO_3DR_INVALID if array is NULL.
+Tango3DR_Status Tango3DR_GridIndexArray_initEmpty(
+    Tango3DR_GridIndexArray* grid_index_array);
 
 /// Destroy a previously created grid index array.
 ///
@@ -511,7 +554,7 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 /// @defgroup ConfigParams Configuration Parameters Get and Set Functions
 /// @brief Configuration Parameters Get and Set Functions
 ///
-/// For an allocated Tango3DR_ConfigH, these functions get and set
+/// For an allocated Tango3DR_Config, these functions get and set
 /// parameters of that config.  The parameters that are available are
 /// dependent on the type of configuration created.
 ///
@@ -522,7 +565,7 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 /// TangoConfig_getBool() for a boolean.
 ///
 /// The supported configuration parameters that can be set for
-/// TANGO_3DR_CONFIG_CONTEXT are:
+/// TANGO_3DR_CONFIG_RECONSTRUCTION are:
 ///
 /// <table>
 /// <tr><td>boolean use_parallel_integration</td><td>
@@ -647,29 +690,28 @@ Tango3DR_Status Tango3DR_GridIndexArray_destroy(
 ///
 /// @{
 
-
-/// Creates a Tango3DR_ConfigH object with configuration settings.
+/// Creates a Tango3DR_Config object with configuration settings.
 /// This should be used to initialize a Config object for setting the
 /// configuration that Tango 3D Reconstruction should be run in. The
-/// Config handle is passed to Tango3DR_create() or
+/// Config handle is passed to Tango3DR_ReconstructionContext_create() or
 /// Tango3DR_textureMeshFromDataset().  The handle is needed only at
 /// the time of the call where it is used and can safely be freed
-/// after it has been used in Tango3DR_create() or
+/// after it has been used in Tango3DR_ReconstructionContext_create() or
 /// Tango3DR_textureMeshFromDataset().
 ///
 /// @param config_type The requested configuration type.
-/// @return A handle (Tango3DR_ConfigH) for a newly allocated
+/// @return A handle (Tango3DR_Config) for a newly allocated
 ///     config object with settings as requested by
 ///     config_type. Returns NULL if the config_type is not valid, the
 ///     config could not be allocated, or an internal failure
 ///     occurred.
-Tango3DR_ConfigH Tango3DR_Config_create(Tango3DR_ConfigType config_type);
+Tango3DR_Config Tango3DR_Config_create(Tango3DR_ConfigType config_type);
 
-/// Free a Tango3DR_ConfigH object.
+/// Free a Tango3DR_Config object.
 ///
-/// Frees the Tango3DR_ConfigH object for the handle specified by the
+/// Frees the Tango3DR_Config object for the handle specified by the
 /// config variable.
-Tango3DR_Status Tango3DR_Config_destroy(Tango3DR_ConfigH config);
+Tango3DR_Status Tango3DR_Config_destroy(Tango3DR_Config config);
 
 /// Set a boolean configuration parameter.
 /// @param config The configuration object to set the parameter on. @p config
@@ -679,8 +721,8 @@ Tango3DR_Status Tango3DR_Config_destroy(Tango3DR_ConfigH config);
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p config or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_Config_setBool(Tango3DR_ConfigH config,
-                                        const char* key, bool value);
+Tango3DR_Status Tango3DR_Config_setBool(Tango3DR_Config config, const char* key,
+                                        bool value);
 
 /// Set an int32 configuration parameter.
 /// @param config The configuration object to set the parameter on. @p config
@@ -690,7 +732,7 @@ Tango3DR_Status Tango3DR_Config_setBool(Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p config or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_Config_setInt32(Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_setInt32(Tango3DR_Config config,
                                          const char* key, int32_t value);
 
 /// Set an int64 configuration parameter.
@@ -701,7 +743,7 @@ Tango3DR_Status Tango3DR_Config_setInt32(Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p config or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_Config_setInt64(Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_setInt64(Tango3DR_Config config,
                                          const char* key, int64_t value);
 
 /// Set a double configuration parameter.
@@ -712,7 +754,7 @@ Tango3DR_Status Tango3DR_Config_setInt64(Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p config or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_Config_setDouble(Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_setDouble(Tango3DR_Config config,
                                           const char* key, double value);
 
 /// Set a matrix3x3 configuration parameter.
@@ -723,7 +765,7 @@ Tango3DR_Status Tango3DR_Config_setDouble(Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p config or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_Config_setMatrix3x3(Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_setMatrix3x3(Tango3DR_Config config,
                                              const char* key,
                                              const Tango3DR_Matrix3x3* value);
 
@@ -735,7 +777,7 @@ Tango3DR_Status Tango3DR_Config_setMatrix3x3(Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_Config_getBool(const Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_getBool(const Tango3DR_Config config,
                                         const char* key, bool* value);
 
 /// Get an int32 configuration parameter.
@@ -746,7 +788,7 @@ Tango3DR_Status Tango3DR_Config_getBool(const Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_Config_getInt32(const Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_getInt32(const Tango3DR_Config config,
                                          const char* key, int32_t* value);
 
 /// Get an int64 configuration parameter.
@@ -757,7 +799,7 @@ Tango3DR_Status Tango3DR_Config_getInt32(const Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_Config_getInt64(const Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_getInt64(const Tango3DR_Config config,
                                          const char* key, int64_t* value);
 
 /// Get a double configuration parameter.
@@ -768,7 +810,7 @@ Tango3DR_Status Tango3DR_Config_getInt64(const Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_Config_getDouble(const Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_getDouble(const Tango3DR_Config config,
                                           const char* key, double* value);
 
 /// Get a matrix3x3 configuration parameter.
@@ -779,7 +821,7 @@ Tango3DR_Status Tango3DR_Config_getDouble(const Tango3DR_ConfigH config,
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
+Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_Config config,
                                              const char* key,
                                              Tango3DR_Matrix3x3* value);
 
@@ -792,7 +834,8 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 /// To build a mesh on a Tango device in realtime with the API, follow
 /// the following steps:
 ///
-/// - Create a Reconstruction server with Tango3DR_create().
+/// - Create a Reconstruction context with
+///   Tango3DR_ReconstructionContext_create().
 ///
 /// - In the Tango Service callbacks, call Tango3DR_update() with
 ///   PointCloud and ImageBuffers for XYZij and Color camera
@@ -811,9 +854,9 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 ///   Tango3DR_extractPreallocatedFullMesh.
 ///
 /// - Finally, when completely finished, call Tango3DR_destroy to
-///   clean up the reconstruction server.
+///   clean up the reconstruction context.
 ///
-/// During the lifetime of a reconstruction server, the following runtime
+/// During the lifetime of a reconstruction context, the following runtime
 /// parameters can be changed using Tango3DR_setRuntimeBool:
 ///
 /// <table>
@@ -825,35 +868,37 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_ConfigH config,
 ///
 /// @{
 
-/// Create a new Tango 3D Reconstruction server and return a handle to
-/// it.  You can run as many 3D Reconstruction servers as you want.
+/// Create a new Tango 3D Reconstruction context and return a handle to
+/// it.  You can run as many 3D Reconstruction contexts as you want.
 ///
-/// @param context_config The server will be started with the setting
+/// @param context_config The context will be started with the setting
 ///     specified by this config handle.  If NULL is passed here, then
-///     the server will be started in the default configuration.
+///     the context will be started in the default configuration.
 ///
-/// @return A handle to the Tango 3D Reconstruction server.
-Tango3DR_Context Tango3DR_create(const Tango3DR_ConfigH context_config);
+/// @return A handle to the Tango 3D Reconstruction context.
+Tango3DR_ReconstructionContext Tango3DR_ReconstructionContext_create(
+    const Tango3DR_Config context_config);
 
-/// Destroy a previously created Tango 3D Reconstruction server.
+/// Destroy a previously created Tango 3D Reconstruction context.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 ///
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
-///     the server.  Returns @c TANGO_3DR_INVALID if context is NULL.
-Tango3DR_Status Tango3DR_destroy(Tango3DR_Context context);
+///     the context.  Returns @c TANGO_3DR_INVALID if context is NULL.
+Tango3DR_Status Tango3DR_ReconstructionContext_destroy(
+    Tango3DR_ReconstructionContext context);
 
 /// Create a new Tango 3D texturing context and return a handle to it.
 ///
-/// @param context_config The server will be started with the setting
+/// @param context_config The context will be started with the setting
 ///     specified by this config handle.  If NULL is passed here, then
-///     the server will be started in the default configuration.
+///     the context will be started in the default configuration.
 /// @param path to the Tango dataset containing the calibration file.
 /// @param tango_mesh mesh that will be textured.
 ///
 /// @return A handle to the Tango texturing context.
-Tango3DR_TexturingContext Tango3DR_createTexturingContext(
-    const Tango3DR_ConfigH texture_config, const char* const dataset_path,
+Tango3DR_TexturingContext Tango3DR_TexturingContext_create(
+    const Tango3DR_Config texture_config, const char* const dataset_path,
     const Tango3DR_Mesh* tango_mesh);
 
 /// Destroy a previously created texturing context.
@@ -862,37 +907,37 @@ Tango3DR_TexturingContext Tango3DR_createTexturingContext(
 ///
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
 ///     the context.  Returns @c TANGO_3DR_INVALID if context is NULL.
-Tango3DR_Status Tango3DR_destroyTexturingContext(
+Tango3DR_Status Tango3DR_TexturingContext_destroy(
     Tango3DR_TexturingContext context);
 
 /// Set a boolean runtime parameter.
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param key The string key value of the configuration parameter to set.
 /// @param value The value to set the configuration key to.
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if @p context or key is NULL, or key is not
 ///     found or could not be set.
-Tango3DR_Status Tango3DR_setRuntimeBool(Tango3DR_Context context,
+Tango3DR_Status Tango3DR_setRuntimeBool(Tango3DR_ReconstructionContext context,
                                         const char* key, bool value);
 
 /// Get a boolean runtime parameter.
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param key The string key value of the configuration parameter to get.
 /// @param value Upon success, set to the value for the configuration key.
 /// @return @c TANGO_3DR_SUCCESS on success or @c
 ///     TANGO_3DR_INVALID if the any of the arguments is NULL, or if
 ///     the key could not be found.
-Tango3DR_Status Tango3DR_getRuntimeBool(Tango3DR_Context context,
+Tango3DR_Status Tango3DR_getRuntimeBool(Tango3DR_ReconstructionContext context,
                                         const char* key, bool* value);
 
-/// Clear all voxels from a running server.
+/// Clear all voxels from a running context.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 ///
 /// @return @c TANGO_3DR_SUCCESS on successfully clearing the
-///     server's voxels.  Returns @c TANGO_3DR_INVALID if context is
+///     context's voxels.  Returns @c TANGO_3DR_INVALID if context is
 ///     NULL.
-Tango3DR_Status Tango3DR_clear(Tango3DR_Context context);
+Tango3DR_Status Tango3DR_clear(Tango3DR_ReconstructionContext context);
 
 /// Updates the voxels using a point cloud and image.
 ///
@@ -901,12 +946,14 @@ Tango3DR_Status Tango3DR_clear(Tango3DR_Context context);
 /// Tango3DR_extractPreallocatedMeshSegment(),
 /// Tango3DR_updateFloorplanSegment() or Tango3DR_extractFloorplanSegment().
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param cloud Point cloud depth data.
 /// @param cloud_pose Pose of the Tango device when capturing the data
 ///     in @c cloud.
-/// @param image Image data.  If NULL, no color information will be
-///     generated for affected voxels.
+/// @param image Image data.  Ideally, the image should be in
+///     TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP.  Other formats (RGB/RGBA)
+///     will be converted automatically.  If image is NULL, no color information
+///     will be generated for affected voxels.
 /// @param image_pose Pose of the Tango device when capturing the data
 ///     in @c image.  Can be NULL if @c image is NULL.
 /// @param calibration Camera calibration for the captured image.  Can
@@ -919,12 +966,12 @@ Tango3DR_Status Tango3DR_clear(Tango3DR_Context context);
 ///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
 ///     valid, TANGO_3DR_ERROR if using @c TANGO_3DR_PROJECTIVE_UPDATE but
 ///     the @c and @c Tango3DR_setDepthCalibration method hasn't been called.
-Tango3DR_Status Tango3DR_update(Tango3DR_Context context,
+Tango3DR_Status Tango3DR_update(Tango3DR_ReconstructionContext context,
                                 const Tango3DR_PointCloud* cloud,
                                 const Tango3DR_Pose* cloud_pose,
                                 const Tango3DR_ImageBuffer* image,
                                 const Tango3DR_Pose* image_pose,
-                                Tango3DR_GridIndexArray** updated_indices);
+                                Tango3DR_GridIndexArray* updated_indices);
 
 /// Retrieves the indices of all active cells.
 ///
@@ -932,7 +979,7 @@ Tango3DR_Status Tango3DR_update(Tango3DR_Context context,
 /// updated by Tango3DR_update() and will remain active until
 /// reconstruction is cleared using Tango3DR_clear().
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param updated_indices On successful return, this will be filled
 ///     with a pointer to a freshly allocated Tango3DR_GridIndexArray
 ///     containing all grid cells that are active.  After
@@ -940,11 +987,12 @@ Tango3DR_Status Tango3DR_update(Tango3DR_Context context,
 /// @return @c TANGO_3DR_SUCCESS on success and @c
 ///     TANGO_3DR_INVALID if the parameters are not valid.
 Tango3DR_Status Tango3DR_getActiveIndices(
-    const Tango3DR_Context context, Tango3DR_GridIndexArray** active_indices);
+    const Tango3DR_ReconstructionContext context,
+    Tango3DR_GridIndexArray* active_indices);
 
 /// Extract a mesh for the current state of a grid cell.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index Index for the grid cell to extract.
 /// @param mesh On successful return, a freshly allocated
 ///     Tango3DR_Mesh containing the mesh for the grid cell.  After
@@ -952,13 +1000,13 @@ Tango3DR_Status Tango3DR_getActiveIndices(
 /// @return @c TANGO_3DR_SUCCESS on success, @c
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
-Tango3DR_Status Tango3DR_extractMeshSegment(const Tango3DR_Context context,
-                                            const Tango3DR_GridIndex grid_index,
-                                            Tango3DR_Mesh** mesh);
+Tango3DR_Status Tango3DR_extractMeshSegment(
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_GridIndex grid_index, Tango3DR_Mesh* mesh);
 
 /// Extract a mesh for the current state of a grid cell.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index Index for the grid cell to extract.
 /// @param mesh Pointer to a previously allocated mesh. On successful
 ///     return the buffers of the mesh will be updated to represent
@@ -970,13 +1018,13 @@ Tango3DR_Status Tango3DR_extractMeshSegment(const Tango3DR_Context context,
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_extractPreallocatedMeshSegment(
-    const Tango3DR_Context context, const Tango3DR_GridIndex grid_index,
-    Tango3DR_Mesh* mesh);
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_GridIndex grid_index, Tango3DR_Mesh* mesh);
 
 /// Extract a single mesh for the current state of multiple grid
 /// cells.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index_array Array of grid cells to extract.
 /// @param mesh On successful return, a freshly allocated
 ///     Tango3DR_Mesh containing the mesh for the grid cells.  After
@@ -985,13 +1033,13 @@ Tango3DR_Status Tango3DR_extractPreallocatedMeshSegment(
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_extractMesh(
-    const Tango3DR_Context context,
-    const Tango3DR_GridIndexArray* grid_index_array, Tango3DR_Mesh** mesh);
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_GridIndexArray* grid_index_array, Tango3DR_Mesh* mesh);
 
 /// Extract a single mesh for the current state of multiple grid
 /// cells.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index_array Array of grid cells to extract.
 /// @param mesh Pointer to a previously allocated mesh. On successful
 ///     return the buffers of the mesh will be updated to represent
@@ -1003,26 +1051,26 @@ Tango3DR_Status Tango3DR_extractMesh(
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_extractPreallocatedMesh(
-    const Tango3DR_Context context,
+    const Tango3DR_ReconstructionContext context,
     const Tango3DR_GridIndexArray* grid_index_array, Tango3DR_Mesh* mesh);
 
 /// Extract a single mesh for the current state of all active grid
 /// cells.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param mesh On successful return, a freshly allocated
 ///     Tango3DR_Mesh containing the mesh for all active grid cells.
 ///     After use, free this by calling Tango3DR_Mesh_destroy().
 /// @return @c TANGO_3DR_SUCCESS on success, @c
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
-Tango3DR_Status Tango3DR_extractFullMesh(const Tango3DR_Context context,
-                                         Tango3DR_Mesh** mesh);
+Tango3DR_Status Tango3DR_extractFullMesh(
+    const Tango3DR_ReconstructionContext context, Tango3DR_Mesh* mesh);
 
 /// Extract a single mesh for the current state of all active grid
 /// cells.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param mesh Pointer to a previously allocated mesh. On successful
 ///     return the buffers of the mesh will be updated to represent
 ///     the mesh.  When @c TANGO_3DR_INSUFFICIENT_SPACE is returned,
@@ -1033,11 +1081,11 @@ Tango3DR_Status Tango3DR_extractFullMesh(const Tango3DR_Context context,
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_extractPreallocatedFullMesh(
-    const Tango3DR_Context context, Tango3DR_Mesh* mesh);
+    const Tango3DR_ReconstructionContext context, Tango3DR_Mesh* mesh);
 
 /// Extract voxels for the current state of a grid cell.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index Index for the grid cell to extract.
 /// @param num_sdf_voxels Number of voxels in this grid cell.  Must be
 ///     16x16x16 = 4096.
@@ -1048,31 +1096,32 @@ Tango3DR_Status Tango3DR_extractPreallocatedFullMesh(
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_extractPreallocatedVoxelGridSegment(
-    const Tango3DR_Context context, const Tango3DR_GridIndex grid_index,
-    const int num_sdf_voxels, Tango3DR_SignedDistanceVoxel* sdf_voxels);
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_GridIndex grid_index, const int num_sdf_voxels,
+    Tango3DR_SignedDistanceVoxel* sdf_voxels);
 
 /// Sets the depth camera intrinsic calibration. It is required to call this
 /// function once before calling @c Tango3DR_update if the update_method flag is
 /// set to @c TANGO_3DR_PROJECTIVE_UPDATE.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param calibration The calibration parameters of the depth camera.
 /// @return @c TANGO_3DR_SUCCESS on success, @TANGO_3DR_INVALID if the
 ///     parameters are not valid.
 Tango3DR_Status Tango3DR_setDepthCalibration(
-    const Tango3DR_Context context,
+    const Tango3DR_ReconstructionContext context,
     const Tango3DR_CameraCalibration* calibration);
 
 /// Sets the depth camera intrinsic calibration. It is required to call this
 /// function once before calling @c Tango3DR_update if you are passing color
 /// images to the reconstruction.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param calibration The calibration parameters of the color camera.
 /// @return @c TANGO_3DR_SUCCESS on success, @TANGO_3DR_INVALID if the
 ///     parameters are not valid.
 Tango3DR_Status Tango3DR_setColorCalibration(
-    const Tango3DR_Context context,
+    const Tango3DR_ReconstructionContext context,
     const Tango3DR_CameraCalibration* calibration);
 
 /**@} */
@@ -1085,31 +1134,9 @@ Tango3DR_Status Tango3DR_setColorCalibration(
 /// A callback function for dataset processing to report progress.
 typedef void (*Tango3DR_ProgressCallback)(int progress, void* callback_param);
 
-/// Reads a dataset with tracking images and IMU data from storage and
-/// generate an optimized trajectory using bundle adjustment.
-///
-/// @param dataset_path Path to a dataset file.
-/// @param loop_closure_database_path Path to a the loop closure database file,
-///     distributed with the Tango 3D reconstruction library. Can be NULL, in
-///     which case the default on-device location will be used.
-/// @param trajectory On successful return, a freshly allocated
-///     trajectory representing the path a Tango device traveled over
-///     time.
-/// @param progress_callback Called periodically while creating the
-///     trajectory.  Optional.
-/// @param callback_param Value passed as @c callback_param to the
-///     callback.
-/// @return @c TANGO_3DR_SUCCESS on success, @c
-///     TANGO_3DR_INVALID if the parameters are not valid, and @c
-///     TANGO_3DR_ERROR if some other error occurred.
-Tango3DR_Status Tango3DR_createTrajectoryFromDataset(
-    const char* dataset_path, const char* loop_closure_database_path,
-    Tango3DR_TrajectoryH* trajectory,
-    Tango3DR_ProgressCallback progress_callback, void* callback_param);
-
 /// Update the voxels given a trajectory and dataset.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param dataset_path Path to a dataset file.
 /// @param trajectory Handle to a trajectory representing the path a
 ///     Tango device traveled over time.
@@ -1121,8 +1148,8 @@ Tango3DR_Status Tango3DR_createTrajectoryFromDataset(
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_updateFromTrajectoryAndDataset(
-    const Tango3DR_Context context, const char* dataset_path,
-    const Tango3DR_TrajectoryH trajectory,
+    const Tango3DR_ReconstructionContext context, const char* dataset_path,
+    const Tango3DR_Trajectory trajectory,
     Tango3DR_ProgressCallback progress_callback, void* callback_param);
 
 /// Extract a mesh with textures given a trajectory and dataset.
@@ -1146,9 +1173,9 @@ Tango3DR_Status Tango3DR_updateFromTrajectoryAndDataset(
 ///     TANGO_3DR_INVALID if the parameters are not valid, and @c
 ///     TANGO_3DR_ERROR if some other error occurred.
 Tango3DR_Status Tango3DR_textureMeshFromDataset(
-    const Tango3DR_ConfigH texture_config, const char* dataset_path,
-    const Tango3DR_TrajectoryH trajectory, const Tango3DR_Mesh* tango_mesh_in,
-    Tango3DR_Mesh** tango_mesh_out, Tango3DR_ProgressCallback progress_callback,
+    const Tango3DR_Config texture_config, const char* dataset_path,
+    const Tango3DR_Trajectory trajectory, const Tango3DR_Mesh* tango_mesh_in,
+    Tango3DR_Mesh* tango_mesh_out, Tango3DR_ProgressCallback progress_callback,
     void* callback_param);
 
 // TODO(idryanov): Add link to documentation.
@@ -1162,43 +1189,41 @@ Tango3DR_Status Tango3DR_textureMeshFromDataset(
 ///     Optional, can be set to NULL.
 /// @param callback_param Value passed as @c callback_param to the
 ///     callback.
-Tango3DR_Status TangoDataset_extractRawDataFromDataset(
+Tango3DR_Status Tango3DR_extractRawDataFromDataset(
     const char* dataset_path, const char* output_path,
     Tango3DR_ProgressCallback progress_callback, void* callback_param);
-
-// TODO(idryanov): Add unit tests for trajectories (b/33011366).
-/// Destroy a previously created trajectory.
-///
-/// @param trajectory Handle to a previously created trajectory.
-/// @return @c TANGO_3DR_SUCCESS on successfully destroying
-///     the trajectory.  Returns @c TANGO_3DR_INVALID if trajectory is
-///     NULL.
-Tango3DR_Status Tango3DR_Trajectory_destroy(Tango3DR_TrajectoryH trajectory);
-
-/// Retrieves the pose at a given time from a trajectory.
-///
-/// @param trajectory The handle to a Tango trajectory.
-/// @param timestamp The timestamp, in seconds, at which to query the pose.
-/// @param tango_pose A pointer to the output pose. Must be within the start
-///     and end time of the trajectory.
-/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
-///     parameters are not valid, and @c TANGO_3DR_ERROR if the timestamp
-///     queried is not in the range of the trajectory.
-Tango3DR_Status Tango3DR_getPoseAtTime(const Tango3DR_TrajectoryH trajectory,
-                                       const double timestamp,
-                                       Tango3DR_Pose* tango_pose);
 
 /// Updates the texturing context using an image with a corresponding pose. Must
 /// be called from the same thread where the context was created and destroyed.
 ///
 /// @param context Handle to the texturing context.
-/// @param image Image used for texturing.
+/// @param image Image used for texturing. Ideally, the image should be in
+///     TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP.  Other formats
+///     (RGB_888/RGBA_8888) will be converted automatically.
 /// @param image_pose Pose corresponding to the image.
 /// @return @c TANGO_3DR_SUCCESS on success and @c TANGO_3DR_INVALID if the
 ///     parameters are not valid.
 Tango3DR_Status Tango3DR_updateTexture(Tango3DR_TexturingContext context,
                                        const Tango3DR_ImageBuffer* image,
                                        const Tango3DR_Pose* image_pose);
+
+/// Updates the texturing context using an image with a corresponding pose. Must
+/// be called from the same thread where the context was created and destroyed.
+///
+/// Additionally, a valid GL context supporting at least Desktop OpengGL 2.1 or
+/// OpenGL ES 2 must be current on the calling thread.
+///
+/// @param context Handle to the texturing context.
+/// @param texture_target Must be GL_TEXTURE_2D on Linux or Android, or
+/// GL_TEXTURE_EXTERNAL_OES on Android.
+/// @param image_texture_id OpenGL ID of the current camera image texture.
+/// @param image_pose Pose corresponding to the image.
+/// @return @c TANGO_3DR_SUCCESS on success and @c TANGO_3DR_INVALID if the
+///     parameters are not valid.
+Tango3DR_Status Tango3DR_updateTextureGl(Tango3DR_TexturingContext context,
+                                         const int texture_target,
+                                         const int image_texture_id,
+                                         const Tango3DR_Pose* image_pose);
 
 /// Extracts the textured mesh from the texturing context.
 ///
@@ -1209,7 +1234,7 @@ Tango3DR_Status Tango3DR_updateTexture(Tango3DR_TexturingContext context,
 /// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
 ///     parameters are not valid
 Tango3DR_Status Tango3DR_getTexturedMesh(
-    const Tango3DR_TexturingContext context, Tango3DR_Mesh** tango_mesh_out);
+    const Tango3DR_TexturingContext context, Tango3DR_Mesh* tango_mesh_out);
 
 /**@} */
 /// @endcond
@@ -1217,7 +1242,7 @@ Tango3DR_Status Tango3DR_getTexturedMesh(
 /// Detect and extract (vertical) building levels. Currently, we only support
 /// single story buildings, so levels->num_levels will always equal 1.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param graphics On successful return, this will be filled with a pointer
 /// to a freshly allocated Tango3DR_Levels object containing the levels
 /// of the building.  After use, free this by calling
@@ -1225,30 +1250,33 @@ Tango3DR_Status Tango3DR_getTexturedMesh(
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
 /// the vector graphics. Returns @c TANGO_3DR_INVALID if
 /// <code>context</code> or <code>graphics</code> is NULL.
-Tango3DR_Status Tango3DR_extractLevels(const Tango3DR_Context context,
-                                       Tango3DR_FloorplanLevelArray** levels);
+Tango3DR_Status Tango3DR_extractLevels(
+    const Tango3DR_ReconstructionContext context,
+    Tango3DR_FloorplanLevelArray* levels);
 
 /// Reset and enable automatic building level estimator. To disable the
 /// automatic estimator and to specify the building level manually instead,
 /// call <code>Tango3DR_selectLevel</code>.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @return @c TANGO_3DR_SUCCESS on successfully resetting the building level
 /// estimator. Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
-Tango3DR_Status Tango3DR_resetLevelsEstimator(const Tango3DR_Context context);
+Tango3DR_Status Tango3DR_resetLevelsEstimator(
+    const Tango3DR_ReconstructionContext context);
 
 /// Manually select building level. This disables the automatic building level
 /// estimator. To re-enable the automatic estimator, call <code>
 /// Tango3DR_resetLevelsEstimator</code>.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param min_z Floor height, in meters.
 /// @param max_z Ceiling height, in meters.
 /// @return @c TANGO_3DR_SUCCESS on successfully destroying
 /// the vector graphics. Returns @c TANGO_3DR_INVALID if
 /// <code>context</code> is NULL.
-Tango3DR_Status Tango3DR_selectLevel(const Tango3DR_Context context,
-                                     const Tango3DR_FloorplanLevel& level);
+Tango3DR_Status Tango3DR_selectLevel(
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_FloorplanLevel* level);
 
 /// Destroy a previously created Tango3DR_Levels object.
 ///
@@ -1260,27 +1288,28 @@ void Tango3DR_destroyLevels(Tango3DR_FloorplanLevelArray* levels);
 /// extracting a floor plan using Tango3DR_extractFullFloorplan() or
 /// Tango3DR_extractFloorplanSegment().
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @return @c TANGO_3DR_SUCCESS on successfully updating the floor plan.
 /// Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
-Tango3DR_Status Tango3DR_updateFullFloorplan(const Tango3DR_Context context);
+Tango3DR_Status Tango3DR_updateFullFloorplan(
+    const Tango3DR_ReconstructionContext context);
 
 /// Update a floor plan in an existing 3D reconstruction context.
 /// You need to call this function or Tango3DR_updateFullFloorplan() prior to
 /// extracting a floor plan using Tango3DR_extractFullFloorplan() or
 /// Tango3DR_extractFloorplanSegment().
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index_array Grid cells that need to be updated.
 /// @return @c TANGO_3DR_SUCCESS on successfully updating the floor plan.
 /// Returns @c TANGO_3DR_INVALID if <code>context</code> is NULL.
 Tango3DR_Status Tango3DR_updateFloorplan(
-    const Tango3DR_Context context,
+    const Tango3DR_ReconstructionContext context,
     const Tango3DR_GridIndexArray* grid_index_array);
 
 /// Extract a floor plan from an existing 3D reconstruction context.
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param levels Building levels to extract.
 /// @param graphics On successful return, this will be filled with a pointer
 /// to a freshly allocated Tango3DR_Graphics object containing a vector graphics
@@ -1292,14 +1321,15 @@ Tango3DR_Status Tango3DR_updateFloorplan(
 /// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
 /// Returns @c TANGO_3DR_INVALID if <code>context</code> or
 /// <code>graphics</code> is NULL.
-Tango3DR_Status Tango3DR_extractFullFloorplan(const Tango3DR_Context context,
-                                              Tango3DR_PolygonArray** graphics);
+Tango3DR_Status Tango3DR_extractFullFloorplan(
+    const Tango3DR_ReconstructionContext context,
+    Tango3DR_PolygonArray* graphics);
 
 /// Extract a floor plan segment from an existing 3D reconstruction context.
 /// Note that this function takes only a 2D grid index (x,y) instead of a
 /// 3D grid index (x,y,z).
 ///
-/// @param context Handle to a previously created server.
+/// @param context Handle to a previously created context.
 /// @param grid_index Index for the grid cell to extract.
 /// @param graphics On successful return, this will be filled with a pointer
 /// to a freshly allocated Tango3DR_Graphics object containing a vector graphics
@@ -1308,13 +1338,104 @@ Tango3DR_Status Tango3DR_extractFullFloorplan(const Tango3DR_Context context,
 /// Returns @c TANGO_3DR_INVALID if <code>context</code> or
 /// <code>graphics</code> is NULL.
 Tango3DR_Status Tango3DR_extractFloorplanSegment(
-    const Tango3DR_Context context, const Tango3DR_GridIndex2D grid_index,
-    Tango3DR_PolygonArray** graphics);
+    const Tango3DR_ReconstructionContext context,
+    const Tango3DR_GridIndex2D grid_index, Tango3DR_PolygonArray* graphics);
 
 /// Destroy a previously created vector graphics object.
 ///
 /// @param config Pointer to a previously created vector graphics object.
 void Tango3DR_VectorGraphics_destroy(Tango3DR_PolygonArray* graphics);
+
+/// @defgroup AreaDescription Functions that operate with area description
+/// files (ADF).
+/// @brief Functions that operate with area description
+/// files (ADF).
+/// @{
+
+/// Create an AreaDescription from a given dataset recording. A new
+/// AreaDescription will be allocated. To free it up, call
+/// @c Tango3DR_AreaDescription_destroy.
+///
+/// @param dataset_path path to a Tango dataset.
+/// @param loop_closure_database_path path to a a loop closure database,
+/// available for download from the Tango developers website.
+/// @param area_description pointer to an area description to be allocated by
+/// this function.
+/// @param progress_callback Called periodically while creating the
+///     trajectory.  Optional, can be NULL.
+/// @param callback_param Value passed as @c callback_param to the
+///     callback. Optional, can be NULL.
+/// @return @c TANGO_3DR_SUCCESS on success, @c
+///     TANGO_3DR_INVALID if the parameters are not valid, and @c
+///     TANGO_3DR_ERROR if some other error occurred.
+Tango3DR_Status Tango3DR_AreaDescription_createFromDataset(
+    const char* dataset_path, const char* loop_closure_database_path,
+    Tango3DR_AreaDescription* area_description,
+    Tango3DR_ProgressCallback progress_callback, void* callback_param);
+
+/// Destroy a previously created area description
+///
+/// @param area_description Handle to a previously-created area description.
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying
+///     the area description.  Returns @c TANGO_3DR_INVALID if area description
+///     is NULL.
+Tango3DR_Status Tango3DR_AreaDescription_destroy(
+    Tango3DR_AreaDescription area_description);
+
+/// Save an area description to an ADF (area description file).
+///
+/// @param area_description Area description to be saved.
+/// @param path Output path.
+/// @return @c TANGO_3DR_SUCCESS on successfully saving the area description,
+///     @c TANGO_3DR_INVALID if any of the arguments are NULL, and @c
+///     TANGO_3DR_ERROR if some other error occurred.
+Tango3DR_Status Tango3DR_AreaDescription_saveToAdf(
+    Tango3DR_AreaDescription area_description, const char* const path);
+
+/// Load an area description from an ADF (area description file).
+///
+/// @param path Path to the ADF.
+/// @param area_description On successful return, this will be filled
+///     with a freshly allocated Tango3DR_AreaDescription. After use, free this
+///     by calling Tango3DR_AreaDescription_destroy().
+/// @return @c TANGO_3DR_SUCCESS on successfully loading an area descruption,
+///     @c TANGO_3DR_INVALID if the parameters are not valid, and
+///     @c TANGO_3DR_ERROR if loading failed.
+Tango3DR_Status Tango3DR_AreaDescription_loadFromAdf(
+    const char* const path, Tango3DR_AreaDescription* area_description);
+
+/// Create a trajectory from a an area description.
+///
+/// @param area_description a handle to an area description.
+/// @param area_description On successful return, this will be filled with a
+///     freshly allocated Tango3DR_Trajectory. After use, free this by calling
+///     Tango3DR_Trajectory_destroy().
+Tango3DR_Status Tango3DR_Trajectory_createFromAreaDescription(
+    const Tango3DR_AreaDescription area_description,
+    Tango3DR_Trajectory* trajectory);
+
+/// Destroy a previously created trajectory.
+///
+/// @param trajectory Handle to a previously created trajectory.
+/// @return @c TANGO_3DR_SUCCESS on successfully destroying
+///     the trajectory.  Returns @c TANGO_3DR_INVALID if trajectory is
+///     NULL.
+Tango3DR_Status Tango3DR_Trajectory_destroy(Tango3DR_Trajectory trajectory);
+
+/// Retrieves the pose at a given time from a trajectory.
+///
+/// @param trajectory The handle to a Tango trajectory.
+/// @param timestamp The timestamp, in seconds, at which to query the pose.
+/// @param tango_pose A pointer to the output pose. Must be within the start
+///     and end time of the trajectory.
+/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
+///     parameters are not valid, and @c TANGO_3DR_ERROR if the timestamp
+///     queried is not in the range of the trajectory.
+Tango3DR_Status Tango3DR_getPoseAtTime(const Tango3DR_Trajectory trajectory,
+                                       const double timestamp,
+                                       Tango3DR_Pose* tango_pose);
+
+/**@} */
 
 #ifdef __cplusplus
 }

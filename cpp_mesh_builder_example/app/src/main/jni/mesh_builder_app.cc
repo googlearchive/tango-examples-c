@@ -165,7 +165,7 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
   Tango3DR_Pose t3dr_depth_pose;
   extract3DRPose(point_cloud_matrix_, &t3dr_depth_pose);
 
-  Tango3DR_GridIndexArray* t3dr_updated;
+  Tango3DR_GridIndexArray t3dr_updated;
   Tango3DR_Status t3dr_err =
       Tango3DR_update(t3dr_context_, &t3dr_depth, &t3dr_depth_pose, &t3dr_image,
                       &t3dr_image_pose, &t3dr_updated);
@@ -176,12 +176,12 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
 
   // It's more important to be responsive than to handle all indexes.
   // Replace the current list if we have fallen behind in processing.
-  updated_indices_binder_thread_.resize(t3dr_updated->num_indices);
-  std::copy(&t3dr_updated->indices[0][0],
-            &t3dr_updated->indices[t3dr_updated->num_indices][0],
+  updated_indices_binder_thread_.resize(t3dr_updated.num_indices);
+  std::copy(&t3dr_updated.indices[0][0],
+            &t3dr_updated.indices[t3dr_updated.num_indices][0],
             reinterpret_cast<uint32_t*>(updated_indices_binder_thread_.data()));
 
-  Tango3DR_GridIndexArray_destroy(t3dr_updated);
+  Tango3DR_GridIndexArray_destroy(&t3dr_updated);
   point_cloud_available_ = false;
 }
 
@@ -302,8 +302,8 @@ void MeshBuilderApp::TangoSetupConfig() {
 void MeshBuilderApp::TangoSetup3DR() {
   // Now that Tango is configured correctly, we also need to configure
   // 3D Reconstruction the way we want.
-  Tango3DR_ConfigH t3dr_config =
-      Tango3DR_Config_create(TANGO_3DR_CONFIG_CONTEXT);
+  Tango3DR_Config t3dr_config =
+      Tango3DR_Config_create(TANGO_3DR_CONFIG_RECONSTRUCTION);
   Tango3DR_Status t3dr_err;
   t3dr_err = Tango3DR_Config_setDouble(t3dr_config, "resolution", 0.05);
   if (t3dr_err != TANGO_3DR_SUCCESS) {
@@ -318,7 +318,7 @@ void MeshBuilderApp::TangoSetup3DR() {
     std::exit(EXIT_SUCCESS);
   }
 
-  t3dr_context_ = Tango3DR_create(t3dr_config);
+  t3dr_context_ = Tango3DR_ReconstructionContext_create(t3dr_config);
   if (t3dr_context_ == nullptr) {
     LOGE("MeshBuilderApp: Unable to create 3DR context.");
     std::exit(EXIT_SUCCESS);

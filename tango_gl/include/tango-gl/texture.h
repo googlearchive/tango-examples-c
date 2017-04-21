@@ -27,6 +27,7 @@ namespace tango_gl {
 class Texture {
  public:
   explicit Texture(AAssetManager* mgr, const char* file_path);
+  explicit Texture(const char* file_path);
   Texture(GLenum texture_id, GLenum texture_target);
   Texture(const Texture& other) = delete;
   Texture& operator=(const Texture&) = delete;

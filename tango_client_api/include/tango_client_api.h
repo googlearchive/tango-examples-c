@@ -194,7 +194,7 @@ typedef enum {
 typedef void* TangoConfig;
 
 #define TANGO_UUID_LEN 37
-#define TANGO_COORDINATE_FRAME_ID_BYTE_LEN 16
+#define TANGO_COORDINATE_FRAME_ID_LEN 37
 #define TANGO_LEVEL_SHORT_NAME_BYTE_MAX_LEN 16
 #define TANGO_LEVEL_ID_BYTE_MAX_LEN 19
 
@@ -203,50 +203,39 @@ typedef void* TangoConfig;
 /// for a total of 37 characters.
 typedef char TangoUUID[TANGO_UUID_LEN];
 
-/// The unique id associated with a frame of interest.
-/// When a new frame of interest is created, the returned id can be used to
-/// reference the same frame of interest in future calls. A caller should not
-/// need to create such an id manually.
+// The unique id associated with a frame of interest.
+// When a new frame of interest is created, the returned id can be used to
+// reference the same frame of interest in future calls. A caller should not
+// need to create such an id manually.
 typedef struct TangoCoordinateFrameId {
-  /// Opaque byte representation of the unique id.
-  uint8_t data[TANGO_COORDINATE_FRAME_ID_BYTE_LEN];
+  // String representation of the unique id (36 characters + null terminator).
+  char data[TANGO_COORDINATE_FRAME_ID_LEN];
 } TangoCoordinateFrameId;
 
 // The following predefined UUIDs must be in the reserved space in
 // 10000000-0000-0000-0000-0000000000[00-ff].
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_NONE = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff}};
+    "10000000-0000-0000-0000-0000000000ff"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84 = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    "10000000-0000-0000-0000-000000000000"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}};
+    "10000000-0000-0000-0000-000000000001"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}};
+    "10000000-0000-0000-0000-000000000002"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_PREVIOUS_DEVICE_POSE = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}};
+    "10000000-0000-0000-0000-000000000003"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_DEVICE = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04}};
+    "10000000-0000-0000-0000-000000000004"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_IMU = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05}};
+    "10000000-0000-0000-0000-000000000005"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_DISPLAY = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06}};
+    "10000000-0000-0000-0000-000000000006"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_COLOR = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07}};
+    "10000000-0000-0000-0000-000000000007"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_DEPTH = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08}};
+    "10000000-0000-0000-0000-000000000008"};
 const TangoCoordinateFrameId TANGO_COORDINATE_FRAME_ID_CAMERA_FISHEYE = {
-    {0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09}};
+    "10000000-0000-0000-0000-000000000009"};
 
 /// This defines a handle to TangoAreaDescriptionMetadata; key/value pairs
 /// can only be accessed through API calls.
@@ -291,7 +280,7 @@ typedef struct {
 /// <a href="http://developer.android.com/guide/topics/sensors/sensors_overview.html#sensors-coords">
 /// Sensor Overview</a> page for more information.
 typedef struct TangoPoseData {
-  /// An integer denoting the version of the structure.
+  ///< Unused. An integer denoting the version of the structure.
   uint32_t version;
 
   /// The timestamp of the pose estimate, in seconds.
@@ -789,52 +778,6 @@ TangoErrorType TangoService_connectOnPoseAvailable(
 TangoErrorType TangoService_getPoseAtTime(double timestamp,
                                           TangoCoordinateFramePair frame,
                                           TangoPoseData* pose);
-
-/// Get a pose at a given timestamp from the base to the target frame id.
-/// Frames of interest (FOIs) can be used as base and/or target frame id.
-///
-/// If no pose can be returned, the status_code of the returned pose will be
-/// @c TANGO_POSE_INVALID.
-///
-/// @param timestamp Time specified in seconds. If not set to 0.0, getPoseAtTime
-///     retrieves the interpolated pose closest to this timestamp. If set to
-///     0.0, the most recent pose estimate for the target-base pair is returned.
-///     The time of the returned pose is contained in the pose output structure
-///     and may differ from the queried timestamp.
-/// @param base_frame_id The base frame id for which the transformation is
-///     queried.
-/// @param target_frame_id The target frame id for which the transformation is
-///     queried.
-///     Base and target frame ids can be either an existing frame of interest id
-///     in the currently loaded ADF or one of the predefined
-///     TangoCoordinateFrameIds:
-///     @c TANGO_COORDINATE_FRAME_ID_GLOBAL_WGS84,
-///     @c TANGO_COORDINATE_FRAME_ID_AREA_DESCRIPTION,
-///     @c TANGO_COORDINATE_FRAME_ID_DEVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_START_OF_SERVICE,
-///     @c TANGO_COORDINATE_FRAME_ID_IMU. For example, the pose of
-///     an existing FOI with respect to your device can be queried with a @p
-///     base_frame_id of @c TANGO_COORDINATE_FRAME_ID_DEVICE and target_frame_id
-///     of this existing FOI.
-///     Only frames of interest that are available in the currently loaded ADF
-///     will be available. Querying frame of interest ids from different ADFs
-///     will return @c TANGO_INVALID.
-/// @param pose The pose of target with respect to base frame of reference. Must
-///     be allocated by the caller, and is overwritten upon return. Depending on
-///     whether @p base_frame_id is an FOI or a predefined
-///     TangoCoordinateFrameId, the base frame field of @p pose is set to
-///     respectively @c TANGO_COORDINATE_FRAME_UUID or to its equivalent
-///     TangoCoordinateFrameType. The same rule holds for @p target_frame_id.
-/// @return @c TANGO_SUCCESS if a pose was returned successfully. Check
-///     the @c status_code attribute on the returned @p pose to see if it is
-///     valid. Returns @c TANGO_INVALID if the base and target frame are the
-///     same, or if the base or the target frame is not valid, or if the
-///     requested frame pair is not supported, or if timestamp is less than 0,
-///     or if the service has not yet begun running (TangoService_connect()
-///     has not completed).
-TangoErrorType TangoService_Experimental_getPoseAtTime2(
-    double timestamp, TangoCoordinateFrameId base_frame_id,
-    TangoCoordinateFrameId target_frame_id, TangoPoseData* return_pose);
 
 /**@} */
 
@@ -1531,47 +1474,6 @@ TangoErrorType TangoService_Experimental_connectTextureIdUnity(
     TangoCameraId id, unsigned int texture_y, unsigned int texture_Cb,
     unsigned int texture_Cr, void* context,
     void (*callback)(void*, TangoCameraId));
-
-/// @deprecated
-/// Experimental API only, subject to change.
-/// Loads an area description with the specified unique ID. This allows an
-/// application to load an ADF for localization after connecting to the service.
-/// It should only be called after calling TangoService_connect(), and then only
-/// if the connect configuration did not enable learning mode.
-/// @param uuid The unique identifier for the ADF to load. If an empty string,
-///     unloads all ADFs and turns off area learning.
-/// @return @c TANGO_SUCCESS if the ADF is successfully loaded for localization
-///     (or if all ADFs were unloaded); @c TANGO_INVALID if the UUID is invalid,
-///     or if learning mode is enabled; @c TANGO_ERROR if communication fails or
-///     if the service needs to be initialized.
-TangoErrorType TangoService_Experimental_loadAreaDescription(
-    const TangoUUID uuid);
-
-/// Experimental API only, subject to change.
-/// Loads an area description with the specified file path. This allows an
-/// application to load an ADF for localization after connecting to the service.
-/// It should only be called after calling TangoService_connect(), and then only
-/// if the connect configuration did not enable learning mode.
-/// @param file_path The file path for the ADF to load. If an empty string,
-///     unloads all ADFs.
-/// @return @c TANGO_SUCCESS if the ADF is successfully loaded for localization
-///     (or if all ADFs were unloaded); @c TANGO_INVALID if the file path is
-///     invalid or if learning mode is enabled; @c TANGO_ERROR if communication
-///     fails.
-TangoErrorType TangoService_Experimental_loadAreaDescriptionFromFile(
-    const char* file_path);
-
-/// Experimental API only, subject to change.
-/// Unloads an area description with the specified file path. This should only
-/// be called to unload an ADF that was previously loaded using
-/// TangoService_Experimental_loadAreaDescriptionFromFile.
-/// @param file_path The file path of the ADF to unload. If an empty string,
-///     unloads all ADFs and turns off area learning.
-/// @return @c TANGO_SUCCESS if the ADF is unloaded; @c TANGO_INVALID if the
-///     given file path is invalid or does not point to an ADF that was
-///     previously loaded; @c TANGO_ERROR if communication fails.
-TangoErrorType TangoService_Experimental_unloadAreaDescriptionFromFile(
-    const char* file_path);
 
 /// Experimental API only, subject to change.
 /// Returns a list of Tango dataset UUIDs, containing a UUID for each valid

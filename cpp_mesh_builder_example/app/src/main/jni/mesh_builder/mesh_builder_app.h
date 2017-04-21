@@ -151,7 +151,7 @@ class MeshBuilderApp {
 
   // Context for a 3D Reconstruction.  Maintains the state of a single
   // mesh being reconstructed.
-  Tango3DR_Context t3dr_context_;
+  Tango3DR_ReconstructionContext t3dr_context_;
 
   // If the 3D Reconstruction is paused or not.  When paused, depth
   // and color updates will get ignored.
