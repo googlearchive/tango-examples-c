@@ -59,6 +59,14 @@ Texture::Texture(AAssetManager* mgr, const char* file_path) {
   AAsset_close(asset);
 }
 
+Texture::Texture(const char* file_path) {
+  FILE* file = fopen(file_path, "rb");
+  if (!LoadFromPNG(file)) {
+    LOGE("Texture initialing error");
+  }
+  fclose(file);
+}
+
 bool Texture::LoadFromPNG(FILE* file) {
   fseek(file, 8, SEEK_CUR);
 

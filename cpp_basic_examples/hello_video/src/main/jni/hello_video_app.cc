@@ -30,19 +30,20 @@ void OnFrameAvailableRouter(void* context, TangoCameraId,
 // We could do this conversion in a fragment shader if all we care about is
 // rendering, but we show it here as an example of how people can use RGB data
 // on the CPU.
-inline void Yuv2Rgb(uint8_t yValue, uint8_t uValue, uint8_t vValue, uint8_t* r,
-                    uint8_t* g, uint8_t* b) {
-  float R = yValue + 1.402 * (vValue - 128) ;
-  float G = yValue - 0.344 * (uValue - 128) - 0.714 * (vValue - 128);
-  float B = yValue + 1.772 * (uValue - 128);
+inline void Yuv2Rgb(uint8_t y_value, uint8_t u_value, uint8_t v_value,
+                    uint8_t* r, uint8_t* g, uint8_t* b) {
+  float float_r = y_value + (1.370705 * (v_value - 128));
+  float float_g =
+      y_value - (0.698001 * (v_value - 128)) - (0.337633 * (u_value - 128));
+  float float_b = y_value + (1.732446 * (u_value - 128));
 
-  R= R * !(R<0);
-  G= G * !(G<0);
-  B= B * !(B<0);
+  float_r = float_r * !(float_r < 0);
+  float_g = float_g * !(float_g < 0);
+  float_b = float_b * !(float_b < 0);
 
-  *r = R*(!(R>255)) + 255 * (R>255);
-  *g = G*(!(G>255)) + 255 * (G>255);
-  *b = B*(!(B>255)) + 255 * (B>255);
+  *r = float_r * (!(float_r > 255)) + 255 * (float_r > 255);
+  *g = float_g * (!(float_g > 255)) + 255 * (float_g > 255);
+  *b = float_b * (!(float_b > 255)) + 255 * (float_b > 255);
 }
 }  // namespace
 

@@ -1,0 +1,3 @@
+include ':app'
+include ':cpp_example_util'
+project(':cpp_example_util').projectDir = new File('../cpp_example_util/app')

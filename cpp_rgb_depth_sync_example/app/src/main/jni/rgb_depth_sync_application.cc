@@ -261,8 +261,12 @@ void SynchronizationApplication::OnDrawFrame() {
   bool new_points = false;
   TangoPointCloud* pointcloud_buffer;
 
-  TangoSupport_getLatestPointCloudAndNewDataFlag(
-      point_cloud_manager_, &pointcloud_buffer, &new_points);
+  if (TangoSupport_getLatestPointCloudAndNewDataFlag(
+          point_cloud_manager_, &pointcloud_buffer, &new_points) !=
+      TANGO_SUCCESS) {
+    LOGE("SynchronizationApplication: Failed to get a point cloud.");
+    return;
+  }
   depth_timestamp = pointcloud_buffer->timestamp;
   // We need to make sure that we update the texture associated with the color
   // image.

@@ -205,15 +205,14 @@ void PointCloudApp::OnDrawFrame() {
     return;
   }
 
-  // Query the latest pose transformation and point cloud frame transformation.
-  // Point cloud data comes in with a specific timestamp, in order to get the
-  // closest pose for the point cloud, we will need to use the
-  // TangoService_getMatrixTransformAtTime() to query a transform at timestamp.
-
-  // Get the last point cloud data.
+  // Get the last point cloud data and associated pose.
   TangoPointCloud* point_cloud = nullptr;
-  TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud);
-  if (point_cloud == nullptr) {
+  TangoPoseData pose;
+  TangoErrorType ret_val = TangoSupport_getLatestPointCloudWithPose(
+      point_cloud_manager_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED,
+      &point_cloud, &pose);
+  if (ret_val != TANGO_SUCCESS || point_cloud == nullptr) {
     return;
   }
 
@@ -221,8 +220,9 @@ void PointCloudApp::OnDrawFrame() {
   // convention.
   TangoDoubleMatrixTransformData matrix_transform;
   TangoSupport_getDoubleMatrixTransformAtTime(
-      0, TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE,
-      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL,
+      point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_OPENGL,
       static_cast<TangoSupportRotation>(screen_rotation_), &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
@@ -234,47 +234,24 @@ void PointCloudApp::OnDrawFrame() {
     return;
   }
 
-  // Compute the average depth value.
-  float average_depth_ = 0.0f;
-  for (size_t i = 0; i < point_cloud->num_points; i++) {
-    average_depth_ += point_cloud->points[i][2];
-  }
-  if (point_cloud->num_points) {
-    average_depth_ /= point_cloud->num_points;
-  }
-  point_cloud_average_depth_ = average_depth_;
-  point_cloud_count_ = point_cloud->num_points;
-
-  std::vector<float> vertices;
-  // Get depth camera transform to start of service frame in OpenGL convention
-  // at the point cloud timestamp.
-  TangoSupport_getDoubleMatrixTransformAtTime(
-      point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
-  if (matrix_transform.status_code == TANGO_POSE_VALID) {
-    start_service_opengl_T_depth_tango_ =
-        glm::make_mat4(matrix_transform.matrix);
-    TangoPointCloud ow_point_cloud;
-    ow_point_cloud.points = new float[point_cloud->num_points][4];
-    ow_point_cloud.num_points = point_cloud->num_points;
-    // Transform point cloud to OpenGL world
-    TangoSupport_doubleTransformPointCloud(matrix_transform.matrix, point_cloud,
-                                           &ow_point_cloud);
-    vertices.resize(point_cloud->num_points * 4);
-    std::copy(&ow_point_cloud.points[0][0],
-              &ow_point_cloud.points[ow_point_cloud.num_points][0],
-              vertices.begin());
-    delete[] ow_point_cloud.points;
-  } else {
+  TangoPointCloud ow_point_cloud;
+  ow_point_cloud.points = new float[point_cloud->num_points][4];
+  ow_point_cloud.num_points = point_cloud->num_points;
+  ret_val = TangoSupport_transformPointCloudWithPose(point_cloud, &pose,
+                                                     &ow_point_cloud);
+  if (ret_val != TANGO_SUCCESS) {
     LOGE(
-        "PointCloudExample: Could not find a valid matrix transform at "
-        "time %lf for the depth camera.",
-        point_cloud->timestamp);
+        "PointCloudExample: Could not transform point cloud into pose "
+        "coordinate space.");
     return;
   }
 
+  std::vector<float> vertices =
+      std::vector<float>(&ow_point_cloud.points[0][0],
+                         &ow_point_cloud.points[ow_point_cloud.num_points][0]);
   main_scene_.Render(start_service_T_device_, vertices);
+
+  delete[] ow_point_cloud.points;
 }
 
 void PointCloudApp::DeleteResources() { main_scene_.DeleteResources(); }
