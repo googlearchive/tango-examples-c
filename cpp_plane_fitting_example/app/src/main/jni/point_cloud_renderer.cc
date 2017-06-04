@@ -29,18 +29,29 @@ const std::string kPointCloudVertexShader =
     "precision mediump float;\n"
     "attribute vec4 vertex;\n"
     "uniform mat4 mvp;\n"
-    "uniform vec4 plane;\n"
+    "uniform vec4 plane1;\n"
+    "uniform vec4 plane2;\n"
+    "uniform vec4 plane3;\n"
     "uniform float plane_distance;\n"
+    "uniform int plane_count;\n"
     "varying vec3 v_color;\n"
     ""
     "void main() {\n"
     "  gl_PointSize = 7.0;\n"
     "  gl_Position =  mvp*vertex;\n"
     "  "
-    "  float d = dot(plane, vertex);\n"
-    "  if (abs(d) < (plane_distance * plane_distance)) {\n"
+    "  float d1 = dot(plane1, vertex);\n"
+    "  float d2 = dot(plane2, vertex);\n"
+    "  float d3 = dot(plane3, vertex);\n"
+    "  if (plane_count > 0 && abs(d1) < (plane_distance * plane_distance)) {\n"
     "    v_color = vec3(0.0, 1.0, 0.0);\n"
-    "  } else if (d < 0.0) {\n"
+    "  } else if (plane_count > 1 && abs(d2) < (plane_distance * "
+    "plane_distance)) {\n"
+    "    v_color = vec3(1.0, 1.0, 0.0);\n"
+    "  } else if (plane_count > 2 && abs(d3) < (plane_distance * "
+    "plane_distance)) {\n"
+    "    v_color = vec3(1.0, 0.5, 0.0);\n"
+    "  } else if (d1 < 0.0) {\n"
     "    v_color = vec3(1.0, 0.0, 0.0);\n"
     "  } else {\n"
     "    v_color = vec3(0.0, 0.0, 1.0);\n"
@@ -58,8 +69,9 @@ const std::string kPointCloudFragmentShader =
 PointCloudRenderer::PointCloudRenderer()
     : plane_distance_(0.05f),
       debug_colors_(false),
-      plane_model_(glm::vec4(0.0, 0.0, 1.0, 0.0)) {
-
+      plane_count_(0),
+      plane_model_{glm::vec4(0.0, 0.0, 1.0, 0.0), glm::vec4(0.0, 0.0, 1.0, 0.0),
+                   glm::vec4(0.0, 0.0, 1.0, 0.0)} {
   shader_program_ = tango_gl::util::CreateProgram(
       kPointCloudVertexShader.c_str(), kPointCloudFragmentShader.c_str());
 
@@ -67,9 +79,12 @@ PointCloudRenderer::PointCloudRenderer()
 
   mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
   vertices_handle_ = glGetAttribLocation(shader_program_, "vertex");
-  plane_handle_ = glGetUniformLocation(shader_program_, "plane");
+  plane_handle_[0] = glGetUniformLocation(shader_program_, "plane1");
+  plane_handle_[1] = glGetUniformLocation(shader_program_, "plane2");
+  plane_handle_[2] = glGetUniformLocation(shader_program_, "plane3");
   plane_distance_handle_ =
       glGetUniformLocation(shader_program_, "plane_distance");
+  plane_count_handle_ = glGetUniformLocation(shader_program_, "plane_count");
 
   tango_gl::util::CheckGlError("PointCloudRenderer::Construction");
 }
@@ -98,14 +113,18 @@ void PointCloudRenderer::Render(const glm::mat4& projection_T_depth,
 
   const glm::mat4 depth_T_opengl = glm::inverse(opengl_T_depth);
 
+  int plane_count = static_cast<int>(plane_count_);
+  glUniform1i(plane_count_handle_, plane_count);
+
   // Transform plane into depth camera coordinates.
   glm::vec4 camera_plane;
-  PlaneTransform(plane_model_, depth_T_opengl, &camera_plane);
+  for (int i = 0; i < plane_count; ++i) {
+    PlaneTransform(plane_model_[i], depth_T_opengl, &camera_plane);
+    glUniform4fv(plane_handle_[i], 1, glm::value_ptr(camera_plane));
+  }
 
   glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE,
                      glm::value_ptr(projection_T_depth));
-
-  glUniform4fv(plane_handle_, 1, glm::value_ptr(camera_plane));
 
   // It looks better to have more points colored by the plane than the number
   // needed to be a good inlier support for fitting. Scale the distance here.

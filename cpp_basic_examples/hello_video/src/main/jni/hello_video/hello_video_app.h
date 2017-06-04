@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HELLO_VIDEO_HELLO_VIDEO_APP_H_
-#define HELLO_VIDEO_HELLO_VIDEO_APP_H_
+#ifndef CPP_BASIC_EXAMPLES_HELLO_VIDEO_HELLO_VIDEO_APP_H_
+#define CPP_BASIC_EXAMPLES_HELLO_VIDEO_HELLO_VIDEO_APP_H_
 
 #include <atomic>
 #include <jni.h>
@@ -125,4 +125,4 @@ class HelloVideoApp {
 };
 }  // namespace hello_video
 
-#endif  // HELLO_VIDEO_HELLO_VIDEO_APP_H_
+#endif  // CPP_BASIC_EXAMPLES_HELLO_VIDEO_HELLO_VIDEO_APP_H_

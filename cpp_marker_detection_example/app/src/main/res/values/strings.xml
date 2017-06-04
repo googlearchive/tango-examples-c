@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">C++ Marker Detection</string>
+    <string name="app_name_long">C++ Marker Detection Example</string>
+    <string name="menu_name">Native Marker Detection</string>
+</resources>
+

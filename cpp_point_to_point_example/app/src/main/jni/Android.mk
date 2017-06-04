@@ -24,15 +24,15 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
                     $(PROJECT_ROOT)/third_party/glm
 LOCAL_SRC_FILES := jni_interface.cc \
                    point_to_point_application.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/camera.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/conversions.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/drawable_object.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/line.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/segment_drawable.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/transform.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/util.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/video_overlay.cc
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/camera.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/conversions.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/drawable_object.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/line.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/segment_drawable.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/util.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/video_overlay.cc
 
 LOCAL_LDLIBS := -lGLESv2 -llog -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)

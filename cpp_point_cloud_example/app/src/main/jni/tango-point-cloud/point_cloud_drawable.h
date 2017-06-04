@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_
-#define TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_
+#ifndef CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_
+#define CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_
 
 #include <jni.h>
 #include <vector>
@@ -55,4 +55,4 @@ class PointCloudDrawable {
 };
 }  // namespace tango_point_cloud
 
-#endif  // TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_
+#endif  // CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_DRAWABLE_H_

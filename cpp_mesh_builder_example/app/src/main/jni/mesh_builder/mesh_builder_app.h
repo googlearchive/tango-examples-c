@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MESH_BUILDER_MESH_BUILDER_APP_H_
-#define MESH_BUILDER_MESH_BUILDER_APP_H_
+#ifndef CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_
+#define CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_
 
 #include <jni.h>
 #include <memory>
@@ -151,7 +151,7 @@ class MeshBuilderApp {
 
   // Context for a 3D Reconstruction.  Maintains the state of a single
   // mesh being reconstructed.
-  Tango3DR_Context t3dr_context_;
+  Tango3DR_ReconstructionContext t3dr_context_;
 
   // If the 3D Reconstruction is paused or not.  When paused, depth
   // and color updates will get ignored.
@@ -207,4 +207,4 @@ class MeshBuilderApp {
 };
 }  // namespace mesh_builder
 
-#endif  // MESH_BUILDER_MESH_BUILDER_APP_H_
+#endif  // CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_MESH_BUILDER_APP_H_

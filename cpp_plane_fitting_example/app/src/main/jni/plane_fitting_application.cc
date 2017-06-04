@@ -410,66 +410,76 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
     return;
   }
 
-  // Calculate the conversion from the latest color camera position to the
-  // most recent depth camera position. This corrects for screen lag between
-  // the two systems.
-  TangoPoseData pose_depth_camera_t0_T_color_camera_t1;
-  int ret = TangoSupport_calculateRelativePose(
-      point_cloud->timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
-      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_COLOR,
-      &pose_depth_camera_t0_T_color_camera_t1);
+  // Get the pose transforms from depth and color camera to opengl frame.
+  TangoPoseData pose_point_cloud, pose_color_camera;
+  TangoErrorType ret;
+
+  ret = TangoSupport_getPoseAtTime(
+      point_cloud->timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_point_cloud);
   if (ret != TANGO_SUCCESS) {
-    LOGE("%s: could not calculate relative pose", __func__);
+    LOGE("%s: could not get openglTdepth pose for timestamp %f.", __func__,
+         point_cloud->timestamp);
     return;
   }
-  glm::vec2 uv(x / screen_width_, y / screen_height_);
-
-  double identity_translation[3] = {0.0, 0.0, 0.0};
-  double identity_orientation[4] = {0.0, 0.0, 0.0, 1.0};
-  glm::dvec3 double_depth_position;
-  glm::dvec4 double_depth_plane_equation;
-  if (TangoSupport_fitPlaneModelNearPoint(
-          point_cloud, identity_translation, identity_orientation,
-          glm::value_ptr(uv), display_rotation_,
-          pose_depth_camera_t0_T_color_camera_t1.translation,
-          pose_depth_camera_t0_T_color_camera_t1.orientation,
-          glm::value_ptr(double_depth_position),
-          glm::value_ptr(double_depth_plane_equation)) != TANGO_SUCCESS) {
-    return;  // Assume error has already been reported.
+  ret = TangoSupport_getPoseAtTime(
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_color_camera);
+  if (ret != TANGO_SUCCESS) {
+    LOGE("%s: could not get openglTcolor pose for last_gpu_timestamp_ %f.",
+         __func__, last_gpu_timestamp_);
+    return;
   }
 
-  const glm::vec3 depth_position =
-      static_cast<glm::vec3>(double_depth_position);
-  const glm::vec4 depth_plane_equation =
-      static_cast<glm::vec4>(double_depth_plane_equation);
+  // Touch location in [0,1] range.
+  glm::vec2 uv(x / screen_width_, y / screen_height_);
 
-  const glm::mat4 area_description_opengl_T_depth_tango =
-      GetAreaDescriptionTDepthTransform(point_cloud->timestamp);
+  // Fit plane model.
+  TangoSupportPlane* planes;
+  int number_of_planes;
+  if (TangoSupport_fitMultiplePlaneModelsNearPoint(
+          point_cloud, pose_point_cloud.translation,
+          pose_point_cloud.orientation, glm::value_ptr(uv), display_rotation_,
+          pose_color_camera.translation, pose_color_camera.orientation, &planes,
+          &number_of_planes) != TANGO_SUCCESS) {
+    // Assuming errors have already been reported.
+    return;
+  }
 
-  // Transform to Area Description coordinates
-  const glm::vec4 area_description_position =
-      area_description_opengl_T_depth_tango * glm::vec4(depth_position, 1.0f);
+  // Cast down to float for other functions.
+  const glm::vec3 depth_position = glm::vec3(planes[0].intersection_point[0],
+                                             planes[0].intersection_point[1],
+                                             planes[0].intersection_point[2]);
 
-  glm::vec4 area_description_plane_equation;
-  PlaneTransform(depth_plane_equation, area_description_opengl_T_depth_tango,
-                 &area_description_plane_equation);
+  point_cloud_renderer_->SetPlaneCount(number_of_planes);
+  // Set up to three planes supported by the point_cloud_renderer_
+  for (int i = 0; i < number_of_planes && i < 3; ++i) {
+    point_cloud_renderer_->SetPlaneEquation(
+        i, glm::vec4(planes[i].plane_equation[0], planes[i].plane_equation[1],
+                     planes[i].plane_equation[2], planes[i].plane_equation[3]));
+  }
 
-  point_cloud_renderer_->SetPlaneEquation(area_description_plane_equation);
+  // Use world up as the second vector unless they are nearly parallel, in
+  // which case use world +Z.
+  const glm::vec3 plane_normal(planes[0].plane_equation[0],
+                               planes[0].plane_equation[1],
+                               planes[0].plane_equation[2]);
 
-  const glm::vec3 plane_normal(area_description_plane_equation);
+  // Free the planes returned by the plane fit call
+  TangoSupport_freePlaneList(&planes);
 
-  // Use world up as the second vector, unless they are nearly parallel.
-  // In that case use world +Z.
-  glm::vec3 normal_Y = glm::vec3(0.0f, 1.0f, 0.0f);
-  const glm::vec3 world_up = glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 normal_Y = glm::vec3(0.0f, 1.0f, 0.0f);  // also world up vector
   const float kWorldUpThreshold = 0.5f;
-  if (glm::dot(plane_normal, world_up) > kWorldUpThreshold) {
+  if (glm::dot(plane_normal, normal_Y) > kWorldUpThreshold) {
     normal_Y = glm::vec3(0.0f, 0.0f, 1.0f);
   }
 
   const glm::vec3 normal_Z = glm::normalize(glm::cross(plane_normal, normal_Y));
   normal_Y = glm::normalize(glm::cross(normal_Z, plane_normal));
 
+  // Set position/rotation of cube visualization.
   glm::mat3 rotation_matrix;
   rotation_matrix[0] = plane_normal;
   rotation_matrix[1] = normal_Y;
@@ -477,8 +487,7 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   const glm::quat rotation = glm::toQuat(rotation_matrix);
 
   cube_->SetRotation(rotation);
-  cube_->SetPosition(glm::vec3(area_description_position) +
-                     plane_normal * kCubeScale);
+  cube_->SetPosition(depth_position + plane_normal * kCubeScale);
 }
 
 glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform(

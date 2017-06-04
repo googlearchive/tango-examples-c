@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
-#define TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
+#ifndef CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
+#define CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
 
 #include <atomic>
 #include <jni.h>
@@ -154,4 +154,4 @@ class PointCloudApp {
 };
 }  // namespace tango_point_cloud
 
-#endif  // TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_
+#endif  // CPP_POINT_CLOUD_EXAMPLE_TANGO_POINT_CLOUD_POINT_CLOUD_APP_H_

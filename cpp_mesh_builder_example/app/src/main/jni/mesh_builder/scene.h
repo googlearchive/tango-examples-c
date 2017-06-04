@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MESH_BUILDER_SCENE_H_
-#define MESH_BUILDER_SCENE_H_
+#ifndef CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_SCENE_H_
+#define CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_SCENE_H_
 
 #include <memory>
 #include <vector>
@@ -65,4 +65,4 @@ class Scene {
 };
 }  // namespace mesh_builder
 
-#endif  // MESH_BUILDER_SCENE_H_
+#endif  // CPP_MESH_BUILDER_EXAMPLE_MESH_BUILDER_SCENE_H_

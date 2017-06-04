@@ -31,17 +31,17 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango-service-sdk/include/ \
 LOCAL_SRC_FILES := jni_interface.cc \
                    motion_tracking_app.cc \
                    scene.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/bounding_box.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/camera.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/conversions.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/gesture_camera.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/line.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/shaders.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/texture.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/transform.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/util.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/meshes.cc \
-                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/tango_gl.cc
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/bounding_box.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/camera.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/conversions.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/gesture_camera.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/line.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/texture.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/util.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/meshes.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/tango_gl.cc
 
 LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib -lz -landroid
 include $(BUILD_SHARED_LIBRARY)

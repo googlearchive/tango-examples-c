@@ -54,11 +54,11 @@ namespace obj_loader {
 //  tango_gl::obj_loader::LoadOBJData("/sdcard/model.obj", vertices, normals);
 //  mesh->SetVertices(vertices, normals);
 
-bool LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
-                 std::vector<GLushort>& indices);
+bool LoadOBJData(const char* path, std::vector<GLfloat>* vertices,
+                 std::vector<GLushort>* indices);
 
-bool LoadOBJData(const char* path, std::vector<GLfloat>& vertices,
-                 std::vector<GLfloat>& normals);
+bool LoadOBJData(const char* path, std::vector<GLfloat>* vertices,
+                 std::vector<GLfloat>* normals);
 }  // namespace obj_loader
 }  // namespace tango_gl
 #endif  // TANGO_GL_OBJ_LOADER_H_

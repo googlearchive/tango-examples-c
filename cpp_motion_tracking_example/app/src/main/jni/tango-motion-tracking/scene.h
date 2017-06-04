@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TANGO_MOTION_TRACKING_SCENE_H_
-#define TANGO_MOTION_TRACKING_SCENE_H_
+#ifndef CPP_MOTION_TRACKING_EXAMPLE_TANGO_MOTION_TRACKING_SCENE_H_
+#define CPP_MOTION_TRACKING_EXAMPLE_TANGO_MOTION_TRACKING_SCENE_H_
 
 #include <jni.h>
 #include <memory>
@@ -78,4 +78,4 @@ class Scene {
 };
 }  // namespace tango_motion_tracking
 
-#endif  // TANGO_MOTION_TRACKING_SCENE_H_
+#endif  // CPP_MOTION_TRACKING_EXAMPLE_TANGO_MOTION_TRACKING_SCENE_H_

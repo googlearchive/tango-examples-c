@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HELLO_MOTION_TRACKING_TANGO_HANDLER_H_
-#define HELLO_MOTION_TRACKING_TANGO_HANDLER_H_
+#ifndef CPP_BASIC_EXAMPLES_HELLO_MOTION_TRACKING_TANGO_HANDLER_H_
+#define CPP_BASIC_EXAMPLES_HELLO_MOTION_TRACKING_TANGO_HANDLER_H_
 
 #include <android/log.h>
 #include <jni.h>
@@ -66,4 +66,4 @@ class TangoHandler {
 };
 }  // namespace hello_motion_tracking
 
-#endif  // HELLO_MOTION_TRACKING_TANGO_HANDLER_H_
+#endif  // CPP_BASIC_EXAMPLES_HELLO_MOTION_TRACKING_TANGO_HANDLER_H_

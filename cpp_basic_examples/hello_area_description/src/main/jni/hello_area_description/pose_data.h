@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef HELLO_AREA_DESCRIPTION_POSE_DATA_H_
-#define HELLO_AREA_DESCRIPTION_POSE_DATA_H_
+#ifndef CPP_BASIC_EXAMPLES_HELLO_AREA_DESCRIPTION_POSE_DATA_H_
+#define CPP_BASIC_EXAMPLES_HELLO_AREA_DESCRIPTION_POSE_DATA_H_
 
 #include <jni.h>
 #include <mutex>
@@ -59,4 +59,4 @@ class PoseData {
 };
 }  // namespace hello_area_description
 
-#endif  // HELLO_AREA_DESCRIPTION_POSE_DATA_H_
+#endif  // CPP_BASIC_EXAMPLES_HELLO_AREA_DESCRIPTION_POSE_DATA_H_
