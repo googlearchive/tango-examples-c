@@ -325,7 +325,8 @@ void MeshBuilderApp::TangoSetup3DR() {
   }
 
   // Configure the color intrinsics to be used with updates to the mesh.
-  t3dr_err = Tango3DR_setColorCalibration(t3dr_context_, &t3dr_intrinsics_);
+  t3dr_err = Tango3DR_ReconstructionContext_setColorCalibration(
+      t3dr_context_, &t3dr_intrinsics_);
   if (t3dr_context_ == nullptr) {
     LOGE("MeshBuilderApp: Unable to set color calibration.");
     std::exit(EXIT_SUCCESS);
@@ -373,7 +374,8 @@ void MeshBuilderApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   // Update the camera intrinsics too.
   TangoCameraIntrinsics intrinsics;

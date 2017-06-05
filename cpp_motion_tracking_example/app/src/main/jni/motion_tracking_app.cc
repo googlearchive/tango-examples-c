@@ -112,7 +112,8 @@ void MotionTrackingApp::TangoDisconnect() {
 }
 
 void MotionTrackingApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
   main_scene_.InitGLContent(aasset_manager);
 }
 

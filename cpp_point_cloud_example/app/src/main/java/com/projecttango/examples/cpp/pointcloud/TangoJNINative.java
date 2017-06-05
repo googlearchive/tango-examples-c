@@ -71,12 +71,6 @@ public class TangoJNINative {
   // Get total point count in current depth frame.
   public static native int getVerticesCount();
 
-  // Get average depth (in meters) in current depth frame.
-  public static native float getAverageZ();
-
-  // Get depth frame delta time between current frame and previous frame.
-  public static native float getFrameDeltaTime();
-
   // Pass touch events to the native layer.
   public static native void onTouchEvent(int touchCount, int event0,
                                          float x0, float y0, float x1, float y1);

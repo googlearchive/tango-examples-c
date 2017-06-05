@@ -25,12 +25,13 @@ LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
 LOCAL_SRC_FILES := jni_interface.cc \
                    plane_fitting.cc \
                    plane_fitting_application.cc \
-                   point_cloud_renderer.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/axis.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/bounding_box.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/camera.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/conversions.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/cube.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/drawable_object.cc \
+                   $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/line.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/mesh.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/shaders.cc \
                    $(PROJECT_ROOT_FROM_JNI)/tango_gl/src/transform.cc \

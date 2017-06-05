@@ -61,9 +61,6 @@ public class TangoJNINative {
    */
   public static native void onGlSurfaceCreated();
 
-  // Display debug colors on point cloud.
-  public static native void setRenderDebugPointCloud(boolean debugRender);
-
   // Setup the view port width and height.
   public static native void onGlSurfaceChanged(int width, int height);
 

@@ -33,6 +33,16 @@
 
 namespace tango_point_to_point {
 
+class MeasuredPoint {
+ public:
+  MeasuredPoint(const glm::vec3& point, double timestamp) {
+    this->point_depth = point;
+    this->timestamp = timestamp;
+  }
+  glm::vec3 point_depth;
+  double timestamp;
+};
+
 /**
  * This class is the main application for PointToPoint. It can be instantiated
  * in the JNI layer and use to pass information back and forth between Java. The
@@ -116,11 +126,8 @@ class PointToPointApplication {
   void OnDisplayChanged(int display_rotation);
 
  private:
-  // Details of rendering to OpenGL after determining transforms.
-  void GLRender(const glm::mat4& opengl_ss_T_color_opengl);
-
   // Update the segment based on a new touch position.
-  void UpdateSegment(glm::vec3 world_position);
+  void UpdateMeasuredPoints(glm::vec3 world_position, double timestamp);
 
   // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
@@ -186,8 +193,10 @@ class PointToPointApplication {
 
   // Toggles which point will be altered
   bool point_modifier_flag_;
-  glm::vec3 point1_;
-  glm::vec3 point2_;
+
+  MeasuredPoint measured_point0_;
+  MeasuredPoint measured_point1_;
+  float measured_distance_;
 
   // Are both points defined?
   bool segment_is_drawable_;
