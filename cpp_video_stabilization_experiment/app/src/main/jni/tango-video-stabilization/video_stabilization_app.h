@@ -25,7 +25,7 @@
 
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include <tango-video-stabilization/scene.h>
 
@@ -139,7 +139,7 @@ class VideoStabilizationApp {
 
   double last_gpu_timestamp_ = 0.0;
 
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
   TangoXYZij* front_cloud_;
 
   bool is_service_connected_;

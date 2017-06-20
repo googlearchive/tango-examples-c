@@ -35,7 +35,7 @@ void TangoHandler::OnCreate(JNIEnv* env, jobject caller_activity) {
   // it will not support the most up to date features.
   int version = 0;
   TangoErrorType err =
-      TangoSupport_GetTangoVersion(env, caller_activity, &version);
+      TangoSupport_getTangoVersion(env, caller_activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("TangoHandler::CheckVersion, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);

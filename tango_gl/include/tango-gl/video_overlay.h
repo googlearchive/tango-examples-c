@@ -18,7 +18,7 @@
 #define TANGO_GL_VIDEO_OVERLAY_H_
 
 #include <array>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "tango-gl/drawable_object.h"
 
@@ -27,12 +27,12 @@ class VideoOverlay : public DrawableObject {
  public:
   VideoOverlay();
   explicit VideoOverlay(GLuint texture_type);
-  explicit VideoOverlay(TangoSupportRotation camera_to_display_rotation);
+  explicit VideoOverlay(TangoSupport_Rotation camera_to_display_rotation);
   explicit VideoOverlay(GLuint texture_type,
-                        TangoSupportRotation camera_to_display_rotation);
+                        TangoSupport_Rotation camera_to_display_rotation);
   void Initialize();
 
-  void SetDisplayRotation(TangoSupportRotation rotation);
+  void SetDisplayRotation(TangoSupport_Rotation rotation);
   void Render(const glm::mat4& projection_mat, const glm::mat4& view_mat) const;
   GLuint GetTextureId() const { return texture_id_; }
 
@@ -49,7 +49,7 @@ class VideoOverlay : public DrawableObject {
   GLuint vertex_buffers_[2];
 
   std::array<GLfloat, 8> texture_coords_;
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
   float u_offset_;
   float v_offset_;
 };

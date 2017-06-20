@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include <tango-gl/conversions.h>
 #include <tango-gl/util.h>

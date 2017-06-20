@@ -192,7 +192,7 @@ void Scene::RotateYAxisForTimestamp(double timestamp,
 void Scene::SetVideoOverlayRotation(int display_rotation) {
   if (is_content_initialized_) {
     video_overlay_->SetDisplayRotation(
-        static_cast<TangoSupportRotation>(display_rotation));
+        static_cast<TangoSupport_Rotation>(display_rotation));
   }
 }
 

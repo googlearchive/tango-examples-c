@@ -24,6 +24,7 @@
 #include <tango-gl/camera.h>
 #include <tango-gl/conversions.h>
 #include <tango-gl/util.h>
+#include <tango_transform_helpers.h>
 
 namespace tango_point_to_point {
 
@@ -94,19 +95,20 @@ PointToPointApplication::PointToPointApplication()
       last_gpu_timestamp_(0.0),
       tap_number_(0),
       point_modifier_flag_(true),
-      point1_(glm::vec3(0.0, 0.0, 0.0)),
-      point2_(glm::vec3(0.0, 0.0, 0.0)),
+      measured_point0_(MeasuredPoint(glm::vec3(0.0f, 0.0f, 0.0f), 0.0)),
+      measured_point1_(MeasuredPoint(glm::vec3(0.0f, 0.0f, 0.0f), 0.0)),
       segment_is_drawable_(false),
       is_service_connected_(false),
       is_gl_initialized_(false),
       is_scene_camera_configured_(false),
-      display_rotation_(TangoSupportRotation::ROTATION_IGNORED) {}
+      display_rotation_(TangoSupport_Rotation::TANGO_SUPPORT_ROTATION_IGNORED) {
+}
 
 PointToPointApplication::~PointToPointApplication() {
   TangoConfig_free(tango_config_);
   TangoSupport_freePointCloudManager(point_cloud_manager_);
   point_cloud_manager_ = nullptr;
-  TangoSupport_freeDepthInterpolator(interpolator_);
+  TangoDepthInterpolation_freeDepthInterpolator(interpolator_);
   interpolator_ = nullptr;
   TangoSupport_freeImageBufferManager(image_buffer_manager_);
   image_buffer_manager_ = nullptr;
@@ -116,7 +118,7 @@ void PointToPointApplication::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
 
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE(
@@ -187,9 +189,6 @@ void PointToPointApplication::TangoSetupConfig() {
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
-  //
-  // The drift corrected pose is is available through the frame pair with
-  // base frame AREA_DESCRIPTION and target frame DEVICE.
   ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
                             true);
   if (ret != TANGO_SUCCESS) {
@@ -280,7 +279,8 @@ void PointToPointApplication::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   // The image_buffer_manager_ contains the image data and allows reading and
   // writing of data in a thread safe way.
@@ -298,7 +298,7 @@ void PointToPointApplication::TangoConnect() {
   // The interpolator_ contains camera intrinsics and references to data buffers
   // allowing for effective upsampling of the depth data to camera image
   // resolution.
-  ret = TangoSupport_createDepthInterpolator(&interpolator_);
+  ret = TangoDepthInterpolation_createDepthInterpolator(&interpolator_);
   if (ret != TANGO_SUCCESS) {
     LOGE("PointToPointApplication: Failed to set up interpolator.");
     std::exit(EXIT_SUCCESS);
@@ -387,39 +387,6 @@ void PointToPointApplication::OnDrawFrame() {
     return;
   }
 
-  // Querying the GPU color image's frame transformation based its timestamp.
-  //
-  // When drift correction mode is enabled in config file, we need to query
-  // the device with respect to Area Description pose in order to use the
-  // drift corrected pose.
-  //
-  // Note that if you don't want to use the drift corrected pose, the
-  // normal device with respect to start of service pose is still available.
-  TangoMatrixTransformData matrix_transform;
-  TangoSupport_getMatrixTransformAtTime(
-      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_OPENGL, display_rotation_, &matrix_transform);
-  if (matrix_transform.status_code != TANGO_POSE_VALID) {
-    // When the pose status is not valid, it indicates the tracking has
-    // been lost. In this case, we simply stop rendering.
-    //
-    // This is also the place to display UI to suggest the user walk
-    // to recover tracking.
-    LOGE(
-        "PointToPointApplication: Could not find a valid matrix transform at "
-        "time %lf for the color camera.",
-        last_gpu_timestamp_);
-    return;
-  } else {
-    const glm::mat4 start_service_T_color_camera =
-        glm::make_mat4(matrix_transform.matrix);
-    GLRender(start_service_T_color_camera);
-  }
-}
-
-void PointToPointApplication::GLRender(
-    const glm::mat4& start_service_T_color_camera) {
   glEnable(GL_CULL_FACE);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -432,11 +399,74 @@ void PointToPointApplication::GLRender(
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
-  const glm::mat4 color_camera_T_start_service =
-      glm::inverse(start_service_T_color_camera);
+  // Querying the GPU color image's frame transformation based its timestamp.
+  //
+  // When drift correction mode is enabled in config file, we need to query
+  // the device with respect to Start of Service pose in order to use the
+  // drift corrected pose.
+  TangoSupport_MatrixTransformData opengl_T_color_camera_matrix_transform;
+  TangoSupport_getMatrixTransformAtTime(
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
+      TANGO_SUPPORT_ENGINE_OPENGL, display_rotation_,
+      &opengl_T_color_camera_matrix_transform);
+  if (opengl_T_color_camera_matrix_transform.status_code != TANGO_POSE_VALID) {
+    // When the pose status is not valid, it indicates the tracking has
+    // been lost. In this case, we simply stop rendering.
+    //
+    // This is also the place to display UI to suggest the user walk
+    // to recover tracking.
+    LOGE(
+        "PointToPointApplication: Could not find a valid matrix transform at "
+        "time %lf for the color camera.",
+        last_gpu_timestamp_);
+    return;
+  }
 
   if (segment_is_drawable_) {
-    segment_->Render(projection_matrix_ar_, color_camera_T_start_service);
+    // To make sure drift correct pose is also applied to virtual
+    // object (measured points).
+    // We need to re-query the Start of Service to Depth camera
+    // pose every frame. Note that you will need to use the timestamp
+    // at the time when the points were measured to query the pose.
+    TangoSupport_MatrixTransformData opengl_T_depth_t0_matrix_transform;
+    TangoSupport_getMatrixTransformAtTime(
+        measured_point0_.timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+        TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+        &opengl_T_depth_t0_matrix_transform);
+
+    TangoSupport_MatrixTransformData opengl_T_depth_t1_matrix_transform;
+    TangoSupport_getMatrixTransformAtTime(
+        measured_point1_.timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+        TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
+        TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+        &opengl_T_depth_t1_matrix_transform);
+
+    if (opengl_T_depth_t0_matrix_transform.status_code == TANGO_POSE_VALID &&
+        opengl_T_depth_t1_matrix_transform.status_code == TANGO_POSE_VALID) {
+      float point0_opengl[3];
+      TangoTransformHelpers_transformPoint(
+          opengl_T_depth_t0_matrix_transform.matrix,
+          glm::value_ptr(measured_point0_.point_depth), point0_opengl);
+
+      float point1_opengl[3];
+      TangoTransformHelpers_transformPoint(
+          opengl_T_depth_t1_matrix_transform.matrix,
+          glm::value_ptr(measured_point1_.point_depth), point1_opengl);
+
+      glm::vec3 p1 =
+          glm::vec3(point0_opengl[0], point0_opengl[1], point0_opengl[2]);
+      glm::vec3 p2 =
+          glm::vec3(point1_opengl[0], point1_opengl[1], point1_opengl[2]);
+      segment_->UpdateSegment(tango_gl::Segment(p1, p2));
+      measured_distance_ = glm::distance(p1, p2);
+
+      const glm::mat4 view_matrix = glm::inverse(
+          glm::make_mat4(opengl_T_color_camera_matrix_transform.matrix));
+
+      segment_->Render(projection_matrix_ar_, view_matrix);
+    }
   }
 }
 
@@ -474,23 +504,13 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   }
 
   // Get poses of point cloud and color camera in OpenGL world space.
-  TangoPoseData pose_depth, pose_color;
+  TangoPoseData pose_depth_T_color;
   TangoErrorType ret;
   ret = TangoSupport_getPoseAtTime(
-      point_cloud->timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_depth);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "PointToPointApplication::%s: Could not get device pose for point "
-        "cloud timestamp %f.",
-        __func__, point_cloud->timestamp);
-    return;
-  }
-  ret = TangoSupport_getPoseAtTime(
-      color_image_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_color);
+      color_image_timestamp, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
+      TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_TANGO,
+      TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+      &pose_depth_T_color);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "PointToPointApplication::%s: Count not get color camera pose for "
@@ -503,42 +523,45 @@ void PointToPointApplication::OnTouchEvent(float x, float y) {
   // - Result coordinate is in OpenGL world space due to base engine choice
   //   above.
   glm::vec2 uv = glm::vec2(x / screen_width_, y / screen_height_);
-  float opengl_position[3] = {0.0f, 0.0f, 0.0f};
+  double zero_vector[3] = {0.0f, 0.0f, 0.0f};
+  double identity_quaternion[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+  float point_depth[3] = {0.0f, 0.0f, 0.0f};
   if (algorithm_ == UpsampleAlgorithm::kNearest) {
-    ret = TangoSupport_getDepthAtPointNearestNeighbor(
-        point_cloud, pose_depth.translation, pose_depth.orientation,
-        glm::value_ptr(uv), display_rotation_, pose_color.translation,
-        pose_color.orientation, opengl_position);
+    ret = TangoDepthInterpolation_getDepthAtPointNearestNeighbor(
+        point_cloud, zero_vector, identity_quaternion, glm::value_ptr(uv),
+        display_rotation_, pose_depth_T_color.translation,
+        pose_depth_T_color.orientation, point_depth);
   } else {
-    ret = TangoSupport_getDepthAtPointBilateral(
-        interpolator_, point_cloud, pose_depth.translation,
-        pose_depth.orientation, image, glm::value_ptr(uv), display_rotation_,
-        pose_color.translation, pose_color.orientation, opengl_position);
+    ret = TangoDepthInterpolation_getDepthAtPointBilateral(
+        interpolator_, point_cloud, zero_vector, identity_quaternion, image,
+        glm::value_ptr(uv), display_rotation_, pose_depth_T_color.translation,
+        pose_depth_T_color.orientation, point_depth);
   }
 
-  // If we found a point, draw it.
+  // If we found a point, send it to update measured list.
   if (ret == TANGO_SUCCESS) {
-    const glm::vec3 opengl_position_vec =
-        glm::vec3(opengl_position[0], opengl_position[1], opengl_position[2]);
-    UpdateSegment(opengl_position_vec);
+    const glm::vec3 point_depth_vec =
+        glm::vec3(point_depth[0], point_depth[1], point_depth[2]);
+    UpdateMeasuredPoints(point_depth_vec, color_image_timestamp);
   } else {
     LOGE("PointToPointApplication::%s: No depth for this point.", __func__);
   }
 }
 
 void PointToPointApplication::OnDisplayChanged(int display_rotation) {
-  display_rotation_ =
-      static_cast<TangoSupportRotation>(display_rotation);
+  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
   is_scene_camera_configured_ = false;
 }
 
-void PointToPointApplication::UpdateSegment(glm::vec3 world_position) {
+void PointToPointApplication::UpdateMeasuredPoints(glm::vec3 point_depth,
+                                                   double timestamp) {
   // Update the points with copy of world_position.
   std::lock_guard<std::mutex> lock(tango_points_mutex_);
   if (point_modifier_flag_) {
-    point1_ = glm::vec3(world_position);
+    measured_point0_ = MeasuredPoint(glm::vec3(point_depth), timestamp);
   } else {
-    point2_ = glm::vec3(world_position);
+    measured_point1_ = MeasuredPoint(glm::vec3(point_depth), timestamp);
   }
   point_modifier_flag_ = !point_modifier_flag_;
 
@@ -551,15 +574,13 @@ void PointToPointApplication::UpdateSegment(glm::vec3 world_position) {
     ++tap_number_;
     segment_is_drawable_ = true;
   }
-  segment_->UpdateSegment(tango_gl::Segment(point1_, point2_));
 }
 
 std::string PointToPointApplication::GetPointSeparation() {
   std::lock_guard<std::mutex> lock(tango_points_mutex_);
   if (segment_is_drawable_) {
-    float dist = glm::distance(point1_, point2_);
     std::ostringstream strs;
-    strs << dist << " meters";
+    strs << measured_distance_ << " meters";
     return strs.str();
   }
   return "Undefined";

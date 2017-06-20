@@ -49,12 +49,6 @@ Java_com_projecttango_examples_cpp_planefitting_TangoJNINative_onGlSurfaceCreate
 }
 
 JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_planefitting_TangoJNINative_setRenderDebugPointCloud(
-    JNIEnv* /*env*/, jobject /*obj*/, jboolean on) {
-  app.SetRenderDebugPointCloud(on);
-}
-
-JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_planefitting_TangoJNINative_onGlSurfaceChanged(
     JNIEnv* /*env*/, jobject /*obj*/, jint width, jint height) {
   app.OnSurfaceChanged(width, height);

@@ -26,14 +26,11 @@
 
 #include <android/asset_manager.h>
 
-#include <tango_client_api.h>  // NOLINT
+#include <tango_client_api.h>
 #include <tango-gl/camera.h>
-#include <tango-gl/color.h>
-#include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
-#include <tango-gl/tango-gl.h>
 
-#include <tango-marker-detection/mesh_object.h>
+#include <tango-marker-detection/marker_object.h>
 
 namespace tango_marker_detection {
 
@@ -88,8 +85,8 @@ class Scene {
   // Camera object that allows user to use touch input to interact with.
   std::unique_ptr<tango_gl::Camera> camera_;
 
-  // Mesh objects.
-  std::vector<std::unique_ptr<MeshObject>> objects_;
+  // Marker objects.
+  std::vector<std::unique_ptr<MarkerObject>> objects_;
 
   // Mutex for protecting mesh objects. Mesh objects are shared between the
   // rendering thread and TangoService callback thread.

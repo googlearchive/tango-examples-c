@@ -16,7 +16,7 @@
 
 #include <tango-gl/conversions.h>
 #include <tango-gl/util.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "mesh_builder/mesh_builder_app.h"
 
@@ -93,11 +93,12 @@ void MeshBuilderApp::onPointCloudAvailable(const TangoPointCloud* point_cloud) {
 
   // Get the depth transform to OpenGL world frame at the timestamp of the point
   // cloud.
-  TangoMatrixTransformData matrix_transform;
+  TangoSupport_MatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
       point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+      &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "MeshBuilderExample: Could not find a valid matrix transform at "
@@ -131,11 +132,12 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
   }
 
   // Get the camera color transform to OpenGL world frame in OpenGL convention.
-  TangoMatrixTransformData matrix_transform;
+  TangoSupport_MatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
       buffer->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
+      TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+      &matrix_transform);
   if (matrix_transform.status_code != TANGO_POSE_VALID) {
     LOGE(
         "MeshBuilderExample: Could not find a valid matrix transform at "
@@ -166,9 +168,9 @@ void MeshBuilderApp::onFrameAvailable(TangoCameraId id,
   extract3DRPose(point_cloud_matrix_, &t3dr_depth_pose);
 
   Tango3DR_GridIndexArray t3dr_updated;
-  Tango3DR_Status t3dr_err =
-      Tango3DR_update(t3dr_context_, &t3dr_depth, &t3dr_depth_pose, &t3dr_image,
-                      &t3dr_image_pose, &t3dr_updated);
+  Tango3DR_Status t3dr_err = Tango3DR_updateFromPointCloud(
+      t3dr_context_, &t3dr_depth, &t3dr_depth_pose, &t3dr_image,
+      &t3dr_image_pose, &t3dr_updated);
   if (t3dr_err != TANGO_3DR_SUCCESS) {
     LOGE("MeshBuilderApp: Tango3DR_update failed with error code %d", t3dr_err);
     return;
@@ -206,7 +208,7 @@ void MeshBuilderApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("AugmentedRealityApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -325,7 +327,8 @@ void MeshBuilderApp::TangoSetup3DR() {
   }
 
   // Configure the color intrinsics to be used with updates to the mesh.
-  t3dr_err = Tango3DR_setColorCalibration(t3dr_context_, &t3dr_intrinsics_);
+  t3dr_err = Tango3DR_ReconstructionContext_setColorCalibration(
+      t3dr_context_, &t3dr_intrinsics_);
   if (t3dr_context_ == nullptr) {
     LOGE("MeshBuilderApp: Unable to set color calibration.");
     std::exit(EXIT_SUCCESS);
@@ -373,7 +376,8 @@ void MeshBuilderApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   // Update the camera intrinsics too.
   TangoCameraIntrinsics intrinsics;
@@ -436,11 +440,11 @@ void MeshBuilderApp::OnDrawFrame() {
 
   // Get the last device transform to start of service frame in OpenGL
   // convention.
-  TangoMatrixTransformData matrix_transform;
+  TangoSupport_MatrixTransformData matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
       0, TANGO_COORDINATE_FRAME_START_OF_SERVICE, TANGO_COORDINATE_FRAME_DEVICE,
       TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_OPENGL,
-      ROTATION_IGNORED, &matrix_transform);
+      TANGO_SUPPORT_ROTATION_IGNORED, &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
   } else {

@@ -24,7 +24,7 @@
 
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/util.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include <tango-point-cloud/scene.h>
 
@@ -78,11 +78,6 @@ class PointCloudApp {
   // Main render loop.
   void OnDrawFrame();
 
-  // Return total point count in the current depth frame.
-  int GetPointCloudVerticesCount();
-
-  // Return the average depth of points in the current depth frame.
-  float GetAverageZ();
   // Set render camera's viewing angle, first person, third person or top down.
   //
   // @param: camera_type, camera type includes first person, third person and
@@ -106,7 +101,7 @@ class PointCloudApp {
   // @param screen_roatation: the screen rotation index,
   //    the index is following Android screen rotation enum.
   //    see Android documentation for detail:
-  //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
+  //    http://developer.android.com/reference/android/view/Surface.html#TANGO_SUPPORT_ROTATION_0
   void SetScreenRotation(int rotation_index);
 
  private:
@@ -129,9 +124,7 @@ class PointCloudApp {
   void DeleteResources();
 
   // Point data manager.
-  TangoSupportPointCloudManager* point_cloud_manager_;
-  float point_cloud_average_depth_;
-  int point_cloud_count_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement and point cloud.

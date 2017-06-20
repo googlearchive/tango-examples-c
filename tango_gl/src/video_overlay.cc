@@ -29,7 +29,7 @@ namespace tango_gl {
 
 VideoOverlay::VideoOverlay()
     : texture_type_(GL_TEXTURE_EXTERNAL_OES),
-      display_rotation_(TangoSupportRotation::ROTATION_IGNORED),
+      display_rotation_(TangoSupport_Rotation::TANGO_SUPPORT_ROTATION_IGNORED),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
@@ -37,13 +37,13 @@ VideoOverlay::VideoOverlay()
 
 VideoOverlay::VideoOverlay(GLuint texture_type)
     : texture_type_(texture_type),
-      display_rotation_(TangoSupportRotation::ROTATION_IGNORED),
+      display_rotation_(TangoSupport_Rotation::TANGO_SUPPORT_ROTATION_IGNORED),
       u_offset_(0.0f),
       v_offset_(0.0f) {
   Initialize();
 }
 
-VideoOverlay::VideoOverlay(TangoSupportRotation display_rotation)
+VideoOverlay::VideoOverlay(TangoSupport_Rotation display_rotation)
     : texture_type_(GL_TEXTURE_EXTERNAL_OES),
       display_rotation_(display_rotation),
       u_offset_(0.0f),
@@ -52,7 +52,7 @@ VideoOverlay::VideoOverlay(TangoSupportRotation display_rotation)
 }
 
 VideoOverlay::VideoOverlay(GLuint texture_type,
-                           TangoSupportRotation display_rotation)
+                           TangoSupport_Rotation display_rotation)
     : texture_type_(texture_type),
       display_rotation_(display_rotation),
       u_offset_(0.0f),
@@ -111,7 +111,7 @@ void VideoOverlay::Initialize() {
   uniform_mvp_mat_ = glGetUniformLocation(shader_program_, "mvp");
 }
 
-void VideoOverlay::SetDisplayRotation(TangoSupportRotation display_rotation) {
+void VideoOverlay::SetDisplayRotation(TangoSupport_Rotation display_rotation) {
   display_rotation_ = display_rotation;
   float texture_coords_0[8] = {
       0.0f + u_offset_, 0.0f + v_offset_, 0.0f + u_offset_, 1.0f - v_offset_,

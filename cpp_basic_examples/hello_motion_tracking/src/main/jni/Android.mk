@@ -18,7 +18,7 @@ PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libhello_motion_tracking
-LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
+LOCAL_SHARED_LIBRARIES := tango_client_api tango_support
 LOCAL_CFLAGS    := -Werror -std=c++11
 LOCAL_SRC_FILES := tango_handler.cc \
                    jni_interface.cc
@@ -29,4 +29,4 @@ include $(BUILD_SHARED_LIBRARY)
 
 $(call import-add-path, $(PROJECT_ROOT))
 $(call import-module,tango_client_api)
-$(call import-module,tango_support_api)
+$(call import-module,tango_support)

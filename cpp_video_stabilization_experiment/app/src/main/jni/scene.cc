@@ -235,7 +235,7 @@ void Scene::SetCameraLocked(bool camera_locked) {
   is_camera_locked_ = camera_locked;
 }
 
-void Scene::SetDisplayRotation(TangoSupportRotation display_rotation) {
+void Scene::SetDisplayRotation(TangoSupport_Rotation display_rotation) {
   for (unsigned i = 0; i < video_overlay_buffer_.size(); ++i) {
     video_overlay_buffer_[i]->SetDisplayRotation(display_rotation);
   }

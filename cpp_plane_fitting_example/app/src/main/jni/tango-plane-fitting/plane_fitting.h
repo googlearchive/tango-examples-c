@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 namespace tango_plane_fitting {
 

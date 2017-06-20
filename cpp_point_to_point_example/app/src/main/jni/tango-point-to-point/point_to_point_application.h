@@ -25,13 +25,24 @@
 #include <vector>
 
 #include <tango_client_api.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
+#include <tango_depth_interpolation.h>
 #include <tango-gl/line.h>
 #include <tango-gl/segment_drawable.h>
 #include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
 
 namespace tango_point_to_point {
+
+class MeasuredPoint {
+ public:
+  MeasuredPoint(const glm::vec3& point, double timestamp) {
+    this->point_depth = point;
+    this->timestamp = timestamp;
+  }
+  glm::vec3 point_depth;
+  double timestamp;
+};
 
 /**
  * This class is the main application for PointToPoint. It can be instantiated
@@ -116,11 +127,8 @@ class PointToPointApplication {
   void OnDisplayChanged(int display_rotation);
 
  private:
-  // Details of rendering to OpenGL after determining transforms.
-  void GLRender(const glm::mat4& opengl_ss_T_color_opengl);
-
   // Update the segment based on a new touch position.
-  void UpdateSegment(glm::vec3 world_position);
+  void UpdateMeasuredPoints(glm::vec3 world_position, double timestamp);
 
   // Setup the configuration file for the Tango Service. We'll also see whether
   // we'd like auto-recover enabled.
@@ -160,13 +168,13 @@ class PointToPointApplication {
   glm::mat4 projection_matrix_ar_;
 
   // Point data manager.
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   // Image data manager.
-  TangoSupportImageBufferManager* image_buffer_manager_;
+  TangoSupport_ImageBufferManager* image_buffer_manager_;
 
   // The depth interpolator class.
-  TangoSupportDepthInterpolator* interpolator_;
+  TangoDepthInterpolation_Interpolator* interpolator_;
 
   // To keep track of when segment can be rendered.
   int tap_number_;
@@ -186,8 +194,10 @@ class PointToPointApplication {
 
   // Toggles which point will be altered
   bool point_modifier_flag_;
-  glm::vec3 point1_;
-  glm::vec3 point2_;
+
+  MeasuredPoint measured_point0_;
+  MeasuredPoint measured_point1_;
+  float measured_distance_;
 
   // Are both points defined?
   bool segment_is_drawable_;
@@ -198,7 +208,7 @@ class PointToPointApplication {
 
   // Orientation is used for handling display rotation in portrait
   // or landscape.
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
 };
 
 }  // namespace tango_point_to_point

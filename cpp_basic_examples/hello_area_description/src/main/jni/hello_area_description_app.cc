@@ -17,7 +17,7 @@
 
 #include <sstream>
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "hello_area_description/hello_area_description_app.h"
 
@@ -58,7 +58,7 @@ void AreaLearningApp::OnCreate(JNIEnv* env, jobject caller_activity) {
   // it will not support the most up to date features.
   int version = 0;
   TangoErrorType err =
-      TangoSupport_GetTangoVersion(env, caller_activity, &version);
+      TangoSupport_getTangoVersion(env, caller_activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE(
         "AreaLearningApp::OnCreate, Tango Core version is out"

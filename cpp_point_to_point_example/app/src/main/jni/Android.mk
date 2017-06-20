@@ -18,7 +18,7 @@ PROJECT_ROOT := $(LOCAL_PATH)/$(PROJECT_ROOT_FROM_JNI)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := cpp_point_to_point_example
-LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
+LOCAL_SHARED_LIBRARIES := tango_client_api tango_depth_interpolation tango_support tango_transform_helpers
 LOCAL_CFLAGS := -std=c++11
 LOCAL_C_INCLUDES := $(PROJECT_ROOT)/tango_gl/include \
                     $(PROJECT_ROOT)/third_party/glm
@@ -39,4 +39,6 @@ include $(BUILD_SHARED_LIBRARY)
 
 $(call import-add-path,$(PROJECT_ROOT))
 $(call import-module,tango_client_api)
-$(call import-module,tango_support_api)
+$(call import-module,tango_support)
+$(call import-module,tango_depth_interpolation)
+$(call import-module,tango_transform_helpers)

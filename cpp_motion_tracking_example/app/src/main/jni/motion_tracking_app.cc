@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include <tango-gl/conversions.h>
 #include "tango-motion-tracking/motion_tracking_app.h"
@@ -34,7 +34,7 @@ void MotionTrackingApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("MotionTrackingApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -112,7 +112,8 @@ void MotionTrackingApp::TangoDisconnect() {
 }
 
 void MotionTrackingApp::OnSurfaceCreated(AAssetManager* aasset_manager) {
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
   main_scene_.InitGLContent(aasset_manager);
 }
 
@@ -131,7 +132,7 @@ void MotionTrackingApp::OnDrawFrame() {
       0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL,
-      static_cast<TangoSupportRotation>(screen_rotation_), &pose);
+      static_cast<TangoSupport_Rotation>(screen_rotation_), &pose);
 
   if (pose.status_code != TANGO_POSE_VALID) {
     LOGE("MotionTrackingApp: Tango pose is not valid.");

@@ -72,8 +72,8 @@ class MotionTrackingApp {
   // @param screen_roatation: the screen rotation index,
   //    the index is following Android screen rotation enum.
   //    see Android documentation for detail:
-  //    http://developer.android.com/reference/android/view/Surface.html#ROTATION_0
-  void SetScreenRotation(int screen_roatation);
+  //    http://developer.android.com/reference/android/view/Surface.html#TANGO_SUPPORT_ROTATION_0
+  void SetScreenRotation(int screen_rotation);
 
  private:
   // Setup the configuration file for the Tango Service

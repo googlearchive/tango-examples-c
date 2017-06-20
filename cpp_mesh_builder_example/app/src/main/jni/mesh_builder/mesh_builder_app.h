@@ -27,7 +27,7 @@
 #include <tango-gl/tango-gl.h>
 #include <tango-gl/util.h>
 #include <tango_3d_reconstruction_api.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "mesh_builder/scene.h"
 
@@ -164,7 +164,7 @@ class MeshBuilderApp {
   bool point_cloud_available_;
 
   // Point cloud manager
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   // The point cloud of the most recent depth received.  Stored
   // as float tuples (X,Y,Z,C).

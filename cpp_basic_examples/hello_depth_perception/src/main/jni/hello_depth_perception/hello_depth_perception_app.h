@@ -20,8 +20,8 @@
 #include <android/log.h>
 #include <jni.h>
 
-#include "tango_client_api.h"   // NOLINT
-#include "tango_support_api.h"  // NOLINT
+#include <tango_client_api.h>  // NOLINT
+#include <tango_support.h>     // NOLINT
 
 #define LOG_TAG "cpp_hello_depth_perception"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
