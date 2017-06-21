@@ -22,10 +22,9 @@
 #include <atomic>
 #include <tango_client_api.h>
 #include <tango-gl/cube.h>
+#include <tango-gl/axis.h>
 #include <tango-gl/util.h>
 #include <tango-gl/video_overlay.h>
-
-#include "tango-plane-fitting/point_cloud_renderer.h"
 
 namespace tango_plane_fitting {
 
@@ -67,9 +66,6 @@ class PlaneFittingApplication {
   // Create OpenGL state and connect to the color camera texture.
   void OnSurfaceCreated();
 
-  // Configure whether to display depth data for debugging.
-  void SetRenderDebugPointCloud(bool on);
-
   // Configure the viewport of the GL view.
   void OnSurfaceChanged(int width, int height);
 
@@ -102,9 +98,6 @@ class PlaneFittingApplication {
   void OnDisplayChanged(int display_rotation);
 
  private:
-  // Details of rendering to OpenGL after determining transforms.
-  void GLRender(const glm::mat4& w_T_cc);
-
   // Update the current point data.
   void UpdateCurrentPointData();
 
@@ -143,14 +136,16 @@ class PlaneFittingApplication {
 
   // Render objects
   tango_gl::VideoOverlay* video_overlay_;
-  PointCloudRenderer* point_cloud_renderer_;
   tango_gl::Cube* cube_;
+  tango_gl::Axis* axis_;
+
+  // Cube's properties.
+  glm::mat4 depth_T_plane_;
+  double plane_timestamp_;
 
   // The dimensions of the render window.
   float screen_width_;
   float screen_height_;
-
-  bool point_cloud_debug_render_;
 
   double last_gpu_timestamp_;
 
@@ -161,6 +156,7 @@ class PlaneFittingApplication {
   std::atomic<bool> is_service_connected_;
   std::atomic<bool> is_gl_initialized_;
   std::atomic<bool> is_scene_camera_configured_;
+  std::atomic<bool> is_cube_placed_;
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;

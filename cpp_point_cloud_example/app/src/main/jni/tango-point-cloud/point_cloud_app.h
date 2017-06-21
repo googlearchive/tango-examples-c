@@ -78,11 +78,6 @@ class PointCloudApp {
   // Main render loop.
   void OnDrawFrame();
 
-  // Return total point count in the current depth frame.
-  int GetPointCloudVerticesCount();
-
-  // Return the average depth of points in the current depth frame.
-  float GetAverageZ();
   // Set render camera's viewing angle, first person, third person or top down.
   //
   // @param: camera_type, camera type includes first person, third person and
@@ -130,8 +125,6 @@ class PointCloudApp {
 
   // Point data manager.
   TangoSupportPointCloudManager* point_cloud_manager_;
-  float point_cloud_average_depth_;
-  int point_cloud_count_;
 
   // main_scene_ includes all drawable object for visualizing Tango device's
   // movement and point cloud.

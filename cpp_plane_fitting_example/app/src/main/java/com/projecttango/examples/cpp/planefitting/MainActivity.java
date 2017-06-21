@@ -17,29 +17,15 @@
 package com.projecttango.examples.cpp.planefitting;
 
 import android.app.Activity;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.hardware.Camera;
 import android.hardware.display.DisplayManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageButton;
-
-import java.util.Iterator;
-import java.util.Map;
 
 import com.projecttango.examples.cpp.util.TangoInitializationHelper;
 
@@ -54,12 +40,6 @@ public class MainActivity extends Activity {
   private GLSurfaceView mGLView;
   private GLSurfaceRenderer mRenderer;
 
-  private CustomDrawerLayout mDrawerLayout;
-  private ImageButton mDrawerButton;
-  private Button mSettingsButton;
-
-  private SharedPreferences mPreferences;
-
   // Tango Service connection.
   ServiceConnection mTangoServiceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -72,24 +52,6 @@ public class MainActivity extends Activity {
         // in the event that Tango itself crashes/gets upgraded while running.
       }
     };
-
-  // This is a callback to listen if there are any changes in the settings
-  // menu of the app and update accordingly.
-  private SharedPreferences.OnSharedPreferenceChangeListener listener =
-    new SharedPreferences.OnSharedPreferenceChangeListener() {
-      public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-        updatePreferences(prefs, key);
-      }
-    };
-
-  // Update settings of the app depending on the settings last saved.
-  private void updatePreferences(SharedPreferences prefs, String key) {
-    if (key.equals(getString(R.string.key_debug_point_cloud))) {
-      TangoJNINative.setRenderDebugPointCloud(prefs.getBoolean(key, false));
-    } else {
-      Log.w(TAG, "Unknown preference: " + key);
-    }
-  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -121,10 +83,6 @@ public class MainActivity extends Activity {
     setContentView(R.layout.activity_main);
 
     configureGlSurfaceView();
-
-    mDrawerLayout = (CustomDrawerLayout) findViewById(R.id.drawer_layout);
-    configureSettingsButton();
-    configureDrawerButton();
   }
 
   @Override
@@ -164,38 +122,6 @@ public class MainActivity extends Activity {
     mGLView.setRenderer(mRenderer);
   }
 
-  private void configureDrawerButton() {
-    mDrawerButton = (ImageButton) findViewById(R.id.drawer_button);
-    mDrawerButton.setOnClickListener(new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          mDrawerLayout.openDrawer(Gravity.START);
-        }
-      });
-
-    PreferenceManager.setDefaultValues(this, R.xml.settings, false);
-    mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-    mPreferences.registerOnSharedPreferenceChangeListener(listener);
-  }
-
-  private void configureSettingsButton() {
-    mSettingsButton = (Button) findViewById(R.id.button_settings);
-    mSettingsButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        SettingsFragment settingsFrag = new SettingsFragment();
-        FragmentManager manager = getFragmentManager();
-        FragmentTransaction transaction = manager.beginTransaction();
-        transaction.replace(R.id.drawer_layout, settingsFrag);
-        transaction.addToBackStack(null);
-        transaction.commit();
-        if (mDrawerLayout.isDrawerOpen(Gravity.START)) {
-          mDrawerLayout.closeDrawer(Gravity.START);
-        }
-      }
-    });
-  }
-
   @Override
   protected void onResume() {
     super.onResume();
@@ -214,13 +140,5 @@ public class MainActivity extends Activity {
 
   public void surfaceCreated() {
     TangoJNINative.onGlSurfaceCreated();
-    // Update the last saved settings after the surface is created.
-    Map<String, ?> allKeys = mPreferences.getAll();
-    Iterator i = allKeys.entrySet().iterator();
-
-    while (i.hasNext()) {
-      Map.Entry pair = (Map.Entry) i.next();
-      updatePreferences(mPreferences, (String) pair.getKey());
-    }
   }
 }

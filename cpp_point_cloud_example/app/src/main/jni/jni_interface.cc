@@ -61,18 +61,6 @@ Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_onGlSurfaceDrawFram
   app.OnDrawFrame();
 }
 
-JNIEXPORT jint JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_getVerticesCount(
-    JNIEnv*, jobject) {
-  return app.GetPointCloudVerticesCount();
-}
-
-JNIEXPORT jfloat JNICALL
-Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_getAverageZ(
-    JNIEnv*, jobject) {
-  return app.GetAverageZ();
-}
-
 JNIEXPORT void JNICALL
 Java_com_projecttango_examples_cpp_pointcloud_TangoJNINative_setCamera(
     JNIEnv*, jobject, int camera_index) {

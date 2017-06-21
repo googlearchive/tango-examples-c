@@ -163,7 +163,8 @@ bool VideoStabilizationApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   return true;
 }

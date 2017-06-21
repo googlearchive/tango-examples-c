@@ -230,7 +230,8 @@ void AugmentedRealityApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 }
 
 void AugmentedRealityApp::OnPause() {

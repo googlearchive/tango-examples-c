@@ -84,7 +84,8 @@ void SynchronizationApplication::OnTangoServiceConnected(JNIEnv* env,
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   TangoSetupConfig();
   TangoConnectCallbacks();

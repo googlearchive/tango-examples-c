@@ -171,7 +171,8 @@ void PointCloudApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 }
 
 void PointCloudApp::OnPause() {
@@ -255,10 +256,6 @@ void PointCloudApp::OnDrawFrame() {
 }
 
 void PointCloudApp::DeleteResources() { main_scene_.DeleteResources(); }
-
-int PointCloudApp::GetPointCloudVerticesCount() { return point_cloud_count_; }
-
-float PointCloudApp::GetAverageZ() { return point_cloud_average_depth_; }
 
 void PointCloudApp::SetCameraType(
     tango_gl::GestureCamera::CameraType camera_type) {

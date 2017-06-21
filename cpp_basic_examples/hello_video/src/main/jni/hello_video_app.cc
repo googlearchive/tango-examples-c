@@ -120,7 +120,8 @@ void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 
   is_service_connected_ = true;
 }

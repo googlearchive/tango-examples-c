@@ -54,11 +54,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
   // service for pose and event information.
   private static final int UPDATE_UI_INTERVAL_MS = 100;
 
-  // Total points count in the current depth frame.
-  private TextView mPointCount;
-  // Average depth value (in meteres) of all the points in the current frame.
-  private TextView mAverageZ;
-
   // GLSurfaceView and renderer, all of the graphic content is rendered
   // through OpenGL ES 2.0 in native code.
   private Renderer mRenderer;
@@ -101,12 +96,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     // Setting content view of this activity.
     setContentView(R.layout.activity_pointcloud);
 
-    // Text views for the available points count.
-    mPointCount = (TextView) findViewById(R.id.point_count);
-
-    // Text view for average depth distance (in meters).
-    mAverageZ = (TextView) findViewById(R.id.average_depth);
-
     // Buttons for selecting camera view and Set up button click listeners.
     findViewById(R.id.first_person_button).setOnClickListener(this);
     findViewById(R.id.third_person_button).setOnClickListener(this);
@@ -131,9 +120,6 @@ public class PointcloudActivity extends Activity implements OnClickListener {
     mGLView.onResume();
 
     TangoInitializationHelper.bindTangoService(this, mTangoServiceConnection);
-
-    // Start the debug text UI update loop.
-    mHandler.post(mUpdateUiLoopRunnable);
   }
 
   @Override
@@ -195,24 +181,5 @@ public class PointcloudActivity extends Activity implements OnClickListener {
       }
     }
     return true;
-  }
-
-  // Debug text UI update loop, updating at 10Hz.
-  private Runnable mUpdateUiLoopRunnable = new Runnable() {
-      public void run() {
-        updateUi();
-        mHandler.postDelayed(this, UPDATE_UI_INTERVAL_MS);
-      }
-    };
-
-  // Update the debug text UI.
-  private void updateUi() {
-    try {
-      mPointCount.setText(String.valueOf(TangoJNINative.getVerticesCount()));
-      mAverageZ.setText(String.format("%.3f", TangoJNINative.getAverageZ()));
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "Exception updateing UI elements");
-    }
   }
 }

@@ -225,7 +225,8 @@ void MarkerDetectionApp::TangoConnect() {
   }
 
   // Initialize TangoSupport context.
-  TangoSupport_initializeLibrary();
+  TangoSupport_initialize(TangoService_getPoseAtTime,
+                          TangoService_getCameraIntrinsics);
 }
 
 TangoErrorType MarkerDetectionApp::SetupIntrinsics() {
