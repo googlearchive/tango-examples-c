@@ -129,7 +129,7 @@ class MarkerDetectionApp {
   // @param camera_transformation_matrix the transformation from camera to
   //    world in OpenGL frame.
   TangoErrorType GetARCameraTransformationMatrix(
-      double timestamp, TangoSupportRotation display_rotation,
+      double timestamp, TangoSupport_Rotation display_rotation,
       glm::mat4* ar_camera_transformation_matrix);
 
   // Get the extrinsics of the color camera.
@@ -144,7 +144,7 @@ class MarkerDetectionApp {
   void DetectMarkers(double timestamp);
 
   // A manger to keep track of the camera image.
-  TangoSupportImageBufferManager* image_buffer_manager_;
+  TangoSupport_ImageBufferManager* image_buffer_manager_;
 
   // main_scene_ includes all drawable objects.
   Scene main_scene_;
@@ -174,7 +174,6 @@ class MarkerDetectionApp {
   std::atomic<bool> is_service_connected_;
   std::atomic<bool> is_gl_initialized_;
   std::atomic<bool> is_video_overlay_rotation_dirty_;
-  std::atomic<bool> is_drift_correction_available_;
 
   // timestamp of last marker detection.
   double prev_marker_detection_timestamp_;
@@ -187,7 +186,7 @@ class MarkerDetectionApp {
   int viewport_height_;
 
   // The Android display rotation.
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
 };
 }  // namespace tango_marker_detection
 

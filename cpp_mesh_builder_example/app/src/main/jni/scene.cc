@@ -16,7 +16,7 @@
 
 #include <tango-gl/conversions.h>
 #include <tango-gl/tango-gl.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "mesh_builder/scene.h"
 

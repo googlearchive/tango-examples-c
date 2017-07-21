@@ -18,7 +18,7 @@
 #include <thread>
 
 #include <tango-gl/conversions.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "tango-marker-detection/marker_detection_app.h"
 
@@ -81,7 +81,7 @@ void MarkerDetectionApp::OnCreate(JNIEnv* env, jobject activity,
   // Check the installed version of the TangoCore against minimum required
   // Tango version.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("MarkerDetectionApp: Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -96,9 +96,8 @@ void MarkerDetectionApp::OnCreate(JNIEnv* env, jobject activity,
 
   is_service_connected_ = false;
   is_gl_initialized_ = false;
-  is_drift_correction_available_ = false;
 
-  display_rotation_ = static_cast<TangoSupportRotation>(display_rotation);
+  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
   is_video_overlay_rotation_dirty_ = true;
   prev_marker_detection_timestamp_ = 0;
 }
@@ -175,9 +174,6 @@ void MarkerDetectionApp::TangoSetupConfig() {
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
-  //
-  // The drift corrected pose is is available through the frame pair with
-  // base frame AREA_DESCRIPTION and target frame DEVICE.
   ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
                             true);
   if (ret != TANGO_SUCCESS) {
@@ -357,7 +353,7 @@ void MarkerDetectionApp::UpdateViewportAndProjectionMatrix() {
 }
 
 void MarkerDetectionApp::OnDeviceRotationChanged(int display_rotation) {
-  display_rotation_ = static_cast<TangoSupportRotation>(display_rotation);
+  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
   is_video_overlay_rotation_dirty_ = true;
 }
 
@@ -407,26 +403,16 @@ void MarkerDetectionApp::OnDrawFrame() {
 }
 
 TangoErrorType MarkerDetectionApp::GetARCameraTransformationMatrix(
-    double timestamp, TangoSupportRotation display_rotation,
+    double timestamp, TangoSupport_Rotation display_rotation,
     glm::mat4* ar_camera_transformation_matrix) {
-  // Detect if drift correction is enabled. If not, we fallback to
-  // start_of_service.
-  is_drift_correction_available_ = true;
-  TangoMatrixTransformData matrix;
+  TangoSupport_MatrixTransformData matrix;
   TangoErrorType status = TangoSupport_getMatrixTransformAtTime(
-      timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL, display_rotation, &matrix);
 
   if (matrix.status_code != TANGO_POSE_VALID) {
-    is_drift_correction_available_ = false;
-    status = TangoSupport_getMatrixTransformAtTime(
-        timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-        TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_OPENGL, display_rotation, &matrix);
-    if (matrix.status_code != TANGO_POSE_VALID) {
-      return status;
-    }
+    return status;
   }
 
   *ar_camera_transformation_matrix = glm::make_mat4(matrix.matrix);
@@ -437,14 +423,12 @@ TangoErrorType MarkerDetectionApp::GetARCameraTransformationMatrix(
 TangoErrorType MarkerDetectionApp::GetColorCameraExtrinsics(
     double timestamp, glm::mat4* camera_extrinsics_matrix) {
   // When drift correction mode is enabled, we need to query the device with
-  // respect to Area Description pose in order to use the drift corrected pose.
-  TangoMatrixTransformData matrix;
+  // respect to Start of Service pose in order to use the drift corrected pose.
+  TangoSupport_MatrixTransformData matrix;
   TangoErrorType status = TangoSupport_getMatrixTransformAtTime(
-      timestamp,
-      is_drift_correction_available_ ? TANGO_COORDINATE_FRAME_AREA_DESCRIPTION
-                                     : TANGO_COORDINATE_FRAME_START_OF_SERVICE,
+      timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix);
+      TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED, &matrix);
   if (matrix.status_code != TANGO_POSE_VALID) {
     return status;
   }

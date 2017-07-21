@@ -15,7 +15,8 @@
  */
 
 #include <tango-gl/conversions.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
+#include <tango_transform_helpers.h>
 
 #include "tango-point-cloud/point_cloud_app.h"
 
@@ -62,7 +63,7 @@ void PointCloudApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("AugmentedRealityApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -211,20 +212,20 @@ void PointCloudApp::OnDrawFrame() {
   TangoPoseData pose;
   TangoErrorType ret_val = TangoSupport_getLatestPointCloudWithPose(
       point_cloud_manager_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
-      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED,
-      &point_cloud, &pose);
+      TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ENGINE_TANGO,
+      TANGO_SUPPORT_ROTATION_IGNORED, &point_cloud, &pose);
   if (ret_val != TANGO_SUCCESS || point_cloud == nullptr) {
     return;
   }
 
   // Get the last device transform to start of service frame in OpenGL
   // convention.
-  TangoDoubleMatrixTransformData matrix_transform;
+  TangoSupport_DoubleMatrixTransformData matrix_transform;
   TangoSupport_getDoubleMatrixTransformAtTime(
       point_cloud->timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_DEVICE, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL,
-      static_cast<TangoSupportRotation>(screen_rotation_), &matrix_transform);
+      static_cast<TangoSupport_Rotation>(screen_rotation_), &matrix_transform);
   if (matrix_transform.status_code == TANGO_POSE_VALID) {
     start_service_T_device_ = glm::make_mat4(matrix_transform.matrix);
   } else {
@@ -238,8 +239,8 @@ void PointCloudApp::OnDrawFrame() {
   TangoPointCloud ow_point_cloud;
   ow_point_cloud.points = new float[point_cloud->num_points][4];
   ow_point_cloud.num_points = point_cloud->num_points;
-  ret_val = TangoSupport_transformPointCloudWithPose(point_cloud, &pose,
-                                                     &ow_point_cloud);
+  ret_val = TangoTransformHelpers_transformPointCloudWithPose(
+      point_cloud, &pose, &ow_point_cloud);
   if (ret_val != TANGO_SUCCESS) {
     LOGE(
         "PointCloudExample: Could not transform point cloud into pose "

@@ -75,5 +75,5 @@ public class TangoJNINative {
   public static native void onTouchEvent(int touchCount, int event0,
                                          float x0, float y0, float x1, float y1);
 
-  public static native void setScreenRotation(int orienationIndex);
+  public static native void setScreenRotation(int rotationIndex);
 }

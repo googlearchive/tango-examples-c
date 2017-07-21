@@ -119,15 +119,6 @@ class PlaneFittingApplication {
   // Delete the GL resources.
   void DeleteResources();
 
-  // Return transform for depth camera in Tango coordinate convention with
-  // respect to
-  // Area Description in OpenGL coordinate convention. The reason to switch from
-  // one convention to
-  // the other is an optimization that allow us to avoid transforming the depth
-  // points into OpenGL
-  // coordinate frame.
-  glm::mat4 GetAreaDescriptionTDepthTransform(double timestamp);
-
   // Set view port and projection matrix. This must be called in the GL thread.
   void SetViewportAndProjectionGLThread();
 
@@ -159,11 +150,11 @@ class PlaneFittingApplication {
   std::atomic<bool> is_cube_placed_;
 
   // Point data manager.
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   // Both of these orientation is used for handling display rotation in portrait
   // or landscape.
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
 };
 
 }  // namespace tango_plane_fitting

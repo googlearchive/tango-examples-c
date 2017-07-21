@@ -72,6 +72,8 @@ typedef enum {
 /// Errors less than 0 should be dealt with by the program.
 /// Success is denoted by <code>TANGO_SUCCESS = 0</code>.
 typedef enum {
+  /// The calling app is missing Android permissions for ACCESS_FINE_LOCATION.
+  TANGO_NO_LOCATION_PERMISSION = -8,
   /// The user has not given permissions to read and write datasets.
   TANGO_NO_DATASET_PERMISSION = -7,
   /// The user has not given permission to export or import ADF files.
@@ -112,14 +114,14 @@ typedef enum {
   TANGO_EVENT_UNKNOWN = 0,  ///< Unclassified Event Type
   TANGO_EVENT_GENERAL,      ///< General uncategorized callbacks
   // "TangoServiceException" : "Service faulted will restart."
-  // "EXPERIMENTAL_PleaseDisconnect" : ""
-  // "CloudLocalizeSuccess" : ""
-  // "CloudLocalizeFailure" : ""
-  // "TileRequested" : "<s2Token>"
-  // "TileUnavailable" : "<s2Token>"
-  // "TileLoaded" : "<s2Token>"
-  // "TileUnloaded" : "<s2Token>"
-  // "TileDownloadFailed" : "<s2Token>"
+  // "EXPERIMENTAL_PleaseDisconnect" : ""  (Experimental)
+  // "CloudLocalizeSuccess" : ""  (Internal Debug)
+  // "CloudLocalizeFailure" : ""  (Internal Debug)
+  // "TileRequested" : "<s2Token>"  (Internal Debug)
+  // "TileUnavailable" : "<s2Token>"  (Internal Debug)
+  // "TileLoaded" : "<s2Token>"  (Internal Debug)
+  // "TileUnloaded" : "<s2Token>"  (Internal Debug)
+  // "TileDownloadFailed" : "<s2Token>"  (Internal Debug)
   TANGO_EVENT_FISHEYE_CAMERA,  ///< Fisheye Camera Event
   // "FisheyeOverExposed" : ""
   // "FisheyeUnderExposed" : ""
@@ -133,9 +135,9 @@ typedef enum {
   TANGO_EVENT_AREA_LEARNING,  ///< Area Learning Event
   // "AreaDescriptionSaveProgress" : "<fraction complete>"
   TANGO_EVENT_CLOUD_ADF,  ///< Event related to cloud ADFs.
-                          // "STATUS_READY" : "0"
-                          // "STATUS_NOT_AVAILABLE" : "0"
-                          // "STATUS_FAILURE" : "0"
+                          // "STATUS_READY" : "0"  (Experimental)
+                          // "STATUS_NOT_AVAILABLE" : "0"  (Experimental)
+                          // "STATUS_FAILURE" : "0"  (Experimental)
 } TangoEventType;
 
 /// Tango Camera Calibration types. See TangoCameraIntrinsics for a detailed
@@ -702,7 +704,9 @@ TangoConfig TangoService_getConfig(TangoConfigType config_type);
 ///     be found or accessed by the service, or if the provided combination of
 ///     config flags is not valid. Returns @c TANGO_NO_DATASET_PERMISSION if the
 ///     config_enable_dataset_recording flag was enabled, but the user has not
-///     given permissions to read and write datasets.
+///     given permissions to read and write datasets. Returns
+///     @c TANGO_NO_LOCATION_PERMISSION if the calling app does not have the
+///     ACCESS_FINE_LOCATION Android permission and cloud ADFs are being used.
 TangoErrorType TangoService_connect(void* context, TangoConfig config);
 
 /// Sets configuration parameters at runtime. Only configuration parameters
@@ -1318,11 +1322,9 @@ TangoErrorType TangoAreaDescriptionMetadata_listKeys(
 /// <tr><td>boolean config_enable_drift_correction</td><td>
 ///         Enables drift-corrected mode. When drift-corrected mode is enabled,
 ///         the drift-corrected pose is available through the frame pair with
-///         base frame AREA_DESCRIPTION and target frame DEVICE.
-///         The base frame START_OF_SERVICE, target frame DEVICE frame pair
-///         remains the same as only enabling config_enable_motion_tracking
-///         flag. learning_mode and loading load_area_description cannot be
-///         used if drift correction is enabled</td></tr>
+///         base frame START_OF_SERVICE and target frame DEVICE. The config
+///         flags for learning_mode and load_area_description_UUID cannot be
+///         used if drift correction is enabled.</td></tr>
 /// </table>
 ///
 /// The supported configuration parameters that can be queried are:

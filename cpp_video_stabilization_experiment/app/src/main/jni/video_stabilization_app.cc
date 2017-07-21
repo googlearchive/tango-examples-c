@@ -55,7 +55,7 @@ void VideoStabilizationApp::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("VideoStabilizationApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -257,7 +257,7 @@ void VideoStabilizationApp::UpdateViewportAndProjectionMatrix() {
   main_scene_.SetProjectionMatrix(projection_mat_ar);
   main_scene_.SetImagePlaneDistance(image_plane_distance);
   main_scene_.SetCameraImagePlaneRatio(image_plane_ratio);
-  main_scene_.SetDisplayRotation(ROTATION_IGNORED);
+  main_scene_.SetDisplayRotation(TANGO_SUPPORT_ROTATION_IGNORED);
 
   float screen_ratio = static_cast<float>(viewport_height_) /
                        static_cast<float>(viewport_width_);
@@ -307,7 +307,7 @@ void VideoStabilizationApp::Render() {
     TangoSupport_getPoseAtTime(
         0.0, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_OPENGL, ROTATION_IGNORED, &pose);
+        TANGO_SUPPORT_ENGINE_OPENGL, TANGO_SUPPORT_ROTATION_IGNORED, &pose);
     if (pose.status_code == TANGO_POSE_VALID) {
       main_scene_.AddNewPose(pose);
       main_scene_.Render();

@@ -16,19 +16,19 @@ LOCAL_PATH := $(call my-dir)
 PROJECT_ROOT:= $(LOCAL_PATH)/..
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := tango_support_api
+LOCAL_MODULE := tango_depth_interpolation
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
 
 ifeq ($(TARGET_ARCH), x86)
-	LOCAL_SRC_FILES := lib/x86/libtango_support_api.so
+	LOCAL_SRC_FILES := lib/x86/libtango_depth_interpolation.so
 endif
 
 ifeq ($(TARGET_ARCH), arm64)
-	LOCAL_SRC_FILES := lib/arm64-v8a/libtango_support_api.so
+	LOCAL_SRC_FILES := lib/arm64-v8a/libtango_depth_interpolation.so
 endif
 
 ifeq ($(TARGET_ARCH), arm)
-	LOCAL_SRC_FILES := lib/armeabi-v7a/libtango_support_api.so
+	LOCAL_SRC_FILES := lib/armeabi-v7a/libtango_depth_interpolation.so
 endif
 
 include $(PREBUILT_SHARED_LIBRARY)

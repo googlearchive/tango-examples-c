@@ -571,23 +571,23 @@ Tango3DR_Status Tango3DR_Mesh_init(
 /// Call @c Tango3DR_Mesh_destroy to free the memory.
 ///
 /// @param path Path to the .obj mesh.
-/// @param mesh On successful return, this will be filled
-///     with a pointer to a freshly allocated Tango3DR_Mesh. After
-///     use, free this by calling Tango3DR_Mesh_destroy().
-/// @return @c TANGO_3DR_SUCCESS on successfully loading a mesh, 3D
-///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
-///     valid, TANGO_3DR_ERROR if using loading failed.
+/// @param mesh On successful return, this will have memory allocated and filled
+///     out with the loaded mesh. After use, free this by calling
+///     @c Tango3DR_Mesh_destroy.
+/// @return @c TANGO_3DR_SUCCESS on successfully loading a mesh,
+///    @c TANGO_3DR_INVALID if the parameters are not valid, @c TANGO_3DR_ERROR
+///    if loading failed.
 Tango3DR_Status Tango3DR_Mesh_loadFromObj(const char* const path,
                                           Tango3DR_Mesh* mesh);
 
 /// Save a mesh to an .obj file.
 ///
-/// @param mesh Mesh to be written.
+/// @param mesh Mesh to be saved.
 /// @param path On successful return, this file will contain the mesh in OBJ
 ///     format.
-/// @return @c TANGO_3DR_SUCCESS on successfully saving a mesh, 3D
-///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
-///     valid, TANGO_3DR_ERROR if using saving failed.
+/// @return @c TANGO_3DR_SUCCESS on successfully saving a mesh,
+///     @c TANGO_3DR_INVALID if the parameters are not valid, @c TANGO_3DR_ERROR
+///     if saving failed.
 Tango3DR_Status Tango3DR_Mesh_saveToObj(const Tango3DR_Mesh* mesh,
                                         const char* const path);
 
@@ -627,7 +627,23 @@ Tango3DR_Status Tango3DR_GridIndexArray_initEmpty(
 Tango3DR_Status Tango3DR_GridIndexArray_destroy(
     Tango3DR_GridIndexArray* grid_index_array);
 
-// From Point cloud to rectified image.
+/// Converts a point cloud into a depth image.
+//
+/// The input point cloud is assumed to be metrically correct. No additional
+/// image rectification is performed. The output depth image can thus be
+/// considered rectified.
+//
+/// The output image must be pre-allocated before calling this function, with
+/// dimensions that match the @Tango3DR_CameraCalibration width and height, and
+/// a format of @c TANGO_3DR_HAL_PIXEL_FORMAT_DEPTH16.
+//
+/// @param cloud the input point cloud
+/// @param depth_camera_calibration calibration containing camera parameters
+///     used for conversion. The distortion coefficients are not used.
+/// @param image Pointer to preallocated image.
+/// @return @ TANGO_3DR_SUCCESS on successfully converting to depth image,
+///    @ TANGO_3DR_INVALID if the image is not allocated with the correct
+///    dimensions or format.
 Tango3DR_Status Tango3DR_PointCloudToRectifiedDepthImage(
     const Tango3DR_PointCloud* cloud,
     const Tango3DR_CameraCalibration* depth_camera_calibration,
@@ -744,7 +760,7 @@ Tango3DR_Status Tango3DR_PointCloudToRectifiedDepthImage(
 ///
 /// <tr><td>int32 mesh_simplification_factor</td><td>
 ///         Reduce the number of vertices by this factor before
-///         generating the texture.  Defaults to 30.</td></tr>
+///         generating the texture.  Defaults to 3.0.</td></tr>
 ///
 /// <tr><td>int32 texture_size</td><td>
 ///         The texture size in pixels.  Defaults to 2048.</td></tr>
@@ -920,7 +936,7 @@ Tango3DR_Status Tango3DR_Config_getMatrix3x3(Tango3DR_Config config,
 /// - Create a Reconstruction context with
 ///   Tango3DR_ReconstructionContext_create().
 ///
-/// - In the Tango Service callbacks, call Tango3DR_update() with
+/// - In the Tango Service callbacks, call Tango3DR_update with
 ///   PointCloud and ImageBuffers for XYZij and Color camera
 ///   callbacks.  This will update internal state and fill out a
 ///   Tango3DR_GridIndexArray.
@@ -970,45 +986,85 @@ Tango3DR_Status Tango3DR_ReconstructionContext_destroy(
 ///     NULL.
 Tango3DR_Status Tango3DR_clear(Tango3DR_ReconstructionContext context);
 
-/// Updates the voxels using a point cloud and image.
+/// Updates the reconstruction using a point cloud and (optional) color image.
 ///
-/// A list of affected voxel cells are returned so that you can create
-/// new meshes for only those cells via Tango3DR_extractMeshSegment(),
-/// Tango3DR_extractPreallocatedMeshSegment(),
-/// Tango3DR_updateFloorplanSegment() or Tango3DR_extractFloorplanSegment().
+/// This is the preferred update method when using the
+/// @c TANGO_3DR_TRAVERSAL_UPDATE setting. When using the
+/// @c TANGO_3DR_PROJECTIVE_UPDATE, setting, this method will result in a
+/// implicit conversion to depth image first. In such cases, consider using
+/// @c Tango3DR_updateFromDepthImage instead.
+///
+/// A list of affected grid cells are returned so that you can create new meshes
+/// for only those cells via the various mesh and floorplan extraction methods.
 ///
 /// @param context Handle to a previously created context.
-/// @param cloud Point cloud depth data.
-/// @param cloud_pose Pose of the Tango device when capturing the data
-///     in @c cloud.
-/// @param image Image data.  Ideally, the image should be in
-///     TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP.  Other formats (RGB/RGBA)
+/// @param cloud Input point cloud.
+/// @param cloud_pose Pose of the depth camera at the time of capturing the
+///     @c cloud.
+/// @param color_image Image data.  Ideally, the image should be in
+///     @c TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP.  Other formats (RGB/RGBA)
 ///     will be converted automatically.  If image is NULL, no color information
-///     will be generated for affected voxels.
-/// @param image_pose Pose of the Tango device when capturing the data
-///     in @c image.  Can be NULL if @c image is NULL.
-/// @param calibration Camera calibration for the captured image.  Can
-///     be NULL if @c image is NULL.
-/// @param updated_indices On successful return, this will be filled
-///     with a pointer to a freshly allocated Tango3DR_GridIndexArray
-///     describing the grid cells whose voxels are affected.  After
-///     use, free this by calling Tango3DR_GridIndexArray_destroy().
-/// @return @c TANGO_3DR_SUCCESS on successfully updating 3D
-///     Reconstruction, @c TANGO_3DR_INVALID if the parameters are not
-///     valid, TANGO_3DR_ERROR if using @c TANGO_3DR_PROJECTIVE_UPDATE but
-///     the @c and @c Tango3DR_ReconstructionContext_setDepthCalibration method
-///     hasn't been called.
-Tango3DR_Status Tango3DR_update(Tango3DR_ReconstructionContext context,
-                                const Tango3DR_PointCloud* cloud,
-                                const Tango3DR_Pose* cloud_pose,
-                                const Tango3DR_ImageBuffer* image,
-                                const Tango3DR_Pose* image_pose,
-                                Tango3DR_GridIndexArray* updated_indices);
+///     will be generated for affected cells.
+/// @param color_image_pose Pose of the color camera when capturing the data in
+///     @c color_image.  Can be NULL if @c color_image is NULL.
+/// @param updated_indices On successful return, this will be populated with
+///     the grid cells which were affected by the update.  After use, free this
+///     by calling @c Tango3DR_GridIndexArray_destroy().
+/// @return @c TANGO_3DR_SUCCESS on successfully updating the reconstruction,
+///     @c TANGO_3DR_INVALID if the parameters are not valid, @c TANGO_3DR_ERROR
+///     if using @c TANGO_3DR_PROJECTIVE_UPDATE but the
+///     @c Tango3DR_ReconstructionContext_setDepthCalibration method hasn't been
+///     called, and @c TANGO_3DR_ERROR if passing in a color image but the
+///     @c Tango3DR_ReconstructionContext_setColorCalibration method hasnt't
+///     been called.
+Tango3DR_Status Tango3DR_updateFromPointCloud(
+    Tango3DR_ReconstructionContext context, const Tango3DR_PointCloud* cloud,
+    const Tango3DR_Pose* cloud_pose, const Tango3DR_ImageBuffer* color_image,
+    const Tango3DR_Pose* color_image_pose,
+    Tango3DR_GridIndexArray* updated_indices);
+
+/// Updates the reconstruction using a depth image and (optional) color image.
+///
+/// This is the preferred update method when using the
+/// @c TANGO_3DR_PROJECTIVE_UPDATE setting. When using the
+/// @c TANGO_3DR_TRAVERSAL_UPDATE, setting, this method will result in a
+/// implicit conversion to point cloud first. In such cases, consider using
+/// @c Tango3DR_updateFromPointCloud instead.
+///
+/// A list of affected grid cells are returned so that you can create new meshes
+/// for only those cells via the various mesh and floorplan extraction methods.
+///
+/// @param context Handle to a previously created context.
+/// @param depth_image Input depth image.
+/// @param depth_image_pose Pose of the depth camera at the time of capturing
+///     the @c depth_image.
+/// @param color_image Image data.  Ideally, the image should be in
+///     @c TANGO_3DR_HAL_PIXEL_FORMAT_YCrCb_420_SP.  Other formats (RGB/RGBA)
+///     will be converted automatically.  If image is NULL, no color information
+///     will be generated for affected cells.
+/// @param color_image_pose Pose of the color camera when capturing the data in
+///     @c color_image.  Can be NULL if @c color_image is NULL.
+/// @param updated_indices On successful return, this will be populated with
+///     the grid cells which were affected by the update.  After use, free this
+///     by calling @c Tango3DR_GridIndexArray_destroy().
+/// @return @c TANGO_3DR_SUCCESS on successfully updating the reconstruction,
+///     @c TANGO_3DR_INVALID if the parameters are not valid, @c TANGO_3DR_ERROR
+///     if @c Tango3DR_ReconstructionContext_setDepthCalibration method hasn't
+///     been called, and @c TANGO_3DR_ERROR if passing in a color image but the
+///     @c Tango3DR_ReconstructionContext_setColorCalibration method hasnt't
+///     been called.
+Tango3DR_Status Tango3DR_updateFromDepthImage(
+    Tango3DR_ReconstructionContext context,
+    const Tango3DR_ImageBuffer* depth_image,
+    const Tango3DR_Pose* depth_image_pose,
+    const Tango3DR_ImageBuffer* color_image,
+    const Tango3DR_Pose* color_image_pose,
+    Tango3DR_GridIndexArray* updated_indices);
 
 /// Retrieves the indices of all active cells.
 ///
 /// A cell is marked as active if it has any voxels that have been
-/// updated by Tango3DR_update() and will remain active until
+/// updated by Tango3DR_update and will remain active until
 /// reconstruction is cleared using Tango3DR_clear().
 ///
 /// @param context Handle to a previously created context.
@@ -1173,6 +1229,19 @@ Tango3DR_Status Tango3DR_extractPreallocatedVoxelGridSegment(
     const Tango3DR_GridIndex grid_index, const int num_sdf_voxels,
     Tango3DR_SignedDistanceVoxel* sdf_voxels);
 
+/// Find planar regions in a mesh and decimates them separately from the rest of
+/// the mesh.
+///
+/// @param context Handle to a reconstruction context.
+/// @param min_plane_area Minimum area of a flat surface to be simplified. In
+/// square meters.
+/// @param tango_mesh mesh that will be analyzed and decimated.
+/// @return @c TANGO_3DR_SUCCESS on success, @TANGO_3DR_INVALID if the
+///     parameters are not valid.
+Tango3DR_Status Tango3DR_ReconstructionContext_decimatePlanes(
+    const Tango3DR_ReconstructionContext context, const double min_plane_area,
+    Tango3DR_Mesh* tango_mesh);
+
 /// Sets the depth camera intrinsic calibration that a reconstruction context
 /// uses. It is required to call this function once before calling
 /// @c Tango3DR_update if the update_method flag is set to
@@ -1186,7 +1255,7 @@ Tango3DR_Status Tango3DR_ReconstructionContext_setDepthCalibration(
     const Tango3DR_ReconstructionContext context,
     const Tango3DR_CameraCalibration* calibration);
 
-/// Sets the depth camera intrinsic calibration that a reconstruction context
+/// Sets the color camera intrinsic calibration that a reconstruction context
 /// uses. It is required to call this function once before calling
 /// @c Tango3DR_update if you are passing color images to the reconstruction.
 ///
@@ -1197,6 +1266,20 @@ Tango3DR_Status Tango3DR_ReconstructionContext_setDepthCalibration(
 Tango3DR_Status Tango3DR_ReconstructionContext_setColorCalibration(
     const Tango3DR_ReconstructionContext context,
     const Tango3DR_CameraCalibration* calibration);
+
+/// Rescales the camera calibration given a new width and height.
+/// This function adapts the camera calibration parameters for scaled images.
+/// This is useful for camera images that are downsampled before being used
+/// in Tango3DR_updateFromDepthImage / Tango3DR_updateTexture.
+///
+/// @param new_width The new width.
+/// @param new_height The new height.
+/// @param calibration_to_rescale The rescaled camera calibration.
+/// @return @c TANGO_3DR_SUCCESS on success, @TANGO_3DR_INVALID if the
+///     parameters are not valid.
+Tango3DR_Status Tango3DR_CameraCalibration_rescale(
+    const int new_width, const int new_height,
+    Tango3DR_CameraCalibration* calibration_to_rescale);
 
 /// @}
 
@@ -1393,8 +1476,8 @@ Tango3DR_Status Tango3DR_extractFloorplanSegment(
 /// @param origin On successful return, position of the top left pixel in
 /// world coordinates (x: right, y: up).
 /// @param image On successful return, this will be filled with a pointer
-/// to a freshly allocated Tango3DR_ImageBuffer object containing a signed
-/// distance image. Note that the image uses a coordinate system with
+/// to a freshly allocated Tango3DR_ImageBuffer object containing a floor plan
+/// layer image. Note that the image uses a coordinate system with
 /// (x: right, y: down). After use, free the image by calling
 /// Tango3DR_ImageBuffer_destroy().
 /// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
@@ -1411,8 +1494,8 @@ Tango3DR_Status Tango3DR_extractFullFloorplanImage(
 /// @param grid_index Index for the grid cell to extract.
 /// @param layer Floor plan layer to extract.
 /// @param image On successful return, this will be filled with a pointer
-/// to a freshly allocated Tango3DR_ImageBuffer object containing a signed
-/// distance image. Note that the image uses a coordinate system with
+/// to a freshly allocated Tango3DR_ImageBuffer object containing a floor plan
+/// layer image. Note that the image uses a coordinate system with
 /// (x: right, y: down). After use, free this by calling
 /// Tango3DR_ImageBuffer_destroy().
 /// @return @c TANGO_3DR_SUCCESS on successfully extracting the floor plan.
@@ -1489,6 +1572,24 @@ Tango3DR_Status Tango3DR_Trajectory_createFromAreaDescription(
 ///     the trajectory.  Returns @c TANGO_3DR_INVALID if trajectory is
 ///     NULL.
 Tango3DR_Status Tango3DR_Trajectory_destroy(Tango3DR_Trajectory trajectory);
+
+/// Retrieves the earliest time available in a trajectory.
+///
+/// @param trajectory The handle to a Tango trajectory.
+/// @param timestamp A pointer to the output timestamp. Timestamp is in seconds.
+/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
+///     parameters are not valid, @c TANGO_3DR_ERROR if the trajectory is empty.
+Tango3DR_Status Tango3DR_Trajectory_getEarliestTime(
+    const Tango3DR_Trajectory trajectory, double* timestamp);
+
+/// Retrieves the latest time available in a trajectory.
+///
+/// @param trajectory The handle to a Tango trajectory.
+/// @param timestamp A pointer to the output timestamp. Timestamp is in seconds.
+/// @return @c TANGO_3DR_SUCCESS on success, @c TANGO_3DR_INVALID if the
+///     parameters are not valid, @c TANGO_3DR_ERROR if the trajectory is empty.
+Tango3DR_Status Tango3DR_Trajectory_getLatestTime(
+    const Tango3DR_Trajectory trajectory, double* timestamp);
 
 /// Retrieves the pose at a given time from a trajectory.
 ///

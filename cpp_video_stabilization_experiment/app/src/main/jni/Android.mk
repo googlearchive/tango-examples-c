@@ -19,7 +19,7 @@ PROJECT_ROOT:= $(call my-dir)/../../../../..
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libcpp_video_stabilization_experiment
-LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
+LOCAL_SHARED_LIBRARIES := tango_client_api tango_support
 LOCAL_STATIC_LIBRARIES := png
 LOCAL_CFLAGS    := -std=c++11
 
@@ -52,4 +52,4 @@ $(call import-add-path, $(PROJECT_ROOT))
 $(call import-add-path, $(PROJECT_ROOT)/third_party)
 $(call import-module,libpng)
 $(call import-module,tango_client_api)
-$(call import-module,tango_support_api)
+$(call import-module,tango_support)

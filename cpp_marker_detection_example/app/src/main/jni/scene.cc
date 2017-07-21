@@ -16,11 +16,8 @@
 
 #include <math.h>
 
-#include <tango-gl/conversions.h>
 #include <tango-gl/tango-gl.h>
-#include <tango-gl/texture.h>
-#include <tango-gl/shaders.h>
-#include <tango-gl/meshes.h>
+#include <tango_markers.h>
 
 #include "tango-marker-detection/scene.h"
 
@@ -39,7 +36,7 @@ void DecomposeMatrix(const glm::mat4& transformation_matrix,
 }
 
 // Maximum marker Id to detect.
-const int kMaxMarkerId = 16;
+const int kMaxMarkerId = 255;
 
 // Physical size of the Alvar marker in meter.
 const double kMarkerEdgeLength = 0.1397;
@@ -64,12 +61,10 @@ void Scene::InitGLContent(AAssetManager* aasset_manager) {
   {
     // Lock objects_ during initialization.
     std::lock_guard<std::mutex> lock(objects_mutex_);
-    objects_.resize(kMaxMarkerId);
-    for (int i = 0; i < kMaxMarkerId; ++i) {
-      objects_[i] = std::unique_ptr<MeshObject>(new MeshObject());
-      objects_[i]->MakeSphere(aasset_manager,
-                              i % 2 == 0 ? "earth.png" : "moon.png",
-                              kMarkerEdgeLength / 2);
+    objects_.resize(kMaxMarkerId + 1);
+    for (int i = 0; i <= kMaxMarkerId; ++i) {
+      objects_[i] =
+          std::unique_ptr<MarkerObject>(new MarkerObject(kMarkerEdgeLength));
     }
   }
 
@@ -82,7 +77,7 @@ void Scene::DeleteResources() {
 
     // Lock objects_ during deleting.
     std::lock_guard<std::mutex> lock(objects_mutex_);
-    for (int i = 0; i < kMaxMarkerId; ++i) {
+    for (int i = 0; i <= kMaxMarkerId; ++i) {
       objects_[i] = nullptr;
     }
 
@@ -135,7 +130,7 @@ void Scene::Render() {
   {
     // Lock objects_ during rendering.
     std::lock_guard<std::mutex> lock(objects_mutex_);
-    for (int i = 0; i < kMaxMarkerId; ++i) {
+    for (int i = 0; i <= kMaxMarkerId; ++i) {
       objects_[i]->Render(camera_.get());
     }
   }
@@ -149,55 +144,37 @@ void Scene::DetectMarkers(const TangoImageBuffer& image_buffer,
   double orientation[4];
   DecomposeMatrix(world_T_camera, translation, orientation);
 
-  TangoSupportMarkerParam param;
-  param.type = TANGO_MARKER_ARTAG;
+  TangoMarkers_DetectParam param;
+  param.type = TANGO_MARKERS_MARKER_ARTAG;
   param.marker_size = kMarkerEdgeLength;
 
-  TangoSupportMarkerList list;
+  TangoMarkers_MarkerList list;
   if (TANGO_SUCCESS ==
-      TangoSupport_detectMarkers(&image_buffer, TANGO_CAMERA_COLOR, translation,
+      TangoMarkers_detectMarkers(&image_buffer, TANGO_CAMERA_COLOR, translation,
                                  orientation, &param, &list)) {
     // Lock objects_ during updating.
     std::lock_guard<std::mutex> lock(objects_mutex_);
 
     for (int i = 0; i < list.marker_count; ++i) {
       int marker_id = atoi(list.markers[i].content);
-      if (marker_id > 0) {
-        int index = (marker_id - 1) % kMaxMarkerId;
-        // Place the mesh object at the location just above the marker center
-        // along the marker plane normal direction. We use the size of the mesh
-        // object as the offset.
-        double object_size = kMarkerEdgeLength / 2;
-        glm::vec4 object_center_local = glm::vec4(0, 0, object_size, 1);
-
-        // Convert the object center from local(marker) space to world space,
-        // using the transformation formed by the marker pose.
-        glm::mat4 world_T_local = tango_gl::conversions::TransformFromArrays(
-            list.markers[i].translation, list.markers[i].orientation);
-
-        glm::vec4 object_center_world = world_T_local * object_center_local;
-
-        double translation[3] = {object_center_world.x, object_center_world.y,
-                                 object_center_world.z};
-
+      if (marker_id >= 0 && marker_id <= kMaxMarkerId) {
         // Reposition the object to the newly calculated location and apply
         // the marker orientation as the rotation.
-        objects_[index]->Transform(translation, list.markers[i].orientation);
-
-        // Make sure the object is visible.
-        objects_[index]->SetVisible(true);
+        objects_[marker_id]->Update(list.markers[i]);
+      } else {
+        LOGE("Marker id is out of range!");
       }
     }
 
-    // Release memory allocated by TangoSupport_detectMarkers().
-    TangoSupport_freeMarkerList(&list);
+    // Release memory allocated by TangoMarkers_detectMarkers().
+    TangoMarkers_freeMarkerList(&list);
   }
 }
 
 void Scene::SetVideoOverlayRotation(int display_rotation) {
   if (is_content_initialized_) {
     video_overlay_->SetDisplayRotation(
-        static_cast<TangoSupportRotation>(display_rotation));
+        static_cast<TangoSupport_Rotation>(display_rotation));
   }
 }
 

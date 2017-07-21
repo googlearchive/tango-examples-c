@@ -44,7 +44,7 @@ void Scene::Clear() {
 
 // We'll render the scene from a pose.
 void Scene::Render(GLuint color_texture, GLuint depth_texture,
-                   TangoSupportRotation camera_to_display_rotation) {
+                   TangoSupport_Rotation camera_to_display_rotation) {
   glViewport(0, 0, viewport_width_, viewport_height_);
   if (color_texture == 0 || depth_texture == 0) {
     return;

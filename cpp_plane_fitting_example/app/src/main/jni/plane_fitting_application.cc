@@ -24,7 +24,7 @@
 #include <tango-gl/util.h>
 
 #include "tango-plane-fitting/plane_fitting.h"
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 namespace tango_plane_fitting {
 
@@ -97,7 +97,7 @@ PlaneFittingApplication::~PlaneFittingApplication() {
 void PlaneFittingApplication::OnCreate(JNIEnv* env, jobject activity) {
   // Check that we have the minimum required version of Tango.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE(
         "PlaneFittingApplication::OnCreate, Tango Core version is out of "
@@ -170,9 +170,6 @@ void PlaneFittingApplication::TangoSetupConfig() {
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
-  //
-  // The drift corrected pose is is available through the frame pair with
-  // base frame AREA_DESCRIPTION and target frame DEVICE.
   ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
                             true);
   if (ret != TANGO_SUCCESS) {
@@ -324,9 +321,9 @@ void PlaneFittingApplication::OnDrawFrame() {
   glEnable(GL_DEPTH_TEST);
 
   // Querying the GPU color image's frame transformation based its timestamp.
-  TangoMatrixTransformData opengl_T_color_camera_matrix_transform;
+  TangoSupport_MatrixTransformData opengl_T_color_camera_matrix_transform;
   TangoSupport_getMatrixTransformAtTime(
-      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+      last_gpu_timestamp_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
       TANGO_SUPPORT_ENGINE_OPENGL, display_rotation_,
       &opengl_T_color_camera_matrix_transform);
@@ -341,14 +338,14 @@ void PlaneFittingApplication::OnDrawFrame() {
   if (is_cube_placed_) {
     // To make sure drift correct pose is also applied to virtual
     // object (cube).
-    // We need to re-query the Area Description to Depth camera
+    // We need to re-query the Start of Service to Depth camera
     // pose every frame. Note that you will need to use the timestamp
     // at the time when the points were measured to query the pose.
-    TangoMatrixTransformData opengl_T_depth_matrix_transform;
+    TangoSupport_MatrixTransformData opengl_T_depth_matrix_transform;
     TangoSupport_getMatrixTransformAtTime(
-        plane_timestamp_, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+        plane_timestamp_, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
         TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-        TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED,
+        TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
         &opengl_T_depth_matrix_transform);
 
     if (opengl_T_depth_matrix_transform.status_code == TANGO_POSE_VALID) {
@@ -376,8 +373,7 @@ void PlaneFittingApplication::DeleteResources() {
 }
 
 void PlaneFittingApplication::OnDisplayChanged(int display_rotation) {
-  display_rotation_ =
-      static_cast<TangoSupportRotation>(display_rotation);
+  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
   is_scene_camera_configured_ = false;
 }
 
@@ -423,7 +419,8 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   ret = TangoSupport_getPoseAtTime(
       last_gpu_timestamp_, TANGO_COORDINATE_FRAME_CAMERA_DEPTH,
       TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_TANGO,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &pose_depth_T_color);
+      TANGO_SUPPORT_ENGINE_TANGO, TANGO_SUPPORT_ROTATION_IGNORED,
+      &pose_depth_T_color);
   if (ret != TANGO_SUCCESS) {
     LOGE("%s: could not get openglTcolor pose for last_gpu_timestamp_ %f.",
          __func__, last_gpu_timestamp_);
@@ -471,38 +468,6 @@ void PlaneFittingApplication::OnTouchEvent(float x, float y) {
   depth_T_plane_[3][2] =
       static_cast<float>(out_plane_intersect.z) + normal_offeset.z;
   is_cube_placed_ = true;
-}
-
-glm::mat4 PlaneFittingApplication::GetAreaDescriptionTDepthTransform(
-    double timestamp) {
-  glm::mat4 area_description_opengl_T_depth_tango;
-  TangoMatrixTransformData matrix_transform;
-
-  // When drift correction mode is enabled in config file, we need to query
-  // the device with respect to Area Description pose in order to use the
-  // drift corrected pose.
-  //
-  // Note that if you don't want to use the drift corrected pose, the
-  // normal device with respect to start of service pose is still available.
-  TangoSupport_getMatrixTransformAtTime(
-      timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
-      TANGO_COORDINATE_FRAME_CAMERA_DEPTH, TANGO_SUPPORT_ENGINE_OPENGL,
-      TANGO_SUPPORT_ENGINE_TANGO, ROTATION_IGNORED, &matrix_transform);
-  if (matrix_transform.status_code != TANGO_POSE_VALID) {
-    // When the pose status is not valid, it indicates the tracking has
-    // been lost. In this case, we simply stop rendering.
-    //
-    // This is also the place to display UI to suggest the user walk
-    // to recover tracking.
-    LOGE(
-        "PlaneFittingApplication: Could not find a valid matrix transform at "
-        "time %lf for the color camera.",
-        last_gpu_timestamp_);
-  } else {
-    area_description_opengl_T_depth_tango =
-        glm::make_mat4(matrix_transform.matrix);
-  }
-  return area_description_opengl_T_depth_tango;
 }
 
 }  // namespace tango_plane_fitting

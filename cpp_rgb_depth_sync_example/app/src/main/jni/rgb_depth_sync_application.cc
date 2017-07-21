@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <tango-gl/conversions.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include <rgb-depth-sync/rgb_depth_sync_application.h>
 namespace {
@@ -49,7 +49,8 @@ SynchronizationApplication::SynchronizationApplication()
       gpu_upsample_(false),
       is_service_connected_(false),
       is_gl_initialized_(false),
-      color_camera_to_display_rotation_(TangoSupportRotation::ROTATION_0) {}
+      color_camera_to_display_rotation_(
+          TangoSupport_Rotation::TANGO_SUPPORT_ROTATION_0) {}
 
 SynchronizationApplication::~SynchronizationApplication() {
   if (tango_config_) {
@@ -63,7 +64,7 @@ void SynchronizationApplication::OnCreate(JNIEnv* env, jobject activity) {
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE(
         "SynchronizationApplication::OnCreate, Tango Core version is out of "

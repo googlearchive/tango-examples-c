@@ -17,7 +17,7 @@
 #ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
 #define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_CAMERA_TEXTURE_DRAWABLE_H_
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 #include <tango-gl/util.h>
 #include "rgb-depth-sync/shader.h"
 
@@ -30,7 +30,7 @@ class CameraTextureDrawable {
   CameraTextureDrawable();
   ~CameraTextureDrawable();
   // Render the color texture on screen.
-  void RenderImage(TangoSupportRotation camera_to_display_rotation);
+  void RenderImage(TangoSupport_Rotation camera_to_display_rotation);
 
   // Call this function when the GL context has been reinitialized
   void InitializeGL();

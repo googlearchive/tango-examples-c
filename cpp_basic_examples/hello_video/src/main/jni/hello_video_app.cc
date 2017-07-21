@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "hello_video/hello_video_app.h"
 
@@ -53,7 +53,7 @@ void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity) {
   // it will not support the most up to date features.
   int version = 0;
   TangoErrorType err =
-      TangoSupport_GetTangoVersion(env, caller_activity, &version);
+      TangoSupport_getTangoVersion(env, caller_activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("HelloVideoApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -310,7 +310,7 @@ void HelloVideoApp::RenderTextureId() {
 }
 
 void HelloVideoApp::OnDisplayChanged(int display_rotation) {
-  display_rotation_ = static_cast<TangoSupportRotation>(display_rotation);
+  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
   is_video_overlay_rotation_set_ = false;
 }
 

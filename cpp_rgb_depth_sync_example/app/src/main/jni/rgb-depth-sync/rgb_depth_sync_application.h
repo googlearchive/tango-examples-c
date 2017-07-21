@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <tango_client_api.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 #include <rgb-depth-sync/color_image.h>
 #include <rgb-depth-sync/depth_image.h>
 #include <rgb-depth-sync/scene.h>
@@ -145,14 +145,14 @@ class SynchronizationApplication {
 
   // The point_cloud_manager allows for thread safe reading and
   // writing of the point cloud data.
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   bool gpu_upsample_;
 
   bool is_service_connected_;
   bool is_gl_initialized_;
 
-  TangoSupportRotation color_camera_to_display_rotation_;
+  TangoSupport_Rotation color_camera_to_display_rotation_;
 };
 }  // namespace rgb_depth_sync
 

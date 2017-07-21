@@ -25,7 +25,7 @@
 
 #include <android/asset_manager.h>
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 #include <tango_client_api.h>  // NOLINT
 #include <tango-gl/camera.h>
 #include <tango-gl/color.h>
@@ -101,7 +101,7 @@ class Scene {
   void SetCameraLocked(bool camera_locked);
 
   // Sets the display rotation.
-  void SetDisplayRotation(TangoSupportRotation display_rotation);
+  void SetDisplayRotation(TangoSupport_Rotation display_rotation);
 
  private:
   // Returns the smooth predicted virtual camera rotation.

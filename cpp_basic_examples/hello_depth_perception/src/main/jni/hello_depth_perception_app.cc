@@ -16,7 +16,7 @@
 
 #include <cstdlib>
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "hello_depth_perception/hello_depth_perception_app.h"
 
@@ -58,7 +58,7 @@ void HelloDepthPerceptionApp::OnCreate(JNIEnv* env, jobject caller_activity) {
   // it will not support the most up to date features.
   int version = 0;
   TangoErrorType err =
-      TangoSupport_GetTangoVersion(env, caller_activity, &version);
+      TangoSupport_getTangoVersion(env, caller_activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE(
         "HelloDepthPerceptionApp::OnCreate, Tango Core version is out"

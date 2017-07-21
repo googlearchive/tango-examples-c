@@ -26,7 +26,7 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -87,7 +87,7 @@ glm::vec3 ApplyTransform(const glm::mat4& mat, const glm::vec3& vec);
 // available are 0, 90, 180, 270. Followed by Android camera orientation
 // standard:
 // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
-TangoSupportRotation GetAndroidRotationFromColorCameraToDisplay(
+TangoSupport_Rotation GetAndroidRotationFromColorCameraToDisplay(
     int display_rotation, int color_camera_rotation);
 
 // Get the Android rotation integer value from color camera to display.
@@ -99,14 +99,14 @@ TangoSupportRotation GetAndroidRotationFromColorCameraToDisplay(
 // available are 0, 90, 180, 270. Followed by Android camera orientation
 // standard:
 // https://developer.android.com/reference/android/hardware/Camera.CameraInfo.html#orientation
-TangoSupportRotation GetAndroidRotationFromColorCameraToDisplay(
-    TangoSupportRotation display_rotation, int color_camera_rotation);
+TangoSupport_Rotation GetAndroidRotationFromColorCameraToDisplay(
+    TangoSupport_Rotation display_rotation, int color_camera_rotation);
 
 // Convert an UV coordinate from Android Display space to Color Camera space
 // This function is used to get the UV value needed by tango_support_library
 // when device display is rotated.
 glm::vec2 GetColorCameraUVFromDisplay(
-    const glm::vec2& uv, TangoSupportRotation color_to_display_rotation);
+    const glm::vec2& uv, TangoSupport_Rotation color_to_display_rotation);
 }  // namespace util
 }  // namespace tango_gl
 #endif  // TANGO_GL_UTIL_H_

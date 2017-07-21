@@ -17,7 +17,7 @@
 #include <string>
 
 #include <tango-gl/conversions.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
 
 #include "tango-augmented-reality/augmented_reality_app.h"
 
@@ -73,7 +73,7 @@ void AugmentedRealityApp::OnCreate(JNIEnv* env, jobject activity,
   // Check the installed version of the TangoCore.  If it is too old, then
   // it will not support the most up to date features.
   int version;
-  TangoErrorType err = TangoSupport_GetTangoVersion(env, activity, &version);
+  TangoErrorType err = TangoSupport_getTangoVersion(env, activity, &version);
   if (err != TANGO_SUCCESS || version < kTangoCoreMinimumVersion) {
     LOGE("AugmentedRealityApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
@@ -166,9 +166,6 @@ void AugmentedRealityApp::TangoSetupConfig() {
   }
 
   // Drift correction allows motion tracking to recover after it loses tracking.
-  //
-  // The drift corrected pose is is available through the frame pair with
-  // base frame AREA_DESCRIPTION and target frame DEVICE.
   ret = TangoConfig_setBool(tango_config_, "config_enable_drift_correction",
                             true);
   if (ret != TANGO_SUCCESS) {
@@ -277,8 +274,7 @@ void AugmentedRealityApp::UpdateViewportAndProjectionMatrix() {
   float image_plane_ratio = 0.0f;
 
   int ret = TangoSupport_getCameraIntrinsicsBasedOnDisplayRotation(
-      TANGO_CAMERA_COLOR,
-      static_cast<TangoSupportRotation>(display_rotation_),
+      TANGO_CAMERA_COLOR, static_cast<TangoSupport_Rotation>(display_rotation_),
       &color_camera_intrinsics_);
 
   if (ret != TANGO_SUCCESS) {
@@ -358,18 +354,12 @@ void AugmentedRealityApp::OnDrawFrame() {
       &video_overlay_timestamp);
 
   if (status == TANGO_SUCCESS) {
-    // When drift correction mode is enabled in config file, we need to query
-    // the device with respect to Area Description pose in order to use the
-    // drift corrected pose.
-    //
-    // Note that if you don't want to use the drift corrected pose, the
-    // normal device with respect to start of service pose is still available.
-    TangoDoubleMatrixTransformData matrix_transform;
+    TangoSupport_DoubleMatrixTransformData matrix_transform;
     status = TangoSupport_getDoubleMatrixTransformAtTime(
-        video_overlay_timestamp, TANGO_COORDINATE_FRAME_AREA_DESCRIPTION,
+        video_overlay_timestamp, TANGO_COORDINATE_FRAME_START_OF_SERVICE,
         TANGO_COORDINATE_FRAME_CAMERA_COLOR, TANGO_SUPPORT_ENGINE_OPENGL,
         TANGO_SUPPORT_ENGINE_OPENGL,
-        static_cast<TangoSupportRotation>(display_rotation_),
+        static_cast<TangoSupport_Rotation>(display_rotation_),
         &matrix_transform);
     if (matrix_transform.status_code == TANGO_POSE_VALID) {
       {

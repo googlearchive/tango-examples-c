@@ -17,7 +17,7 @@
 #ifndef CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SCENE_H_
 #define CPP_RGB_DEPTH_SYNC_EXAMPLE_RGB_DEPTH_SYNC_SCENE_H_
 
-#include <tango_support_api.h>
+#include <tango_support.h>
 #include <tango-gl/camera.h>
 #include <tango-gl/grid.h>
 #include <tango-gl/util.h>
@@ -43,7 +43,7 @@ class Scene {
 
   // Renders the scene onto the camera image using the provided depth texture.
   void Render(GLuint color_texture_id, GLuint depth_texture_id,
-              TangoSupportRotation camera_to_display_rotation);
+              TangoSupport_Rotation camera_to_display_rotation);
 
   // Recreate GL structures because of context creation.
   void InitializeGL();

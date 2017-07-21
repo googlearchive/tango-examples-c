@@ -25,7 +25,8 @@
 #include <vector>
 
 #include <tango_client_api.h>
-#include <tango_support_api.h>
+#include <tango_support.h>
+#include <tango_depth_interpolation.h>
 #include <tango-gl/line.h>
 #include <tango-gl/segment_drawable.h>
 #include <tango-gl/util.h>
@@ -167,13 +168,13 @@ class PointToPointApplication {
   glm::mat4 projection_matrix_ar_;
 
   // Point data manager.
-  TangoSupportPointCloudManager* point_cloud_manager_;
+  TangoSupport_PointCloudManager* point_cloud_manager_;
 
   // Image data manager.
-  TangoSupportImageBufferManager* image_buffer_manager_;
+  TangoSupport_ImageBufferManager* image_buffer_manager_;
 
   // The depth interpolator class.
-  TangoSupportDepthInterpolator* interpolator_;
+  TangoDepthInterpolation_Interpolator* interpolator_;
 
   // To keep track of when segment can be rendered.
   int tap_number_;
@@ -207,7 +208,7 @@ class PointToPointApplication {
 
   // Orientation is used for handling display rotation in portrait
   // or landscape.
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
 };
 
 }  // namespace tango_point_to_point

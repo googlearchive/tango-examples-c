@@ -116,7 +116,7 @@ class HelloVideoApp {
   bool is_texture_id_set_;
   bool is_video_overlay_rotation_set_;
 
-  TangoSupportRotation display_rotation_;
+  TangoSupport_Rotation display_rotation_;
 
   void AllocateTexture(GLuint texture_id, int width, int height);
   void RenderYuv();
