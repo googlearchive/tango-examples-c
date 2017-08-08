@@ -62,66 +62,19 @@ class HelloVideoApp {
   // Tango Service.
   void OnPause();
 
-  // Initializing the Scene.
-  void OnSurfaceCreated();
 
-  // Setup the view port width and height.
-  void OnSurfaceChanged(int width, int height);
+  void OnFrameAvailable(TangoCameraId camera_id, const TangoImageBuffer* buffer);
+  void OnImageAvailable(TangoCameraId camera_id,
+                        const TangoImage* image,
+                        const TangoCameraMetadata* metadata);
 
-  // Main render loop.
-  void OnDrawFrame();
 
-  // Set texture method.
-  void SetTextureMethod(TextureMethod method) {
-    current_texture_method_ = method;
-  }
-
-  // YUV data callback.
-  void OnFrameAvailable(const TangoImageBuffer* buffer);
-
-  // Callback for display change event, we use this function to detect display
-  // orientation change.
-  //
-  // @param display_rotation, the rotation index of the display. Same as the
-  // Android display enum value, see here:
-  // https://developer.android.com/reference/android/view/Display.html#getRotation()
-  void OnDisplayChanged(int display_rotation);
 
  private:
   // Tango configration file, this object is for configuring Tango Service setup
   // before connect to service. For example, we set the flag
   // config_enable_auto_recovery based user's input and then start Tango.
   TangoConfig tango_config_;
-
-  // video_overlay_ Render the camera video feedback onto the screen.
-  tango_gl::VideoOverlay* video_overlay_drawable_;
-  tango_gl::VideoOverlay* yuv_drawable_;
-
-  TextureMethod current_texture_method_;
-
-  std::vector<uint8_t> yuv_buffer_;
-  std::vector<uint8_t> yuv_temp_buffer_;
-  std::vector<GLubyte> rgb_buffer_;
-
-  std::atomic<bool> is_yuv_texture_available_;
-  std::atomic<bool> swap_buffer_signal_;
-  std::mutex yuv_buffer_mutex_;
-
-  size_t yuv_width_;
-  size_t yuv_height_;
-  size_t yuv_size_;
-  size_t uv_buffer_offset_;
-
-  bool is_service_connected_;
-  bool is_texture_id_set_;
-  bool is_video_overlay_rotation_set_;
-
-  TangoSupport_Rotation display_rotation_;
-
-  void AllocateTexture(GLuint texture_id, int width, int height);
-  void RenderYuv();
-  void RenderTextureId();
-  void DeleteDrawables();
 };
 }  // namespace hello_video
 

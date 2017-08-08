@@ -33,14 +33,11 @@ import com.projecttango.examples.cpp.util.TangoInitializationHelper;
  * Main activity shows video overlay scene.
  */
 public class HelloVideoActivity extends Activity {
-    private GLSurfaceView mSurfaceView;
-    private ToggleButton mYuvRenderSwitcher;
 
     private ServiceConnection mTangoServiceCoonnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             TangoJniNative.onTangoServiceConnected(binder);
-            setDisplayRotation();
         }
 
         @Override
@@ -57,65 +54,18 @@ public class HelloVideoActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         TangoJniNative.onCreate(this);
-
-        // Register for display orientation change updates.
-        DisplayManager displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
-        if (displayManager != null) {
-            displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
-                @Override
-                public void onDisplayAdded(int displayId) {}
-
-                @Override
-                public void onDisplayChanged(int displayId) {
-                    synchronized (this) {
-                        setDisplayRotation();
-                    }
-                }
-
-                @Override
-                public void onDisplayRemoved(int displayId) {}
-            }, null);
-        }
-
-
-
-        // Configure OpenGL renderer
-        mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
-        mSurfaceView.setEGLContextClientVersion(2);
-        mSurfaceView.setRenderer(new HelloVideoRenderer());
-
-        mYuvRenderSwitcher = (ToggleButton) findViewById(R.id.yuv_switcher);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mSurfaceView.onResume();
         TangoInitializationHelper.bindTangoService(this, mTangoServiceCoonnection);
-        TangoJniNative.setYuvMethod(mYuvRenderSwitcher.isChecked());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mSurfaceView.onPause();
         TangoJniNative.onPause();
         unbindService(mTangoServiceCoonnection);
-    }
-
-    /**
-     * The render mode toggle button was pressed.
-     */
-    public void renderModeClicked(View view) {
-        TangoJniNative.setYuvMethod(mYuvRenderSwitcher.isChecked());
-    }
-
-    /**
-     *  Pass device rotation to native layer. This parameter is important for Tango to render video
-     *  overlay in the correct device orientation.
-     */
-    private void setDisplayRotation() {
-        Display display = getWindowManager().getDefaultDisplay();
-        TangoJniNative.onDisplayChanged(display.getRotation());
     }
 }

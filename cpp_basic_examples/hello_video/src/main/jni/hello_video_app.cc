@@ -20,30 +20,20 @@
 
 namespace {
 constexpr int kTangoCoreMinimumVersion = 9377;
-void OnFrameAvailableRouter(void* context, TangoCameraId,
+
+void OnFrameAvailableRouter(void* context, TangoCameraId camera_id,
                             const TangoImageBuffer* buffer) {
   hello_video::HelloVideoApp* app =
       static_cast<hello_video::HelloVideoApp*>(context);
-  app->OnFrameAvailable(buffer);
+  app->OnFrameAvailable(camera_id, buffer);
 }
 
-// We could do this conversion in a fragment shader if all we care about is
-// rendering, but we show it here as an example of how people can use RGB data
-// on the CPU.
-inline void Yuv2Rgb(uint8_t y_value, uint8_t u_value, uint8_t v_value,
-                    uint8_t* r, uint8_t* g, uint8_t* b) {
-  float float_r = y_value + (1.370705 * (v_value - 128));
-  float float_g =
-      y_value - (0.698001 * (v_value - 128)) - (0.337633 * (u_value - 128));
-  float float_b = y_value + (1.732446 * (u_value - 128));
-
-  float_r = float_r * !(float_r < 0);
-  float_g = float_g * !(float_g < 0);
-  float_b = float_b * !(float_b < 0);
-
-  *r = float_r * (!(float_r > 255)) + 255 * (float_r > 255);
-  *g = float_g * (!(float_g > 255)) + 255 * (float_g > 255);
-  *b = float_b * (!(float_b > 255)) + 255 * (float_b > 255);
+void OnImageAvailableRouter(void* context, TangoCameraId camera_id,
+                            const TangoImage* image,
+                            const TangoCameraMetadata* metadata) {
+  hello_video::HelloVideoApp* app =
+      static_cast<hello_video::HelloVideoApp*>(context);
+  app->OnImageAvailable(camera_id, image, metadata);
 }
 }  // namespace
 
@@ -58,15 +48,6 @@ void HelloVideoApp::OnCreate(JNIEnv* env, jobject caller_activity) {
     LOGE("HelloVideoApp::OnCreate, Tango Core version is out of date.");
     std::exit(EXIT_SUCCESS);
   }
-
-  // Initialize variables
-  is_yuv_texture_available_ = false;
-  swap_buffer_signal_ = false;
-  is_service_connected_ = false;
-  is_texture_id_set_ = false;
-  video_overlay_drawable_ = NULL;
-  yuv_drawable_ = NULL;
-  is_video_overlay_rotation_set_ = false;
 }
 
 void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
@@ -98,15 +79,33 @@ void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
     std::exit(EXIT_SUCCESS);
   }
 
-  ret = TangoService_connectOnFrameAvailable(TANGO_CAMERA_COLOR, this,
+  ret = TangoService_connectOnFrameAvailable(TANGO_CAMERA_FISHEYE, this,
+                                               OnFrameAvailableRouter);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "HelloVideoApp::OnTangoServiceConnected,"
+        "Error connecting fisheye %d with onFrameAvailable",
+        ret);
+  }
+
+  /*ret = TangoService_connectOnFrameAvailable(TANGO_CAMERA_COLOR, this,
                                              OnFrameAvailableRouter);
   if (ret != TANGO_SUCCESS) {
     LOGE(
         "HelloVideoApp::OnTangoServiceConnected,"
-        "Error connecting color frame %d",
+        "Error connecting color %d with onFrameAvailable",
         ret);
-    std::exit(EXIT_SUCCESS);
-  }
+  }*/
+
+  /*ret = TangoService_connectOnImageAvailable(TANGO_CAMERA_COLOR, this,
+                                             OnImageAvailableRouter);
+  if (ret != TANGO_SUCCESS) {
+    LOGE(
+        "HelloVideoApp::OnTangoServiceConnected,"
+        "Error connecting color %d with onImageAvailable",
+        ret);
+  }*/
+
 
   // Connect to Tango Service, service will start running, and
   // pose can be queried.
@@ -118,12 +117,6 @@ void HelloVideoApp::OnTangoServiceConnected(JNIEnv* env, jobject binder) {
         ret);
     std::exit(EXIT_SUCCESS);
   }
-
-  // Initialize TangoSupport context.
-  TangoSupport_initialize(TangoService_getPoseAtTime,
-                          TangoService_getCameraIntrinsics);
-
-  is_service_connected_ = true;
 }
 
 void HelloVideoApp::OnPause() {
@@ -135,183 +128,28 @@ void HelloVideoApp::OnPause() {
 
   // Disconnect from the Tango service
   TangoService_disconnect();
-
-  // Free buffer data
-  is_yuv_texture_available_ = false;
-  swap_buffer_signal_ = false;
-  is_service_connected_ = false;
-  is_video_overlay_rotation_set_ = false;
-  is_texture_id_set_ = false;
-  rgb_buffer_.clear();
-  yuv_buffer_.clear();
-  yuv_temp_buffer_.clear();
-  this->DeleteDrawables();
 }
 
-void HelloVideoApp::OnFrameAvailable(const TangoImageBuffer* buffer) {
-  if (current_texture_method_ != TextureMethod::kYuv) {
-    return;
-  }
-
-  if (yuv_drawable_->GetTextureId() == 0) {
-    LOGE("HelloVideoApp::yuv texture id not valid");
-    return;
-  }
-
-  if (buffer->format != TANGO_HAL_PIXEL_FORMAT_YCrCb_420_SP) {
-    LOGE("HelloVideoApp::yuv texture format is not supported by this app");
-    return;
-  }
-
-  // The memory needs to be allocated after we get the first frame because we
-  // need to know the size of the image.
-  if (!is_yuv_texture_available_) {
-    yuv_width_ = buffer->width;
-    yuv_height_ = buffer->height;
-    uv_buffer_offset_ = yuv_width_ * yuv_height_;
-
-    yuv_size_ = yuv_width_ * yuv_height_ + yuv_width_ * yuv_height_ / 2;
-
-    // Reserve and resize the buffer size for RGB and YUV data.
-    yuv_buffer_.resize(yuv_size_);
-    yuv_temp_buffer_.resize(yuv_size_);
-    rgb_buffer_.resize(yuv_width_ * yuv_height_ * 3);
-
-    AllocateTexture(yuv_drawable_->GetTextureId(), yuv_width_, yuv_height_);
-    is_yuv_texture_available_ = true;
-  }
-
-  std::lock_guard<std::mutex> lock(yuv_buffer_mutex_);
-  memcpy(&yuv_temp_buffer_[0], buffer->data, yuv_size_);
-  swap_buffer_signal_ = true;
-}
-
-void HelloVideoApp::DeleteDrawables() {
-  delete video_overlay_drawable_;
-  delete yuv_drawable_;
-  video_overlay_drawable_ = NULL;
-  yuv_drawable_ = NULL;
-}
-
-void HelloVideoApp::OnSurfaceCreated() {
-  if (video_overlay_drawable_ != NULL || yuv_drawable_ != NULL) {
-    this->DeleteDrawables();
-  }
-
-  video_overlay_drawable_ =
-      new tango_gl::VideoOverlay(GL_TEXTURE_EXTERNAL_OES, display_rotation_);
-  yuv_drawable_ = new tango_gl::VideoOverlay(GL_TEXTURE_2D, display_rotation_);
-}
-
-void HelloVideoApp::OnSurfaceChanged(int width, int height) {
-  glViewport(0, 0, width, height);
-}
-
-void HelloVideoApp::OnDrawFrame() {
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-  if (!is_service_connected_) {
-    return;
-  }
-
-  if (!is_texture_id_set_) {
-    is_texture_id_set_ = true;
-    // Connect color camera texture. TangoService_connectTextureId expects a
-    // valid texture id from the caller, so we will need to wait until the GL
-    // content is properly allocated.
-    int texture_id = static_cast<int>(video_overlay_drawable_->GetTextureId());
-    TangoErrorType ret = TangoService_connectTextureId(
-        TANGO_CAMERA_COLOR, texture_id, nullptr, nullptr);
-    if (ret != TANGO_SUCCESS) {
-      LOGE(
-          "HelloVideoApp: Failed to connect the texture id with error"
-          "code: %d",
-          ret);
-    }
-  }
-
-  if (!is_video_overlay_rotation_set_) {
-    video_overlay_drawable_->SetDisplayRotation(display_rotation_);
-    yuv_drawable_->SetDisplayRotation(display_rotation_);
-    is_video_overlay_rotation_set_ = true;
-  }
-
-  switch (current_texture_method_) {
-    case TextureMethod::kYuv:
-      RenderYuv();
-      break;
-    case TextureMethod::kTextureId:
-      RenderTextureId();
-      break;
+void HelloVideoApp::OnFrameAvailable(TangoCameraId camera_id, const TangoImageBuffer* buffer) {
+  if (camera_id == TangoCameraId::TANGO_CAMERA_FISHEYE) {
+    LOGE("HelloVideoApp::OnFrameAvailable: new fisheye frame available");
+  } else if (camera_id == TangoCameraId::TANGO_CAMERA_COLOR) {
+    LOGE("HelloVideoApp::OnFrameAvailable: new color frame available");
+  } else {
+    LOGE("HelloVideoApp::OnFrameAvailable: new frame available with unknown id");
   }
 }
 
-void HelloVideoApp::AllocateTexture(GLuint texture_id, int width, int height) {
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-               GL_UNSIGNED_BYTE, rgb_buffer_.data());
-}
-
-void HelloVideoApp::RenderYuv() {
-  if (!is_yuv_texture_available_) {
-    return;
+void HelloVideoApp::OnImageAvailable(TangoCameraId camera_id,
+                      const TangoImage* image,
+                      const TangoCameraMetadata* metadata) {
+  if (camera_id == TangoCameraId::TANGO_CAMERA_FISHEYE) {
+    LOGE("HelloVideoApp::OnImageAvailable: new fisheye image available");
+  } else if (camera_id == TangoCameraId::TANGO_CAMERA_COLOR) {
+    LOGE("HelloVideoApp::OnImageAvailable: new color image available");
+  } else {
+    LOGE("HelloVideoApp::OnImageAvailable: new image available with unknown id");
   }
-  {
-    std::lock_guard<std::mutex> lock(yuv_buffer_mutex_);
-    if (swap_buffer_signal_) {
-      std::swap(yuv_buffer_, yuv_temp_buffer_);
-      swap_buffer_signal_ = false;
-    }
-  }
-
-  for (size_t i = 0; i < yuv_height_; ++i) {
-    for (size_t j = 0; j < yuv_width_; ++j) {
-      size_t x_index = j;
-      if (j % 2 != 0) {
-        x_index = j - 1;
-      }
-
-      size_t rgb_index = (i * yuv_width_ + j) * 3;
-
-      // The YUV texture format is NV21,
-      // yuv_buffer_ buffer layout:
-      //   [y0, y1, y2, ..., yn, v0, u0, v1, u1, ..., v(n/4), u(n/4)]
-      Yuv2Rgb(
-          yuv_buffer_[i * yuv_width_ + j],
-          yuv_buffer_[uv_buffer_offset_ + (i / 2) * yuv_width_ + x_index + 1],
-          yuv_buffer_[uv_buffer_offset_ + (i / 2) * yuv_width_ + x_index],
-          &rgb_buffer_[rgb_index], &rgb_buffer_[rgb_index + 1],
-          &rgb_buffer_[rgb_index + 2]);
-    }
-  }
-
-  glBindTexture(GL_TEXTURE_2D, yuv_drawable_->GetTextureId());
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, yuv_width_, yuv_height_, 0, GL_RGB,
-               GL_UNSIGNED_BYTE, rgb_buffer_.data());
-
-  yuv_drawable_->Render(glm::mat4(1.0f), glm::mat4(1.0f));
-}
-
-void HelloVideoApp::RenderTextureId() {
-  double timestamp;
-  // TangoService_updateTexture() updates target camera's
-  // texture and timestamp.
-  int ret = TangoService_updateTexture(TANGO_CAMERA_COLOR, &timestamp);
-  if (ret != TANGO_SUCCESS) {
-    LOGE(
-        "HelloVideoApp: Failed to update the texture id with error code: "
-        "%d",
-        ret);
-  }
-  video_overlay_drawable_->Render(glm::mat4(1.0f), glm::mat4(1.0f));
-}
-
-void HelloVideoApp::OnDisplayChanged(int display_rotation) {
-  display_rotation_ = static_cast<TangoSupport_Rotation>(display_rotation);
-  is_video_overlay_rotation_set_ = false;
 }
 
 }  // namespace hello_video
