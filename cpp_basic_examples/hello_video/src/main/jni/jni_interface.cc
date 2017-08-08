@@ -42,40 +42,6 @@ Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onPause(
   app.OnPause();
 }
 
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceCreated(
-    JNIEnv*, jobject) {
-  app.OnSurfaceCreated();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceChanged(
-    JNIEnv*, jobject, jint width, jint height) {
-  app.OnSurfaceChanged(width, height);
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onGlSurfaceDrawFrame(
-    JNIEnv*, jobject) {
-  app.OnDrawFrame();
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_setYuvMethod(
-    JNIEnv*, jobject, jboolean use_yuv_method) {
-  if (use_yuv_method) {
-    app.SetTextureMethod(hello_video::HelloVideoApp::TextureMethod::kYuv);
-  } else {
-    app.SetTextureMethod(hello_video::HelloVideoApp::TextureMethod::kTextureId);
-  }
-}
-
-JNIEXPORT void JNICALL
-Java_com_projecttango_examples_cpp_hellovideo_TangoJniNative_onDisplayChanged(
-    JNIEnv* /*env*/, jobject /*obj*/, jint display_rotation) {
-  app.OnDisplayChanged(display_rotation);
-}
-
 #ifdef __cplusplus
 }
 #endif

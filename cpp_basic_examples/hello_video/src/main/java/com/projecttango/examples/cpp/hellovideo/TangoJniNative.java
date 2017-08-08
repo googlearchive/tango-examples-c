@@ -55,32 +55,4 @@ public class TangoJniNative {
      * Interfaces to native OnPause function.
      */
     public static native void onPause();
-
-    /**
-     * Delegate {@code GLSurfaceView.onGlSurfaceCreated} to the native code code.
-     */
-    public static native void onGlSurfaceCreated();
-
-    /**
-     * Delegate {@code GLSurfaceView.onGlSurfaceChanged} to the native code code.
-     */
-    public static native void onGlSurfaceChanged(int width, int height);
-
-    /**
-     * Delegate {@code GLSurfaceView.onGlSurfaceDrawFrame} to the native code code.
-     */
-    public static native void onGlSurfaceDrawFrame();
-
-    /**
-     * Select the RGB camera texture rendering method.
-     *
-     * @param useYuvMethod If {@code true}, YUV buffer rendering method will be used, otherwise
-     *                     the Texture ID rendering method will be used instead.
-     */
-    public static native void setYuvMethod(boolean useYuvMethod);
-
-    /**
-     * Respond to a display change.
-     */
-    public static native void onDisplayChanged(int displayRotation);
 }

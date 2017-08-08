@@ -14,17 +14,4 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <android.opengl.GLSurfaceView
-        android:id="@+id/surfaceview"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" 
-       	android:layout_gravity="top"
-        />
-    <ToggleButton
-        android:id="@+id/yuv_switcher"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:text="YUV"
-        android:onClick="renderModeClicked" />
-
 </RelativeLayout>
