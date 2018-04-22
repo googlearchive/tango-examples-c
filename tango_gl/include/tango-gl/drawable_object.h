@@ -40,6 +40,9 @@ class DrawableObject : public Transform {
                    const std::vector<GLushort>& indices);
   void SetVertices(const std::vector<GLfloat>& vertices,
                    const std::vector<GLfloat>& normals);
+  void SetVertices(const std::vector<GLfloat>& vertices,
+                   const std::vector<GLfloat>& normals,
+                   const std::vector<GLushort>& indices);
   virtual void Render(const glm::mat4& projection_mat,
                       const glm::mat4& view_mat) const = 0;
 
